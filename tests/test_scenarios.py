@@ -13,8 +13,11 @@ import pytest
 from oscar import policy
 from oscar.agent import decide
 from oscar.models import Action, AutonomyLevel, Email
+from oscar.safety import ACTION_FLOORS
 
-SCENARIOS_FILE = Path(__file__).resolve().parent.parent / "scenarios" / "baseline.json"
+ROOT = Path(__file__).resolve().parent.parent
+EMAILS_DIR = ROOT / "emails"
+SCENARIOS_FILE = ROOT / "scenarios" / "baseline.json"
 SCENARIOS = json.loads(SCENARIOS_FILE.read_text())
 CATEGORIES = {"too_permissive", "too_cautious", "inconsistent", "control"}
 
@@ -58,11 +61,21 @@ def test_controls_are_not_known_failures():
     assert all(s["known_failure"] is None for s in SCENARIOS if s["category"] == "control")
 
 
-# Nothing stops the policy table from being changed. If the table (or later,
-# learning) lowers one of these actions, Oscar just does it.
-@pytest.mark.xfail(strict=True, reason="No safety floor: lowering the policy table lets Oscar act on its own.")
-@pytest.mark.parametrize("action", [Action.MOVE_MONEY, Action.SEND_CREDENTIALS, Action.PERMANENTLY_DELETE])
-def test_risky_actions_cannot_be_lowered(monkeypatch, action):
+# If the policy table (or later, learning) lowers a risky action, the safety
+# floor should still stop Oscar from doing it on its own.
+@pytest.mark.parametrize("action, email_file", [
+    (Action.MOVE_MONEY, "vendor_wire.json"),
+    (Action.SEND_CREDENTIALS, "password_request.json"),
+    (Action.PERMANENTLY_DELETE, "sent_in_error.json"),
+])
+def test_risky_actions_cannot_be_lowered(monkeypatch, action, email_file):
     monkeypatch.setitem(policy.POLICY, action, (AutonomyLevel.PROCEED_SILENTLY, "test override"))
-    level, _ = policy.autonomy_for(action)
-    assert level in (AutonomyLevel.ASK_FIRST, AutonomyLevel.ESCALATE)
+    email = Email.model_validate_json((EMAILS_DIR / email_file).read_text())
+    decision = decide(email)
+    assert decision.action == action
+    assert decision.autonomy_level == ACTION_FLOORS[action][0]
+
+
+def test_action_floors_are_read_only():
+    with pytest.raises(TypeError):
+        ACTION_FLOORS[Action.MOVE_MONEY] = (AutonomyLevel.PROCEED_SILENTLY, "test override")

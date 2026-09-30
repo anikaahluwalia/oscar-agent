@@ -3,6 +3,7 @@
 from oscar.classifier import classify
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.policy import autonomy_for
+from oscar.safety import apply_floor
 
 ACTION_PHRASES: dict[Action, str] = {
     Action.MARK_READ: "mark this as read",
@@ -36,6 +37,7 @@ def explain(action: Action, level: AutonomyLevel, reason: str, matched: str | No
 def decide(email: Email) -> Decision:
     classification = classify(email)
     level, reason = autonomy_for(classification.action)
+    level, reason = apply_floor(classification.action, level, reason)
     return Decision(
         email_id=email.id,
         action=classification.action,
