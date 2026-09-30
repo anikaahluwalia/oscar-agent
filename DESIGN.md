@@ -119,3 +119,70 @@ A hard safety floor for money movement, credentials, irreversible actions, exter
 commitments, sensitive data, account security changes and prompt injection. It
 should sit after the policy so nothing can lower it. The 10 controls must still
 pass, so Oscar doesn't become too cautious.
+
+## Stage 3 — Hard safety floor
+
+**Goal:** Make sure risky emails can't be handled without the user, and that
+nothing (the policy table now, learning later) can change that.
+
+### How it works
+
+The safety code is in `oscar/safety.py` and runs after the policy table.
+
+1. **Action floors.** Each risky action has a lowest allowed level. `MOVE_MONEY`
+   and `SEND_CREDENTIALS` are always `ESCALATE`. `PERMANENTLY_DELETE`,
+   `UNSUBSCRIBE`, `SEND_REPLY`, `FORWARD` and `ACCEPT_MEETING` are at least
+   `ASK_FIRST`. If the policy says something lower, the floor wins.
+2. **Email checks.** The email text is checked for prompt injection, money
+   requests, credential requests, account security changes, sensitive data and
+   commitments. Any match escalates, whatever action the classifier picked.
+3. The decision now has `safety_flags` listing what was found. For money and
+   credential requests the action is changed to `MOVE_MONEY` / `SEND_CREDENTIALS`
+   so the decision shows what the email is really asking for.
+
+Both tables are read-only (`MappingProxyType`), and a test tries to change each one.
+
+### Decisions
+
+- **The floor is a separate step, not more rows in the policy table.** The policy
+  table is what learning will change in Stage 5. Keeping the floor outside it
+  means learning can only make Oscar stricter than the floor, never looser.
+- **Email checks look for requests where possible.** "Send payment" or "pay via
+  Zelle" is a request; "you paid via PayPal" is a receipt. The first version of
+  the PayPal pattern escalated a normal receipt, so a control was added and the
+  pattern now needs "send" or "pay" too.
+- **Injection is checked first**, so when an email has both an injection and a
+  money request, the user is told about the injection.
+- **Scenarios can check flags.** Two injection scenarios were passing only because
+  another check escalated them. Now they must raise `PROMPT_INJECTION`.
+- **The floor tests go through `decide()`.** In Stage 2 they only checked the
+  policy table, so they couldn't see the floor.
+
+### Results
+
+| Category | Stage 2 wrong | Stage 3 wrong |
+|---|---|---|
+| `too_permissive` | 12 of 12 | 1 of 13 |
+| `too_cautious` | 3 of 3 | 4 of 4 |
+| `inconsistent` | 2 of 2 | 1 of 2 |
+| `control` | 0 of 10 | 0 of 11 |
+
+Three scenarios were added in this stage: a PayPal receipt control, an
+AI-assistants newsletter control, and a 2FA tips newsletter (too cautious).
+`injection_preapproved_payment` moved from control to too_permissive once flags
+were checked. All 3 floor tests now pass.
+
+### Still wrong
+
+- **Too permissive (1):** an urgent outage email with no keywords is still marked
+  as read. Urgency isn't a safety category, so the floor doesn't cover it.
+- **Too cautious (4):** a bank transfer receipt, a newsletter quoting a scam, an
+  IT phishing warning and a 2FA tips newsletter are escalated. The checks match
+  words, not whether the email is asking for something. The safety checks made
+  this a little worse (one new case), which is the trade-off for catching risky
+  emails.
+- **Inconsistent (1):** "please forward this newsletter" is still archived. This is
+  a classifier ordering problem, not a safety problem.
+
+These are left for later stages. Stage 6 will measure how often this happens, and
+Stage 7 will use those results to fix them.

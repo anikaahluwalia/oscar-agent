@@ -10,9 +10,10 @@ decides how much autonomy to take:
 | `ASK_FIRST` | Action is proposed to user, user must accept or decline |
 | `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Stage 2 — baseline testing.** Oscar uses a keyword classifier and a fixed
-action → level table. Stage 2 adds scenarios in `scenarios/baseline.json` that show
-where this goes wrong. Synthetic emails only; no real side effects, no learning.
+**Status: Stage 3 — hard safety floor.** Oscar uses a keyword classifier and a fixed
+action → level table, and then a safety floor that the table can't lower. The
+scenarios in `scenarios/baseline.json` show what is fixed and what isn't yet.
+Synthetic emails only; no real side effects, no learning.
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
