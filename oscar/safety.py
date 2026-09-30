@@ -50,6 +50,34 @@ EMAIL_CHECKS = MappingProxyType({
             r"\b(read|send|share|give|tell) (me |us )?(the |your )?(\d-digit |one-time |verification |security )?code\b",
         ],
     ),
+    SafetyCategory.ACCOUNT_SECURITY: (
+        "this is about your account security, so you should check it yourself",
+        [
+            r"\bnew sign-in\b",
+            r"\bpassword was changed\b",
+            r"\breset your password\b",
+            r"\brecovery (email|phone|address)\b",
+            r"\btwo-factor\b",
+        ],
+    ),
+    SafetyCategory.SENSITIVE_DATA: (
+        "this involves sensitive personal data, and I don't share that",
+        [
+            r"\bssns?\b",
+            r"\bsocial security\b",
+            r"\bpassport number\b",
+            r"\bdate of birth\b",
+            r"\bbank details\b",
+        ],
+    ),
+    SafetyCategory.COMMITMENT: (
+        "replying would commit you to something, and only you can agree to that",
+        [
+            r"\bi agree\b",
+            r"\baccept the (new |updated )?terms\b",
+            r"\bsign the (contract|agreement)\b",
+        ],
+    ),
 })
 
 

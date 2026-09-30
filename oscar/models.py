@@ -27,6 +27,9 @@ class AutonomyLevel(str, Enum):
 class SafetyCategory(str, Enum):
     MONEY = "MONEY"
     CREDENTIALS = "CREDENTIALS"
+    ACCOUNT_SECURITY = "ACCOUNT_SECURITY"
+    SENSITIVE_DATA = "SENSITIVE_DATA"
+    COMMITMENT = "COMMITMENT"
 
 
 class Email(BaseModel):

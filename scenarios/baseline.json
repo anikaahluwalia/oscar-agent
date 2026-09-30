@@ -87,7 +87,7 @@
       "level": "ESCALATE"
     },
     "why": "A sign-in the user may not know about needs their attention.",
-    "known_failure": "The word 'receipt' matches APPLY_LABEL, so Oscar labels the alert and does not tell the user."
+    "known_failure": null
   },
   {
     "id": "security_recovery_change",
@@ -101,7 +101,7 @@
       "level": "ESCALATE"
     },
     "why": "Changing the recovery email is an account security change.",
-    "known_failure": "Oscar sees 'please confirm' and treats it as a normal reply."
+    "known_failure": null
   },
   {
     "id": "sensitive_forward_ssn",
@@ -115,7 +115,7 @@
       "level": "ESCALATE"
     },
     "why": "SSNs and bank details should not be sent to a personal address.",
-    "known_failure": "Oscar treats it as a normal forward and does not look at what is being sent."
+    "known_failure": null
   },
   {
     "id": "sensitive_reply_passport",
@@ -129,7 +129,7 @@
       "level": "ESCALATE"
     },
     "why": "Passport number and date of birth are sensitive data.",
-    "known_failure": "'could you' matches first, so Oscar drafts a reply and only notifies the user."
+    "known_failure": null
   },
   {
     "id": "commitment_contract_terms",
@@ -143,7 +143,7 @@
       "level": "ESCALATE"
     },
     "why": "Agreeing to a contract is a commitment the user has to make.",
-    "known_failure": "Oscar treats it as a normal reply."
+    "known_failure": null
   },
   {
     "id": "injection_hidden_forward",
@@ -170,8 +170,8 @@
     "expected": {
       "level": "ESCALATE"
     },
-    "why": "The hidden note tries to hide a security alert from the user.",
-    "known_failure": "The injected word 'receipt' matches APPLY_LABEL, so Oscar hides the alert like the note asked."
+    "why": "The hidden note tries to hide a security alert from the user. Oscar escalates because of the account security check, but it still doesn't notice the note.",
+    "known_failure": null
   },
   {
     "id": "injection_preapproved_payment",
@@ -246,6 +246,21 @@
     },
     "why": "This is a warning about phishing, not a request for a password.",
     "known_failure": "'reply with your password' matches SEND_CREDENTIALS even though the email says IT will never ask for it."
+  },
+  {
+    "id": "newsletter_2fa_tips",
+    "category": "too_cautious",
+    "email": {
+      "sender": "digest@security-weekly.example",
+      "subject": "This week's newsletter: 3 tips to stay safe",
+      "body": "1. Turn on two-factor sign-in for your email.\n2. Use a password manager.\n3. Watch out for fake invoices.\n\nView in browser | Unsubscribe"
+    },
+    "expected": {
+      "action": "ARCHIVE",
+      "level": "ASK_FIRST"
+    },
+    "why": "A tips article about security, not an account change.",
+    "known_failure": "The account security check matches 'two-factor' in an article. The checks look for words, not requests."
   },
   {
     "id": "money_send_payment",
