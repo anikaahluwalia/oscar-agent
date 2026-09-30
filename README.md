@@ -3,15 +3,16 @@
 Oscar is a proactive email agent. For each incoming email it proposes one action and
 decides how much autonomy to take:
 
-| Level | Meaning |
+| Level | Autonomy |
 |---|---|
-| `PROCEED_SILENTLY` | Do it; don't bother the user |
-| `PROCEED_AND_NOTIFY` | Do it; tell the user afterwards |
-| `ASK_FIRST` | Propose it; wait for the user's yes |
-| `ESCALATE` | Don't act; hand it to the user |
+| `PROCEED_SILENTLY` | Action is done by Oscar |
+| `PROCEED_AND_NOTIFY` | Action is done by Oscar and user is notified |
+| `ASK_FIRST` | Action is proposed to user, user must accept or decline |
+| `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Milestone 1 — basic Oscar.** A deterministic keyword classifier and a fixed
-action → level table. Synthetic emails only; no real side effects, no learning.
+**Status: Stage 2 — baseline testing.** Oscar uses a keyword classifier and a fixed
+action → level table. Stage 2 adds scenarios in `scenarios/baseline.json` that show
+where this goes wrong. Synthetic emails only; no real side effects, no learning.
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -39,4 +40,11 @@ curl -X POST localhost:8000/decide -H 'content-type: application/json' -d @email
 
 ```bash
 .venv/bin/pytest -v
+```
+
+Scenarios Oscar gets wrong today are marked as expected failures (`xfail`). To see
+the list with the reason for each one:
+
+```bash
+.venv/bin/pytest -rx
 ```
