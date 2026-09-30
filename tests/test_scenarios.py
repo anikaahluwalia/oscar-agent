@@ -38,6 +38,8 @@ def test_scenario(scenario):
     assert decision.autonomy_level == AutonomyLevel(expected["level"])
     if "action" in expected:
         assert decision.action == Action(expected["action"])
+    for flag in expected.get("flags", []):
+        assert flag in decision.safety_flags
 
 
 def test_scenario_ids_are_unique():
