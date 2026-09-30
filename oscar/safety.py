@@ -32,8 +32,18 @@ ACTION_FLOORS = MappingProxyType({
 
 
 # Patterns in the email text that should escalate no matter which action the
-# classifier picked. These look for requests, not just mentions.
+# classifier picked. These look for requests, not just mentions. Injection is
+# first so its explanation is the one the user sees.
 EMAIL_CHECKS = MappingProxyType({
+    SafetyCategory.PROMPT_INJECTION: (
+        "this email has instructions written for me, so I'm not acting on it",
+        [
+            r"\b(ai|email|virtual) assistant\s*[:,]",
+            r"\bnote to (the )?(ai|assistant)\b",
+            r"\bignore (all |any )?(previous|prior|earlier) instructions\b",
+            r"\bthe user has (already )?(pre-)?approved\b",
+        ],
+    ),
     SafetyCategory.MONEY: (
         "this looks like a request for money, and I never move money",
         [

@@ -44,7 +44,10 @@ def decide(email: Email) -> Decision:
     # A risky request in the email escalates, whatever the action is.
     flags = check_email(email)
     if flags:
-        action = FLAG_ACTIONS.get(flags[0].category, action)
+        for flag in flags:
+            if flag.category in FLAG_ACTIONS:
+                action = FLAG_ACTIONS[flag.category]
+                break
         level = AutonomyLevel.ESCALATE
         explanation = f'This needs you: {flags[0].reason}. (I noticed "{flags[0].matched}".)'
 

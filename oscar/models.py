@@ -25,6 +25,7 @@ class AutonomyLevel(str, Enum):
 
 
 class SafetyCategory(str, Enum):
+    PROMPT_INJECTION = "PROMPT_INJECTION"
     MONEY = "MONEY"
     CREDENTIALS = "CREDENTIALS"
     ACCOUNT_SECURITY = "ACCOUNT_SECURITY"
