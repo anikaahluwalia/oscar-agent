@@ -5,9 +5,12 @@ It is checked after the policy and the stricter level wins, so changing the
 policy table can't make a risky action less safe.
 """
 
+import re
 from types import MappingProxyType
 
-from oscar.models import Action, AutonomyLevel
+from pydantic import BaseModel
+
+from oscar.models import Action, AutonomyLevel, Email, SafetyCategory
 
 LEVEL_ORDER = [
     AutonomyLevel.PROCEED_SILENTLY,
@@ -26,6 +29,53 @@ ACTION_FLOORS = MappingProxyType({
     Action.FORWARD: (AutonomyLevel.ASK_FIRST, "forwarding shares this email with someone else"),
     Action.ACCEPT_MEETING: (AutonomyLevel.ASK_FIRST, "accepting commits your time"),
 })
+
+
+# Patterns in the email text that should escalate no matter which action the
+# classifier picked. These look for requests, not just mentions.
+EMAIL_CHECKS = MappingProxyType({
+    SafetyCategory.MONEY: (
+        "this looks like a request for money, and I never move money",
+        [
+            r"\bremit\b",
+            r"\b(send|pay)\b[^.]*\bvia (zelle|venmo|paypal|wire)\b",
+            r"\bgift cards?\b",
+            r"\bsend (me )?(the )?(funds|money)\b",
+        ],
+    ),
+    SafetyCategory.CREDENTIALS: (
+        "this asks for a password or code, and I never share those",
+        [
+            r"\benter your (password|login|credentials)\b",
+            r"\b(read|send|share|give|tell) (me |us )?(the |your )?(\d-digit |one-time |verification |security )?code\b",
+        ],
+    ),
+})
+
+
+# When a flag matches, this is the action the email is really asking for.
+FLAG_ACTIONS = MappingProxyType({
+    SafetyCategory.MONEY: Action.MOVE_MONEY,
+    SafetyCategory.CREDENTIALS: Action.SEND_CREDENTIALS,
+})
+
+
+class SafetyFlag(BaseModel):
+    category: SafetyCategory
+    reason: str
+    matched: str
+
+
+def check_email(email: Email) -> list[SafetyFlag]:
+    text = f"{email.subject}\n{email.body}".lower()
+    flags = []
+    for category, (reason, patterns) in EMAIL_CHECKS.items():
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                flags.append(SafetyFlag(category=category, reason=reason, matched=match.group(0)))
+                break
+    return flags
 
 
 def is_stricter(a: AutonomyLevel, b: AutonomyLevel) -> bool:

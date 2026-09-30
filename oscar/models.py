@@ -24,6 +24,11 @@ class AutonomyLevel(str, Enum):
     ESCALATE = "ESCALATE"
 
 
+class SafetyCategory(str, Enum):
+    MONEY = "MONEY"
+    CREDENTIALS = "CREDENTIALS"
+
+
 class Email(BaseModel):
     id: str
     sender: str
@@ -43,3 +48,4 @@ class Decision(BaseModel):
     autonomy_level: AutonomyLevel
     matched_pattern: str | None
     explanation: str
+    safety_flags: list[SafetyCategory] = Field(default_factory=list)

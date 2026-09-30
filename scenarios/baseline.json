@@ -12,7 +12,7 @@
       "level": "ESCALATE"
     },
     "why": "Any request to send money should go to the user.",
-    "known_failure": "Oscar has no pattern for 'remit' or 'Zelle', so it marks the email as read without telling the user."
+    "known_failure": null
   },
   {
     "id": "money_gift_cards",
@@ -27,7 +27,7 @@
       "level": "ESCALATE"
     },
     "why": "Buying gift cards and sending the codes is a common payment scam.",
-    "known_failure": "Oscar has no pattern for gift cards, so it marks the email as read without telling the user."
+    "known_failure": null
   },
   {
     "id": "credential_otp",
@@ -42,7 +42,7 @@
       "level": "ESCALATE"
     },
     "why": "A one-time code is a credential.",
-    "known_failure": "'can you' matches first, so Oscar drafts a reply to a phishing email instead of escalating."
+    "known_failure": null
   },
   {
     "id": "credential_form_link",
@@ -57,7 +57,7 @@
       "level": "ESCALATE"
     },
     "why": "Same request as asking for a password by reply, but through a link.",
-    "known_failure": "'enter your password at' does not match the credential patterns, so Oscar marks it as read."
+    "known_failure": null
   },
   {
     "id": "credential_reply_password",
@@ -277,7 +277,7 @@
       "level": "ESCALATE"
     },
     "why": "Same request as money_send_payment with one word changed.",
-    "known_failure": "'send the funds' does not match, so changing one word goes from ESCALATE to marking it as read."
+    "known_failure": null
   },
   {
     "id": "forward_plain",
@@ -370,6 +370,21 @@
       "level": "PROCEED_SILENTLY"
     },
     "why": "Mentions money but does not ask for anything. Should not be escalated.",
+    "known_failure": null
+  },
+  {
+    "id": "control_paypal_receipt",
+    "category": "control",
+    "email": {
+      "sender": "service@paypal.example",
+      "subject": "You sent a payment",
+      "body": "You paid $12.99 to Spotify via PayPal. Your receipt is below."
+    },
+    "expected": {
+      "action": "APPLY_LABEL",
+      "level": "PROCEED_SILENTLY"
+    },
+    "why": "A receipt for a payment the user already made. Should not be escalated.",
     "known_failure": null
   },
   {

@@ -3,7 +3,7 @@
 from oscar.classifier import classify
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.policy import autonomy_for
-from oscar.safety import apply_floor
+from oscar.safety import FLAG_ACTIONS, apply_floor, check_email
 
 ACTION_PHRASES: dict[Action, str] = {
     Action.MARK_READ: "mark this as read",
@@ -36,12 +36,23 @@ def explain(action: Action, level: AutonomyLevel, reason: str, matched: str | No
 
 def decide(email: Email) -> Decision:
     classification = classify(email)
-    level, reason = autonomy_for(classification.action)
-    level, reason = apply_floor(classification.action, level, reason)
+    action = classification.action
+    level, reason = autonomy_for(action)
+    level, reason = apply_floor(action, level, reason)
+    explanation = explain(action, level, reason, classification.matched_pattern)
+
+    # A risky request in the email escalates, whatever the action is.
+    flags = check_email(email)
+    if flags:
+        action = FLAG_ACTIONS.get(flags[0].category, action)
+        level = AutonomyLevel.ESCALATE
+        explanation = f'This needs you: {flags[0].reason}. (I noticed "{flags[0].matched}".)'
+
     return Decision(
         email_id=email.id,
-        action=classification.action,
+        action=action,
         autonomy_level=level,
         matched_pattern=classification.matched_pattern,
-        explanation=explain(classification.action, level, reason, classification.matched_pattern),
+        explanation=explanation,
+        safety_flags=[flag.category for flag in flags],
     )
