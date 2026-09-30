@@ -1,0 +1,9 @@
+{
+  "id": "invoice_notice",
+  "sender": "billing@cloudhost.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Your September invoice is ready",
+  "body": "Your invoice for September is available in your dashboard. Payment of $19.00 will be charged to your card on file on Oct 5. No action needed."
+}

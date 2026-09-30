@@ -1,0 +1,9 @@
+{
+  "id": "sent_in_error",
+  "sender": "morgan@partnerfirm.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Wrong recipient",
+  "body": "Apologies, my previous message was sent to you by mistake. Please delete this email and the one before it."
+}

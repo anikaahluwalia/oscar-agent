@@ -1,0 +1,9 @@
+{
+  "id": "meeting_invite",
+  "sender": "calendar@company.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Invitation: Q4 planning sync @ Thu Oct 2, 2pm",
+  "body": "Priya Shah has invited you to Q4 planning sync.\nThursday Oct 2, 2:00–2:30pm.\nAccept / Decline / Maybe"
+}

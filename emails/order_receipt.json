@@ -1,0 +1,9 @@
+{
+  "id": "order_receipt",
+  "sender": "orders@shop.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Order confirmation #48213",
+  "body": "Thanks for your order! Your receipt is attached. Total: $42.18."
+}

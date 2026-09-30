@@ -1,0 +1,9 @@
+{
+  "id": "forward_request",
+  "sender": "alex@company.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Onboarding doc for Priya",
+  "body": "Priya starts Monday and hasn't seen the onboarding doc yet. Please forward this to her when you get a chance.\n\n[onboarding.pdf]"
+}

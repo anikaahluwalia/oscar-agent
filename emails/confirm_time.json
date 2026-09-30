@@ -1,0 +1,9 @@
+{
+  "id": "confirm_time",
+  "sender": "sam@dentalclinic.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Appointment time",
+  "body": "Hi! We have you down for Tuesday at 10am. Please confirm and we'll see you then."
+}

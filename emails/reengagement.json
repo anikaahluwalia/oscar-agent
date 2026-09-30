@@ -1,0 +1,9 @@
+{
+  "id": "reengagement",
+  "sender": "hello@fitnessapp.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "We miss you!",
+  "body": "We noticed you haven't opened our emails in a while. Still interested? If not, click here to unsubscribe."
+}

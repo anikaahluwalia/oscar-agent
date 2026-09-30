@@ -1,0 +1,9 @@
+{
+  "id": "newsletter",
+  "sender": "digest@morningbrew-weekly.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Your weekly digest: 5 stories in AI this week",
+  "body": "Here's your newsletter for the week. View in browser.\n\n1. Agents that book appointments\n2. ...\n\nManage preferences or unsubscribe at the bottom of this email."
+}

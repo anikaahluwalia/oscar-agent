@@ -1,0 +1,9 @@
+{
+  "id": "fyi_update",
+  "sender": "casey@company.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "FYI: office closed Monday",
+  "body": "Just a heads up that the office will be closed Monday for maintenance. Enjoy the long weekend."
+}

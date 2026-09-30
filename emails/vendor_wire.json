@@ -1,0 +1,9 @@
+{
+  "id": "vendor_wire",
+  "sender": "accounts@supplier.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Urgent: overdue balance",
+  "body": "Our records show an overdue balance. Please wire me $4,800 today to the account below to avoid a service interruption."
+}

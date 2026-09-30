@@ -1,0 +1,9 @@
+{
+  "id": "manager_question",
+  "sender": "jordan.lee@company.example",
+  "to": [
+    "me@oscar.example"
+  ],
+  "subject": "Q3 numbers",
+  "body": "Hi, could you pull together the Q3 retention numbers before Friday's review? Thanks, Jordan"
+}
