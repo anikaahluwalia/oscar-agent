@@ -34,6 +34,8 @@ export interface Decision {
   autonomy_level: Level;
   matched_pattern: string | null;
   explanation: string;
+  message: string;
+  noticed: string | null;
   safety_flags: string[];
   learned: boolean;
   level_source: "policy" | "guess" | "learned" | "floor" | "safety_check";
@@ -68,6 +70,27 @@ export interface LearnedRow {
   sentence: string;
 }
 
+export interface Brief {
+  handled: number;
+  told: number;
+  waiting: number;
+  for_you: number;
+  summary: string;
+  trend: string | null;
+  learned: string | null;
+}
+
+export interface AutonomyRow {
+  sender: string;
+  action: Action;
+  level: Level;
+  reason: string;
+  floor: Level | null;
+  floor_reason: string | null;
+  ceiling: Level | null;
+  decision_id: string;
+}
+
 const API = process.env.NEXT_PUBLIC_OSCAR_API ?? "http://localhost:8000";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -85,6 +108,8 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const getDecisions = () => call<DecisionWithFeedback[]>("/decisions");
 export const getLearned = () => call<LearnedRow[]>("/learned");
+export const getBrief = () => call<Brief>("/brief");
+export const getAutonomy = () => call<AutonomyRow[]>("/autonomy");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
 export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "POST" });
 

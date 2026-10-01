@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Inter, Geist_Mono } from "next/font/google";
+import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,7 +21,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${figtree.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            <SiteHeader />
+            {children}
+          </TooltipProvider>
           <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
