@@ -1,0 +1,91 @@
+"""What Oscar has learned from feedback.
+
+For each action Oscar keeps a Beta(yes, no) count of how often the user was fine
+with it, starting from Beta(1, 1). The mean yes / (yes + no) is how sure he is
+that the user is fine with him doing it. Once he has enough evidence he asks less:
+
+    3 or more, mean >= 0.8  ->  PROCEED_AND_NOTIFY
+    8 or more, mean >= 0.9  ->  PROCEED_SILENTLY
+
+This only suggests a level. The safety floor is applied after it, so learning
+can't make a risky action less safe.
+"""
+
+from collections import Counter
+from dataclasses import dataclass, field
+
+from oscar.feedback import FeedbackEvent, FeedbackKind
+from oscar.models import Action, AutonomyLevel
+
+PRIOR_YES = 1.0
+PRIOR_NO = 1.0
+
+# How much each kind of feedback counts as (yes, no).
+WEIGHTS: dict[FeedbackKind, tuple[float, float]] = {
+    FeedbackKind.APPROVE: (1, 0),
+    FeedbackKind.EDIT_THEN_SEND: (1, 0),
+    FeedbackKind.ALWAYS_DO_THIS: (3, 0),
+    FeedbackKind.REJECT: (0, 1),
+    FeedbackKind.UNDO: (0, 2),
+}
+
+NOTIFY_AT = (0.8, 3)  # (mean, evidence)
+SILENT_AT = (0.9, 8)
+
+
+@dataclass
+class ActionPreference:
+    yes: float = PRIOR_YES
+    no: float = PRIOR_NO
+    counts: Counter = field(default_factory=Counter)
+
+    @property
+    def mean(self) -> float:
+        return self.yes / (self.yes + self.no)
+
+    @property
+    def evidence(self) -> float:
+        return self.yes + self.no - PRIOR_YES - PRIOR_NO
+
+    def reason(self) -> str:
+        if self.counts[FeedbackKind.ALWAYS_DO_THIS]:
+            return "you told me you're fine with this"
+        okays = self.counts[FeedbackKind.APPROVE] + self.counts[FeedbackKind.EDIT_THEN_SEND]
+        return f"you've okayed this {okays} times"
+
+
+class Preferences:
+    def __init__(self) -> None:
+        self.by_action: dict[Action, ActionPreference] = {}
+
+    @classmethod
+    def from_feedback(cls, events: list[FeedbackEvent]) -> "Preferences":
+        preferences = cls()
+        for event in events:
+            preferences.add(event)
+        return preferences
+
+    def add(self, event: FeedbackEvent) -> None:
+        # Feedback the floor blocked, or on escalated emails, says nothing about
+        # how much autonomy Oscar should have.
+        if event.blocked_by_floor or event.autonomy_level == AutonomyLevel.ESCALATE:
+            return
+        if event.kind not in WEIGHTS:
+            return
+        pref = self.by_action.setdefault(event.action, ActionPreference())
+        yes, no = WEIGHTS[event.kind]
+        pref.yes += yes
+        pref.no += no
+        pref.counts[event.kind] += 1
+
+    def get(self, action: Action) -> ActionPreference:
+        return self.by_action.get(action, ActionPreference())
+
+    def suggest(self, action: Action) -> tuple[AutonomyLevel, str] | None:
+        """The level Oscar has earned for this action, or None if not enough evidence."""
+        pref = self.get(action)
+        if pref.mean >= SILENT_AT[0] and pref.evidence >= SILENT_AT[1]:
+            return AutonomyLevel.PROCEED_SILENTLY, pref.reason()
+        if pref.mean >= NOTIFY_AT[0] and pref.evidence >= NOTIFY_AT[1]:
+            return AutonomyLevel.PROCEED_AND_NOTIFY, pref.reason()
+        return None
