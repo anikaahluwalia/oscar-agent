@@ -5,14 +5,17 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DecisionCard } from "@/components/decision-card";
+import { LearnedList } from "@/components/learned-list";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import {
   getDecisions,
+  getLearned,
   loadDemoInbox,
   resetDemo,
   sendFeedback,
   type DecisionWithFeedback,
   type FeedbackKind,
+  type LearnedRow,
   type Level,
 } from "@/lib/api";
 
@@ -33,6 +36,8 @@ function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
   return items.filter((i) => !seen.has(i.decision.email_id) && seen.add(i.decision.email_id));
 }
 
+const fetchAll = () => Promise.all([getDecisions(), getLearned()]);
+
 const isAnswered = (i: DecisionWithFeedback) => i.feedback.some((f) => ANSWERS.has(f.kind));
 
 function greeting(items: DecisionWithFeedback[]): string {
@@ -46,12 +51,14 @@ function greeting(items: DecisionWithFeedback[]): string {
 
 export function Inbox() {
   const [items, setItems] = useState<DecisionWithFeedback[]>([]);
+  const [learned, setLearned] = useState<LearnedRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const show = useCallback((result: DecisionWithFeedback[] | null) => {
+  const show = useCallback((result: [DecisionWithFeedback[], LearnedRow[]] | null) => {
     if (result) {
-      setItems(latestPerEmail(result));
+      setItems(latestPerEmail(result[0]));
+      setLearned(result[1]);
       setError(null);
     } else {
       setError(API_DOWN);
@@ -59,11 +66,11 @@ export function Inbox() {
     setLoading(false);
   }, []);
 
-  const refresh = useCallback(() => getDecisions().then(show, () => show(null)), [show]);
+  const refresh = useCallback(() => fetchAll().then(show, () => show(null)), [show]);
 
   useEffect(() => {
     let cancelled = false;
-    getDecisions().then(
+    fetchAll().then(
       (result) => !cancelled && show(result),
       () => !cancelled && show(null),
     );
@@ -125,7 +132,11 @@ export function Inbox() {
                 {s.label} ({items.filter((i) => s.levels.includes(i.decision.autonomy_level)).length})
               </TabsTrigger>
             ))}
+            <TabsTrigger value="learned">What I&apos;ve learned</TabsTrigger>
           </TabsList>
+          <TabsContent value="learned" className="pt-2">
+            <LearnedList rows={learned} />
+          </TabsContent>
           {SECTIONS.map((s) => {
             const shown = items
               .filter((i) => s.levels.includes(i.decision.autonomy_level))
