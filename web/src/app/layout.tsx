@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Inter, Geist_Mono } from "next/font/google";
-import { OscarPanel } from "@/components/oscar-panel";
-import { SiteHeader } from "@/components/site-header";
+import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,14 +23,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <TooltipProvider>
             <div className="flex flex-1">
-              <div className="flex min-w-0 flex-1 flex-col">
-                <SiteHeader />
-                {children}
-              </div>
-              <OscarPanel />
+              <Sidebar />
+              {/* Room at the bottom on phones for the menu bar. */}
+              <div className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0">{children}</div>
             </div>
           </TooltipProvider>
-          <Toaster position="bottom-center" />
+          {/* At the top, so it never covers the menu bar on phones or the chat box. */}
+          <Toaster position="top-center" />
         </ThemeProvider>
       </body>
     </html>

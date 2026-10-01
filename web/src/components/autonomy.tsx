@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { LockIcon } from "lucide-react";
-import { OscarAvatar } from "@/components/oscar-avatar";
 import type { AutonomyRow, Level } from "@/lib/api";
 import { ACTIONS, LEVELS } from "@/lib/labels";
 import { API_DOWN, useOscar } from "@/lib/use-oscar";
@@ -92,11 +91,10 @@ export function Autonomy() {
   for (const row of rows.filter((r) => r.floor !== "ESCALATE")) bySender.set(row.sender, [...(bySender.get(row.sender) ?? []), row]);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pb-16 pt-4">
-      <section className="flex items-center gap-4">
-        <OscarAvatar size={64} />
+    <div className="flex flex-col gap-4">
+      <section>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">What I do on my own</h1>
+          <h2 className="font-heading text-xl font-semibold">What I do on my own</h2>
           <p className="text-sm text-muted-foreground">
             For each sender, how much I handle without you. I move up as you okay things. You can move me too, except
             where a lock says I always check.
@@ -109,8 +107,8 @@ export function Autonomy() {
       {data && rows.length === 0 && <p className="text-muted-foreground">Once some emails come in, you&apos;ll see them here.</p>}
 
       {[...bySender.entries()].map(([sender, rows]) => (
-        <section key={sender} className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
-          <h2 className="text-sm font-medium">{sender}</h2>
+        <section key={sender} className="flex flex-col gap-3 rounded-2xl bg-card p-4">
+          <h3 className="text-sm font-medium">{sender}</h3>
           {rows.map((row) => (
             <div key={row.action} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -127,12 +125,12 @@ export function Autonomy() {
 
       {never.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <h3 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <LockIcon className="size-3.5" /> Always comes to you
-          </h2>
+          </h3>
           <ul className="flex flex-col gap-2">
             {never.map((row) => (
-              <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-1 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+              <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-1 rounded-2xl bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm">
                   {ACTIONS[row.action]} <span className="text-muted-foreground">from {row.sender}</span>
                 </span>
@@ -144,6 +142,6 @@ export function Autonomy() {
           </ul>
         </section>
       )}
-    </main>
+    </div>
   );
 }

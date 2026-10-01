@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Highlight } from "@/components/highlight";
 import { HoldButton } from "@/components/hold-button";
 import { MOOD_FOR_LEVEL, OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";
-import { ACTIONS, FEEDBACK, FLAGS, HOLD_TO_CONFIRM, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
-import { onShowEmail } from "@/lib/panel";
+import { FEEDBACK, FLAGS, HOLD_TO_CONFIRM, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
+import { onShowEmail } from "@/lib/show-email";
 import { isAnswered } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +32,9 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
   const { decision, feedback } = item;
   const level = decision.autonomy_level;
   // Rows only render in the browser (after the inbox loads), so reading the hash here is safe.
-  const [open, setOpen] = useState(() => level === "ESCALATE" || window.location.hash === `#${decision.id}`);
+  const [open, setOpen] = useState(() => window.location.hash === `#${decision.id}`);
   const row = useRef<HTMLLIElement>(null);
+  const [why, setWhy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -87,10 +88,10 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index, 8) * 0.03 }}
-      className="scroll-mt-4 rounded-2xl border bg-card"
+      className="scroll-mt-4 rounded-2xl bg-card"
     >
       <div className="flex items-center gap-3 p-3 pl-4">
-        <button type="button" onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
           <span className={cn("size-2 shrink-0 rounded-[2px]", LEVELS[level].square)} aria-label={LEVELS[level].label} />
           <span className="min-w-0 flex-1">
             <span className="flex items-baseline gap-2">
@@ -105,7 +106,7 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
       </div>
 
       {open && (
-        <div className="flex flex-col gap-3 border-t px-4 py-3">
+        <div className="flex flex-col gap-3 px-4 pb-4">
           <p className="text-sm text-muted-foreground">
             {/* Some phrases are in the subject (like "Invitation:"), so show it when that's where the match is. */}
             {decision.noticed && decision.subject.toLowerCase().includes(decision.noticed.toLowerCase()) && (
@@ -121,18 +122,30 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
             <p className="rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-sm">{decision.message}</p>
           </div>
 
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-            <dt className="text-muted-foreground">Proposed</dt>
-            <dd>{ACTIONS[decision.action]}</dd>
-            <dt className="text-muted-foreground">Why this level</dt>
-            <dd>{LEVEL_SOURCES[decision.level_source]}</dd>
-            {decision.safety_flags.length > 0 && (
-              <>
-                <dt className="text-muted-foreground">Safety checks</dt>
-                <dd>{decision.safety_flags.map((f) => FLAGS[f] ?? f).join(", ")}</dd>
-              </>
-            )}
-          </dl>
+          <button
+            type="button"
+            aria-expanded={why}
+            onClick={() => setWhy(!why)}
+            className="self-start text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Why?
+          </button>
+          {why && (
+            // Oscar's working notes: the real path the email took through decide().
+            <ul className="flex flex-col gap-1.5 rounded-2xl bg-muted/60 p-3 text-sm">
+              {(decision.steps.length ? decision.steps : [LEVEL_SOURCES[decision.level_source]]).map((step) => (
+                <li key={step} className="flex gap-2">
+                  <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                  {step}
+                </li>
+              ))}
+              {decision.safety_flags.length > 0 && (
+                <li className="text-xs text-muted-foreground">
+                  Safety checks: {decision.safety_flags.map((f) => FLAGS[f] ?? f).join(", ")}
+                </li>
+              )}
+            </ul>
+          )}
 
           {editing && (
             <div className="flex flex-col gap-2">

@@ -10,11 +10,11 @@ export function Activity() {
   const quiet = done.filter((i) => i.decision.autonomy_level === "PROCEED_SILENTLY").length;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 pb-16">
-      <section className="flex items-center gap-4 pt-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 pt-8 pb-16 sm:px-8">
+      <section className="flex items-center gap-4">
         <OscarAvatar size={64} mood="happy" />
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">Activity</h1>
           <p className="text-sm text-muted-foreground">
             {loading
               ? "Checking your inbox..."
