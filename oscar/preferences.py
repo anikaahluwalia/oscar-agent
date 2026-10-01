@@ -42,6 +42,12 @@ NOTIFY_AT = (0.8, 3)  # (mean, evidence)
 SILENT_AT = (0.9, 8)
 ASK_AT_OR_BELOW = 0.2
 
+# The most autonomy an action can ever learn. Drafts stop at notify: a draft
+# you don't know about is no use to you.
+CEILINGS: dict[Action, AutonomyLevel] = {
+    Action.DRAFT_REPLY: AutonomyLevel.PROCEED_AND_NOTIFY,
+}
+
 
 @dataclass
 class ActionPreference:
@@ -126,7 +132,7 @@ class Preferences:
             if level == AutonomyLevel.ESCALATE:
                 return None
             return AutonomyLevel.ASK_FIRST, "you asked me to always check with you on these"
-        if pref.mean >= SILENT_AT[0] and pref.evidence >= SILENT_AT[1]:
+        if pref.mean >= SILENT_AT[0] and pref.evidence >= SILENT_AT[1] and action not in CEILINGS:
             return AutonomyLevel.PROCEED_SILENTLY, pref.reason()
         if pref.mean >= NOTIFY_AT[0] and pref.evidence >= NOTIFY_AT[1]:
             return AutonomyLevel.PROCEED_AND_NOTIFY, pref.reason()

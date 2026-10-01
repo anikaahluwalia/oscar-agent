@@ -63,3 +63,9 @@ def test_blocked_feedback_is_ignored():
 def test_feedback_on_escalated_decisions_is_ignored():
     prefs = Preferences.from_feedback(approvals(8, level=AutonomyLevel.ESCALATE))
     assert prefs.suggest(Action.ARCHIVE, ASK) is None
+
+
+def test_drafts_never_learn_to_be_silent():
+    prefs = Preferences.from_feedback(approvals(50, action=Action.DRAFT_REPLY, level=AutonomyLevel.PROCEED_AND_NOTIFY))
+    level, _ = prefs.suggest(Action.DRAFT_REPLY, AutonomyLevel.PROCEED_AND_NOTIFY)
+    assert level == AutonomyLevel.PROCEED_AND_NOTIFY
