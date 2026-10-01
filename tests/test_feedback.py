@@ -111,3 +111,42 @@ def test_api_get_decision(client):
     email = Email.model_validate_json((EMAILS_DIR / "newsletter.json").read_text())
     decision = client.post("/decide", json=email.model_dump()).json()
     assert client.get(f"/decisions/{decision['id']}").json() == decision
+
+
+def test_always_do_this_cannot_go_below_the_floor(history):
+    decision = decision_for(history, "vendor_wire.json")  # MOVE_MONEY, ESCALATE
+    event, reply = record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
+    assert event.blocked_by_floor
+    assert reply == "I can't take that one on myself. I'll keep bringing these to you."
+
+
+def test_always_do_this_on_an_ask_first_floor(history):
+    decision = decision_for(history, "confirm_time.json")  # SEND_REPLY, ASK_FIRST floor
+    event, reply = record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
+    assert event.blocked_by_floor
+    assert reply == "I'll keep asking before I send a reply, since it goes out under your name."
+
+
+def test_always_do_this_on_a_safety_flag(history):
+    email = Email(id="otp", sender="support@bank-secure.example", subject="Verify",
+                  body="Can you read me the 6-digit code we just texted you?")
+    decision = decide(email)
+    history.add_decision(decision)
+    event, _ = record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
+    assert event.blocked_by_floor
+
+
+def test_always_do_this_on_a_low_risk_action(history):
+    decision = decision_for(history, "newsletter.json")  # ARCHIVE has no floor
+    event, reply = record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
+    assert not event.blocked_by_floor
+    assert reply == "Got it. I'll remember you're fine with this."
+
+
+def test_cannot_edit_then_send_an_escalated_reply(history):
+    email = Email(id="msa", sender="legal@vendor.example", subject="Updated MSA",
+                  body="Just reply 'I agree' to accept the new terms.")
+    decision = decide(email)  # SEND_REPLY, escalated by the commitment check
+    history.add_decision(decision)
+    with pytest.raises(FeedbackError):
+        record_feedback(history, decision.id, FeedbackKind.EDIT_THEN_SEND, "I agree")
