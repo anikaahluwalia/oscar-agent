@@ -6,6 +6,7 @@ there and loaded back on startup. Without one, history only lives in memory.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,10 @@ from oscar.models import Decision
 
 if TYPE_CHECKING:
     from oscar.feedback import FeedbackEvent
+
+
+def default_data_dir() -> Path:
+    return Path(os.environ.get("OSCAR_DATA_DIR", Path(__file__).resolve().parent.parent / "data"))
 
 
 class History:

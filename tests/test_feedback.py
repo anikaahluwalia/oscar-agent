@@ -83,3 +83,31 @@ def test_failed_feedback_is_not_saved(history):
     with pytest.raises(FeedbackError):
         record_feedback(history, decision.id, FeedbackKind.APPROVE)
     assert history.feedback == []
+
+
+def test_feedback_through_the_api(client):
+    email = Email.model_validate_json((EMAILS_DIR / "newsletter.json").read_text())
+    decision = client.post("/decide", json=email.model_dump()).json()
+
+    response = client.post("/feedback", json={"decision_id": decision["id"], "kind": "APPROVE"})
+    assert response.status_code == 200
+    assert response.json()["reply"] == "Done."
+
+
+def test_api_rejects_feedback_that_does_not_fit(client):
+    email = Email.model_validate_json((EMAILS_DIR / "order_receipt.json").read_text())
+    decision = client.post("/decide", json=email.model_dump()).json()
+
+    response = client.post("/feedback", json={"decision_id": decision["id"], "kind": "APPROVE"})
+    assert response.status_code == 400
+
+
+def test_api_feedback_on_unknown_decision(client):
+    response = client.post("/feedback", json={"decision_id": "missing", "kind": "APPROVE"})
+    assert response.status_code == 404
+
+
+def test_api_get_decision(client):
+    email = Email.model_validate_json((EMAILS_DIR / "newsletter.json").read_text())
+    decision = client.post("/decide", json=email.model_dump()).json()
+    assert client.get(f"/decisions/{decision['id']}").json() == decision

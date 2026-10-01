@@ -33,11 +33,25 @@ python3 -m venv .venv
 .venv/bin/python -m oscar emails/vendor_wire.json  # one email
 ```
 
+## Give Oscar feedback
+
+Each decision prints an id. Use it to tell Oscar how he did:
+
+```bash
+.venv/bin/python -m oscar feedback <decision_id> APPROVE
+.venv/bin/python -m oscar feedback <decision_id> EDIT_THEN_SEND --text "Sure, Thursday works."
+```
+
+Feedback kinds: `APPROVE`, `REJECT`, `UNDO`, `EDIT_THEN_SEND`, `ALWAYS_DO_THIS`,
+`ALWAYS_ASK_ME`. Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR`
+to use another folder).
+
 ## Run the API
 
 ```bash
 .venv/bin/uvicorn oscar.api:app --reload
 curl -X POST localhost:8000/decide -H 'content-type: application/json' -d @emails/newsletter.json
+curl -X POST localhost:8000/feedback -H 'content-type: application/json' -d '{"decision_id": "<id>", "kind": "APPROVE"}'
 ```
 
 ## Tests

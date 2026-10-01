@@ -3,10 +3,8 @@
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
 
 from oscar.agent import decide, explain
-from oscar.api import app
 from oscar.models import Action, AutonomyLevel, Email
 from oscar.policy import POLICY
 
@@ -53,8 +51,7 @@ def test_unmatched_email_falls_back_to_mark_read():
     assert decision.matched_pattern is None
 
 
-def test_post_decide():
-    client = TestClient(app)
+def test_post_decide(client):
     payload = load(EMAILS_DIR / "vendor_wire.json").model_dump()
     response = client.post("/decide", json=payload)
     assert response.status_code == 200
@@ -63,8 +60,7 @@ def test_post_decide():
     assert body["autonomy_level"] == "ESCALATE"
 
 
-def test_post_decide_rejects_malformed_email():
-    client = TestClient(app)
+def test_post_decide_rejects_malformed_email(client):
     response = client.post("/decide", json={"id": "x"})
     assert response.status_code == 422
 
