@@ -78,3 +78,26 @@ def test_two_undos_make_oscar_ask():
     record_feedback(history, decide_with(history, email).id, FeedbackKind.UNDO)
     record_feedback(history, decide_with(history, email).id, FeedbackKind.UNDO)
     assert decide_with(history, email).autonomy_level == AutonomyLevel.ASK_FIRST
+
+
+def test_always_ask_me_overrides_what_oscar_learned():
+    history = History()
+    email = load("newsletter.json")
+    for _ in range(10):
+        decision = decide_with(history, email)
+        if decision.autonomy_level != AutonomyLevel.PROCEED_SILENTLY:
+            record_feedback(history, decision.id, FeedbackKind.APPROVE)
+    silent = decide_with(history, email)
+    assert silent.autonomy_level == AutonomyLevel.PROCEED_SILENTLY
+
+    record_feedback(history, silent.id, FeedbackKind.ALWAYS_ASK_ME)
+    decision = decide_with(history, email)
+    assert decision.autonomy_level == AutonomyLevel.ASK_FIRST
+    assert "you asked me to always check with you" in decision.explanation
+
+
+def test_always_ask_me_on_a_silent_action():
+    history = History()
+    email = load("order_receipt.json")  # APPLY_LABEL, PROCEED_SILENTLY
+    record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_ASK_ME)
+    assert decide_with(history, email).autonomy_level == AutonomyLevel.ASK_FIRST

@@ -11,6 +11,9 @@ If the user has undone or rejected the action and Oscar hasn't earned it back,
 he gets more careful instead: he won't do it silently, and if the mean is 0.2 or
 less he asks first. One undo is enough to stop silent, two to go back to asking.
 
+"Always ask me" isn't counted as evidence. It's a rule from the user, and it
+keeps the action at ASK_FIRST no matter what Oscar has learned.
+
 This only suggests a level. The safety floor is applied after it, so learning
 can't make a risky action less safe.
 """
@@ -44,6 +47,7 @@ class ActionPreference:
     yes: float = PRIOR_YES
     no: float = PRIOR_NO
     counts: Counter = field(default_factory=Counter)
+    always_ask: bool = False
 
     @property
     def mean(self) -> float:
@@ -84,9 +88,12 @@ class Preferences:
         # how much autonomy Oscar should have.
         if event.blocked_by_floor or event.autonomy_level == AutonomyLevel.ESCALATE:
             return
+        pref = self.by_action.setdefault(event.action, ActionPreference())
+        if event.kind == FeedbackKind.ALWAYS_ASK_ME:
+            pref.always_ask = True
+            return
         if event.kind not in WEIGHTS:
             return
-        pref = self.by_action.setdefault(event.action, ActionPreference())
         yes, no = WEIGHTS[event.kind]
         pref.yes += yes
         pref.no += no
@@ -96,8 +103,12 @@ class Preferences:
         return self.by_action.get(action, ActionPreference())
 
     def suggest(self, action: Action, level: AutonomyLevel) -> tuple[AutonomyLevel, str] | None:
-        """The level Oscar should use instead of `level`, or None to keep it."""
+        """The level feedback says Oscar should use, or None if feedback has nothing to say."""
         pref = self.get(action)
+        if pref.always_ask:
+            if level == AutonomyLevel.ESCALATE:
+                return None
+            return AutonomyLevel.ASK_FIRST, "you asked me to always check with you on these"
         if pref.mean >= SILENT_AT[0] and pref.evidence >= SILENT_AT[1]:
             return AutonomyLevel.PROCEED_SILENTLY, pref.reason()
         if pref.mean >= NOTIFY_AT[0] and pref.evidence >= NOTIFY_AT[1]:
