@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DecisionCard } from "@/components/decision-card";
 import { LearnedList } from "@/components/learned-list";
-import { OscarAvatar } from "@/components/oscar-avatar";
+import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
 import {
   getDecisions,
   getLearned,
@@ -39,6 +39,14 @@ function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
 const fetchAll = () => Promise.all([getDecisions(), getLearned()]);
 
 const isAnswered = (i: DecisionWithFeedback) => i.feedback.some((f) => ANSWERS.has(f.kind));
+
+// How Oscar looks at the top of the page, from what's still waiting on you.
+function inboxMood(items: DecisionWithFeedback[]): Mood {
+  const waiting = items.filter((i) => !isAnswered(i));
+  if (waiting.some((i) => i.decision.autonomy_level === "ESCALATE")) return "alert";
+  if (waiting.some((i) => i.decision.autonomy_level === "ASK_FIRST")) return "curious";
+  return items.length ? "happy" : "calm";
+}
 
 function greeting(items: DecisionWithFeedback[]): string {
   if (items.length === 0) return "Your inbox is empty. Bring in the demo emails and I'll get to work.";
@@ -104,7 +112,7 @@ export function Inbox() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
       <header className="flex flex-wrap items-center gap-4">
-        <OscarAvatar size={64} />
+        <OscarAvatar size={64} mood={error ? "calm" : inboxMood(items)} />
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight">Oscar</h1>
           <p className="text-sm text-muted-foreground">Your inbox, looked after.</p>
@@ -148,9 +156,10 @@ export function Inbox() {
             return (
               <TabsContent key={s.id} value={s.id} className="flex flex-col gap-3 pt-2">
                 {shown.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{s.empty}</p>}
-                {shown.map((item) => (
+                {shown.map((item, index) => (
                   <DecisionCard
                     key={item.decision.id}
+                    index={index}
                     dimmed={isAnswered(item)}
                     item={item}
                     onFeedback={(kind, text) => feedback(item.decision.id, kind, text)}
