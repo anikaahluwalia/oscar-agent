@@ -1,4 +1,6 @@
+from datetime import datetime, timezone
 from enum import Enum
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
@@ -46,8 +48,19 @@ class Classification(BaseModel):
     matched_pattern: str | None = None  # None means the fallback was used
 
 
+def new_id() -> str:
+    return uuid4().hex[:8]
+
+
+def now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 class Decision(BaseModel):
+    id: str = Field(default_factory=new_id)
+    created_at: datetime = Field(default_factory=now)
     email_id: str
+    sender: str
     action: Action
     autonomy_level: AutonomyLevel
     matched_pattern: str | None

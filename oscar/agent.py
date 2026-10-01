@@ -68,6 +68,7 @@ def decide(email: Email) -> Decision:
 
     return Decision(
         email_id=email.id,
+        sender=email.sender,
         action=action,
         autonomy_level=level,
         matched_pattern=classification.matched_pattern,
