@@ -5,7 +5,7 @@ import type { Action, Decision, FeedbackKind, Level } from "@/lib/api";
 export const LEVELS: Record<Level, { label: string; square: string }> = {
   PROCEED_SILENTLY: { label: "Done!", square: "bg-level-silent" },
   PROCEED_AND_NOTIFY: { label: "Told you", square: "bg-level-notify" },
-  ASK_FIRST: { label: "Okay!", square: "bg-level-ask" },
+  ASK_FIRST: { label: "Your okay? 🙂", square: "bg-level-ask" },
   ESCALATE: { label: "For you", square: "bg-level-escalate" },
 };
 
@@ -47,6 +47,7 @@ export const FEEDBACK: Record<FeedbackKind, string> = {
   EDIT_THEN_SEND: "Edited and sent",
   ALWAYS_DO_THIS: "Always do this",
   ALWAYS_ASK_ME: "Always ask me",
+  SEEN: "Got it",
 };
 
 // Actions you can't swipe yes on, because they're hard to undo or leave your inbox.
