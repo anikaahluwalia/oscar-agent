@@ -55,7 +55,8 @@ Each decision prints an id. Use it to tell Oscar how he did:
 ```
 
 Feedback kinds: `APPROVE`, `REJECT`, `UNDO`, `EDIT_THEN_SEND`, `ALWAYS_DO_THIS`,
-`ALWAYS_ASK_ME`. To see what Oscar has learned from it:
+`ALWAYS_ASK_ME`, and `SEEN` ("got it" on an email Oscar brought to you, which
+teaches him nothing). To see what Oscar has learned from it:
 
 ```bash
 .venv/bin/python -m oscar learned
@@ -76,15 +77,18 @@ npm run dev
 Open http://localhost:3000. Until Gmail is connected, the inbox is the example
 emails: click **Bring in the demo emails** on Home (it's also in **Settings**).
 
-- **Home** has what needs you. Swipe the cards under **Okay!** to answer Oscar,
-  and talk to him at the bottom: ask what needs you, or teach him a rule like
+- **Home** has what needs you, one card at a time, most important first: emails
+  for you (**Got it**), ones waiting for **your okay** (yes or no), and what he
+  told you about (looks good or undo). Swipe sideways or use the buttons. Under the
+  cards you can talk to Oscar: ask what needs you, or teach him a rule like
   "always archive emails from digest@morningbrew-weekly.example".
 - **Activity** has everything that's done.
 - **Settings** shows what Oscar does on his own for each sender, and lets you
   change it.
 
 Say yes to the newsletter a few times and bring the emails in again to watch
-Oscar learn. Open any email and tap **Why?** to see how he decided.
+Oscar learn. Tap **Why?** on a card, or open any email in a list, to see how he
+decided.
 
 ## Run the API
 

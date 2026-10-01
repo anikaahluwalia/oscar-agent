@@ -661,3 +661,26 @@ Oscar's working notes moved from the Live feed into each email: open it and tap
 **Why?**. Rows lost their outlines and the details list, to look more like
 wajo.ai: soft cards, one big sentence from Oscar, and colour only from the four
 level squares. /triage and /autonomy redirect to the new places.
+
+### Fifth pass: one stack
+
+Home still asked you to work four ways (a list to open, a swipe card, rows with
+buttons, a chat), so everything that needs you is now one stack of cards, most
+important first: emails for you, then hard-to-undo asks, other asks, and what Oscar
+told you about. Each card says which kind it is, and the buttons change to match
+(Got it; Yes / No; Looks good / Undo). The headline and the stack use the same
+number, and the chat's "what needs me?" uses the same list (`overview.needs_you`).
+
+Emails Oscar brings to you used to stay on your list forever, since there was
+nothing to answer. A new feedback kind, `SEEN` ("Got it"), takes them off. It's
+only allowed on escalated emails and teaches Oscar nothing, because feedback on
+escalated emails never counts towards learning.
+
+"Waiting for your okay" became "Your okay? 🙂": short, and it still reads as a
+question. Oscar's face is now only in the sidebar, the header and the chat.
+
+The review of this pass found: a failed answer still removed the card; the "2 of
+6" counter drifted from the headline as you answered; a card pulled forward by a
+chat link flew off with a "Yes" badge as if answered; and "Always do this" on a
+row left the email on your list. Each was fixed.
+
