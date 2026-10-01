@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -69,3 +70,6 @@ class Decision(BaseModel):
     explanation: str
     safety_flags: list[SafetyCategory] = Field(default_factory=list)
     learned: bool = False  # True when the level came from feedback
+    # Which step decided the level: the policy table, a guess (nothing matched),
+    # what Oscar learned, the safety floor for the action, or a safety check on the email.
+    level_source: Literal["policy", "guess", "learned", "floor", "safety_check"] = "policy"
