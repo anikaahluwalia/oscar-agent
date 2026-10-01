@@ -24,3 +24,4 @@ packages = ["oscar"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
