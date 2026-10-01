@@ -76,7 +76,10 @@ npm run dev
 Open http://localhost:3000. Until Gmail is connected, the inbox is the example
 emails: open the **⋯** menu and click **Bring in the demo emails**. Say yes to the
 newsletter a few times (on Home or in **Triage**) and bring the emails in again to
-watch Oscar learn. **Autonomy** shows what he does on his own for each sender.
+watch Oscar learn. **Activity** has everything that's done, and **Autonomy** shows
+what he does on his own for each sender. The panel on the right shows Oscar's
+working notes as emails come in (**Live**), and you can ask him things or teach him
+a rule in **Chat**, like "always archive emails from digest@morningbrew-weekly.example".
 
 ## Run the API
 

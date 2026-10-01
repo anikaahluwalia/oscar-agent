@@ -568,7 +568,6 @@ tabs overflowing on phones.
 ### Not done
 
 - No real Gmail, OAuth or background worker. The inbox is the example emails.
-- No dark mode toggle.
 - The UI has no automated tests; it was checked by hand in the browser.
 
 ### Second pass: making it feel like an agent
@@ -599,7 +598,7 @@ numbers stay in the README; the app only talks about your own inbox.
   `GET /autonomy`.
 - **Undo window.** When Oscar acts at "Tell me" level he pops up for 10 seconds with
   an Undo button. Silent actions stay silent, which is what silent means; they can
-  still be undone from Home.
+  still be undone from Activity.
 - **Look.** Dark by default with a light mode. Figtree and Inter like wajo.ai, pill
   buttons, and level colours from wajo.ai's confetti squares. The demo controls
   moved into a menu, since they aren't part of using Oscar.
@@ -609,9 +608,38 @@ need you." like the number 1.8; open rows repeated the subject and message; the
 ladder's ceiling lock was on the wrong end; the header overflowed at 375px; and the
 theme toggle caused a hydration warning. Each got its own fix.
 
+(Since then, Home only shows what still needs you. See the third pass.)
+
 One process mistake: for part of this pass my browser tests were hitting the API on
 port 8000 that was already running, instead of a separate test API, because a
 second `next dev` in the same folder silently fell back to the existing one. That
 changed local demo data in `data/`. Tests now run against a copy of the web app on
 its own port with its own API and data folder (`OSCAR_WEB_ORIGINS` was added for
 this).
+
+### Third pass: Oscar's panel and chat
+
+Every agent product I looked at, Fo included, has a place to talk to the agent and
+see what it's doing. I took a few ideas from a mock and left out the ones that were
+for show (a device switcher, an evals tab, fake emails arriving on a timer).
+
+- **Live.** A side panel with Oscar's working notes for each email: who it's from,
+  what he noticed, which rule or habit decided it, and the outcome. The notes come
+  from the backend (`Decision.steps`, built in `voice.working_notes`), so they are
+  the real path through `decide()`, not a story written in the UI. New emails play
+  the notes in one at a time.
+- **Chat.** `POST /chat` in `oscar/chat.py`. There's no LLM yet: Oscar understands
+  a handful of questions (what needs me, what did you handle, what do you know about
+  me, why) and rules like "always archive emails from X". Rules go through
+  `record_feedback`, the same path as the buttons, so the safety floor answers in
+  chat too ("I can't take that one on myself. I don't touch money..."). Anything
+  else gets an honest "I can't do that yet". Emails he mentions show as chips that
+  open the email.
+- **Activity.** Emails that are done (handled quietly, or already answered) moved
+  off Home to their own page. Home is only what still needs you.
+- **Triage.** Shows "2 of 6", puts hard-to-undo emails first, and has a Why? button
+  that asks Oscar in the chat. When you're done, Oscar naps.
+
+Bugs found while checking it: the chat's scroll effect returned a Promise and
+crashed React; "don't ask me about ..." was read as "always ask me"; the undo toast
+covered the chat box; and the Why? answer repeated what Oscar noticed.
