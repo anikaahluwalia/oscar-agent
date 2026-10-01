@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmailRow } from "@/components/email-row";
-import { LearnedList } from "@/components/learned-list";
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, Level } from "@/lib/api";
 import { LEVELS } from "@/lib/labels";
@@ -69,7 +68,12 @@ export function Home() {
           </h1>
           {error && <p className="text-sm text-muted-foreground">{API_DOWN.replace("I can't reach my API. ", "")}</p>}
           {data?.brief.trend && <p className="text-muted-foreground">{data.brief.trend}</p>}
-          {data?.brief.learned && <p className="text-muted-foreground">{data.brief.learned}</p>}
+          {data?.brief.learned && (
+            <p className="text-muted-foreground">
+              {data.brief.learned}{" "}
+              <Link href="/autonomy" className="underline underline-offset-4 hover:text-foreground">See what I do on my own</Link>
+            </p>
+          )}
           {!!data?.brief.waiting && (
             <Button asChild className="mt-2 self-center sm:self-start">
               <Link href="/triage">Go through {data.brief.waiting} with me</Link>
@@ -96,12 +100,6 @@ export function Home() {
               </button>
             )}
           </Section>
-          {data.learned.length > 0 && (
-            <section className="flex flex-col gap-2">
-              <h2 className="text-sm font-medium text-muted-foreground">What I&apos;ve learned</h2>
-              <LearnedList rows={data.learned} />
-            </section>
-          )}
         </>
       )}
     </main>

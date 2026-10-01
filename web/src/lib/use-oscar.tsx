@@ -11,13 +11,11 @@ import {
   getAutonomy,
   getBrief,
   getDecisions,
-  getLearned,
   sendFeedback,
   type AutonomyRow,
   type Brief,
   type DecisionWithFeedback,
   type FeedbackKind,
-  type LearnedRow,
 } from "@/lib/api";
 
 const CHANGED = "oscar:changed";
@@ -25,7 +23,7 @@ export const notifyChanged = () => window.dispatchEvent(new Event(CHANGED));
 
 export const API_DOWN = "I can't reach my API. Start it from the repo root with: .venv/bin/uvicorn oscar.api:app --reload";
 
-export type OscarData = { items: DecisionWithFeedback[]; brief: Brief; autonomy: AutonomyRow[]; learned: LearnedRow[] };
+export type OscarData = { items: DecisionWithFeedback[]; brief: Brief; autonomy: AutonomyRow[] };
 
 const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND"]);
 export const isAnswered = (i: DecisionWithFeedback) => i.feedback.some((f) => ANSWERS.has(f.kind));
@@ -38,8 +36,8 @@ function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
 }
 
 async function fetchAll(): Promise<OscarData> {
-  const [items, brief, autonomy, learned] = await Promise.all([getDecisions(), getBrief(), getAutonomy(), getLearned()]);
-  return { items: latestPerEmail(items), brief, autonomy, learned };
+  const [items, brief, autonomy] = await Promise.all([getDecisions(), getBrief(), getAutonomy()]);
+  return { items: latestPerEmail(items), brief, autonomy };
 }
 
 export function oscarSays(text: string) {
