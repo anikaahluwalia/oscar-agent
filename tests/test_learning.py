@@ -110,7 +110,8 @@ def test_learned_summary_through_the_api(client):
         client.post("/feedback", json={"decision_id": decision["id"], "kind": "APPROVE"})
     rows = client.get("/learned").json()
     assert rows == [{"sender": "digest@morningbrew-weekly.example", "action": "ARCHIVE", "yes": 3.0, "no": 0.0, "mean": 0.8, "always_ask": False,
-                     "level": "PROCEED_AND_NOTIFY", "reason": "you've okayed this 3 times"}]
+                     "level": "PROCEED_AND_NOTIFY", "reason": "you've okayed this 3 times",
+                     "sentence": "archive from digest@morningbrew-weekly.example: you've okayed this 3 times, so I do it and let you know."}]
 
 
 def test_learned_summary_shows_careful_actions():

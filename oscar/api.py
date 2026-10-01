@@ -10,6 +10,7 @@ from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_fe
 from oscar.history import History, default_data_dir
 from oscar.models import Decision, Email
 from oscar.preferences import Preferences
+from oscar.voice import describe_learning
 
 app = FastAPI(title="Oscar", version="0.1.0")
 
@@ -85,7 +86,8 @@ def get_decision(decision_id: str, history: History = Depends(get_history)) -> D
 
 @app.get("/learned")
 def learned(history: History = Depends(get_history)) -> list[dict]:
-    return Preferences.from_feedback(history.feedback).summary()
+    rows = Preferences.from_feedback(history.feedback).summary()
+    return [{**row, "sentence": describe_learning(row)} for row in rows]
 
 
 @app.post("/feedback", response_model=FeedbackResponse)
