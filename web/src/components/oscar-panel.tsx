@@ -7,7 +7,7 @@ import { Chat, type ChatMessage } from "@/components/chat";
 import { LiveFeed } from "@/components/live-feed";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { sendChat } from "@/lib/api";
-import { onOpenOscar } from "@/lib/panel";
+import { onOpenOscar, onShowEmail } from "@/lib/panel";
 import { notifyChanged, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,8 @@ export function OscarPanel() {
       }),
     [send],
   );
+  // On a phone the panel covers the page, so get out of the way when a chip points at an email.
+  useEffect(() => onShowEmail(() => setOpen(false)), []);
 
   const items = data?.items ?? [];
 

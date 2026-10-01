@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { HoldButton } from "@/components/hold-button";
 import { MOOD_FOR_LEVEL, OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";
 import { ACTIONS, FEEDBACK, FLAGS, HOLD_TO_CONFIRM, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
+import { onShowEmail } from "@/lib/panel";
 import { isAnswered } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -30,12 +31,25 @@ type Props = {
 export function EmailRow({ item, index = 0, onFeedback }: Props) {
   const { decision, feedback } = item;
   const level = decision.autonomy_level;
-  const [open, setOpen] = useState(level === "ESCALATE");
+  // Rows only render in the browser (after the inbox loads), so reading the hash here is safe.
+  const [open, setOpen] = useState(() => level === "ESCALATE" || window.location.hash === `#${decision.id}`);
+  const row = useRef<HTMLLIElement>(null);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const answered = isAnswered(item);
   const canEdit = REPLIES.has(decision.action) && level !== "ESCALATE";
+
+  // A chip in the chat points here: open the row and bring it into view.
+  useEffect(() => {
+    const show = () => row.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (window.location.hash === `#${decision.id}`) show();
+    return onShowEmail((id) => {
+      if (id !== decision.id) return;
+      setOpen(true);
+      show();
+    });
+  }, [decision.id]);
 
   async function give(kind: FeedbackKind, editedText?: string) {
     setBusy(true);
@@ -68,10 +82,12 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
 
   return (
     <motion.li
+      ref={row}
+      id={decision.id}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index, 8) * 0.03 }}
-      className="rounded-2xl border bg-card"
+      className="scroll-mt-4 rounded-2xl border bg-card"
     >
       <div className="flex items-center gap-3 p-3 pl-4">
         <button type="button" onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-3 text-left">

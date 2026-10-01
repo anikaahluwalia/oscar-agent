@@ -6,7 +6,8 @@ import { ArrowUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback } from "@/lib/api";
-import { isAnswered } from "@/lib/use-oscar";
+import { showEmail } from "@/lib/panel";
+import { isDone } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 export type ChatMessage = { from: "you" | "oscar"; text: string; decisions?: string[] };
@@ -15,8 +16,7 @@ const SUGGESTIONS = ["What needs me?", "What did you handle?", "What do you know
 
 /** Where an email lives in the app: open ones on Home, finished ones in Activity. */
 function hrefFor(item: DecisionWithFeedback) {
-  const finished = item.decision.autonomy_level === "PROCEED_SILENTLY" || isAnswered(item);
-  return `${finished ? "/activity" : "/"}#${item.decision.id}`;
+  return `${isDone(item) ? "/activity" : "/"}#${item.decision.id}`;
 }
 
 type Props = {
@@ -62,7 +62,7 @@ export function Chat({ items, messages, busy, onSend }: Props) {
                     const item = items.find((i) => i.decision.id === id);
                     if (!item) return null;
                     return (
-                      <Link key={id} href={hrefFor(item)} className="max-w-full truncate rounded-full border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground">
+                      <Link key={id} href={hrefFor(item)} onClick={() => showEmail(id)} className="max-w-full truncate rounded-full border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground">
                         {item.decision.subject}
                       </Link>
                     );
