@@ -48,3 +48,13 @@ export const FEEDBACK: Record<FeedbackKind, string> = {
   ALWAYS_DO_THIS: "Always do this",
   ALWAYS_ASK_ME: "Always ask me",
 };
+
+// Actions you can't swipe yes on, because they're hard to undo or leave your inbox.
+// Saying yes to these needs a press and hold.
+export const HOLD_TO_CONFIRM: Partial<Record<Action, string>> = {
+  PERMANENTLY_DELETE: "Deleted email can't be brought back",
+  UNSUBSCRIBE: "Unsubscribing is hard to undo",
+  SEND_REPLY: "This goes out under your name",
+  FORWARD: "This shares the email with someone else",
+  ACCEPT_MEETING: "This commits your time",
+};

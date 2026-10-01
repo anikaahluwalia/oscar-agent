@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { EmailRow } from "@/components/email-row";
 import { LearnedList } from "@/components/learned-list";
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
@@ -68,6 +70,11 @@ export function Home() {
           {error && <p className="text-sm text-muted-foreground">{API_DOWN.replace("I can't reach my API. ", "")}</p>}
           {data?.brief.trend && <p className="text-muted-foreground">{data.brief.trend}</p>}
           {data?.brief.learned && <p className="text-muted-foreground">{data.brief.learned}</p>}
+          {!!data?.brief.waiting && (
+            <Button asChild className="mt-2 self-center sm:self-start">
+              <Link href="/triage">Go through {data.brief.waiting} with me</Link>
+            </Button>
+          )}
         </div>
       </section>
 

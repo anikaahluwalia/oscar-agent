@@ -18,7 +18,10 @@ import { loadDemoInbox, resetDemo } from "@/lib/api";
 import { notifyChanged, oscarSays } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
-const LINKS = [{ href: "/", label: "Home" }];
+const LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/triage", label: "Triage" },
+];
 
 export function SiteHeader() {
   const path = usePathname();
