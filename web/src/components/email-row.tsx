@@ -6,9 +6,10 @@ import { ChevronDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Highlight } from "@/components/highlight";
+import { HoldButton } from "@/components/hold-button";
 import { MOOD_FOR_LEVEL, OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";
-import { ACTIONS, FEEDBACK, FLAGS, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
+import { ACTIONS, FEEDBACK, FLAGS, HOLD_TO_CONFIRM, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
 import { isAnswered } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,11 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
     <div className="flex shrink-0 gap-1.5">
       {level === "ASK_FIRST" && (
         <>
-          <Button size="sm" disabled={busy} onClick={() => give("APPROVE")}>Yes</Button>
+          {HOLD_TO_CONFIRM[decision.action] ? (
+            <HoldButton disabled={busy} onConfirm={() => give("APPROVE")}>Hold for yes</HoldButton>
+          ) : (
+            <Button size="sm" disabled={busy} onClick={() => give("APPROVE")}>Yes</Button>
+          )}
           <Button size="sm" variant="outline" disabled={busy} onClick={() => give("REJECT")}>No</Button>
         </>
       )}
