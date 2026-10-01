@@ -37,7 +37,7 @@ export function OscarAvatar({ size = 32, mood = "calm", className }: Props) {
       {mood === "alert" && (
         <span
           className="absolute -top-0.5 -right-0.5 rounded-full bg-level-escalate ring-2 ring-background"
-          style={{ width: Math.max(6, size / 6), height: Math.max(6, size / 6) }}
+          style={{ width: Math.min(12, Math.max(6, size / 6)), height: Math.min(12, Math.max(6, size / 6)) }}
           aria-hidden
         />
       )}

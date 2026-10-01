@@ -1,5 +1,5 @@
-import { Inbox } from "@/components/inbox";
+import { Home } from "@/components/home";
 
-export default function Home() {
-  return <Inbox />;
+export default function Page() {
+  return <Home />;
 }
