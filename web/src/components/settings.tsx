@@ -21,7 +21,7 @@ export function Settings() {
   const pill = "rounded-full px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground";
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 pt-8 pb-16 sm:px-8">
+    <main className="flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 pt-8 pb-16 sm:px-10">
       <h1 className="font-heading text-3xl font-semibold tracking-tight">Settings</h1>
 
       <Autonomy />

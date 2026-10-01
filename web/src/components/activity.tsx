@@ -10,7 +10,7 @@ export function Activity() {
   const quiet = done.filter((i) => i.decision.autonomy_level === "PROCEED_SILENTLY").length;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 pt-8 pb-16 sm:px-8">
+    <main className="flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 pt-8 pb-16 sm:px-10">
       <section className="flex items-center gap-4">
         <OscarAvatar size={64} mood="happy" />
         <div className="flex flex-col gap-1">
