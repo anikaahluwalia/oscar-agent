@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/oscar.png" alt="Oscar" width="160"></p>
+
 # Oscar
 
 Oscar is a proactive email agent, named after my dog Oscar, a Shih Tzu. Like the real
