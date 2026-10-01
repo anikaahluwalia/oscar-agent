@@ -8,7 +8,8 @@ export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const dark = resolvedTheme !== "light";
   return (
-    <Button variant="ghost" size="icon" aria-label={dark ? "Light mode" : "Dark mode"} onClick={() => setTheme(dark ? "light" : "dark")}>
+    // The label can't depend on the theme: the server doesn't know it, so it would differ after hydration.
+    <Button variant="ghost" size="icon" aria-label="Switch light or dark mode" onClick={() => setTheme(dark ? "light" : "dark")}>
       {/* Both icons render; CSS picks one, so the server and client agree before the theme is known. */}
       <SunIcon className="hidden dark:block" />
       <MoonIcon className="block dark:hidden" />

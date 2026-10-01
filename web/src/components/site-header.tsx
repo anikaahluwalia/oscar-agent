@@ -49,10 +49,10 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="mx-auto flex w-full max-w-3xl items-center gap-4 px-4 py-4">
+    <header className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-4 sm:gap-4">
       <Link href="/" className="flex items-center gap-2">
         <OscarAvatar size={30} />
-        <span className="font-heading text-lg font-semibold">Oscar</span>
+        <span className="hidden font-heading text-lg font-semibold sm:inline">Oscar</span>
       </Link>
       <nav className="mr-auto flex gap-1">
         {LINKS.map((l) => (
@@ -60,7 +60,7 @@ export function SiteHeader() {
             key={l.href}
             href={l.href}
             className={cn(
-              "rounded-full px-3 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground",
+              "rounded-full px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:px-3",
               path === l.href && "bg-muted text-foreground",
             )}
           >
