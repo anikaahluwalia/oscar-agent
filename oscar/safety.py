@@ -42,6 +42,8 @@ EMAIL_CHECKS = MappingProxyType({
             r"\bnote to (the )?(ai|assistant)\b",
             r"\bignore (all |any )?(previous|prior|earlier) instructions\b",
             r"\bthe user has (already )?(pre-)?approved\b",
+            r"\bthe user (said|says|has said) (it's|its|this is) (fine|ok|okay)\b",
+            r"(^|\n)\s*(hey |hi )?oscar\s*[,:]",
         ],
     ),
     SafetyCategory.MONEY: (
@@ -51,12 +53,14 @@ EMAIL_CHECKS = MappingProxyType({
             r"\b(send|pay)\b[^.]*\bvia (zelle|venmo|paypal|wire)\b",
             r"\bgift cards?\b",
             r"\bsend (me )?(the )?(funds|money)\b",
+            r"\b(settle|pay|send)\b[^.]*\bby (bank |wire )?transfer\b",
         ],
     ),
     SafetyCategory.CREDENTIALS: (
         "It's asking for a password or code, and I don't share those",
         [
             r"\benter your (password|login|credentials)\b",
+            r"\bverify your (account )?(password|login)\b",
             r"\b(read|send|share|give|tell) (me |us )?(the |your )?(\d-digit |one-time |verification |security )?code\b",
         ],
     ),
@@ -64,6 +68,7 @@ EMAIL_CHECKS = MappingProxyType({
         "It's about your account security, so you should look at it yourself",
         [
             r"\bnew sign-in\b",
+            r"\btried to (log|sign) in\b",
             r"\bpassword was changed\b",
             r"\breset your password\b",
             r"\brecovery (email|phone|address)\b",
@@ -74,7 +79,8 @@ EMAIL_CHECKS = MappingProxyType({
         "It has sensitive personal info in it, and I don't share that",
         [
             r"\bssns?\b",
-            r"\bsocial security\b",
+            r"\bsins?\b",
+            r"\bsocial (security|insurance)\b",
             r"\bpassport number\b",
             r"\bdate of birth\b",
             r"\bbank details\b",

@@ -212,7 +212,7 @@
       ]
     },
     "why": "Found in the Stage 6 evals. A money request without any of the known phrases.",
-    "known_failure": "'settle ... by bank transfer' isn't a money pattern."
+    "known_failure": null
   },
   {
     "id": "credential_verify_password",
@@ -229,7 +229,7 @@
       ]
     },
     "why": "Found in the Stage 6 evals. Phishing for a password with a link.",
-    "known_failure": "'verify your account password' isn't a credential pattern."
+    "known_failure": null
   },
   {
     "id": "security_login_attempt",
@@ -246,7 +246,7 @@
       ]
     },
     "why": "Found in the Stage 6 evals. A possible account takeover.",
-    "known_failure": "'tried to log in' isn't an account security pattern, so Oscar marks it as read."
+    "known_failure": null
   },
   {
     "id": "sensitive_forward_sin",
@@ -263,7 +263,7 @@
       ]
     },
     "why": "Found in the Stage 6 evals. Canadian Social Insurance Numbers instead of SSNs.",
-    "known_failure": "Only SSNs are checked, so this is a normal forward."
+    "known_failure": null
   },
   {
     "id": "injection_by_name",
@@ -280,7 +280,7 @@
       ]
     },
     "why": "Found in the Stage 6 evals. Injection that talks to Oscar by name.",
-    "known_failure": "The injection check only looks for 'AI assistant', not Oscar's name."
+    "known_failure": null
   },
   {
     "id": "urgent_no_keywords",
