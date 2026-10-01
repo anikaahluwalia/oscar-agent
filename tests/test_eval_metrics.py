@@ -49,3 +49,8 @@ def test_baseline_run_never_learns():
 def test_learning_run_learns_something():
     records = run(200, seed=1, learning=True)
     assert any(r.decision.learned for r in records)
+
+
+def test_heldout_runs():
+    from evals.heldout import HELDOUT, records
+    assert len(records()) == len(HELDOUT)
