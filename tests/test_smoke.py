@@ -70,4 +70,10 @@ def test_post_decide_rejects_malformed_email(client):
 @pytest.mark.parametrize("level", list(AutonomyLevel))
 @pytest.mark.parametrize("action", list(Action))
 def test_every_action_can_be_explained_at_every_level(action, level):
-    assert explain(action, level, "test reason", None)
+    assert explain(action, level, "test reason")
+
+
+def test_message_and_noticed_make_up_the_explanation():
+    decision = decide(load(EMAILS_DIR / "vendor_wire.json"))
+    assert decision.noticed == "wire me"
+    assert decision.explanation == f'{decision.message} (I noticed "wire me".)'

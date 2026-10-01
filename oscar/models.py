@@ -68,6 +68,8 @@ class Decision(BaseModel):
     autonomy_level: AutonomyLevel
     matched_pattern: str | None
     explanation: str
+    message: str = ""  # the explanation without the evidence, for the UI
+    noticed: str | None = None  # the phrase that triggered the decision, if any
     safety_flags: list[SafetyCategory] = Field(default_factory=list)
     learned: bool = False  # True when the level came from feedback
     # Which step decided the level: the policy table, a guess (nothing matched),

@@ -59,9 +59,14 @@ def describe_learning(row: dict) -> str:
 CAREFUL_NOTIFY = "Heads up: I {done}. I'm telling you because {reason}."
 
 
-def explain(action: Action, level: AutonomyLevel, reason: str, matched: str | None, careful: bool = False) -> str:
+def explain(action: Action, level: AutonomyLevel, reason: str, careful: bool = False) -> str:
+    """What Oscar says about a decision, without the evidence."""
     template = CAREFUL_NOTIFY if careful and level == AutonomyLevel.PROCEED_AND_NOTIFY else TEMPLATES[level]
-    text = template.format(phrase=ACTION_PHRASES[action], done=ACTION_DONE[action], reason=reason)
-    if matched is None:
-        return f"{text} (Nothing in it stood out to me.)"
-    return f'{text} (I noticed "{matched}".)'
+    return template.format(phrase=ACTION_PHRASES[action], done=ACTION_DONE[action], reason=reason)
+
+
+def with_evidence(message: str, noticed: str | None) -> str:
+    """The message plus the phrase that triggered it, for places that only show text (CLI, transcripts)."""
+    if noticed is None:
+        return f"{message} (Nothing in it stood out to me.)"
+    return f'{message} (I noticed "{noticed}".)'

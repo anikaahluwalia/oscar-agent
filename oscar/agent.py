@@ -11,7 +11,7 @@ from oscar.models import AutonomyLevel, Decision, Email
 from oscar.policy import autonomy_for
 from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, check_email, is_stricter
-from oscar.voice import explain
+from oscar.voice import explain, with_evidence
 
 def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     classification = classify(email)
@@ -38,7 +38,8 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     floor = ACTION_FLOORS.get(action)
     if floor and level == floor[0] and (level != before_floor or source != "learned"):
         source = "floor"
-    explanation = explain(action, level, reason, classification.matched_pattern, careful)
+    message = explain(action, level, reason, careful)
+    noticed = classification.matched_pattern
 
     # A risky request in the email escalates, whatever the action is.
     flags = check_email(email)
@@ -49,7 +50,8 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
                 break
         level = AutonomyLevel.ESCALATE
         source = "safety_check"
-        explanation = f'This one\'s for you. {flags[0].reason}. (I noticed "{flags[0].matched}".)'
+        message = f"This one's for you. {flags[0].reason}."
+        noticed = flags[0].matched
 
     return Decision(
         email_id=email.id,
@@ -59,7 +61,9 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
         action=action,
         autonomy_level=level,
         matched_pattern=classification.matched_pattern,
-        explanation=explanation,
+        explanation=with_evidence(message, noticed),
+        message=message,
+        noticed=noticed,
         safety_flags=[flag.category for flag in flags],
         learned=learned and not flags,
         level_source=source,
