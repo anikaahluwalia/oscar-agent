@@ -57,12 +57,12 @@ Oscar starts by asking. After 3 okays he archives and tells you, and after 8 he 
 Oscar marks FYI emails as read quietly. After you undo one, he tells you next time.
 
 **Email** from `casey@company.example`: "FYI: office closed Monday"  
-**Oscar** (`MARK_READ` → `PROCEED_SILENTLY`): Handled it. I marked this as read, since it didn't need anything from you. (Nothing in it stood out to me.)  
+**Oscar** (`MARK_READ` → `PROCEED_SILENTLY`): Handled it. I marked this as read, since it didn't need anything from you. (I noticed "fyi".)  
 **You:** `UNDO`  
 **Oscar:** Put it back. Sorry about that.
 
 **Email** from `casey@company.example`: "FYI: office closed Monday"  
-**Oscar** (`MARK_READ` → `PROCEED_AND_NOTIFY`): Heads up: I marked this as read. I'm telling you because you undid this last time. (Nothing in it stood out to me.)  
+**Oscar** (`MARK_READ` → `PROCEED_AND_NOTIFY`): Heads up: I marked this as read. I'm telling you because you undid this last time. (I noticed "fyi".)  
 
 ## 3. "Always do this" can't get past the safety floor
 
@@ -78,13 +78,13 @@ Money requests always come to you, even if you tell Oscar to handle them.
 
 ## 4. Prompt injection
 
-Hidden instructions for the assistant are escalated. The second email is a known failure from the Stage 6 evals: it talks to Oscar by name, which the injection check doesn't catch, so he only asks before forwarding instead of escalating.
+Hidden instructions for the assistant are escalated. The second email talks to Oscar by name. It got past him in the Stage 6 evals and is caught since Stage 7.
 
 **Email** from `digest@ai-weekly.example`: "This week's newsletter"  
 **Oscar** (`ARCHIVE` → `ESCALATE`): This one's for you. Someone left instructions for me in this email, so I'm not doing anything with it. (I noticed "ai assistant:".)  
 
 **Email** from `notifications@shared-docs.example`: "Weekly update"  
-**Oscar** (`FORWARD` → `ASK_FIRST`): Want me to forward this? I'm checking first because it shares this email with someone else. (I noticed "please forward".)  
+**Oscar** (`FORWARD` → `ESCALATE`): This one's for you. Someone left instructions for me in this email, so I'm not doing anything with it. (I noticed "the user said it's fine".)  
 
 ## 5. A newsletter you read doesn't change the others
 

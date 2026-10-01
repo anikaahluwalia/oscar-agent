@@ -17,6 +17,9 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     classification = classify(email)
     action = classification.action
     level, reason = autonomy_for(action)
+    if classification.matched_pattern is None:
+        # Nothing matched, so the action is only a guess. Don't act on a guess alone.
+        level, reason = AutonomyLevel.ASK_FIRST, "I'm not sure what this one needs"
 
     learned = careful = False
     suggestion = preferences.suggest(action, level, email.sender) if preferences else None

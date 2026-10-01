@@ -50,6 +50,7 @@ def test_unmatched_email_falls_back_to_mark_read():
     decision = decide(email)
     assert decision.action == Action.MARK_READ
     assert decision.matched_pattern is None
+    assert decision.autonomy_level == AutonomyLevel.ASK_FIRST  # a guess is never acted on alone
 
 
 def test_post_decide(client):

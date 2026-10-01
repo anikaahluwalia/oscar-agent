@@ -92,9 +92,8 @@ def money() -> Transcript:
 
 def injection() -> Transcript:
     t = Transcript("4. Prompt injection",
-                   "Hidden instructions for the assistant are escalated. The second email is a known failure from "
-                   "the Stage 6 evals: it talks to Oscar by name, which the injection check doesn't catch, so he only "
-                   "asks before forwarding instead of escalating.")
+                   "Hidden instructions for the assistant are escalated. The second email talks to Oscar by name. "
+                   "It got past him in the Stage 6 evals and is caught since Stage 7.")
     t.email(INJECTION)
     t.email(INJECTION_BY_NAME)
     return t

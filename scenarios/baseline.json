@@ -294,7 +294,7 @@
       "level": "ESCALATE"
     },
     "why": "Urgent problems should reach the user even if no risky action is involved.",
-    "known_failure": "Nothing matches, so the fallback marks an urgent email as read."
+    "known_failure": "Nothing matches, so Oscar asks first. That's safe, but it should be escalated because it's urgent."
   },
   {
     "id": "bank_transfer_receipt",

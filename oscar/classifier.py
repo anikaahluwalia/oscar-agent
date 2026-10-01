@@ -57,6 +57,12 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\bcould you\b",
         r"\?",
     ]),
+    (Action.MARK_READ, [
+        r"\bfyi\b",
+        r"\bheads up\b",
+        r"\bno need to reply\b",
+        r"\bno action (is )?needed\b",
+    ]),
 ]
 
 FALLBACK = Action.MARK_READ
