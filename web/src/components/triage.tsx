@@ -9,6 +9,7 @@ import { Highlight } from "@/components/highlight";
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { HOLD_TO_CONFIRM } from "@/lib/labels";
+import { openOscar } from "@/lib/panel";
 import { API_DOWN, isAnswered, oscarSays, useOscar } from "@/lib/use-oscar";
 
 const SWIPE = 110; // px to count as a swipe
@@ -87,8 +88,11 @@ export function Triage() {
     const waiting = (data?.items ?? []).filter(
       (i) => i.decision.autonomy_level === "ASK_FIRST" && !isAnswered(i) && !gone.has(i.decision.id),
     );
-    // Skipped cards go to the back.
-    return [...waiting].sort((a, b) => later.indexOf(a.decision.id) - later.indexOf(b.decision.id));
+    // Hard-to-undo ones first, since they matter most. Skipped cards go to the back.
+    const weight = (i: DecisionWithFeedback) => (HOLD_TO_CONFIRM[i.decision.action] ? 0 : 1);
+    return [...waiting].sort(
+      (a, b) => later.indexOf(a.decision.id) - later.indexOf(b.decision.id) || weight(a) - weight(b),
+    );
   }, [data, gone, later]);
   const current = stack[0];
   const forYou = (data?.items ?? []).filter((i) => i.decision.autonomy_level === "ESCALATE").length;
@@ -127,7 +131,7 @@ export function Triage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-6 px-4 pb-16 pt-4">
-      <OscarAvatar size={96} mood={current ? (lastMove ? MOOD_AFTER[lastMove] : "curious") : "happy"} key={stack.length} />
+      <OscarAvatar size={96} mood={current ? (lastMove ? MOOD_AFTER[lastMove] : "curious") : data ? "sleepy" : "calm"} key={stack.length} />
 
       {loading && <p className="text-muted-foreground">Getting your emails ready...</p>}
       {error && <p className="text-center text-sm text-muted-foreground">{API_DOWN}</p>}
@@ -147,7 +151,7 @@ export function Triage() {
       {current && (
         <>
           <p className="text-sm text-muted-foreground">
-            {stack.length} waiting for your okay{forYou > 0 && ` · ${forYou} for you on Home`}
+            {gone.size + 1} of {gone.size + stack.length} · most important first{forYou > 0 && ` · ${forYou} for you on Home`}
           </p>
           <div className="relative h-80 w-full">
             <AnimatePresence custom={lastMove ?? "skip"}>
@@ -164,6 +168,9 @@ export function Triage() {
               <Button onClick={() => move("yes")}>Yes</Button>
             )}
             <Button variant="ghost" onClick={() => move("skip")}>Later</Button>
+            <Button variant="ghost" onClick={() => openOscar({ tab: "chat", message: "Why?", decisionId: current.decision.id })}>
+              Why?
+            </Button>
             {!hold && <Button variant="ghost" onClick={() => move("always")}>Always do this</Button>}
           </div>
           <p className="text-center text-xs text-muted-foreground">
