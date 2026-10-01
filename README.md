@@ -1,7 +1,7 @@
 # Oscar
 
 Oscar is a proactive email agent, named after my dog Oscar, a Shih Tzu. Like the real
-Oscar, this one is loyal, keeps an eye on things, and comes to get you when something isn't
+Oscar, he's loyal, keeps an eye on things, and comes to get you when something isn't
 right.
 
 For each incoming email Oscar proposes one action and decides how much autonomy to take:
