@@ -1,7 +1,5 @@
-import { Badge } from "@/components/ui/badge";
+import { LevelTag } from "@/components/level-tag";
 import type { LearnedRow } from "@/lib/api";
-import { LEVELS } from "@/lib/labels";
-import { cn } from "@/lib/utils";
 
 function sentence(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -21,7 +19,7 @@ export function LearnedList({ rows }: { rows: LearnedRow[] }) {
         <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-2 rounded-xl border bg-card p-4">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm">{sentence(row.sentence)}</p>
-            {row.level && <Badge className={cn("shrink-0 border-0", LEVELS[row.level].badge)}>{LEVELS[row.level].label}</Badge>}
+            {row.level && <LevelTag level={row.level} />}
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {/* How sure Oscar is that you're fine with this: the Beta mean. */}

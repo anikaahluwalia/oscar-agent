@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-figtree);
   --color-level-silent: var(--level-silent);
   --color-level-notify: var(--level-notify);
   --color-level-ask: var(--level-ask);
@@ -53,7 +53,7 @@
 }
 
 :root {
-  --background: oklch(0.985 0.006 85);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -77,11 +77,11 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.75rem;
-  /* One colour per autonomy level */
-  --level-silent: oklch(0.55 0 0);
-  --level-notify: oklch(0.55 0.12 240);
-  --level-ask: oklch(0.68 0.15 70);
-  --level-escalate: oklch(0.58 0.2 25);
+  /* One colour per autonomy level, from Wajo's confetti squares */
+  --level-silent: oklch(0.72 0.19 150);
+  --level-notify: oklch(0.83 0.16 90);
+  --level-ask: oklch(0.72 0.18 50);
+  --level-escalate: oklch(0.65 0.22 15);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -93,9 +93,9 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.11 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.165 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
@@ -138,5 +138,11 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-heading);
   }
 }

@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { MOOD_FOR_LEVEL, OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
-import { ACTIONS, FEEDBACK, FLAGS, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
-import { cn } from "@/lib/utils";
+import { LevelTag } from "@/components/level-tag";
+import { ACTIONS, FEEDBACK, FLAGS, LEVEL_SOURCES } from "@/lib/labels";
 
 const REPLIES = new Set(["DRAFT_REPLY", "SEND_REPLY"]);
 
@@ -50,7 +49,7 @@ export function DecisionCard({ item, index = 0, dimmed, onFeedback }: Props) {
             <p className="truncate text-xs text-muted-foreground">{decision.sender}</p>
             <p className="truncate font-medium">{decision.subject}</p>
           </div>
-          <Badge className={cn("shrink-0 border-0", LEVELS[level].badge)}>{LEVELS[level].label}</Badge>
+          <LevelTag level={level} />
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3">

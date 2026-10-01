@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DecisionCard } from "@/components/decision-card";
 import { LearnedList } from "@/components/learned-list";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
 import {
   getDecisions,
@@ -124,6 +125,7 @@ export function Inbox() {
           <Button variant="outline" onClick={startOver} disabled={!!error}>
             Start over
           </Button>
+          <ThemeToggle />
         </div>
       </header>
 

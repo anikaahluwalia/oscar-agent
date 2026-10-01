@@ -2,11 +2,11 @@
 
 import type { Action, Decision, FeedbackKind, Level } from "@/lib/api";
 
-export const LEVELS: Record<Level, { label: string; badge: string }> = {
-  PROCEED_SILENTLY: { label: "Handled quietly", badge: "bg-level-silent/10 text-level-silent" },
-  PROCEED_AND_NOTIFY: { label: "Told you", badge: "bg-level-notify/10 text-level-notify" },
-  ASK_FIRST: { label: "Waiting for your okay", badge: "bg-level-ask/15 text-level-ask" },
-  ESCALATE: { label: "For you", badge: "bg-level-escalate/10 text-level-escalate" },
+export const LEVELS: Record<Level, { label: string; square: string }> = {
+  PROCEED_SILENTLY: { label: "Handled quietly", square: "bg-level-silent" },
+  PROCEED_AND_NOTIFY: { label: "Told you", square: "bg-level-notify" },
+  ASK_FIRST: { label: "Waiting for your okay", square: "bg-level-ask" },
+  ESCALATE: { label: "For you", square: "bg-level-escalate" },
 };
 
 export const ACTIONS: Record<Action, string> = {
