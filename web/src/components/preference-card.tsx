@@ -54,10 +54,10 @@ export function PreferenceControls({ limits, alwaysAsk, onFeedback }: ControlsPr
   );
 }
 
-type Props = { learned: LearnedRow; limits?: AutonomyRow; answers: Answers; onFeedback: ControlsProps["onFeedback"] };
+type Props = { learned: LearnedRow; limits?: AutonomyRow; answers: Answers; onFeedback: ControlsProps["onFeedback"]; readOnly?: boolean };
 
 /** Something Oscar has learned about one sender and action. */
-export function PreferenceCard({ learned, limits, answers, onFeedback }: Props) {
+export function PreferenceCard({ learned, limits, answers, onFeedback, readOnly }: Props) {
   const level = limits?.level;
   const anyAnswers = answers.approved + answers.declined + answers.undone > 0;
   return (
@@ -77,7 +77,7 @@ export function PreferenceCard({ learned, limits, answers, onFeedback }: Props) 
           )}
         </div>
       </div>
-      {limits && <PreferenceControls limits={limits} alwaysAsk={learned.always_ask} onFeedback={onFeedback} />}
+      {limits && (readOnly ? <Ladder row={limits} /> : <PreferenceControls limits={limits} alwaysAsk={learned.always_ask} onFeedback={onFeedback} />)}
     </li>
   );
 }

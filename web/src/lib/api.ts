@@ -183,7 +183,7 @@ export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "P
 export const getGmailStatus = () => call<GmailStatus>("/gmail");
 /** A link, not a fetch: it takes you to Google and back. */
 export const gmailConnectUrl = `${API}/auth/google/start`;
-export const syncGmail = () => call<{ new: number }>("/gmail/sync", { method: "POST" });
+export const syncGmail = () => call<{ new: number; skipped: number }>("/gmail/sync", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
 export const getReviewSummary = () => call<ReviewSummary>("/reviews/summary");
 export const sendReview = (review: ReviewInput) => call<Review>("/reviews", { method: "POST", body: JSON.stringify(review) });

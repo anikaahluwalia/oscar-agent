@@ -24,18 +24,27 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
   const [busy, setBusy] = useState(false);
   const detail = picked ? REVIEW_DETAIL[picked] : undefined;
 
+  // A new label starts from scratch, so a review never carries details meant for another one.
+  function reset(next: ReviewLabel | null) {
+    setPicked(next);
+    setLevel("");
+    setAction("");
+    setType("");
+    setNote("");
+  }
+
   async function save(label: ReviewLabel) {
     setBusy(true);
     try {
       await sendReview({
         decision_id: decision.id,
         label,
-        should_be_level: level || null,
-        should_be_action: action || null,
-        actual_type: type.trim() || null,
-        note: note.trim() || null,
+        should_be_level: (label === picked && REVIEW_DETAIL[label] === "level" && level) || null,
+        should_be_action: (label === picked && REVIEW_DETAIL[label] === "action" && action) || null,
+        actual_type: (label === picked && REVIEW_DETAIL[label] === "type" && type.trim()) || null,
+        note: (label === picked && note.trim()) || null,
       });
-      setPicked(null);
+      reset(null);
       notifyChanged();
     } catch (e) {
       oscarSays(e instanceof Error ? e.message : "Something went wrong.");
@@ -47,7 +56,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
   function pick(label: ReviewLabel) {
     // Labels with no "should have been" save straight away; the rest ask for it first.
     if (REVIEW_DETAIL[label] || label === picked) {
-      setPicked(label === picked ? null : label);
+      reset(label === picked ? null : label);
       return;
     }
     void save(label);
@@ -129,7 +138,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
             <Button size="sm" disabled={busy || (detail === "type" && !type.trim())} onClick={() => save(picked)}>
               Save review
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setPicked(null)}>
+            <Button size="sm" variant="ghost" onClick={() => reset(null)}>
               Cancel
             </Button>
           </div>

@@ -47,13 +47,13 @@ export function WhyDrawer() {
   const checks = decision?.steps.slice(1, -1) ?? [];
 
   return (
-    <Drawer open={!!decision} onClose={close} title="Why Oscar did this">
+    <Drawer open={!!decision} onClose={close} title={decision?.source === "gmail" ? "Why Oscar would do this" : "Why Oscar did this"}>
       {decision && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-1">
             <p className="text-sm text-muted-foreground">{decision.sender}</p>
             <p className="font-medium">{decision.subject}</p>
-            <StatusPill level={decision.autonomy_level} className="mt-1 self-start" />
+            <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} className="mt-1 self-start" />
           </div>
 
           <dl className="divide-y rounded-xl border px-4">

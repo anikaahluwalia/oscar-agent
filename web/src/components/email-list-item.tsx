@@ -28,7 +28,7 @@ export function EmailListItem({ item, selected, onSelect }: Props) {
         <span className="truncate text-sm">{decision.subject}</span>
         <span className="flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{decision.snippet}</span>
-          <StatusPill level={decision.autonomy_level} />
+          <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} />
         </span>
       </button>
     </li>

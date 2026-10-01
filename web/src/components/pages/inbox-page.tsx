@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/empty-state";
 import { Loading, Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import type { Level } from "@/lib/api";
-import { STATUS } from "@/lib/labels";
+import { statusLabel } from "@/lib/labels";
+import { checkGmail } from "@/lib/demo";
 import { setHash, useHash } from "@/lib/use-hash";
 import { useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,13 @@ export function InboxPage() {
         text={data.gmail.connected ? "Your Gmail, and what Oscar would do with each email. He only reads it." : "Every email, and what Oscar did with it."}
       />
       {data.items.length === 0 ? (
-        <EmptyState title="Your inbox is empty." text="Bring in the demo emails from Settings to see Oscar at work." />
+        data.gmail.connected ? (
+          <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
+            <Button onClick={checkGmail}>Check for new email</Button>
+          </EmptyState>
+        ) : (
+          <EmptyState title="Your inbox is empty." text="Bring in the demo emails from Settings to see Oscar at work." />
+        )
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
           <div className={cn("flex flex-col gap-3", picked && "hidden lg:flex")}>
@@ -56,7 +63,7 @@ export function InboxPage() {
                     filter === f && "border-transparent bg-foreground text-background hover:text-background",
                   )}
                 >
-                  {f === "ALL" ? "All" : STATUS[f].label}
+                  {f === "ALL" ? "All" : statusLabel(f, data.gmail.connected)}
                 </button>
               ))}
             </div>

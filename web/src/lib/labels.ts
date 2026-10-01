@@ -3,12 +3,15 @@
 import type { Action, Decision, FeedbackKind, Level, ReviewLabel } from "@/lib/api";
 
 /** What each autonomy level is called in the app. */
-export const STATUS: Record<Level, { label: string; pill: string; dot: string }> = {
-  PROCEED_SILENTLY: { label: "Handled", pill: "bg-status-handled/10 text-status-handled", dot: "bg-status-handled" },
-  PROCEED_AND_NOTIFY: { label: "FYI", pill: "bg-status-fyi/10 text-status-fyi", dot: "bg-status-fyi" },
-  ASK_FIRST: { label: "Needs You", pill: "bg-status-needs/10 text-status-needs", dot: "bg-status-needs" },
-  ESCALATE: { label: "Blocked", pill: "bg-status-blocked/10 text-status-blocked", dot: "bg-status-blocked" },
+export const STATUS: Record<Level, { label: string; would: string; pill: string; dot: string }> = {
+  PROCEED_SILENTLY: { label: "Handled", would: "Would handle", pill: "bg-status-handled/10 text-status-handled", dot: "bg-status-handled" },
+  PROCEED_AND_NOTIFY: { label: "FYI", would: "Would tell you", pill: "bg-status-fyi/10 text-status-fyi", dot: "bg-status-fyi" },
+  ASK_FIRST: { label: "Needs You", would: "Would ask", pill: "bg-status-needs/10 text-status-needs", dot: "bg-status-needs" },
+  ESCALATE: { label: "Blocked", would: "Would stop", pill: "bg-status-blocked/10 text-status-blocked", dot: "bg-status-blocked" },
 };
+
+/** What a status is called. On the real inbox (read-only) it's what Oscar would do. */
+export const statusLabel = (level: Level, readOnly = false) => (readOnly ? STATUS[level].would : STATUS[level].label);
 
 export const ACTIONS: Record<Action, string> = {
   MARK_READ: "Mark as read",

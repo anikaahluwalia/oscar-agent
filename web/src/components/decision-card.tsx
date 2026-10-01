@@ -76,7 +76,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
             <p className="font-medium">{whatOscarDid(decision)}</p>
             <p className="text-xs text-muted-foreground">Read-only: nothing was changed in Gmail.</p>
           </div>
-          <StatusPill level={level} className="ml-auto" />
+          <StatusPill level={level} readOnly className="ml-auto" />
         </div>
         <p className="text-sm text-muted-foreground">{decision.message}</p>
         {decision.safety_flags.length > 0 && (

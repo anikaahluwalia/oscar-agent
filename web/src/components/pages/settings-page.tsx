@@ -4,7 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { gmailConnectUrl } from "@/lib/api";
+import { getGmailStatus, gmailConnectUrl } from "@/lib/api";
 import { bringInDemo, checkGmail, disconnectGmailAccount, startOver } from "@/lib/demo";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { useLocalSetting } from "@/lib/local-setting";
@@ -66,16 +66,31 @@ function Toggle({ id, label, text }: { id: string; label: string; text: string }
 }
 
 /** After Google sends you back, say how connecting went, then tidy the URL. */
+// The API sends back a short code; only these fixed words are ever shown, so a crafted link can't put words in Oscar's mouth.
+const GMAIL_RESULTS: Record<string, string> = {
+  connected: "Gmail is connected. I'll only read it; nothing in Gmail will change.",
+  not_configured: "Gmail isn't set up yet. Add your Google keys to .env first.",
+  expired: "That sign-in took too long. Try connecting again.",
+  cancelled: "Google sign-in was cancelled.",
+  not_granted: "Gmail access wasn't granted. Tick the Gmail box on Google's screen and try again.",
+  no_lasting_access: "Google didn't give lasting access. Remove Oscar from your Google account's connections and connect again.",
+  google_error: "Google didn't accept the sign-in. Try again.",
+};
+
 function useGmailResult() {
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const result = params.get("gmail");
+    const result = new URLSearchParams(window.location.search).get("gmail");
     if (!result) return;
-    if (result === "connected") oscarSays("Gmail is connected. I'll only read it; nothing in Gmail will change.");
-    else if (result === "not_configured") oscarSays("Gmail isn't set up yet. Add your Google keys to .env first.");
-    else oscarSays(params.get("reason") ?? "Connecting Gmail didn't work.");
-    notifyChanged();
     window.history.replaceState(null, "", window.location.pathname);
+    if (result !== "connected") {
+      oscarSays(GMAIL_RESULTS[result] ?? GMAIL_RESULTS.google_error);
+      return;
+    }
+    // Only say it's connected if it really is.
+    getGmailStatus()
+      .then((s) => s.connected && oscarSays(GMAIL_RESULTS.connected))
+      .catch(() => {})
+      .finally(notifyChanged);
   }, []);
 }
 

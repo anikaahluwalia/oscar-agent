@@ -26,17 +26,21 @@ export async function startOver() {
 
 // --- The real inbox ---------------------------------------------------------
 
+let checking = false;
+
 export async function checkGmail() {
+  if (checking) return; // a second click while the first check is running does nothing
+  checking = true;
+  oscarSays("Checking your inbox...");
   try {
-    const { new: count } = await syncGmail();
+    const { new: count, skipped } = await syncGmail();
     notifyChanged();
-    oscarSays(
-      count
-        ? `I read ${count} new ${count === 1 ? "email" : "emails"}. Nothing was changed in Gmail.`
-        : "Nothing new in your inbox.",
-    );
+    const read = count ? `I read ${count} new ${count === 1 ? "email" : "emails"}. Nothing was changed in Gmail.` : "Nothing new in your inbox.";
+    oscarSays(skipped ? `${read} I couldn't open ${skipped}; I'll try again next time.` : read);
   } catch (e) {
     oscarSays(e instanceof Error ? e.message : "I can't reach my API right now.");
+  } finally {
+    checking = false;
   }
 }
 

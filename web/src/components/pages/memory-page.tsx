@@ -13,6 +13,8 @@ export function MemoryPage() {
   const [showAll, setShowAll] = useState(false);
 
   const tell = (decisionId: string, kind: FeedbackKind) => void feedback(decisionId, kind);
+  // On the real inbox Oscar only reads for now, so there's nothing to teach him there yet.
+  const readOnly = !!data?.gmail.connected;
 
   const limitsFor = (sender: string, action: string) => data?.autonomy.find((r) => r.sender === sender && r.action === action);
   const learnedKeys = new Set(data?.learned.map((r) => `${r.sender}|${r.action}`));
@@ -21,6 +23,11 @@ export function MemoryPage() {
   return (
     <Page className="max-w-3xl">
       <PageHeader title="What Oscar Knows" text="Preferences Oscar has learned from how you work." />
+      {readOnly && (
+        <p className="-mt-4 rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
+          Oscar only reads your real inbox for now, so he isn&apos;t learning from it yet. Your reviews measure him instead.
+        </p>
+      )}
       {!data && <Loading error={error} />}
 
       {data && (
@@ -34,6 +41,7 @@ export function MemoryPage() {
                   limits={limitsFor(row.sender, row.action)}
                   answers={answersFor(data.all, row.sender, row.action)}
                   onFeedback={tell}
+                  readOnly={readOnly}
                 />
               ))}
             </ul>
@@ -45,7 +53,7 @@ export function MemoryPage() {
         </Section>
       )}
 
-      {data && others.length > 0 && (
+      {data && !readOnly && others.length > 0 && (
         <Section title="Other senders">
           {showAll ? (
             <ul className="flex flex-col gap-3">

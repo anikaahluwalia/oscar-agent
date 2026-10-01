@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Level } from "@/lib/api";
-import { STATUS } from "@/lib/labels";
+import { STATUS, statusLabel } from "@/lib/labels";
 import type { Counts } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ const ORDER: { level: Level; href: string }[] = [
 ];
 
 /** A row of small counts: 3 Handled · 1 FYI · 0 Needs You · 0 Blocked. */
-export function StatusSummary({ counts }: { counts: Counts }) {
+export function StatusSummary({ counts, readOnly }: { counts: Counts; readOnly?: boolean }) {
   return (
     <div className="flex flex-wrap gap-2">
       {ORDER.map(({ level, href }) => (
@@ -26,7 +26,7 @@ export function StatusSummary({ counts }: { counts: Counts }) {
         >
           <span className={cn("size-2 rounded-full", STATUS[level].dot, !counts[level] && "opacity-40")} aria-hidden />
           <span className="font-semibold tabular-nums">{counts[level]}</span>
-          {STATUS[level].label}
+          {statusLabel(level, readOnly)}
         </Link>
       ))}
     </div>

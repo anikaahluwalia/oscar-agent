@@ -44,7 +44,7 @@ export function HomePage() {
         <OscarStatusHeader items={data.items} brief={data.brief} realInbox={data.gmail.connected} />
         {data.items.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
-            <StatusSummary counts={counts} />
+            <StatusSummary counts={counts} readOnly={data.gmail.connected} />
             {data.gmail.connected && (
               <Button variant="outline" size="sm" className="rounded-full" onClick={checkGmail}>
                 Check for new email

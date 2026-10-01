@@ -21,7 +21,7 @@ export function ActivityRow({ decision }: { decision: Decision }) {
             {whatOscarDid(decision)} · {decision.subject}
           </span>
         </span>
-        <StatusPill level={decision.autonomy_level} />
+        <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} />
       </EmailLink>
     </li>
   );

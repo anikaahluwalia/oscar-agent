@@ -14,7 +14,7 @@ export function EmailDetail({ item, onFeedback }: Props) {
       <header className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-2xl font-semibold tracking-tight">{decision.subject}</h2>
-          <StatusPill level={decision.autonomy_level} className="mt-1.5" />
+          <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} className="mt-1.5" />
         </div>
         <p className="text-sm text-muted-foreground">
           {decision.sender} · {dayLabel(decision.created_at)}, {formatTime(decision.created_at)}
