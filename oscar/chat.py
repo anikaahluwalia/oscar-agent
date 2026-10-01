@@ -51,6 +51,9 @@ def _subjects(decisions: list[Decision], limit: int = 4) -> str:
 
 def _why(decision: Decision) -> ChatReply:
     middle = decision.steps[1:-1]
+    # The explanation already says what Oscar noticed, so don't say it twice.
+    if decision.noticed and decision.noticed in decision.explanation:
+        middle = [s for s in middle if not s.startswith("Noticed")]
     how = f" Here's how I got there: {'; '.join(s[0].lower() + s[1:] for s in middle)}." if middle else ""
     return ChatReply(reply=f"{decision.explanation}{how}", decisions=[decision.id])
 

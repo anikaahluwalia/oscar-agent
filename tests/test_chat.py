@@ -43,6 +43,8 @@ def test_why_about_an_email():
     r = answer(history, "why?", wire.id)
     assert r.reply.startswith(wire.explanation)
     assert "checked my safety rules" in r.reply
+    # What Oscar noticed is in the explanation already, so it's said once.
+    assert r.reply.count(wire.noticed) == 1
 
 
 def test_why_without_an_email():
