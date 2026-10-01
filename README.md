@@ -24,7 +24,11 @@ results are in [evals/RESULTS.md](evals/RESULTS.md), a held-out check is in
 [examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md). Synthetic emails only; no real
 side effects.
 
-![Oscar's inbox](assets/inbox.png)
+![Oscar's home screen](assets/home.png)
+
+| Triage | Autonomy |
+|---|---|
+| ![Triage](assets/triage.png) | ![Autonomy](assets/autonomy.png) |
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -69,8 +73,10 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 and click **Bring in the demo emails**. Say yes to the
-newsletter a few times and bring the emails in again to watch Oscar learn.
+Open http://localhost:3000. Until Gmail is connected, the inbox is the example
+emails: open the **⋯** menu and click **Bring in the demo emails**. Say yes to the
+newsletter a few times (on Home or in **Triage**) and bring the emails in again to
+watch Oscar learn. **Autonomy** shows what he does on his own for each sender.
 
 ## Run the API
 

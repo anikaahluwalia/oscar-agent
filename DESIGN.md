@@ -570,3 +570,48 @@ tabs overflowing on phones.
 - No real Gmail, OAuth or background worker. The inbox is the example emails.
 - No dark mode toggle.
 - The UI has no automated tests; it was checked by hand in the browser.
+
+### Second pass: making it feel like an agent
+
+The first version read like an inbox with comments: every email got the same big
+card, and Oscar's face was on all of them. Wajo's pitch is that the agent does the
+work and you only see what matters, so the second pass was built around that. Eval
+numbers stay in the README; the app only talks about your own inbox.
+
+- **Home is Oscar's brief.** A big Oscar in the mood of the inbox, what needs you,
+  what he did, and whether he's asking less than when you started ("I'm asking you
+  about 17% less than when we started"). Emails are one line each under For you,
+  Waiting for your okay, Told you, and Handled quietly (folded away). The wording
+  comes from `GET /brief`, not the UI.
+- **Highlighted evidence.** Opening an email highlights the phrase Oscar noticed,
+  instead of "(I noticed ...)" in his message. Decisions now carry `message` and
+  `noticed` separately; the CLI still prints the full explanation.
+- **Triage.** One email at a time with a big Oscar: swipe or arrow keys for yes,
+  no, yes and always, or later. **Friction follows risk:** anything hard to undo or
+  that leaves your inbox (delete, unsubscribe, send, forward, accept a meeting)
+  can't be swiped yes. It needs a press and hold, on Home too. Escalated emails
+  never appear in triage.
+- **Autonomy ladder.** For each sender and action, Ask me / Tell me / Just do it,
+  with a marker where Oscar is and his reason. Steps the safety floor blocks have a
+  padlock; clicking one still calls the API so Oscar's refusal is real and saved as
+  blocked. Drafts lock "Just do it" because of the learning ceiling. Money and
+  credentials are listed under "Always comes to you". Data comes from
+  `GET /autonomy`.
+- **Undo window.** When Oscar acts at "Tell me" level he pops up for 10 seconds with
+  an Undo button. Silent actions stay silent, which is what silent means; they can
+  still be undone from Home.
+- **Look.** Dark by default with a light mode. Figtree and Inter like wajo.ai, pill
+  buttons, and level colours from wajo.ai's confetti squares. The demo controls
+  moved into a menu, since they aren't part of using Oscar.
+
+Problems found while checking it in Chrome: the brief read "told you about 1. 8
+need you." like the number 1.8; open rows repeated the subject and message; the
+ladder's ceiling lock was on the wrong end; the header overflowed at 375px; and the
+theme toggle caused a hydration warning. Each got its own fix.
+
+One process mistake: for part of this pass my browser tests were hitting the API on
+port 8000 that was already running, instead of a separate test API, because a
+second `next dev` in the same folder silently fell back to the existing one. That
+changed local demo data in `data/`. Tests now run against a copy of the web app on
+its own port with its own API and data folder (`OSCAR_WEB_ORIGINS` was added for
+this).
