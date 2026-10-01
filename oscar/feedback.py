@@ -59,6 +59,10 @@ REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None) -> None:
+    if decision.source == "gmail":
+        # Stage 9 is read-only: Oscar didn't do anything, so there's nothing to approve or undo,
+        # and feedback would make him learn from emails that are being used to score him.
+        raise FeedbackError("I'm only reading your real inbox for now, so there's nothing to approve or undo. Review it instead.")
     level = decision.autonomy_level
     if kind == FeedbackKind.APPROVE and level not in (AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY):
         raise FeedbackError("I only need an okay on things I asked about or told you about.")

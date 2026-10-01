@@ -5,12 +5,20 @@ which is what Oscar learns from, so scoring a decision never teaches him anythin
 about that same decision. A decision is always logged before it's reviewed.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from collections import Counter
+
 from oscar.models import Action, AutonomyLevel, new_id, now
+
+if TYPE_CHECKING:
+    from oscar.history import History
 
 
 class ReviewLabel(str, Enum):
@@ -48,3 +56,47 @@ class Review(BaseModel):
     should_be_action: Action | None = None  # for INCORRECT_ACTION
     actual_type: str | None = None  # for INCORRECT_TYPE, e.g. "recruiter"
     note: str | None = None
+
+
+class ReviewError(ValueError):
+    pass
+
+
+def record_review(history: History, review: Review) -> Review:
+    """Save a review. Only real-inbox decisions get reviewed, and only after they were logged."""
+    decision = history.get_decision(review.decision_id)
+    if decision is None:
+        raise ReviewError(f"I can't find decision {review.decision_id}.")
+    if decision.source != "gmail":
+        raise ReviewError("Reviews are for decisions on your real inbox.")
+    if review.reviewed_at < decision.created_at:
+        raise ReviewError("A decision has to be logged before it's reviewed.")
+    history.add_review(review)
+    return review
+
+
+def summary(history: History) -> dict:
+    """How Oscar is doing on the real inbox, from your latest review of each decision.
+
+    Skips don't count either way. Agreement is Correct out of everything else.
+    Results are also split by policy_version, so a fix can be compared with what came before.
+    """
+    real = [d for d in history.decisions.values() if d.source == "gmail"]
+    latest = {d.id: history.review_for(d.id) for d in real}
+    reviewed = {i: r for i, r in latest.items() if r is not None}
+
+    def tally(ids: set[str]) -> dict:
+        counts = Counter(reviewed[i].label for i in ids if i in reviewed)
+        scored = sum(n for label, n in counts.items() if label != ReviewLabel.SKIP)
+        return {
+            "decisions": len(ids),
+            "reviewed": sum(counts.values()),
+            "scored": scored,
+            "agreement": counts[ReviewLabel.CORRECT] / scored if scored else None,
+            "labels": {label.value: counts[label] for label in ReviewLabel},
+        }
+
+    by_version: dict[str, set[str]] = {}
+    for d in real:
+        by_version.setdefault(d.policy_version or "unknown", set()).add(d.id)
+    return {**tally({d.id for d in real}), "by_version": {v: tally(ids) for v, ids in sorted(by_version.items())}}
