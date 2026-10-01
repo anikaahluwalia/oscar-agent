@@ -35,7 +35,10 @@ export function InboxPage() {
 
   return (
     <Page className="max-w-7xl">
-      <PageHeader title="Inbox" text="Every email, and what Oscar did with it." />
+      <PageHeader
+        title="Inbox"
+        text={data.gmail.connected ? "Your Gmail, and what Oscar would do with each email. He only reads it." : "Every email, and what Oscar did with it."}
+      />
       {data.items.length === 0 ? (
         <EmptyState title="Your inbox is empty." text="Bring in the demo emails from Settings to see Oscar at work." />
       ) : (

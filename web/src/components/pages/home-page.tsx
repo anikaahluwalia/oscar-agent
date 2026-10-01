@@ -10,7 +10,7 @@ import { Loading, Page, Section } from "@/components/page";
 import { answerLine, DOES } from "@/components/preference-card";
 import { StatusSummary } from "@/components/status-summary";
 import { Button } from "@/components/ui/button";
-import { bringInDemo } from "@/lib/demo";
+import { bringInDemo, checkGmail } from "@/lib/demo";
 import { ACTIONS } from "@/lib/labels";
 import { answersFor, countsOf, useOscar } from "@/lib/use-oscar";
 
@@ -41,14 +41,29 @@ export function HomePage() {
   return (
     <Page>
       <div className="flex flex-col gap-5">
-        <OscarStatusHeader items={data.items} brief={data.brief} />
-        {data.items.length > 0 && <StatusSummary counts={counts} />}
+        <OscarStatusHeader items={data.items} brief={data.brief} realInbox={data.gmail.connected} />
+        {data.items.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusSummary counts={counts} />
+            {data.gmail.connected && (
+              <Button variant="outline" size="sm" className="rounded-full" onClick={checkGmail}>
+                Check for new email
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {data.items.length === 0 ? (
-        <EmptyState title="Nothing new yet." text="Until Gmail is connected, Oscar works on a set of example emails.">
-          <Button onClick={bringInDemo}>Bring in the demo emails</Button>
-        </EmptyState>
+        data.gmail.connected ? (
+          <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
+            <Button onClick={checkGmail}>Check for new email</Button>
+          </EmptyState>
+        ) : (
+          <EmptyState title="Nothing new yet." text="Connect Gmail in Settings, or try Oscar on a set of example emails.">
+            <Button onClick={bringInDemo}>Bring in the demo emails</Button>
+          </EmptyState>
+        )
       ) : (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-8">

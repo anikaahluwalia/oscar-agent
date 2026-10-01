@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { HoldButton } from "@/components/hold-button";
 import { OscarAvatar } from "@/components/oscar-avatar";
+import { ReviewPanel } from "@/components/review-panel";
+import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
 import { ACTIONS, FEEDBACK, FLAGS, HOLD_TO_CONFIRM, REPLIES, whatOscarDid } from "@/lib/labels";
@@ -62,6 +64,38 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatTime(decision.created_at)}</span>
     </div>
   );
+
+  // The real inbox is read-only for now: show what Oscar would have done, and let you review it.
+  if (decision.source === "gmail") {
+    return (
+      <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5">
+        {from}
+        <div className="flex items-center gap-3">
+          <OscarAvatar size={32} mood={level === "ESCALATE" ? "alert" : level === "ASK_FIRST" ? "curious" : "calm"} />
+          <div className="min-w-0">
+            <p className="font-medium">{whatOscarDid(decision)}</p>
+            <p className="text-xs text-muted-foreground">Read-only: nothing was changed in Gmail.</p>
+          </div>
+          <StatusPill level={level} className="ml-auto" />
+        </div>
+        <p className="text-sm text-muted-foreground">{decision.message}</p>
+        {decision.safety_flags.length > 0 && (
+          <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+            {decision.safety_flags.map((f) => (
+              <li key={f} className="flex gap-2">
+                <span className="mt-2 size-1 shrink-0 rounded-full bg-status-blocked" aria-hidden />
+                {FLAGS[f] ?? f}
+              </li>
+            ))}
+          </ul>
+        )}
+        <ReviewPanel item={item} />
+        <div className="flex">
+          <Why id={decision.id} />
+        </div>
+      </div>
+    );
+  }
 
   if (level === "ESCALATE") {
     const reasons = decision.safety_flags.length

@@ -6,7 +6,19 @@ import { countsOf, isOpen, isUnchecked } from "@/lib/use-oscar";
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** What Oscar says at the top of Home, from what's going on in the inbox. */
-export function statusCopy(items: DecisionWithFeedback[]): { headline: string; sentence: string; mood: Mood } {
+export function statusCopy(items: DecisionWithFeedback[], realInbox = false): { headline: string; sentence: string; mood: Mood } {
+  if (realInbox) {
+    // Read-only: Oscar didn't do anything, so the question is how he would have done.
+    const toReview = items.filter((i) => !i.review).length;
+    if (!items.length) return { headline: "Nothing read yet.", sentence: "Check for new email and I'll read your inbox.", mood: "calm" };
+    if (toReview)
+      return {
+        headline: `${plural(toReview, "decision", "decisions")} to review.`,
+        sentence: `I read ${plural(items.length, "email", "emails")} and noted what I'd do with each. Nothing in Gmail was changed.`,
+        mood: "curious",
+      };
+    return { headline: "All reviewed.", sentence: "Thanks. Check for new email when you want me to read more.", mood: "sleepy" };
+  }
   const counts = countsOf(items);
   const total = items.length;
   // "Suspicious" only when a safety check fired; money and password requests are stopped by rule.
@@ -43,8 +55,8 @@ export function statusCopy(items: DecisionWithFeedback[]): { headline: string; s
   };
 }
 
-export function OscarStatusHeader({ items, brief }: { items: DecisionWithFeedback[]; brief: Brief }) {
-  const { headline, sentence, mood } = statusCopy(items);
+export function OscarStatusHeader({ items, brief, realInbox }: { items: DecisionWithFeedback[]; brief: Brief; realInbox: boolean }) {
+  const { headline, sentence, mood } = statusCopy(items, realInbox);
   return (
     <section className="flex items-center gap-5">
       <OscarAvatar size={72} mood={mood} />
