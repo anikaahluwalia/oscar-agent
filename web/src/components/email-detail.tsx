@@ -2,6 +2,7 @@ import { DecisionCard } from "@/components/decision-card";
 import { Highlight } from "@/components/highlight";
 import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
+import { cleanText } from "@/lib/text";
 import { dayLabel, formatTime } from "@/lib/time";
 
 type Props = { item: DecisionWithFeedback; onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean> };
@@ -22,7 +23,7 @@ export function EmailDetail({ item, onFeedback }: Props) {
       </header>
       <p className="leading-relaxed">
         {/* What Oscar noticed is marked, so you can see what he went on. */}
-        <Highlight text={decision.snippet} phrase={decision.noticed} className="bg-brand/20" />
+        <Highlight text={cleanText(decision.snippet) || "(No text in this email.)"} phrase={decision.noticed} className="bg-brand/20" />
       </p>
       <DecisionCard key={decision.id} item={item} onFeedback={onFeedback} />
     </article>
