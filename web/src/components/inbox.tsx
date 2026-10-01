@@ -134,7 +134,7 @@ export function Inbox() {
 
       {!error && (
         <Tabs defaultValue="needs-you">
-          <TabsList>
+          <TabsList className="w-full justify-start overflow-x-auto">
             {SECTIONS.map((s) => (
               <TabsTrigger key={s.id} value={s.id}>
                 {s.label} ({items.filter((i) => s.levels.includes(i.decision.autonomy_level)).length})

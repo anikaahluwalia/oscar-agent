@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { MOOD_FOR_LEVEL, OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
-import { ACTIONS, FEEDBACK, FLAGS, LEVELS } from "@/lib/labels";
+import { ACTIONS, FEEDBACK, FLAGS, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 const REPLIES = new Set(["DRAFT_REPLY", "SEND_REPLY"]);
@@ -72,12 +72,12 @@ export function DecisionCard({ item, index = 0, dimmed, onFeedback }: Props) {
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-lg border p-3 text-xs">
               <dt className="text-muted-foreground">Proposed action</dt>
               <dd>{ACTIONS[decision.action]}</dd>
+              <dt className="text-muted-foreground">Why this level</dt>
+              <dd>{LEVEL_SOURCES[decision.level_source]}</dd>
               <dt className="text-muted-foreground">What I noticed</dt>
               <dd>{decision.matched_pattern ? `"${decision.matched_pattern}"` : "Nothing matched, so it's a guess"}</dd>
               <dt className="text-muted-foreground">Safety checks</dt>
               <dd>{decision.safety_flags.length ? decision.safety_flags.map((f) => FLAGS[f] ?? f).join(", ") : "Nothing flagged"}</dd>
-              <dt className="text-muted-foreground">From your feedback</dt>
-              <dd>{decision.learned ? "Yes, this level is based on what you've told me" : "No, this is my default"}</dd>
             </dl>
           )}
 

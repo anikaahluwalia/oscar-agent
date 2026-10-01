@@ -1,6 +1,6 @@
 // Plain-language labels for what the API returns.
 
-import type { Action, FeedbackKind, Level } from "@/lib/api";
+import type { Action, Decision, FeedbackKind, Level } from "@/lib/api";
 
 export const LEVELS: Record<Level, { label: string; badge: string }> = {
   PROCEED_SILENTLY: { label: "Handled quietly", badge: "bg-level-silent/10 text-level-silent" },
@@ -30,6 +30,14 @@ export const FLAGS: Record<string, string> = {
   ACCOUNT_SECURITY: "Account security",
   SENSITIVE_DATA: "Sensitive data",
   COMMITMENT: "Commits you to something",
+};
+
+export const LEVEL_SOURCES: Record<Decision["level_source"], string> = {
+  policy: "My default for this kind of action",
+  guess: "Nothing matched, so I'm not sure. I ask when I'm guessing",
+  learned: "What you've told me before",
+  floor: "A safety rule for this action. Feedback can't change it",
+  safety_check: "Something in the email looked risky",
 };
 
 export const FEEDBACK: Record<FeedbackKind, string> = {

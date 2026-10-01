@@ -36,6 +36,7 @@ export interface Decision {
   explanation: string;
   safety_flags: string[];
   learned: boolean;
+  level_source: "policy" | "guess" | "learned" | "floor" | "safety_check";
 }
 
 export interface FeedbackEvent {
