@@ -18,16 +18,17 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     action = classification.action
     level, reason = autonomy_for(action)
 
-    learned = False
-    suggestion = preferences.suggest(action) if preferences else None
-    if suggestion and is_stricter(level, suggestion[0]):
+    learned = careful = False
+    suggestion = preferences.suggest(action, level) if preferences else None
+    if suggestion and suggestion[0] != level:
+        careful = is_stricter(suggestion[0], level)
         level, reason = suggestion
         learned = True
 
     level, reason = apply_floor(action, level, reason)
     if learned and level != suggestion[0]:
         learned = False  # the floor overruled what Oscar learned
-    explanation = explain(action, level, reason, classification.matched_pattern)
+    explanation = explain(action, level, reason, classification.matched_pattern, careful)
 
     # A risky request in the email escalates, whatever the action is.
     flags = check_email(email)

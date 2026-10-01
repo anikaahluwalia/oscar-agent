@@ -39,8 +39,13 @@ TEMPLATES: dict[AutonomyLevel, str] = {
 }
 
 
-def explain(action: Action, level: AutonomyLevel, reason: str, matched: str | None) -> str:
-    text = TEMPLATES[level].format(phrase=ACTION_PHRASES[action], done=ACTION_DONE[action], reason=reason)
+# Used when Oscar is being more careful than usual because of feedback.
+CAREFUL_NOTIFY = "Heads up: I {done}. I'm telling you because {reason}."
+
+
+def explain(action: Action, level: AutonomyLevel, reason: str, matched: str | None, careful: bool = False) -> str:
+    template = CAREFUL_NOTIFY if careful and level == AutonomyLevel.PROCEED_AND_NOTIFY else TEMPLATES[level]
+    text = template.format(phrase=ACTION_PHRASES[action], done=ACTION_DONE[action], reason=reason)
     if matched is None:
         return f"{text} (Nothing in it stood out to me.)"
     return f'{text} (I noticed "{matched}".)'

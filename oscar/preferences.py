@@ -7,6 +7,10 @@ that the user is fine with him doing it. Once he has enough evidence he asks les
     3 or more, mean >= 0.8  ->  PROCEED_AND_NOTIFY
     8 or more, mean >= 0.9  ->  PROCEED_SILENTLY
 
+If the user has undone or rejected the action and Oscar hasn't earned it back,
+he gets more careful instead: he won't do it silently, and if the mean is 0.2 or
+less he asks first. One undo is enough to stop silent, two to go back to asking.
+
 This only suggests a level. The safety floor is applied after it, so learning
 can't make a risky action less safe.
 """
@@ -16,6 +20,7 @@ from dataclasses import dataclass, field
 
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import Action, AutonomyLevel
+from oscar.safety import is_stricter
 
 PRIOR_YES = 1.0
 PRIOR_NO = 1.0
@@ -31,6 +36,7 @@ WEIGHTS: dict[FeedbackKind, tuple[float, float]] = {
 
 NOTIFY_AT = (0.8, 3)  # (mean, evidence)
 SILENT_AT = (0.9, 8)
+ASK_AT_OR_BELOW = 0.2
 
 
 @dataclass
@@ -52,6 +58,14 @@ class ActionPreference:
             return "you told me you're fine with this"
         okays = self.counts[FeedbackKind.APPROVE] + self.counts[FeedbackKind.EDIT_THEN_SEND]
         return f"you've okayed this {okays} times"
+
+    def careful_reason(self) -> str:
+        undos = self.counts[FeedbackKind.UNDO]
+        if undos == 1:
+            return "you undid this last time"
+        if undos > 1:
+            return f"you undid this {undos} times"
+        return "you said no to this before"
 
 
 class Preferences:
@@ -81,11 +95,15 @@ class Preferences:
     def get(self, action: Action) -> ActionPreference:
         return self.by_action.get(action, ActionPreference())
 
-    def suggest(self, action: Action) -> tuple[AutonomyLevel, str] | None:
-        """The level Oscar has earned for this action, or None if not enough evidence."""
+    def suggest(self, action: Action, level: AutonomyLevel) -> tuple[AutonomyLevel, str] | None:
+        """The level Oscar should use instead of `level`, or None to keep it."""
         pref = self.get(action)
         if pref.mean >= SILENT_AT[0] and pref.evidence >= SILENT_AT[1]:
             return AutonomyLevel.PROCEED_SILENTLY, pref.reason()
         if pref.mean >= NOTIFY_AT[0] and pref.evidence >= NOTIFY_AT[1]:
             return AutonomyLevel.PROCEED_AND_NOTIFY, pref.reason()
+        if pref.no > PRIOR_NO:
+            careful = AutonomyLevel.ASK_FIRST if pref.mean <= ASK_AT_OR_BELOW else AutonomyLevel.PROCEED_AND_NOTIFY
+            if is_stricter(careful, level):
+                return careful, pref.careful_reason()
         return None
