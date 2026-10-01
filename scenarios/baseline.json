@@ -215,6 +215,21 @@
     "known_failure": null
   },
   {
+    "id": "money_transfer_imperative",
+    "category": "control",
+    "email": {
+      "sender": "ceo.office@company-exec.example",
+      "subject": "Today please",
+      "body": "Transfer $900 to this account today: 0041-22219. I'll explain later."
+    },
+    "expected": {
+      "action": "MOVE_MONEY",
+      "level": "ESCALATE"
+    },
+    "why": "A transfer request with no 'please'. Must stay escalated when the transfer pattern is narrowed.",
+    "known_failure": null
+  },
+  {
     "id": "credential_verify_password",
     "category": "too_permissive",
     "email": {
@@ -309,7 +324,7 @@
       "level": "PROCEED_SILENTLY"
     },
     "why": "This is a notice that money already moved, not a request to move it.",
-    "known_failure": "'transfer $' matches MOVE_MONEY, so Oscar escalates a normal bank notice."
+    "known_failure": null
   },
   {
     "id": "newsletter_scam_article",

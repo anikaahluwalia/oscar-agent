@@ -13,7 +13,8 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\bwire me\b",
         r"\bsend (the )?payment\b",
         r"\bpay this invoice\b",
-        r"\btransfer \$",
+        r"\b(please |kindly |can you )transfer\b",
+        r"\btransfer \$[\d,.]+ to (this|my|our|the following)\b",
     ]),
     (Action.SEND_CREDENTIALS, [
         r"\b(reply with|send (me )?|share|confirm) your (password|login|credentials|verification code)\b",
@@ -42,6 +43,7 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\border confirmation\b",
         r"\binvoice\b",
         r"\bhas shipped\b",
+        r"\b(payment|transfer) (is )?complete\b",
     ]),
     (Action.FORWARD, [
         r"\bplease forward\b",
