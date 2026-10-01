@@ -710,3 +710,63 @@ around Oscar's work, with plain controls:
 Nothing here is made up: where the backend has no data (Gmail, notifications,
 the autonomy preference), the app says so instead of showing a fake value.
 
+
+## How Oscar is evaluated, and what comes next
+
+Oscar is evaluated in two layers. Synthetic evals are the benchmark. A real inbox
+is a source of failure cases, not a second benchmark.
+
+**1. Synthetic evals** (`evals/`, Stages 6–7). Fixed seeds and generated emails, so
+every run is reproducible. They're for regression testing, safety and injection
+tests, matched risky/benign pairs, calibration metrics, and comparing versions of
+Oscar. They stay after Gmail is connected, and every change still has to pass them.
+
+**2. A real inbox, read-only.** Oscar reads a real Gmail inbox and logs the decision
+he *would* make, without changing anything in Gmail. That shows him things the
+synthetic inbox doesn't have: long threads, real sender relationships, recruiting
+and school email, ambiguous wording, and cases nobody thought to write. I review
+his decisions and log where I disagree.
+
+The loop between them:
+
+real Gmail → Oscar's decision (logged, nothing done) → I review it → disagreement
+logged → turned into a synthetic regression test → fix Oscar → full synthetic
+suite → back to real Gmail.
+
+A real-world failure becomes a test **before** the logic changes, so a fix is
+measured on the whole suite and not on whether my inbox looks better. The aim is
+an Oscar that's right on email in general, not one tuned to one person's inbox.
+
+### Reviewing a decision
+
+Each decision on the real inbox gets one of these (`oscar/review.py`):
+
+| Label | Value | Meaning |
+|---|---|---|
+| Correct | `CORRECT` | Right action and right level |
+| Questioned too much | `QUESTIONED_TOO_MUCH` | Too cautious; should have done more on his own |
+| Needed to ask | `NEEDED_TO_ASK` | Too permissive; should have asked first |
+| Misinterpreted risk | `MISINTERPRETED_RISK` | Got the risk of the email wrong |
+| Unnecessary flagging | `UNNECESSARY_FLAGGING` | Stopped or flagged something harmless |
+| Incorrect action | `INCORRECT_ACTION` | The level may be fine, but the action was wrong |
+| Incorrect type | `INCORRECT_TYPE` | Wrong kind of email, like a recruiter email read as a newsletter |
+| Skip | `SKIP` | Not sure, or don't count this one |
+
+A review can also say what it should have been (the level, the action, or the
+kind of email) and carry a note.
+
+Reviews are for evaluation only. They're stored apart from feedback, which is what
+Oscar learns from, and a decision is always logged before it's reviewed. So the
+real-inbox numbers measure what Oscar decided on his own, and scoring a decision
+never teaches him about that same decision.
+
+### Rollout
+
+| Stage | Gmail access | What Oscar does in Gmail |
+|---|---|---|
+| 9. Read-only | Read-only (`gmail.readonly`) | Nothing. Decisions are logged and reviewed in the app. |
+| 10. Safe, reversible actions | Adds label/modify access | Mark read/unread, add/remove labels, archive/unarchive, maybe drafts. Anything that leaves the inbox or can't be undone still asks. |
+| 11. More autonomy | Same | Only for kinds of email where the Stage 9 and 10 numbers are strong. The safety floor never moves. |
+
+Each stage starts only when the one before it has been measured, not on a date.
+The demo inbox stays, for evals and for anyone trying Oscar without Gmail.
