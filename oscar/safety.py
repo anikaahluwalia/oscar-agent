@@ -21,13 +21,13 @@ LEVEL_ORDER = [
 
 # Read-only so it can't be changed at runtime.
 ACTION_FLOORS = MappingProxyType({
-    Action.MOVE_MONEY: (AutonomyLevel.ESCALATE, "I never move money"),
-    Action.SEND_CREDENTIALS: (AutonomyLevel.ESCALATE, "I never share passwords or login details"),
-    Action.PERMANENTLY_DELETE: (AutonomyLevel.ASK_FIRST, "deleted email can't be recovered"),
-    Action.UNSUBSCRIBE: (AutonomyLevel.ASK_FIRST, "unsubscribing is hard to undo"),
-    Action.SEND_REPLY: (AutonomyLevel.ASK_FIRST, "a reply goes out under your name"),
-    Action.FORWARD: (AutonomyLevel.ASK_FIRST, "forwarding shares this email with someone else"),
-    Action.ACCEPT_MEETING: (AutonomyLevel.ASK_FIRST, "accepting commits your time"),
+    Action.MOVE_MONEY: (AutonomyLevel.ESCALATE, "I don't touch money"),
+    Action.SEND_CREDENTIALS: (AutonomyLevel.ESCALATE, "I don't share passwords or login details"),
+    Action.PERMANENTLY_DELETE: (AutonomyLevel.ASK_FIRST, "deleted email can't be brought back"),
+    Action.UNSUBSCRIBE: (AutonomyLevel.ASK_FIRST, "it's hard to undo"),
+    Action.SEND_REPLY: (AutonomyLevel.ASK_FIRST, "it goes out under your name"),
+    Action.FORWARD: (AutonomyLevel.ASK_FIRST, "it shares this email with someone else"),
+    Action.ACCEPT_MEETING: (AutonomyLevel.ASK_FIRST, "it commits your time"),
 })
 
 
@@ -36,7 +36,7 @@ ACTION_FLOORS = MappingProxyType({
 # first so its explanation is the one the user sees.
 EMAIL_CHECKS = MappingProxyType({
     SafetyCategory.PROMPT_INJECTION: (
-        "this email has instructions written for me, so I'm not acting on it",
+        "Someone left instructions for me in this email, so I'm not doing anything with it",
         [
             r"\b(ai|email|virtual) assistant\s*[:,]",
             r"\bnote to (the )?(ai|assistant)\b",
@@ -45,7 +45,7 @@ EMAIL_CHECKS = MappingProxyType({
         ],
     ),
     SafetyCategory.MONEY: (
-        "this looks like a request for money, and I never move money",
+        "It's asking for money, and I don't touch money",
         [
             r"\bremit\b",
             r"\b(send|pay)\b[^.]*\bvia (zelle|venmo|paypal|wire)\b",
@@ -54,14 +54,14 @@ EMAIL_CHECKS = MappingProxyType({
         ],
     ),
     SafetyCategory.CREDENTIALS: (
-        "this asks for a password or code, and I never share those",
+        "It's asking for a password or code, and I don't share those",
         [
             r"\benter your (password|login|credentials)\b",
             r"\b(read|send|share|give|tell) (me |us )?(the |your )?(\d-digit |one-time |verification |security )?code\b",
         ],
     ),
     SafetyCategory.ACCOUNT_SECURITY: (
-        "this is about your account security, so you should check it yourself",
+        "It's about your account security, so you should look at it yourself",
         [
             r"\bnew sign-in\b",
             r"\bpassword was changed\b",
@@ -71,7 +71,7 @@ EMAIL_CHECKS = MappingProxyType({
         ],
     ),
     SafetyCategory.SENSITIVE_DATA: (
-        "this involves sensitive personal data, and I don't share that",
+        "It has sensitive personal info in it, and I don't share that",
         [
             r"\bssns?\b",
             r"\bsocial security\b",
@@ -81,7 +81,7 @@ EMAIL_CHECKS = MappingProxyType({
         ],
     ),
     SafetyCategory.COMMITMENT: (
-        "replying would commit you to something, and only you can agree to that",
+        "Replying would commit you to something, and that's your call",
         [
             r"\bi agree\b",
             r"\baccept the (new |updated )?terms\b",

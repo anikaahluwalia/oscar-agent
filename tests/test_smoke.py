@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from oscar.agent import decide
+from oscar.agent import decide, explain
 from oscar.api import app
 from oscar.models import Action, AutonomyLevel, Email
 from oscar.policy import POLICY
@@ -67,3 +67,9 @@ def test_post_decide_rejects_malformed_email():
     client = TestClient(app)
     response = client.post("/decide", json={"id": "x"})
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("level", list(AutonomyLevel))
+@pytest.mark.parametrize("action", list(Action))
+def test_every_action_can_be_explained_at_every_level(action, level):
+    assert explain(action, level, "test reason", None)
