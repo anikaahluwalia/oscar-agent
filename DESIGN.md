@@ -246,3 +246,87 @@ to respect the floor from Stage 3.
   this one" (same sender or same type) yet.
 - Feedback can be given more than once on the same decision, and nothing checks
   for conflicts (for example "always do this" and then "always ask me").
+
+## Stage 5 — Preference learning
+
+**Goal:** Oscar asks less as he learns what the user is fine with, but never below
+the safety floor.
+
+### The model
+
+`oscar/preferences.py` keeps a Beta(yes, no) for each action, starting at
+Beta(1, 1). The mean yes / (yes + no) is how sure Oscar is that the user is fine
+with him doing it. Preferences are rebuilt from the feedback file every time, so
+there is nothing else to store.
+
+| Feedback | Counts as |
+|---|---|
+| `APPROVE`, `EDIT_THEN_SEND` | 1 yes |
+| `ALWAYS_DO_THIS` | 3 yes |
+| `REJECT` | 1 no |
+| `UNDO` | 2 no |
+| `ALWAYS_ASK_ME` | not counted; a rule that keeps the action at `ASK_FIRST` |
+
+Feedback that was `blocked_by_floor`, or given on an escalated decision, is
+ignored.
+
+| Evidence | Oscar uses |
+|---|---|
+| 3 or more, mean ≥ 0.8 | `PROCEED_AND_NOTIFY` |
+| 8 or more, mean ≥ 0.9 | `PROCEED_SILENTLY` |
+| corrected and not earned back, mean > 0.2 | at least `PROCEED_AND_NOTIFY` |
+| corrected and not earned back, mean ≤ 0.2 | `ASK_FIRST` |
+
+So the newsletter goes `ASK_FIRST` 3 times, then `PROCEED_AND_NOTIFY` 5 times,
+then `PROCEED_SILENTLY`. One undo stops a silent action and two go back to asking.
+
+I picked a Beta count over anything more complex because every decision can be
+explained in one sentence ("you've okayed this 8 times"), and it is easy to test.
+
+### Where it fits
+
+The order in `decide()` is: policy → learned preference → safety floor → email
+checks. Learning is the only step that can make Oscar less strict, and both safety
+steps come after it, so they always get the last word. Decisions now say
+`learned: true` when the level came from feedback, and the explanation gives the
+reason ("I went ahead because you've okayed this 3 times").
+
+`python -m oscar learned` and `GET /learned` show what Oscar has learned.
+
+### Problems found while building it
+
+- **Oscar got stuck at notify.** `APPROVE` only worked on things he asked about,
+  so once he moved to notify nothing could count as a yes. You can now approve a
+  notification ("okay, that was fine").
+- **An undo didn't make Oscar more careful.** It only lowered the mean, so if he
+  had never earned anything for the action he kept using the policy level, and
+  marked an email as read silently right after it was undone. Now a correction
+  stops silent until it is earned back. My first cutoff for going back to asking
+  (0.4) made one undo jump straight from silent to asking, so I lowered it to 0.2.
+- **"Always ask me" did nothing.** It was saved but not used. It now keeps the
+  action at `ASK_FIRST`.
+- **Explanations gave the old reason** when feedback agreed with the policy level,
+  because the agent skipped suggestions that didn't change the level.
+- **A circular import** between agent, preferences and feedback. Oscar's wording
+  moved into `oscar/voice.py`.
+- **The learned summary** checked every action from `ASK_FIRST`, so careful
+  actions showed "not enough feedback yet".
+
+### Safety
+
+`tests/test_floor_vs_learning.py` writes fake feedback straight into the
+preferences (100 "always do this" for every action, and 200 random histories) and
+checks that risky emails stay at their floor and flagged emails stay escalated. It
+skips the feedback rules on purpose, as if the feedback file had bad data.
+
+### Not done yet
+
+- **Preferences are per action only.** Approving newsletter archives makes Oscar
+  archive anything the classifier calls `ARCHIVE`, from any sender.
+- **"Always ask me" can't be taken back.** A later "always do this" doesn't clear
+  it, and nothing decides which one wins.
+- **Getting back to silent after an undo takes 26 okays.** That might be too slow.
+- **The thresholds (3 / 0.8, 8 / 0.9, 0.2) were picked by hand.** Stage 6 should
+  measure them.
+- **Ignoring a notification doesn't count as anything.** Only explicit feedback
+  counts.

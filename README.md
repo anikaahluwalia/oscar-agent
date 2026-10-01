@@ -13,10 +13,10 @@ For each incoming email Oscar proposes one action and decides how much autonomy 
 | `ASK_FIRST` | Action is proposed to user, user must accept or decline |
 | `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Stage 4 — user feedback.** Oscar uses a keyword classifier, a fixed
-action → level table and a safety floor the table can't lower. You can now give
-feedback on each decision, and it is saved. Oscar doesn't learn from it yet.
-Synthetic emails only; no real side effects.
+**Status: Stage 5 — preference learning.** Oscar uses a keyword classifier, a fixed
+action → level table, what he has learned from your feedback, and a safety floor
+that neither the table nor learning can lower. Synthetic emails only; no real side
+effects.
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -43,7 +43,12 @@ Each decision prints an id. Use it to tell Oscar how he did:
 ```
 
 Feedback kinds: `APPROVE`, `REJECT`, `UNDO`, `EDIT_THEN_SEND`, `ALWAYS_DO_THIS`,
-`ALWAYS_ASK_ME`. Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR`
+`ALWAYS_ASK_ME`. To see what Oscar has learned from it:
+
+```bash
+.venv/bin/python -m oscar learned
+```
+ Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR`
 to use another folder).
 
 ## Run the API
