@@ -1,10 +1,12 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { bringInDemo, startOver } from "@/lib/demo";
+import { gmailConnectUrl } from "@/lib/api";
+import { bringInDemo, checkGmail, disconnectGmailAccount, startOver } from "@/lib/demo";
+import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { useLocalSetting } from "@/lib/local-setting";
 import { cn } from "@/lib/utils";
 
@@ -63,8 +65,76 @@ function Toggle({ id, label, text }: { id: string; label: string; text: string }
   );
 }
 
+/** After Google sends you back, say how connecting went, then tidy the URL. */
+function useGmailResult() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("gmail");
+    if (!result) return;
+    if (result === "connected") oscarSays("Gmail is connected. I'll only read it; nothing in Gmail will change.");
+    else if (result === "not_configured") oscarSays("Gmail isn't set up yet. Add your Google keys to .env first.");
+    else oscarSays(params.get("reason") ?? "Connecting Gmail didn't work.");
+    notifyChanged();
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
+}
+
+function GmailAccount() {
+  const { data } = useOscar();
+  const gmail = data?.gmail;
+  if (!gmail) return <p className="text-sm text-muted-foreground">Checking...</p>;
+
+  if (!gmail.connected && !gmail.configured) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Gmail isn&apos;t set up yet. Copy <code>.env.example</code> to <code>.env</code>, add your Google client ID and
+        secret, and restart the API.
+      </p>
+    );
+  }
+  if (!gmail.connected) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="max-w-md text-sm text-muted-foreground">
+          Oscar is working on example emails. Connect Gmail and he&apos;ll read your real inbox. He only reads it: nothing
+          in Gmail changes, and you review what he would have done.
+        </p>
+        <Button asChild size="sm">
+          <a href={gmailConnectUrl}>Connect Gmail</a>
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium">{gmail.address}</p>
+          <p className="text-sm text-muted-foreground">
+            {gmail.last_sync ? `Last checked ${new Date(gmail.last_sync * 1000).toLocaleString()}` : "Not checked yet"}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={checkGmail}>
+            Check for new email
+          </Button>
+          <Button size="sm" variant="outline" onClick={disconnectGmailAccount}>
+            Disconnect
+          </Button>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Oscar can read your inbox but can&apos;t change anything in it. Disconnecting keeps his decisions and your reviews.
+      </p>
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { data } = useOscar();
+  const gmail = data?.gmail;
+  useGmailResult();
   // The theme is only known in the browser, so nothing is selected until then.
   const inBrowser = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [autonomy, setAutonomy] = useLocalSetting<"cautious" | "balanced" | "independent">("autonomy", "balanced");
@@ -72,6 +142,26 @@ export function SettingsPage() {
   return (
     <Page className="max-w-3xl">
       <PageHeader title="Settings" />
+
+      <Group title="Email account" note={gmail?.connected ? "Read-only" : undefined}>
+        <GmailAccount />
+      </Group>
+
+      {!gmail?.connected && (
+        <Group title="Demo inbox">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">Bring in the example emails, or wipe everything Oscar has learned.</p>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={bringInDemo}>
+                Bring in emails
+              </Button>
+              <Button size="sm" variant="outline" onClick={startOver}>
+                Start over
+              </Button>
+            </div>
+          </div>
+        </Group>
+      )}
 
       {/* These two aren't connected to Oscar yet, so they say so instead of pretending. */}
       <Group title="Notifications" note="Saved on this device · coming soon">
@@ -111,31 +201,6 @@ export function SettingsPage() {
         />
       </Group>
 
-      <Group title="Account">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Email account</p>
-            <p className="text-sm text-muted-foreground">Not connected. Oscar is working on a set of example emails.</p>
-          </div>
-          <Button variant="outline" size="sm" disabled>
-            Connect Gmail
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
-          <div>
-            <p className="text-sm font-medium">Demo inbox</p>
-            <p className="text-sm text-muted-foreground">Bring in the example emails, or wipe everything Oscar has learned.</p>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={bringInDemo}>
-              Bring in emails
-            </Button>
-            <Button size="sm" variant="outline" onClick={startOver}>
-              Start over
-            </Button>
-          </div>
-        </div>
-      </Group>
     </Page>
   );
 }

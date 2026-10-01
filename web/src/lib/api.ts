@@ -52,6 +52,54 @@ export interface Decision {
   learned: boolean;
   level_source: "policy" | "guess" | "learned" | "floor" | "safety_check";
   steps: string[];
+  /** "gmail" is a real inbox. Oscar only reads it for now, so the decision is what he would do. */
+  source: "demo" | "gmail";
+  gmail: GmailInfo | null;
+  policy_version: string | null;
+}
+
+export interface GmailInfo {
+  message_id: string;
+  thread_id: string;
+  received_at: string | null;
+  labels: string[];
+  category: string | null;
+  thread_length: number;
+  emailed_before: boolean | null;
+}
+
+export interface Review {
+  id: string;
+  reviewed_at: string;
+  decision_id: string;
+  label: ReviewLabel;
+  should_be_level: Level | null;
+  should_be_action: Action | null;
+  actual_type: string | null;
+  note: string | null;
+}
+
+export type ReviewInput = Omit<Review, "id" | "reviewed_at">;
+
+export interface ReviewTally {
+  decisions: number;
+  reviewed: number;
+  scored: number;
+  agreement: number | null;
+  labels: Record<ReviewLabel, number>;
+}
+
+export interface ReviewSummary extends ReviewTally {
+  by_version: Record<string, ReviewTally>;
+}
+
+export interface GmailStatus {
+  configured: boolean;
+  connected: boolean;
+  address: string | null;
+  connected_at: number | null;
+  last_sync: number | null;
+  read_only: boolean;
 }
 
 export interface ChatReply {
@@ -74,6 +122,7 @@ export interface FeedbackEvent {
 export interface DecisionWithFeedback {
   decision: Decision;
   feedback: FeedbackEvent[];
+  review: Review | null;
 }
 
 export interface LearnedRow {
@@ -130,6 +179,14 @@ export const getBrief = () => call<Brief>("/brief");
 export const getAutonomy = () => call<AutonomyRow[]>("/autonomy");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
 export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "POST" });
+
+export const getGmailStatus = () => call<GmailStatus>("/gmail");
+/** A link, not a fetch: it takes you to Google and back. */
+export const gmailConnectUrl = `${API}/auth/google/start`;
+export const syncGmail = () => call<{ new: number }>("/gmail/sync", { method: "POST" });
+export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
+export const getReviewSummary = () => call<ReviewSummary>("/reviews/summary");
+export const sendReview = (review: ReviewInput) => call<Review>("/reviews", { method: "POST", body: JSON.stringify(review) });
 
 export const sendChat = (message: string, decisionId?: string) =>
   call<ChatReply>("/chat", {

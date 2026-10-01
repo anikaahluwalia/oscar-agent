@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChartColumnIcon,
+  ClipboardCheckIcon,
   HistoryIcon,
   HouseIcon,
   InboxIcon,
@@ -20,16 +21,19 @@ import { OscarAvatar } from "@/components/oscar-avatar";
 import { countsOf, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
+type NavItem = { href: string; label: string; icon: typeof HouseIcon; realInboxOnly?: boolean };
+
+const LINKS: NavItem[] = [
   { href: "/home", label: "Home", icon: HouseIcon },
   { href: "/inbox", label: "Inbox", icon: InboxIcon },
   { href: "/needs-you", label: "Needs You", icon: UserRoundCheckIcon },
+  { href: "/review", label: "Review", icon: ClipboardCheckIcon, realInboxOnly: true },
   { href: "/activity", label: "Activity", icon: HistoryIcon },
   { href: "/memory", label: "What Oscar Knows", icon: LightbulbIcon },
   { href: "/evals", label: "Evals", icon: ChartColumnIcon },
 ];
 
-function NavLink({ href, label, icon: Icon, badge, onClick }: (typeof LINKS)[number] & { badge?: number; onClick?: () => void }) {
+function NavLink({ href, label, icon: Icon, badge, onClick }: NavItem & { badge?: number; onClick?: () => void }) {
   const path = usePathname();
   const active = path === href;
   return (
@@ -53,23 +57,24 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const { data } = useOscar();
   const counts = data ? countsOf(data.items) : null;
   const waiting = counts ? counts.ASK_FIRST + counts.ESCALATE : 0;
+  const toReview = data ? data.items.filter((i) => i.decision.source === "gmail" && !i.review).length : 0;
   return (
     <>
       <nav className="flex flex-col gap-0.5">
-        {LINKS.map((l) => (
-          <NavLink key={l.href} {...l} badge={l.href === "/needs-you" ? waiting : undefined} onClick={onNavigate} />
+        {LINKS.filter((l) => !l.realInboxOnly || data?.gmail.connected).map((l) => (
+          <NavLink key={l.href} {...l} badge={l.href === "/needs-you" ? waiting : l.href === "/review" ? toReview : undefined} onClick={onNavigate} />
         ))}
       </nav>
       <div className="mt-auto flex flex-col gap-0.5">
         <NavLink href="/settings" label="Settings" icon={SettingsIcon} onClick={onNavigate} />
         {/* Until Gmail is connected there's no real account, so say so instead of inventing one. */}
         <div className="flex items-center gap-3 px-3 py-2 text-sm">
-          <span className="flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <UserIcon className="size-4" />
           </span>
           <span className="flex min-w-0 flex-col leading-tight">
-            <span className="truncate">Demo inbox</span>
-            <span className="text-xs text-muted-foreground">Gmail not connected</span>
+            <span className="truncate">{data?.gmail.connected ? data.gmail.address : "Demo inbox"}</span>
+            <span className="text-xs text-muted-foreground">{data?.gmail.connected ? "Gmail · read-only" : "Gmail not connected"}</span>
           </span>
         </div>
       </div>
