@@ -3,9 +3,9 @@
 import type { Action, Decision, FeedbackKind, Level } from "@/lib/api";
 
 export const LEVELS: Record<Level, { label: string; square: string }> = {
-  PROCEED_SILENTLY: { label: "Handled quietly", square: "bg-level-silent" },
+  PROCEED_SILENTLY: { label: "Done!", square: "bg-level-silent" },
   PROCEED_AND_NOTIFY: { label: "Told you", square: "bg-level-notify" },
-  ASK_FIRST: { label: "Waiting for your okay", square: "bg-level-ask" },
+  ASK_FIRST: { label: "Okay!", square: "bg-level-ask" },
   ESCALATE: { label: "For you", square: "bg-level-escalate" },
 };
 
