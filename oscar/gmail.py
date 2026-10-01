@@ -181,6 +181,9 @@ CATEGORIES = {
 }
 
 
+INVISIBLE = re.compile("[\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u3164\ufeff]")
+
+
 def _charset(part: dict) -> str:
     for h in part.get("headers", []):
         if h.get("name", "").lower() == "content-type":
@@ -220,6 +223,10 @@ def body_text(payload: dict) -> str:
 
     walk(payload)
     text = "\n".join(plain) if plain else "\n".join(rich)
+    # Plain-text parts often have HTML entities written out too ("&zwnj;", "&amp;").
+    text = html.unescape(text)
+    # Invisible characters marketing emails use as padding, and soft hyphens.
+    text = INVISIBLE.sub("", text).replace("\u00a0", " ")
     return re.sub(r"\s+", " ", text).strip()[:BODY_LIMIT]
 
 

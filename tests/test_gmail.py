@@ -166,3 +166,11 @@ def test_chat_and_brief_say_what_oscar_would_do(tmp_path):
     handled = answer(history, "what did you handle?").reply
     assert handled.startswith("I'm only reading your inbox") and "I handled" not in handled
     assert "I did these" not in answer(history, "what needs me?").reply
+
+
+def test_marketing_padding_is_removed():
+    # Marketing emails pad the plain-text part with invisible spacers, often written out
+    # as "&zwnj;" text, so the inbox preview looks tidy. Oscar should read the words.
+    plain = "&zwnj; &zwnj;&nbsp;&zwnj; ‌​͏­﻿ Free standard shipping &amp; returns"
+    part = {"mimeType": "text/plain", "body": {"data": base64.urlsafe_b64encode(plain.encode()).decode()}}
+    assert body_text(part) == "Free standard shipping & returns"
