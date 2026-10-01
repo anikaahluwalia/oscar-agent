@@ -424,3 +424,89 @@ kind of email on its own. With a mixed inbox the per-action model breaks down.
   emails per seed, so the ranges are wide. The full tables show them.
 - The user's feedback rates (okaying 60% of notifications, noticing 80% of silent
   mistakes) were picked by hand.
+
+## Stage 7 — Improving from eval failures
+
+**Goal:** Fix what the Stage 6 evals found, one change at a time, re-running the
+evals after each one.
+
+### Changes, in order
+
+| Change | Why (Stage 6 finding) | Accuracy, last 100 |
+|---|---|---|
+| Start | | 42.0% |
+| Drafts can't learn to be silent (action ceilings) | Drafts went silent | 52.4% |
+| Preferences per sender | One "always ask me" blocked every newsletter; undos on one sender made Oscar careful with all | 83.6% |
+| Newer "always" rule wins | Oscar promised to remember and kept asking | 83.6% |
+| More risky wordings caught | Unsafe and injection misses | 86.6% |
+| Don't act on a guess alone | An urgent email and phishing were marked as read silently | 87.2% |
+| Only archive bulk mail | A colleague's email about the newsletter was archived | 92.6% |
+| Stop escalating transfer receipts | Bank notices were escalated | 96.2% |
+
+### Results: Stage 6 vs Stage 7
+
+| Metric | Stage 6, learning (last 100) | Stage 7, baseline | Stage 7, learning (last 100) |
+|---|---|---|---|
+| Unsafe autonomy ↓ | 23.6% | 0.0% | 0.0% |
+| Injection failures ↓ | 16.7% | 0.0% | 0.0% |
+| Unnecessary asks ↓ | 43.3% | 32.3% | 3.0% |
+| Low-risk autonomy ↑ | 47.5% | 57.2% | 81.7% |
+| Decision accuracy ↑ | 42.0% | 75.4% | 96.2% |
+| Regret ↓ | 8.1% | 0.0% | 0.0% |
+
+Learning now helps instead of hurting: it takes unnecessary asks from 32.3% to
+3.0% and accuracy from 75.4% to 96.2%, while unsafe autonomy stays at 0%.
+
+### Decisions
+
+- **Per sender, with no fallback to the action.** A new sender starts from
+  scratch, so Oscar learns more slowly than he could. I chose this over mixing
+  sender and action evidence because mixing is what broke Stage 6. Grouping by
+  domain or by type of email would be the next step.
+- **Ceilings are separate from the safety floor.** The floor is about safety and
+  can't be changed by learning. Ceilings are about usefulness: a silent draft isn't
+  dangerous, just useless.
+- **A guess is never acted on alone.** When nothing matched, the action is a guess,
+  and Oscar now asks. This turned out to be the most important safety change: in
+  the held-out check most of the risky emails Oscar didn't recognise ended up here
+  instead of being marked as read.
+- **Some emails stay over-cautious on purpose.** A newsletter quoting a scam, an IT
+  warning about phishing, and security tips are still escalated. Loosening the
+  checks for them (for example skipping checks for anything that looks like a
+  newsletter) would let real phishing through. An extra escalation costs the user a
+  few seconds; a missed one can cost money.
+- **Each change was checked against scenarios first.** New risky wordings were
+  added as failing scenarios before the fix, and controls were added so each fix
+  didn't over-reach (a friend asking how Oscar the dog is doing, a transfer that
+  came in, a transfer request without "please").
+
+### Held-out check
+
+The new patterns in this stage were written from the eval wordings, so the 0%
+unsafe figure above is optimistic. `evals/heldout.py` has 20 emails with wordings
+that weren't used for any pattern, run once and not tuned afterwards.
+
+| Metric | Held out |
+|---|---|
+| Unsafe autonomy ↓ | 16.7% (2 of 12) |
+| Injection failures ↓ | 100% (2 of 2) |
+| Decision accuracy ↑ | 40.0% |
+
+The keyword checks don't generalise to new wordings: only 4 of the 12 risky emails
+were handled right, and one of those was luck. Most of the misses were saved by the
+"don't act on a guess" rule and asked first, including both injections. The two
+unsafe ones were drafts to a code request and to a request for a licence scan.
+
+**This is the main limit of Oscar as he is.** The safety floor and learning are
+sound: learning can't weaken the floor, and the tests try hard to make it. But the
+floor can only protect against what the checks recognise. Keywords are fine for a
+baseline, but recognising risky requests in any wording needs a real classifier.
+
+### What I'd do next
+
+- Use an LLM to propose the action and to flag risk, alongside the keyword checks.
+  The LLM could add flags but never remove one, and the floor stays plain code, so
+  a wrong or injected LLM answer can't make Oscar less safe.
+- Never draft a reply to an email that asks for codes, passwords or ID documents.
+- Group preferences by domain or type of email, so new senders learn faster.
+- Grow the held-out set over time and only ever add to it.
