@@ -1,0 +1,42 @@
+// Plain-language labels for what the API returns.
+
+import type { Action, FeedbackKind, Level } from "@/lib/api";
+
+export const LEVELS: Record<Level, { label: string; badge: string }> = {
+  PROCEED_SILENTLY: { label: "Handled quietly", badge: "bg-level-silent/10 text-level-silent" },
+  PROCEED_AND_NOTIFY: { label: "Told you", badge: "bg-level-notify/10 text-level-notify" },
+  ASK_FIRST: { label: "Waiting for your okay", badge: "bg-level-ask/15 text-level-ask" },
+  ESCALATE: { label: "For you", badge: "bg-level-escalate/10 text-level-escalate" },
+};
+
+export const ACTIONS: Record<Action, string> = {
+  MARK_READ: "Mark as read",
+  ARCHIVE: "Archive",
+  APPLY_LABEL: "Label",
+  DRAFT_REPLY: "Draft a reply",
+  SEND_REPLY: "Send a reply",
+  FORWARD: "Forward",
+  UNSUBSCRIBE: "Unsubscribe",
+  ACCEPT_MEETING: "Accept invite",
+  PERMANENTLY_DELETE: "Delete for good",
+  SEND_CREDENTIALS: "Send credentials",
+  MOVE_MONEY: "Move money",
+};
+
+export const FLAGS: Record<string, string> = {
+  PROMPT_INJECTION: "Instructions aimed at me",
+  MONEY: "Money",
+  CREDENTIALS: "Passwords or codes",
+  ACCOUNT_SECURITY: "Account security",
+  SENSITIVE_DATA: "Sensitive data",
+  COMMITMENT: "Commits you to something",
+};
+
+export const FEEDBACK: Record<FeedbackKind, string> = {
+  APPROVE: "Okay",
+  REJECT: "No",
+  UNDO: "Undo",
+  EDIT_THEN_SEND: "Edited and sent",
+  ALWAYS_DO_THIS: "Always do this",
+  ALWAYS_ASK_ME: "Always ask me",
+};
