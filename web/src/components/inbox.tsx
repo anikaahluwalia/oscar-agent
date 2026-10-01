@@ -24,6 +24,17 @@ const SECTIONS: { id: string; label: string; levels: Level[]; empty: string }[] 
 
 const API_DOWN = "I can't reach my API. Start it from the repo root with: .venv/bin/uvicorn oscar.api:app --reload";
 
+const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND"]);
+
+// The demo sends the same emails again, so only keep Oscar's latest decision on each one.
+// The API returns newest first.
+function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
+  const seen = new Set<string>();
+  return items.filter((i) => !seen.has(i.decision.email_id) && seen.add(i.decision.email_id));
+}
+
+const isAnswered = (i: DecisionWithFeedback) => i.feedback.some((f) => ANSWERS.has(f.kind));
+
 function greeting(items: DecisionWithFeedback[]): string {
   if (items.length === 0) return "Your inbox is empty. Bring in the demo emails and I'll get to work.";
   const count = (levels: Level[]) => items.filter((i) => levels.includes(i.decision.autonomy_level)).length;
@@ -40,7 +51,7 @@ export function Inbox() {
 
   const show = useCallback((result: DecisionWithFeedback[] | null) => {
     if (result) {
-      setItems(result);
+      setItems(latestPerEmail(result));
       setError(null);
     } else {
       setError(API_DOWN);
@@ -118,13 +129,18 @@ export function Inbox() {
           {SECTIONS.map((s) => {
             const shown = items
               .filter((i) => s.levels.includes(i.decision.autonomy_level))
-              .sort((a, b) => s.levels.indexOf(a.decision.autonomy_level) - s.levels.indexOf(b.decision.autonomy_level));
+              .sort(
+                (a, b) =>
+                  Number(isAnswered(a)) - Number(isAnswered(b)) ||
+                  s.levels.indexOf(a.decision.autonomy_level) - s.levels.indexOf(b.decision.autonomy_level),
+              );
             return (
               <TabsContent key={s.id} value={s.id} className="flex flex-col gap-3 pt-2">
                 {shown.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{s.empty}</p>}
                 {shown.map((item) => (
                   <DecisionCard
                     key={item.decision.id}
+                    dimmed={isAnswered(item)}
                     item={item}
                     onFeedback={(kind, text) => feedback(item.decision.id, kind, text)}
                   />

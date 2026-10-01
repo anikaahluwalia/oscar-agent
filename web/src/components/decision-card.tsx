@@ -14,10 +14,11 @@ const REPLIES = new Set(["DRAFT_REPLY", "SEND_REPLY"]);
 
 type Props = {
   item: DecisionWithFeedback;
+  dimmed?: boolean;
   onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean>;
 };
 
-export function DecisionCard({ item, onFeedback }: Props) {
+export function DecisionCard({ item, dimmed, onFeedback }: Props) {
   const { decision, feedback } = item;
   const level = decision.autonomy_level;
   const [showWhy, setShowWhy] = useState(false);
@@ -36,7 +37,7 @@ export function DecisionCard({ item, onFeedback }: Props) {
   const canEdit = REPLIES.has(decision.action) && level !== "ESCALATE";
 
   return (
-    <Card className="gap-3">
+    <Card className={cn("gap-3 transition-opacity", dimmed && "opacity-60")}>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-xs text-muted-foreground">{decision.sender}</p>
