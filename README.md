@@ -15,13 +15,16 @@ For each incoming email Oscar proposes one action and decides how much autonomy 
 | `ASK_FIRST` | Action is proposed to user, user must accept or decline |
 | `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Stage 7 — improved from eval failures.** Oscar uses a keyword classifier,
-a fixed action → level table, what he has learned from your feedback (per sender),
-and a safety floor that neither the table nor learning can lower. Eval results are
-in [evals/RESULTS.md](evals/RESULTS.md), a held-out check is in
+**Status: Stage 8 — product UI.** Oscar uses a keyword classifier, a fixed action →
+level table, what he has learned from your feedback (per sender), and a safety
+floor that neither the table nor learning can lower. There's a web app to see what
+he handled, what he told you about, what needs you and what he's learned. Eval
+results are in [evals/RESULTS.md](evals/RESULTS.md), a held-out check is in
 [evals/results/heldout.md](evals/results/heldout.md), and example transcripts are in
 [examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md). Synthetic emails only; no real
 side effects.
+
+![Oscar's inbox](assets/inbox.png)
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -55,6 +58,19 @@ Feedback kinds: `APPROVE`, `REJECT`, `UNDO`, `EDIT_THEN_SEND`, `ALWAYS_DO_THIS`,
 ```
  Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR`
 to use another folder).
+
+## Run the web app
+
+Start the API (below), then in another terminal:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 and click **Bring in the demo emails**. Say yes to the
+newsletter a few times and bring the emails in again to watch Oscar learn.
 
 ## Run the API
 

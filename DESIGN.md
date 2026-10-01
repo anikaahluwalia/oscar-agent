@@ -510,3 +510,63 @@ baseline, but recognising risky requests in any wording needs a real classifier.
 - Never draft a reply to an email that asks for codes, passwords or ID documents.
 - Group preferences by domain or type of email, so new senders learn faster.
 - Grow the held-out set over time and only ever add to it.
+
+## Stage 8 — Product UI
+
+**Goal:** A web app where the user can see what Oscar did and why, and teach him,
+with Oscar's personality.
+
+### What it shows
+
+- **Needs you:** escalated emails first ("For you"), then ones waiting for an okay.
+- **Told you:** things Oscar did and told you about.
+- **Handled:** things Oscar did quietly.
+- **What I've learned:** each sender and action Oscar has feedback on, in his own
+  words, with how sure he is.
+- **Why?** on every email: the proposed action, which step set the level, the
+  phrase Oscar noticed, and any safety flags.
+
+Feedback buttons depend on the level: yes/no when Oscar asked, "looks good" or undo
+when he told you, undo when he acted quietly, edit and send for replies, and
+"always do this" / "always ask me". Escalated emails have no buttons: "I won't act
+on this one. It's yours." Oscar's reply to each piece of feedback shows as a toast,
+so the safety floor talks back in his voice ("I'll keep asking before I permanently
+delete this…").
+
+### Oscar
+
+The logo is a drawing of my dog. The avatar uses a cropped version of it, and his
+mood is shown by how he moves, not by redrawing him: a wag when he handled
+something, a head tilt when he's waiting for you, a hop and a red dot when
+something is for you. The Oscar at the top shows the mood of the whole inbox.
+Motion is turned off when the system asks for reduced motion.
+
+### Stack and decisions
+
+- Next.js 16, TypeScript, Tailwind, shadcn/ui (Radix) and Framer Motion in `web/`.
+  The page is a client component that calls the FastAPI backend.
+- **The UI doesn't make decisions.** Every word Oscar says comes from the API
+  (`explanation`, feedback replies, `/learned` sentences), so the CLI, the
+  transcripts and the UI all say the same thing.
+- **New API fields for the UI:** `subject` and `snippet` on decisions, and
+  `level_source` (policy, guess, learned, floor or safety_check). The "Why?" panel
+  said "Nothing flagged" on the wire request, which was true but misleading: it's
+  escalated because `MOVE_MONEY` always is. `level_source` fixed that.
+- **One card per email.** The demo sends the same emails again, which filled the
+  inbox with copies. The UI shows Oscar's latest decision on each email, which is
+  also what makes learning visible: after three okays the newsletter moves from
+  "Needs you" to "Told you".
+
+### How it was checked
+
+I clicked through the app in headless Chrome against a separate API with its own
+data folder: approving the newsletter until it moved tabs, "always do this" on a
+delete (Oscar refuses), edit and send on a draft, the "Why?" panel, and a 375px
+phone screen. That found the duplicate cards, the misleading "Why?" panel and the
+tabs overflowing on phones.
+
+### Not done
+
+- No real Gmail, OAuth or background worker. The inbox is the example emails.
+- No dark mode toggle.
+- The UI has no automated tests; it was checked by hand in the browser.
