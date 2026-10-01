@@ -24,6 +24,17 @@ export type FeedbackKind =
   | "ALWAYS_ASK_ME"
   | "SEEN";
 
+/** How you score one of Oscar's decisions on a real inbox (oscar/review.py). Evaluation only; Oscar doesn't learn from it. */
+export type ReviewLabel =
+  | "CORRECT"
+  | "QUESTIONED_TOO_MUCH"
+  | "NEEDED_TO_ASK"
+  | "MISINTERPRETED_RISK"
+  | "UNNECESSARY_FLAGGING"
+  | "INCORRECT_ACTION"
+  | "INCORRECT_TYPE"
+  | "SKIP";
+
 export interface Decision {
   id: string;
   created_at: string;

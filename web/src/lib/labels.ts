@@ -1,6 +1,6 @@
 // Plain-language labels for what the API returns.
 
-import type { Action, Decision, FeedbackKind, Level } from "@/lib/api";
+import type { Action, Decision, FeedbackKind, Level, ReviewLabel } from "@/lib/api";
 
 /** What each autonomy level is called in the app. */
 export const STATUS: Record<Level, { label: string; pill: string; dot: string }> = {
@@ -74,6 +74,18 @@ export const FEEDBACK: Record<FeedbackKind, string> = {
   ALWAYS_DO_THIS: "Always do this",
   ALWAYS_ASK_ME: "Always ask me",
   SEEN: "Reviewed",
+};
+
+/** Review labels for the real-inbox review (Stage 9), with what each one means. Mirrors oscar/review.py. */
+export const REVIEW_LABELS: Record<ReviewLabel, { label: string; meaning: string }> = {
+  CORRECT: { label: "Correct", meaning: "Right action and right level." },
+  QUESTIONED_TOO_MUCH: { label: "Questioned too much", meaning: "Too cautious. Should have done more on his own." },
+  NEEDED_TO_ASK: { label: "Needed to ask", meaning: "Too permissive. Should have asked first." },
+  MISINTERPRETED_RISK: { label: "Misinterpreted risk", meaning: "Got the risk of the email wrong." },
+  UNNECESSARY_FLAGGING: { label: "Unnecessary flagging", meaning: "Stopped or flagged something harmless." },
+  INCORRECT_ACTION: { label: "Incorrect action", meaning: "The level may be fine, but the action was wrong." },
+  INCORRECT_TYPE: { label: "Incorrect type", meaning: "Wrong kind of email, like a recruiter email read as a newsletter." },
+  SKIP: { label: "Skip", meaning: "Not sure, or don't count this one." },
 };
 
 // Mirrors ACTION_FLOORS in oscar/safety.py. Learning can never lower these.
