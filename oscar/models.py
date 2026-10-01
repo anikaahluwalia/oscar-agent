@@ -57,6 +57,18 @@ def now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class GmailInfo(BaseModel):
+    """Where a real email came from, logged with the decision so it can be reviewed later."""
+
+    message_id: str
+    thread_id: str
+    received_at: datetime | None = None
+    labels: list[str] = Field(default_factory=list)  # Gmail's labels when Oscar read it, e.g. INBOX, UNREAD
+    category: str | None = None  # Gmail's tab: promotions, updates, social, forums, or primary
+    thread_length: int = 1
+    emailed_before: bool | None = None  # have you ever sent this person an email
+
+
 class Decision(BaseModel):
     id: str = Field(default_factory=new_id)
     created_at: datetime = Field(default_factory=now)
@@ -76,3 +88,8 @@ class Decision(BaseModel):
     # what Oscar learned, the safety floor for the action, or a safety check on the email.
     level_source: Literal["policy", "guess", "learned", "floor", "safety_check"] = "policy"
     steps: list[str] = Field(default_factory=list)  # Oscar's working notes, in order
+    # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he
+    # didn't do anything; the decision is what he would have done.
+    source: Literal["demo", "gmail"] = "demo"
+    gmail: GmailInfo | None = None
+    policy_version: str | None = None  # the git commit that made this decision

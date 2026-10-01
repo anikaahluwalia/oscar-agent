@@ -55,13 +55,26 @@ def describe_learning(row: dict) -> str:
     return f"{what}: {row['reason']}, so {LEVEL_HABITS[row['level']]}."
 
 
+# On a real inbox in Stage 9 Oscar only reads, so he says what he would do.
+READ_ONLY_TEMPLATES: dict[AutonomyLevel, str] = {
+    AutonomyLevel.PROCEED_SILENTLY: "I'd {phrase} without bothering you, since {reason}.",
+    AutonomyLevel.PROCEED_AND_NOTIFY: "I'd {phrase} and let you know, since {reason}.",
+    AutonomyLevel.ASK_FIRST: TEMPLATES[AutonomyLevel.ASK_FIRST],
+    AutonomyLevel.ESCALATE: TEMPLATES[AutonomyLevel.ESCALATE],
+}
+READ_ONLY_CAREFUL = "I'd {phrase} and tell you, because {reason}."
+
 # Used when Oscar is being more careful than usual because of feedback.
 CAREFUL_NOTIFY = "Heads up: I {done}. I'm telling you because {reason}."
 
 
-def explain(action: Action, level: AutonomyLevel, reason: str, careful: bool = False) -> str:
+def explain(action: Action, level: AutonomyLevel, reason: str, careful: bool = False, read_only: bool = False) -> str:
     """What Oscar says about a decision, without the evidence."""
-    template = CAREFUL_NOTIFY if careful and level == AutonomyLevel.PROCEED_AND_NOTIFY else TEMPLATES[level]
+    careful_notify = careful and level == AutonomyLevel.PROCEED_AND_NOTIFY
+    if read_only:
+        template = READ_ONLY_CAREFUL if careful_notify else READ_ONLY_TEMPLATES[level]
+    else:
+        template = CAREFUL_NOTIFY if careful_notify else TEMPLATES[level]
     return template.format(phrase=ACTION_PHRASES[action], done=ACTION_DONE[action], reason=reason)
 
 
@@ -98,12 +111,20 @@ DECIDED: dict[AutonomyLevel, str] = {
 }
 
 
+WOULD_DECIDE: dict[AutonomyLevel, str] = {
+    AutonomyLevel.PROCEED_SILENTLY: "Would handle it quietly",
+    AutonomyLevel.PROCEED_AND_NOTIFY: "Would do it and let you know",
+    AutonomyLevel.ASK_FIRST: "Would ask you first",
+    AutonomyLevel.ESCALATE: "Would bring it to you",
+}
+
+
 def working_notes(sender: str, noticed: str | None, flags: list[SafetyCategory], source: str,
-                  reason: str, level: AutonomyLevel) -> list[str]:
+                  reason: str, level: AutonomyLevel, read_only: bool = False) -> list[str]:
     notes = [f"Read the email from {sender}"]
     if noticed:
         notes.append(f'Noticed "{noticed}"')
     notes += [FLAG_NOTES[f] for f in flags]
     notes.append(SOURCE_NOTES[source].format(reason=reason))
-    notes.append(DECIDED[level])
+    notes.append((WOULD_DECIDE if read_only else DECIDED)[level])
     return notes

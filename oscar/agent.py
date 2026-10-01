@@ -13,7 +13,9 @@ from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, check_email, is_stricter
 from oscar.voice import explain, with_evidence, working_notes
 
-def decide(email: Email, preferences: Preferences | None = None) -> Decision:
+def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False) -> Decision:
+    """Oscar's decision on one email. read_only only changes the wording ("I'd archive this"),
+    never the level or the action."""
     classification = classify(email)
     action = classification.action
     level, reason = autonomy_for(action)
@@ -38,7 +40,7 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     floor = ACTION_FLOORS.get(action)
     if floor and level == floor[0] and (level != before_floor or source != "learned"):
         source = "floor"
-    message = explain(action, level, reason, careful)
+    message = explain(action, level, reason, careful, read_only)
     noticed = classification.matched_pattern
 
     # A risky request in the email escalates, whatever the action is.
@@ -67,5 +69,5 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
         safety_flags=[flag.category for flag in flags],
         learned=learned and not flags,
         level_source=source,
-        steps=working_notes(email.sender, noticed, [f.category for f in flags], source, reason, level),
+        steps=working_notes(email.sender, noticed, [f.category for f in flags], source, reason, level, read_only),
     )
