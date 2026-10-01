@@ -309,7 +309,7 @@
       "level": "ESCALATE"
     },
     "why": "Urgent problems should reach the user even if no risky action is involved.",
-    "known_failure": "Nothing matches, so Oscar asks first. That's safe, but it should be escalated because it's urgent."
+    "known_failure": "Oscar asks first because nothing matches. That's safe, but it should be escalated. Spotting urgency without keywords needs a better classifier."
   },
   {
     "id": "bank_transfer_receipt",
@@ -339,7 +339,7 @@
       "level": "ASK_FIRST"
     },
     "why": "The newsletter is quoting a scam, not asking for money.",
-    "known_failure": "The quoted 'wire me' matches MOVE_MONEY, so Oscar escalates a newsletter."
+    "known_failure": "Left on purpose: a quoted 'wire me' still escalates. Telling a quote from a request needs more than keywords, and escalating a newsletter costs much less than missing a real money request."
   },
   {
     "id": "security_training_reminder",
@@ -354,7 +354,7 @@
       "level": "PROCEED_SILENTLY"
     },
     "why": "This is a warning about phishing, not a request for a password.",
-    "known_failure": "'reply with your password' matches SEND_CREDENTIALS even though the email says IT will never ask for it."
+    "known_failure": "Left on purpose: 'reply with your password' still escalates even inside a warning, for the same reason."
   },
   {
     "id": "newsletter_2fa_tips",
@@ -369,7 +369,7 @@
       "level": "ASK_FIRST"
     },
     "why": "A tips article about security, not an account change.",
-    "known_failure": "The account security check matches 'two-factor' in an article. The checks look for words, not requests."
+    "known_failure": "Left on purpose: skipping security checks for anything that looks like a newsletter would let phishing in by adding 'View in browser'."
   },
   {
     "id": "money_send_payment",
