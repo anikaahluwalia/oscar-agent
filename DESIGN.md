@@ -684,3 +684,29 @@ The review of this pass found: a failed answer still removed the card; the "2 of
 chat link flew off with a "Yes" badge as if answered; and "Always do this" on a
 row left the email on your list. Each was fixed.
 
+### Sixth pass: an inbox that takes care of itself
+
+The card stack and the chat still made Oscar feel like something you talk to, and
+the Got it / Later / Why? buttons weren't obvious. This pass rebuilds the app
+around Oscar's work, with plain controls:
+
+- **Names.** Handled, FYI, Needs You and Blocked, with muted colours.
+- **Pages.** Home (status, recent activity, what Oscar knows, a small chat box),
+  Inbox (list plus the selected email and Oscar's decision), Needs You, Activity,
+  What Oscar Knows, Evals and Settings, in a sidebar.
+- **Decisions.** Approve / Edit / Decline on asks (hold to approve for risky
+  actions, as before), Looks good / Undo on FYI, Undo on handled, and "Oscar
+  stopped this" with the reasons on blocked emails.
+- **Why?** opens a drawer with facts, not reasoning: the action, risk,
+  reversibility, what decided the level, your feedback, how sure Oscar is, and the
+  safety limit. Risk and reversibility come from the protected rules.
+- **Chat** is a small box on Home and a drawer everywhere else.
+- **Evals** got their own page after all (an earlier pass kept them out of the
+  app). The numbers are copied from evals/RESULTS.md, with the two kinds of email
+  Oscar still gets wrong.
+- **One copy of the data.** `useOscar` used to fetch separately for every
+  component that used it; now the whole app shares one store.
+
+Nothing here is made up: where the backend has no data (Gmail, notifications,
+the autonomy preference), the app says so instead of showing a fake value.
+

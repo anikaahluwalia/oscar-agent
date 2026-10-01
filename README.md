@@ -26,9 +26,10 @@ side effects.
 
 ![Oscar's home screen](assets/home.png)
 
-| On a phone | Settings |
+| Inbox | What Oscar Knows |
 |---|---|
-| ![Oscar on a phone](assets/phone.png) | ![Settings](assets/settings.png) |
+| ![Inbox](assets/inbox.png) | ![What Oscar Knows](assets/memory.png) |
+
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -55,7 +56,7 @@ Each decision prints an id. Use it to tell Oscar how he did:
 ```
 
 Feedback kinds: `APPROVE`, `REJECT`, `UNDO`, `EDIT_THEN_SEND`, `ALWAYS_DO_THIS`,
-`ALWAYS_ASK_ME`, and `SEEN` ("got it" on an email Oscar brought to you, which
+`ALWAYS_ASK_ME`, and `SEEN` ("Mark as reviewed" on an email Oscar stopped, which
 teaches him nothing). To see what Oscar has learned from it:
 
 ```bash
@@ -77,18 +78,25 @@ npm run dev
 Open http://localhost:3000. Until Gmail is connected, the inbox is the example
 emails: click **Bring in the demo emails** on Home (it's also in **Settings**).
 
-- **Home** has what needs you, one card at a time, most important first: emails
-  for you (**Got it**), ones waiting for **your okay** (yes or no), and what he
-  told you about (looks good or undo). Swipe sideways or use the buttons. Under the
-  cards you can talk to Oscar: ask what needs you, or teach him a rule like
-  "always archive emails from digest@morningbrew-weekly.example".
-- **Activity** has everything that's done.
-- **Settings** shows what Oscar does on his own for each sender, and lets you
-  change it.
+In the app, Oscar's four levels are called **Handled** (did it quietly), **FYI**
+(did it and told you), **Needs You** (asks first) and **Blocked** (stopped it).
 
-Say yes to the newsletter a few times and bring the emails in again to watch
-Oscar learn. Tap **Why?** on a card, or open any email in a list, to see how he
-decided.
+- **Home**: what Oscar is up to, a count of each status, his recent activity, a
+  few things he's learned, and a box to talk to him.
+- **Inbox**: every email with what Oscar did. Open one to approve, edit, decline
+  or undo, and tap **Why?** for the facts behind the decision.
+- **Needs You**: everything waiting on you, in one list.
+- **Activity**: a log of everything Oscar did, suggested or stopped.
+- **What Oscar Knows**: what he's learned per sender (you can change it), and the
+  protected rules learning can't touch.
+- **Evals**: the eval results from `evals/RESULTS.md`.
+- **Settings**: appearance and the demo inbox. Notifications and the autonomy
+  preference are only saved in your browser for now; the backend doesn't use them.
+
+**Ask Oscar** (the box on Home, or the button in the corner) answers "what needs me?", "what did you
+handle?", "what do you know about me?", and rules like "always archive emails from
+digest@morningbrew-weekly.example". Approve the newsletter a few times and bring
+the emails in again to watch Oscar learn.
 
 ## Run the API
 
