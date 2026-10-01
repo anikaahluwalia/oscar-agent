@@ -13,10 +13,10 @@ For each incoming email Oscar proposes one action and decides how much autonomy 
 | `ASK_FIRST` | Action is proposed to user, user must accept or decline |
 | `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Stage 3 — hard safety floor.** Oscar uses a keyword classifier and a fixed
-action → level table, and then a safety floor that the table can't lower. The
-scenarios in `scenarios/baseline.json` show what is fixed and what isn't yet.
-Synthetic emails only; no real side effects, no learning.
+**Status: Stage 4 — user feedback.** Oscar uses a keyword classifier, a fixed
+action → level table and a safety floor the table can't lower. You can now give
+feedback on each decision, and it is saved. Oscar doesn't learn from it yet.
+Synthetic emails only; no real side effects.
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup

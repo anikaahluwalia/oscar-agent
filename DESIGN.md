@@ -186,3 +186,63 @@ were checked. All 3 floor tests now pass.
 
 These are left for later stages. Stage 6 will measure how often this happens, and
 Stage 7 will use those results to fix them.
+
+## Stage 4 — User feedback
+
+**Goal:** Let the user tell Oscar how he did, and save it so Stage 5 can learn
+from it. Oscar doesn't change his behaviour based on feedback yet.
+
+### Oscar's voice
+
+Oscar is named after my dog, a Shih Tzu. The explanations and replies were
+rewritten to sound like him: warm, loyal, a bit protective, and clear about what
+he won't do. For example, "This one's for you. It's asking for money, and I don't
+touch money." Code names stay plain; the personality is only in what the user reads.
+
+### Feedback kinds
+
+| Feedback | Allowed when |
+|---|---|
+| `APPROVE` / `REJECT` | Oscar asked first |
+| `UNDO` | Oscar already did it (silently or with a notification) |
+| `EDIT_THEN_SEND` | The action is a reply or draft, edited text is given, and it wasn't escalated |
+| `ALWAYS_DO_THIS` | Any decision, but it's blocked if the floor covers it (see below) |
+| `ALWAYS_ASK_ME` | Any decision |
+
+Feedback that doesn't fit is rejected with a reply from Oscar, for example "I
+didn't do anything with that one, so there's nothing to undo."
+
+### How it's stored
+
+- Each decision now has an id, a timestamp and the sender.
+- `History` keeps decisions and feedback. With a data folder it appends to
+  `data/decisions.jsonl` and `data/feedback.jsonl` and loads them on startup. No
+  database; one JSON object per line is enough for now and easy to read.
+- Each feedback event copies the action, level and sender from its decision, so
+  the feedback file can be read on its own.
+- The API has `POST /feedback` and `GET /decisions/{id}`. The CLI has
+  `python -m oscar feedback <id> <kind>`. Tests use an in-memory history so they
+  don't write to `data/`.
+
+### Feedback and the safety floor
+
+This is the first place where the user can ask Oscar for more autonomy, so it has
+to respect the floor from Stage 3.
+
+- **"Always do this" on a risky decision is saved but marked `blocked_by_floor`.**
+  Oscar says so instead of agreeing: "I can't take that one on myself. I'll keep
+  bringing these to you." For actions with an `ASK_FIRST` floor he says "I'll keep
+  asking before I send a reply, since it goes out under your name." The event is
+  still saved because it tells us something about the user, but Stage 5 should not
+  learn autonomy from it.
+- **Edit then send is blocked on escalated decisions.** While writing the floor
+  tests I found that "edit then send" worked on an escalated `SEND_REPLY`, so the
+  user could send "I agree" to a contract through feedback. That's fixed.
+
+### Not done yet
+
+- Oscar doesn't use feedback to change decisions. That's Stage 5.
+- "Always do this" applies to the action only. There's no idea of "emails like
+  this one" (same sender or same type) yet.
+- Feedback can be given more than once on the same decision, and nothing checks
+  for conflicts (for example "always do this" and then "always ask me").
