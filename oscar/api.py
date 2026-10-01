@@ -7,6 +7,7 @@ from oscar.agent import decide
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
 from oscar.models import Decision, Email
+from oscar.preferences import Preferences
 
 app = FastAPI(title="Oscar", version="0.1.0")
 
@@ -29,7 +30,7 @@ class FeedbackResponse(BaseModel):
 
 @app.post("/decide", response_model=Decision)
 def decide_endpoint(email: Email, history: History = Depends(get_history)) -> Decision:
-    decision = decide(email)
+    decision = decide(email, Preferences.from_feedback(history.feedback))
     history.add_decision(decision)
     return decision
 

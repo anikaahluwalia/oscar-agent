@@ -66,3 +66,4 @@ class Decision(BaseModel):
     matched_pattern: str | None
     explanation: str
     safety_flags: list[SafetyCategory] = Field(default_factory=list)
+    learned: bool = False  # True when feedback changed the level

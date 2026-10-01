@@ -4,9 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from oscar.agent import decide, explain
+from oscar.agent import decide
 from oscar.models import Action, AutonomyLevel, Email
 from oscar.policy import POLICY
+from oscar.voice import explain
 
 EMAILS_DIR = Path(__file__).resolve().parent.parent / "emails"
 EXAMPLES = sorted(EMAILS_DIR.glob("*.json"))

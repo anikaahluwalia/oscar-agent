@@ -10,10 +10,10 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-from oscar.agent import ACTION_PHRASES
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision, new_id, now
 from oscar.safety import ACTION_FLOORS
+from oscar.voice import ACTION_PHRASES
 
 
 class FeedbackKind(str, Enum):

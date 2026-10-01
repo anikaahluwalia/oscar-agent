@@ -14,6 +14,7 @@ from oscar.agent import decide
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
 from oscar.models import Email
+from oscar.preferences import Preferences
 
 DEFAULT_DIR = Path(__file__).resolve().parent.parent / "emails"
 
@@ -22,7 +23,7 @@ def run_decide(history: History, files: list[str]) -> None:
     paths = [Path(p) for p in files] or sorted(DEFAULT_DIR.glob("*.json"))
     for path in paths:
         email = Email.model_validate_json(path.read_text())
-        decision = decide(email)
+        decision = decide(email, Preferences.from_feedback(history.feedback))
         history.add_decision(decision)
         print(f"── {email.id}  (decision {decision.id})")
         print(f"   From:    {email.sender}")
