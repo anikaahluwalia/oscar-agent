@@ -9,6 +9,7 @@ from oscar.agent import decide
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
 from oscar.models import Decision, Email
+from oscar.overview import autonomy, brief
 from oscar.preferences import Preferences
 from oscar.voice import describe_learning
 
@@ -51,6 +52,18 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     """Every decision, newest first, with the feedback given on it."""
     decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
     return [DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id)) for d in decisions]
+
+
+@app.get("/brief")
+def get_brief(history: History = Depends(get_history)) -> dict:
+    """Oscar's summary of the inbox, in his words."""
+    return brief(history)
+
+
+@app.get("/autonomy")
+def get_autonomy(history: History = Depends(get_history)) -> list[dict]:
+    """How much Oscar does on his own for each sender and action, and the limits."""
+    return autonomy(history)
 
 
 @app.post("/demo/inbox", response_model=list[Decision])
