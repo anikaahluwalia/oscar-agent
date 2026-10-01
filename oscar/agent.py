@@ -11,7 +11,7 @@ from oscar.models import AutonomyLevel, Decision, Email
 from oscar.policy import autonomy_for
 from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, check_email, is_stricter
-from oscar.voice import explain, with_evidence
+from oscar.voice import explain, with_evidence, working_notes
 
 def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     classification = classify(email)
@@ -67,4 +67,5 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
         safety_flags=[flag.category for flag in flags],
         learned=learned and not flags,
         level_source=source,
+        steps=working_notes(email.sender, noticed, [f.category for f in flags], source, reason, level),
     )

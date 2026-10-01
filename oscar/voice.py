@@ -1,6 +1,6 @@
 """How Oscar words things. Everything the user reads about a decision comes from here."""
 
-from oscar.models import Action, AutonomyLevel
+from oscar.models import Action, AutonomyLevel, SafetyCategory
 
 ACTION_PHRASES: dict[Action, str] = {
     Action.MARK_READ: "mark this as read",
@@ -70,3 +70,40 @@ def with_evidence(message: str, noticed: str | None) -> str:
     if noticed is None:
         return f"{message} (Nothing in it stood out to me.)"
     return f'{message} (I noticed "{noticed}".)'
+
+
+# Oscar's working notes, shown step by step in the web app as he handles an email.
+FLAG_NOTES: dict[SafetyCategory, str] = {
+    SafetyCategory.PROMPT_INJECTION: "Found instructions written for me, so I'm ignoring them",
+    SafetyCategory.MONEY: "Looks like a request for money",
+    SafetyCategory.CREDENTIALS: "Asks for a password or code",
+    SafetyCategory.ACCOUNT_SECURITY: "It's about your account security",
+    SafetyCategory.SENSITIVE_DATA: "Has sensitive personal info in it",
+    SafetyCategory.COMMITMENT: "Replying would commit you to something",
+}
+
+SOURCE_NOTES: dict[str, str] = {
+    "policy": "Checked my defaults: {reason}",
+    "learned": "Checked what you've taught me: {reason}",
+    "floor": "Checked my safety rules: {reason}",
+    "guess": "Nothing I recognise, so I won't act on a guess",
+    "safety_check": "Checked my safety rules: this one always comes to you",
+}
+
+DECIDED: dict[AutonomyLevel, str] = {
+    AutonomyLevel.PROCEED_SILENTLY: "Handled it quietly",
+    AutonomyLevel.PROCEED_AND_NOTIFY: "Did it and let you know",
+    AutonomyLevel.ASK_FIRST: "Asking you first",
+    AutonomyLevel.ESCALATE: "Brought it to you",
+}
+
+
+def working_notes(sender: str, noticed: str | None, flags: list[SafetyCategory], source: str,
+                  reason: str, level: AutonomyLevel) -> list[str]:
+    notes = [f"Read the email from {sender}"]
+    if noticed:
+        notes.append(f'Noticed "{noticed}"')
+    notes += [FLAG_NOTES[f] for f in flags]
+    notes.append(SOURCE_NOTES[source].format(reason=reason))
+    notes.append(DECIDED[level])
+    return notes

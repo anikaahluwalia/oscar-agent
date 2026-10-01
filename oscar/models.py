@@ -75,3 +75,4 @@ class Decision(BaseModel):
     # Which step decided the level: the policy table, a guess (nothing matched),
     # what Oscar learned, the safety floor for the action, or a safety check on the email.
     level_source: Literal["policy", "guess", "learned", "floor", "safety_check"] = "policy"
+    steps: list[str] = Field(default_factory=list)  # Oscar's working notes, in order
