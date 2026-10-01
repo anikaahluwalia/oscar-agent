@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Inter, Geist_Mono } from "next/font/google";
+import { OscarPanel } from "@/components/oscar-panel";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -22,10 +23,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <TooltipProvider>
-            <SiteHeader />
-            {children}
+            <div className="flex flex-1">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <SiteHeader />
+                {children}
+              </div>
+              <OscarPanel />
+            </div>
           </TooltipProvider>
-          <Toaster position="bottom-right" />
+          <Toaster position="bottom-center" />
         </ThemeProvider>
       </body>
     </html>

@@ -39,6 +39,12 @@ export interface Decision {
   safety_flags: string[];
   learned: boolean;
   level_source: "policy" | "guess" | "learned" | "floor" | "safety_check";
+  steps: string[];
+}
+
+export interface ChatReply {
+  reply: string;
+  decisions: string[];
 }
 
 export interface FeedbackEvent {
@@ -112,6 +118,12 @@ export const getBrief = () => call<Brief>("/brief");
 export const getAutonomy = () => call<AutonomyRow[]>("/autonomy");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
 export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "POST" });
+
+export const sendChat = (message: string, decisionId?: string) =>
+  call<ChatReply>("/chat", {
+    method: "POST",
+    body: JSON.stringify({ message, decision_id: decisionId ?? null }),
+  });
 
 export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string) =>
   call<{ event: FeedbackEvent; reply: string }>("/feedback", {
