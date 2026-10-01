@@ -21,7 +21,8 @@ export type FeedbackKind =
   | "UNDO"
   | "EDIT_THEN_SEND"
   | "ALWAYS_DO_THIS"
-  | "ALWAYS_ASK_ME";
+  | "ALWAYS_ASK_ME"
+  | "SEEN";
 
 export interface Decision {
   id: string;

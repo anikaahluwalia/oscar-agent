@@ -40,14 +40,16 @@ export function Chat({ items }: { items: DecisionWithFeedback[] }) {
 
   return (
     <section ref={box} id="chat" className="flex scroll-mt-6 flex-col gap-3 rounded-3xl bg-card p-4">
+      <h2 className="flex items-center gap-2 font-heading text-xl font-semibold">
+        <OscarAvatar size={36} /> Talk to Oscar
+      </h2>
       <div ref={list} className="flex max-h-96 flex-col gap-3 overflow-y-auto">
         {messages.map((m, i) => (
           <div key={i} className={cn("flex gap-2", m.from === "you" && "justify-end")}>
-            {m.from === "oscar" && <OscarAvatar size={28} className="mt-0.5" />}
             <div className="flex max-w-[85%] flex-col gap-1.5">
               <p
                 className={cn(
-                  "rounded-2xl px-3.5 py-2 text-sm",
+                  "rounded-2xl px-3.5 py-2",
                   m.from === "you" ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-tl-sm bg-muted",
                 )}
               >
@@ -74,7 +76,7 @@ export function Chat({ items }: { items: DecisionWithFeedback[] }) {
             </div>
           </div>
         ))}
-        {busy && <p className="pl-9 text-xs text-muted-foreground">Oscar is thinking...</p>}
+        {busy && <p className="text-xs text-muted-foreground">Oscar is thinking...</p>}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {SUGGESTIONS.map((s) => (

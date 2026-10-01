@@ -26,7 +26,7 @@ export const API_DOWN = "I can't reach my API. Start it from the repo root with:
 
 export type OscarData = { items: DecisionWithFeedback[]; brief: Brief; autonomy: AutonomyRow[] };
 
-const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND"]);
+const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND", "SEEN"]);
 export const isAnswered = (i: DecisionWithFeedback) => i.feedback.some((f) => ANSWERS.has(f.kind));
 // Done: Oscar handled it quietly, or you've already answered. These live on the Activity page.
 export const isDone = (i: DecisionWithFeedback) => i.decision.autonomy_level === "PROCEED_SILENTLY" || isAnswered(i);

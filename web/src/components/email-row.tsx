@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Highlight } from "@/components/highlight";
 import { HoldButton } from "@/components/hold-button";
-import { MOOD_FOR_LEVEL, OscarAvatar } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";
 import { FEEDBACK, FLAGS, HOLD_TO_CONFIRM, LEVEL_SOURCES, LEVELS } from "@/lib/labels";
 import { onShowEmail } from "@/lib/show-email";
@@ -59,9 +58,25 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
     if (ok) setEditing(false);
   }
 
+  // "Always do this" on something still waiting also answers it (yes, or looks good), so it leaves
+  // your list. Hard-to-undo asks still need the hold, so for those it only sets the rule.
+  async function always() {
+    const waiting = !answered && (level === "PROCEED_AND_NOTIFY" || (level === "ASK_FIRST" && !HOLD_TO_CONFIRM[decision.action]));
+    if (waiting) {
+      setBusy(true);
+      const ok = await onFeedback("APPROVE");
+      setBusy(false);
+      if (!ok) return;
+    }
+    await give("ALWAYS_DO_THIS");
+  }
+
   // The main buttons stay visible on the closed row; the rest show when it's open.
-  const main = !answered && level !== "ESCALATE" && (
+  const main = !answered && (
     <div className="flex shrink-0 gap-1.5">
+      {level === "ESCALATE" && (
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => give("SEEN")}>Got it</Button>
+      )}
       {level === "ASK_FIRST" && (
         <>
           {HOLD_TO_CONFIRM[decision.action] ? (
@@ -75,7 +90,7 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
       {level === "PROCEED_AND_NOTIFY" && (
         <Button size="sm" variant="outline" disabled={busy} onClick={() => give("APPROVE")}>Looks good</Button>
       )}
-      {level !== "ASK_FIRST" && (
+      {(level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && (
         <Button size="sm" variant="outline" disabled={busy} onClick={() => give("UNDO")}>Undo</Button>
       )}
     </div>
@@ -117,10 +132,7 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
             <Highlight text={decision.snippet} phrase={decision.noticed} className={MARK[level]} />
           </p>
 
-          <div className="flex items-start gap-2">
-            <OscarAvatar size={32} mood={MOOD_FOR_LEVEL[level]} />
-            <p className="rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-sm">{decision.message}</p>
-          </div>
+          <p className="rounded-2xl bg-muted px-3 py-2 text-sm">{decision.message}</p>
 
           <button
             type="button"
@@ -168,7 +180,7 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
                 {!answered && canEdit && !editing && (
                   <Button size="sm" variant="outline" disabled={busy} onClick={() => setEditing(true)}>Edit and send</Button>
                 )}
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => give("ALWAYS_DO_THIS")}>Always do this</Button>
+                <Button size="sm" variant="ghost" disabled={busy} onClick={always}>Always do this</Button>
                 <Button size="sm" variant="ghost" disabled={busy} onClick={() => give("ALWAYS_ASK_ME")}>Always ask me</Button>
               </>
             )}
