@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
-from oscar.overview import ANSWERS, brief, latest_per_email
+from oscar.overview import brief, latest_per_email, needs_you
 from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS
 from oscar.voice import describe_learning
@@ -59,18 +59,19 @@ def _why(decision: Decision) -> ChatReply:
 
 
 def _needs_you(history: History) -> ChatReply:
-    answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS}
-    current = latest_per_email(history)
-    for_you = [d for d in current if d.autonomy_level == AutonomyLevel.ESCALATE and d.id not in answered]
-    waiting = [d for d in current if d.autonomy_level == AutonomyLevel.ASK_FIRST and d.id not in answered]
-    if not for_you and not waiting:
+    open_ = needs_you(history)
+    for_you, waiting, told = (open_[level] for level in (AutonomyLevel.ESCALATE, AutonomyLevel.ASK_FIRST,
+                                                         AutonomyLevel.PROCEED_AND_NOTIFY))
+    if not for_you and not waiting and not told:
         return ChatReply(reply="Nothing needs you right now. I'll bring you anything new.")
     parts = []
     if for_you:
         parts.append(f"For you: {_subjects(for_you)}.")
     if waiting:
         parts.append(f"Waiting for your okay: {_subjects(waiting)}.")
-    return ChatReply(reply=" ".join(parts), decisions=[d.id for d in for_you + waiting])
+    if told:
+        parts.append(f"I did these and told you, in case you want to check: {_subjects(told)}.")
+    return ChatReply(reply=" ".join(parts), decisions=[d.id for d in for_you + waiting + told])
 
 
 def _handled(history: History) -> ChatReply:

@@ -21,20 +21,28 @@ def latest_per_email(history: History) -> list[Decision]:
     return out
 
 
+def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
+    """What's still on your list, newest first: emails for you, asks you haven't answered,
+    and things Oscar did and told you about that you haven't checked."""
+    answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS}
+    levels = (AutonomyLevel.ESCALATE, AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY)
+    current = latest_per_email(history)
+    return {level: [d for d in current if d.autonomy_level == level and d.id not in answered] for level in levels}
+
+
 def ask_rate(decisions: list[Decision]) -> float:
     return sum(d.autonomy_level == AutonomyLevel.ASK_FIRST for d in decisions) / len(decisions)
 
 
 def brief(history: History) -> dict:
     current = latest_per_email(history)
-    answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS}
     count = lambda level: sum(d.autonomy_level == level for d in current)  # noqa: E731
-    waiting = sum(d.autonomy_level == AutonomyLevel.ASK_FIRST and d.id not in answered for d in current)
-    for_you = sum(d.autonomy_level == AutonomyLevel.ESCALATE and d.id not in answered for d in current)
+    open_ = needs_you(history)
+    waiting, for_you = len(open_[AutonomyLevel.ASK_FIRST]), len(open_[AutonomyLevel.ESCALATE])
     handled, told = count(AutonomyLevel.PROCEED_SILENTLY), count(AutonomyLevel.PROCEED_AND_NOTIFY)
 
     # Things Oscar did and told you about wait for a "looks good" or an undo, so they're on your list too.
-    told_unchecked = sum(d.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY and d.id not in answered for d in current)
+    told_unchecked = len(open_[AutonomyLevel.PROCEED_AND_NOTIFY])
 
     done = [part for n, part in ((handled, f"handled {handled} quietly"), (told, f"told you about {told}")) if n]
     did = f"I {' and '.join(done)}." if done else ""

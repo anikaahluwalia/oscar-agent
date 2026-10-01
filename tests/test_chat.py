@@ -2,7 +2,7 @@ from pathlib import Path
 
 from oscar.agent import decide
 from oscar.chat import answer
-from oscar.feedback import FeedbackKind
+from oscar.feedback import FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.models import AutonomyLevel, Email
 from oscar.preferences import Preferences
@@ -26,6 +26,25 @@ def test_what_needs_me():
     r = answer(history, "What needs me?")
     assert r.reply.startswith("For you:")
     assert by_email(history, "vendor_wire").id in r.decisions
+
+
+def test_what_needs_me_matches_the_brief():
+    from oscar.overview import brief
+
+    history = inbox()
+    r = answer(history, "What needs me?")
+    # Same list as the headline: for you, waiting, and what he told you about.
+    assert "in case you want to check" in r.reply
+    assert brief(history)["summary"].startswith(f"{len(r.decisions)} emails need you.")
+    for d in list(history.decisions.values()):
+        level = d.autonomy_level
+        if level == AutonomyLevel.ESCALATE:
+            record_feedback(history, d.id, FeedbackKind.SEEN)
+        elif level == AutonomyLevel.ASK_FIRST:
+            record_feedback(history, d.id, FeedbackKind.REJECT)
+        elif level == AutonomyLevel.PROCEED_AND_NOTIFY:
+            record_feedback(history, d.id, FeedbackKind.APPROVE)
+    assert answer(history, "What needs me?").reply.startswith("Nothing needs you")
 
 
 def test_what_did_you_handle():
