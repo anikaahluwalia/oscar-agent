@@ -15,7 +15,7 @@ import {
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { loadDemoInbox, resetDemo } from "@/lib/api";
-import { notifyChanged, oscarSays } from "@/lib/use-oscar";
+import { notifyChanged, offerUndo, oscarSays } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -32,6 +32,17 @@ export function SiteHeader() {
       await action();
       notifyChanged();
       oscarSays(said);
+    } catch {
+      oscarSays("I can't reach my API right now.");
+    }
+  }
+
+  async function bringIn() {
+    try {
+      const decisions = await loadDemoInbox();
+      notifyChanged();
+      oscarSays("New emails are in. I've sorted them.");
+      offerUndo(decisions);
     } catch {
       oscarSays("I can't reach my API right now.");
     }
@@ -67,7 +78,7 @@ export function SiteHeader() {
         <DropdownMenuContent align="end">
           {/* Until Gmail is connected, the inbox is the example emails in emails/. */}
           <DropdownMenuLabel>Demo inbox</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run(loadDemoInbox, "New emails are in. I've sorted them.")}>
+          <DropdownMenuItem onClick={bringIn}>
             Bring in the demo emails
           </DropdownMenuItem>
           <DropdownMenuSeparator />

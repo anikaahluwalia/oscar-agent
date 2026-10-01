@@ -14,6 +14,7 @@ import {
   sendFeedback,
   type AutonomyRow,
   type Brief,
+  type Decision,
   type DecisionWithFeedback,
   type FeedbackKind,
 } from "@/lib/api";
@@ -42,6 +43,44 @@ async function fetchAll(): Promise<OscarData> {
 
 export function oscarSays(text: string) {
   toast(text, { icon: <OscarAvatar size={22} /> });
+}
+
+const UNDO_WINDOW_MS = 10_000;
+
+/**
+ * After new emails come in, tell you about what Oscar did with a heads-up, with a
+ * chance to undo it. That's what PROCEED_AND_NOTIFY means. Silent actions stay
+ * silent; they can still be undone from Home.
+ */
+export function offerUndo(decisions: Decision[]) {
+  const told = decisions.filter((d) => d.autonomy_level === "PROCEED_AND_NOTIFY");
+  if (told.length > 3) {
+    toast(`Heads up: I took care of ${told.length} emails.`, {
+      icon: <OscarAvatar size={22} />,
+      description: "They're under Told you on Home if you want to check or undo any.",
+      duration: UNDO_WINDOW_MS,
+    });
+    return;
+  }
+  for (const d of told) {
+    toast(d.subject, {
+      icon: <OscarAvatar size={22} />,
+      description: d.message,
+      duration: UNDO_WINDOW_MS,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          try {
+            const { reply } = await sendFeedback(d.id, "UNDO");
+            oscarSays(reply);
+            notifyChanged();
+          } catch (e) {
+            oscarSays(e instanceof Error ? e.message : "Something went wrong.");
+          }
+        },
+      },
+    });
+  }
 }
 
 export function useOscar() {
