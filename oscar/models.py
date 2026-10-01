@@ -61,6 +61,8 @@ class Decision(BaseModel):
     created_at: datetime = Field(default_factory=now)
     email_id: str
     sender: str
+    subject: str = ""
+    snippet: str = ""  # start of the body, for showing the email in the UI
     action: Action
     autonomy_level: AutonomyLevel
     matched_pattern: str | None

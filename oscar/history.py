@@ -43,6 +43,14 @@ class History:
     def feedback_for(self, decision_id: str) -> list[FeedbackEvent]:
         return [e for e in self.feedback if e.decision_id == decision_id]
 
+    def clear(self) -> None:
+        """Forget everything, including the saved files."""
+        self.decisions.clear()
+        self.feedback.clear()
+        if self.data_dir is not None:
+            for name in ("decisions.jsonl", "feedback.jsonl"):
+                (self.data_dir / name).unlink(missing_ok=True)
+
     def _append(self, filename: str, line: str) -> None:
         if self.data_dir is None:
             return

@@ -1,6 +1,8 @@
 from functools import lru_cache
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from oscar.agent import decide
@@ -10,6 +12,16 @@ from oscar.models import Decision, Email
 from oscar.preferences import Preferences
 
 app = FastAPI(title="Oscar", version="0.1.0")
+
+# The web app runs on its own port in development.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+DEMO_EMAILS = Path(__file__).resolve().parent.parent / "emails"
 
 
 @lru_cache
@@ -26,6 +38,34 @@ class FeedbackRequest(BaseModel):
 class FeedbackResponse(BaseModel):
     event: FeedbackEvent
     reply: str
+
+
+class DecisionWithFeedback(BaseModel):
+    decision: Decision
+    feedback: list[FeedbackEvent]
+
+
+@app.get("/decisions", response_model=list[DecisionWithFeedback])
+def list_decisions(history: History = Depends(get_history)) -> list[DecisionWithFeedback]:
+    """Every decision, newest first, with the feedback given on it."""
+    decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
+    return [DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id)) for d in decisions]
+
+
+@app.post("/demo/inbox", response_model=list[Decision])
+def load_demo_inbox(history: History = Depends(get_history)) -> list[Decision]:
+    """Run every email in emails/ through Oscar, as if they just arrived."""
+    decisions = []
+    for path in sorted(DEMO_EMAILS.glob("*.json")):
+        decisions.append(decide_endpoint(Email.model_validate_json(path.read_text()), history))
+    return decisions
+
+
+@app.post("/demo/reset")
+def reset(history: History = Depends(get_history)) -> dict:
+    """Forget all decisions and feedback, so the demo can start again."""
+    history.clear()
+    return {"ok": True}
 
 
 @app.post("/decide", response_model=Decision)

@@ -46,6 +46,8 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     return Decision(
         email_id=email.id,
         sender=email.sender,
+        subject=email.subject,
+        snippet=email.body[:160],
         action=action,
         autonomy_level=level,
         matched_pattern=classification.matched_pattern,
