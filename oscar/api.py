@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -15,10 +16,12 @@ from oscar.voice import describe_learning
 
 app = FastAPI(title="Oscar", version="0.1.0")
 
-# The web app runs on its own port in development.
+# The web app runs on its own port in development. OSCAR_WEB_ORIGINS (comma
+# separated) overrides the default, e.g. when running a second copy on another port.
+WEB_ORIGINS = os.environ.get("OSCAR_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=WEB_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
