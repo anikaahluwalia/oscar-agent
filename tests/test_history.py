@@ -23,3 +23,17 @@ def test_history_returns_saved_decision():
 
 def test_history_returns_none_for_unknown_id():
     assert History().get_decision("missing") is None
+
+
+def test_history_is_saved_and_loaded(tmp_path):
+    from oscar.feedback import FeedbackKind, record_feedback
+
+    history = History(tmp_path)
+    decision = decide(make_email(subject="weekly newsletter"))  # ARCHIVE, ASK_FIRST
+    history.add_decision(decision)
+    event, _ = record_feedback(history, decision.id, FeedbackKind.APPROVE)
+
+    reloaded = History(tmp_path)
+    assert reloaded.get_decision(decision.id) == decision
+    assert reloaded.feedback == [event]
+
