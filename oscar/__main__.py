@@ -4,6 +4,7 @@
     python -m oscar decide emails/newsletter.json   decide on one email
     python -m oscar feedback <decision_id> APPROVE  give feedback on a decision
     python -m oscar feedback <decision_id> EDIT_THEN_SEND --text "Sure, Thursday works."
+    python -m oscar learned                         show what Oscar has learned
 """
 
 import argparse
@@ -15,6 +16,7 @@ from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
 from oscar.models import Email
 from oscar.preferences import Preferences
+from oscar.voice import describe_learning
 
 DEFAULT_DIR = Path(__file__).resolve().parent.parent / "emails"
 
@@ -43,6 +45,16 @@ def run_feedback(history: History, decision_id: str, kind: str, text: str | None
     return 0
 
 
+def run_learned(history: History) -> None:
+    rows = Preferences.from_feedback(history.feedback).summary()
+    if not rows:
+        print("Oscar: I haven't learned anything yet. Give me some feedback first.")
+        return
+    print("Oscar: Here's what I've learned.")
+    for row in rows:
+        print(f"  - {describe_learning(row)}")
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m oscar")
     commands = parser.add_subparsers(dest="command")
@@ -55,9 +67,14 @@ def main(argv: list[str]) -> int:
     feedback_cmd.add_argument("kind", choices=[k.value for k in FeedbackKind], type=str.upper)
     feedback_cmd.add_argument("--text", help="edited reply, for EDIT_THEN_SEND")
 
+    commands.add_parser("learned", help="show what Oscar has learned")
+
     args = parser.parse_args(argv)
     history = History(default_data_dir())
 
+    if args.command == "learned":
+        run_learned(history)
+        return 0
     if args.command == "feedback":
         return run_feedback(history, args.decision_id, args.kind, args.text)
     run_decide(history, getattr(args, "files", []))

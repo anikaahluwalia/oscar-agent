@@ -39,6 +39,21 @@ TEMPLATES: dict[AutonomyLevel, str] = {
 }
 
 
+LEVEL_HABITS: dict[AutonomyLevel, str] = {
+    AutonomyLevel.PROCEED_SILENTLY: "I do it without bothering you",
+    AutonomyLevel.PROCEED_AND_NOTIFY: "I do it and let you know",
+    AutonomyLevel.ASK_FIRST: "I check with you first",
+}
+
+
+def describe_learning(row: dict) -> str:
+    """One line on what Oscar has learned about an action."""
+    action = row["action"].value.lower().replace("_", " ")
+    if row["level"] is None:
+        return f"{action}: {row['reason']}."
+    return f"{action}: {row['reason']}, so {LEVEL_HABITS[row['level']]}."
+
+
 # Used when Oscar is being more careful than usual because of feedback.
 CAREFUL_NOTIFY = "Heads up: I {done}. I'm telling you because {reason}."
 

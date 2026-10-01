@@ -101,3 +101,22 @@ def test_always_ask_me_on_a_silent_action():
     email = load("order_receipt.json")  # APPLY_LABEL, PROCEED_SILENTLY
     record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_ASK_ME)
     assert decide_with(history, email).autonomy_level == AutonomyLevel.ASK_FIRST
+
+
+def test_learned_summary_through_the_api(client):
+    email = load("newsletter.json").model_dump()
+    for _ in range(3):
+        decision = client.post("/decide", json=email).json()
+        client.post("/feedback", json={"decision_id": decision["id"], "kind": "APPROVE"})
+    rows = client.get("/learned").json()
+    assert rows == [{"action": "ARCHIVE", "yes": 3.0, "no": 0.0, "mean": 0.8, "always_ask": False,
+                     "level": "PROCEED_AND_NOTIFY", "reason": "you've okayed this 3 times"}]
+
+
+def test_learned_summary_shows_careful_actions():
+    history = History()
+    email = load("fyi_update.json")
+    record_feedback(history, decide_with(history, email).id, FeedbackKind.UNDO)
+    [row] = Preferences.from_feedback(history.feedback).summary()
+    assert row["level"] == AutonomyLevel.PROCEED_AND_NOTIFY
+    assert row["reason"] == "you undid this last time"

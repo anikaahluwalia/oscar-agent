@@ -43,6 +43,11 @@ def get_decision(decision_id: str, history: History = Depends(get_history)) -> D
     return decision
 
 
+@app.get("/learned")
+def learned(history: History = Depends(get_history)) -> list[dict]:
+    return Preferences.from_feedback(history.feedback).summary()
+
+
 @app.post("/feedback", response_model=FeedbackResponse)
 def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_history)) -> FeedbackResponse:
     if history.get_decision(request.decision_id) is None:

@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import Action, AutonomyLevel
+from oscar.policy import autonomy_for
 from oscar.safety import is_stricter
 
 PRIOR_YES = 1.0
@@ -98,6 +99,22 @@ class Preferences:
         pref.yes += yes
         pref.no += no
         pref.counts[event.kind] += 1
+
+    def summary(self) -> list[dict]:
+        """What Oscar has learned, one row per action with feedback."""
+        rows = []
+        for action, pref in self.by_action.items():
+            suggestion = self.suggest(action, autonomy_for(action)[0])
+            rows.append({
+                "action": action,
+                "yes": pref.yes - PRIOR_YES,
+                "no": pref.no - PRIOR_NO,
+                "mean": round(pref.mean, 2),
+                "always_ask": pref.always_ask,
+                "level": suggestion[0] if suggestion else None,
+                "reason": suggestion[1] if suggestion else "not enough feedback yet",
+            })
+        return rows
 
     def get(self, action: Action) -> ActionPreference:
         return self.by_action.get(action, ActionPreference())
