@@ -12,7 +12,6 @@ const GREETING: ChatMessage = {
   from: "oscar",
   text: "Hi, I'm Oscar. Ask me what needs you, why I made a call, or teach me a rule.",
 };
-const ASKED = "oscar:asked";
 
 let state: ChatState = { messages: [GREETING], busy: false };
 const listeners = new Set<() => void>();
@@ -34,7 +33,6 @@ export function useChat() {
 export async function askOscar(text: string, decisionId?: string) {
   if (state.busy) return;
   set({ busy: true, messages: [...state.messages, { from: "you", text }] });
-  window.dispatchEvent(new Event(ASKED));
   try {
     const reply = await sendChat(text, decisionId);
     set({ messages: [...state.messages, { from: "oscar", text: reply.reply, decisions: reply.decisions }] });
@@ -44,10 +42,4 @@ export async function askOscar(text: string, decisionId?: string) {
   } finally {
     set({ busy: false });
   }
-}
-
-/** Called when anything asks Oscar something, so the chat can scroll into view. */
-export function onAsked(handler: () => void) {
-  window.addEventListener(ASKED, handler);
-  return () => window.removeEventListener(ASKED, handler);
 }

@@ -1,5 +1,5 @@
-import { Activity } from "@/components/activity";
+import { ActivityPage } from "@/components/pages/activity-page";
 
 export default function Page() {
-  return <Activity />;
+  return <ActivityPage />;
 }

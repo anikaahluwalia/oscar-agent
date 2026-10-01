@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Old pages: the swipe cards moved onto Home, and autonomy lives in Settings now.
   async redirects() {
     return [
-      { source: "/triage", destination: "/", permanent: false },
-      { source: "/autonomy", destination: "/settings", permanent: false },
+      { source: "/", destination: "/home", permanent: false },
+      // Older pages: the swipe cards became Needs You, and autonomy lives in What Oscar Knows.
+      { source: "/triage", destination: "/needs-you", permanent: false },
+      { source: "/autonomy", destination: "/memory", permanent: false },
     ];
   },
 };
