@@ -31,10 +31,11 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\bclick (here )?to unsubscribe\b",
         r"\bhaven['’]t opened\b",
     ]),
+    # Signs of bulk mail, not just the word "newsletter", which colleagues use too.
     (Action.ARCHIVE, [
-        r"\bnewsletter\b",
         r"\bweekly digest\b",
         r"\bview (it )?in (your )?browser\b",
+        r"\bmanage (your )?preferences\b",
     ]),
     (Action.APPLY_LABEL, [
         r"\breceipt\b",

@@ -418,7 +418,7 @@
       "level": "ASK_FIRST"
     },
     "why": "Same request as forward_plain. The word 'newsletter' should not change the action.",
-    "known_failure": "ARCHIVE is checked before FORWARD, so the word 'newsletter' turns this into an archive."
+    "known_failure": null
   },
   {
     "id": "meeting_invitation",
