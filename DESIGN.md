@@ -770,3 +770,78 @@ never teaches him about that same decision.
 
 Each stage starts only when the one before it has been measured, not on a date.
 The demo inbox stays, for evals and for anyone trying Oscar without Gmail.
+
+## Stage 9 — Read-only on a real inbox
+
+Oscar reads a real Gmail inbox and logs what he would do with each email. Nothing
+in Gmail changes. This is the first step of the rollout above.
+
+### How it works
+
+- **Access.** Google OAuth with one scope, `gmail.readonly`. The client
+  (`oscar/gmail.py`) only has read methods and only sends GET requests to Gmail;
+  a test fails if anything else goes out. The refresh token is saved in
+  `data/gmail/token.json` (not in git, readable only by you). The Google client
+  secret lives in `.env`. A new connection is tried on its own first, so a failed
+  attempt never breaks one that works.
+- **Checking for new email** (`oscar/inbox.py`) reads the newest inbox emails Oscar
+  hasn't seen and runs `decide()` on each. The decision is logged with where it
+  came from: Gmail's IDs, when it arrived, Gmail's labels and tab, the length of
+  the thread, whether you've emailed the sender before, and the git commit of
+  Oscar that made it. Only the first 160 characters of the body are stored.
+- **Wording.** `decide(read_only=True)` says "I'd archive this" instead of "I
+  archived this". The level and action are the same either way.
+- **What you did later.** Each check also notes whether recent emails are still in
+  the inbox, still unread, or gone. It's a second opinion next to your reviews.
+- **Kept apart.** The real inbox has its own history in `data/gmail/accounts/`,
+  one per Gmail address: its own decisions, feedback and learning. Nothing learned
+  on the demo inbox changes his decisions on your real one, so the numbers are
+  about the real inbox only.
+- **Checking** runs one at a time, pages back through the inbox so a busy day isn't
+  cut short, skips an email Gmail won't return (and tries it next time), and reads
+  each email in its own character set.
+- **Version.** Each decision records the git commit it was made with, marked
+  "-changed" when `oscar/` has uncommitted edits, so results before and after a fix
+  are never mixed.
+- **No learning yet.** Feedback (approve, undo, always do this) is refused on the
+  real inbox: Oscar didn't do anything, and he shouldn't learn from emails being
+  used to score him. Reviews are recorded instead.
+- **Reviews** (`oscar/review.py`) use the eight labels above. A review can only be
+  given after the decision was logged, and the latest review of a decision counts.
+  The summary gives agreement (Correct out of everything except Skip), the count of
+  each label, and the same split by version of Oscar.
+- **Regression cases** go in `evals/regression_cases/`, one JSON file per case,
+  and run with `python -m evals.regressions` and in the test suite. There are none
+  yet: they get written from real mistakes, with their opposite case, before
+  Oscar's logic changes.
+
+### Decisions
+
+- **Read-only before anything else.** The narrowest access shows how Oscar does on
+  real email without any risk to the inbox, and doesn't need Google's "can send
+  email" permission at all.
+- **Separate histories instead of a filter.** Filtering one history by source would
+  still let demo feedback shape real decisions through learning.
+- **httpx instead of Google's client library.** Five GET endpoints and two token
+  calls don't need a large dependency, and it keeps every request visible and easy
+  to test with a fake Gmail.
+
+### Reviewing Stage 9
+
+A review found 18 problems, all fixed before the stage was finished. The ones that
+mattered most: the chat and brief said Oscar "handled" emails he had only read;
+another website could make the browser POST to the API (POSTs must now be JSON,
+which browsers only send cross-site after asking, and the API only answers to
+known host names); two checks at once logged emails twice; one unreadable email
+stopped the whole check; and a Gmail rate limit was logged as you deleting an
+email.
+
+### Not done
+
+- **Deploying.** The API has no sign-in, so it must only run on your own machine
+  while it can read a real inbox. Deploying needs sign-in first.
+- **Checking on a timer.** Oscar reads new email when you press Check for new email.
+- **Long threads.** Oscar decides on the newest message and only knows how long the
+  thread is, not what was said earlier in it.
+- **Google's 7-day limit** while the app is in testing mode.
+

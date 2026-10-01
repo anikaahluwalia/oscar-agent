@@ -98,6 +98,30 @@ handle?", "what do you know about me?", and rules like "always archive emails fr
 digest@morningbrew-weekly.example". Approve the newsletter a few times and bring
 the emails in again to watch Oscar learn.
 
+## Connect a real Gmail inbox (read-only)
+
+Oscar can read a real Gmail inbox and note what he *would* do with each email.
+He only gets read-only access: nothing in Gmail changes. You review his decisions
+in the app, and mistakes become regression tests (see DESIGN.md, Stage 9).
+
+1. Make a Gmail account for testing, or use your own.
+2. In [Google Cloud Console](https://console.cloud.google.com), create a project and
+   enable the **Gmail API**.
+3. Under **Google Auth Platform**, set up the app (External) and add your Gmail
+   address as a **test user**.
+4. Under **Clients**, create a **Web application** client with this redirect URI:
+   `http://localhost:8000/auth/google/callback`
+5. Copy `.env.example` to `.env` and fill in the client ID and secret. `.env` is
+   ignored by git.
+6. Restart the API, open **Settings → Connect Gmail**, then **Check for new email**.
+
+While Gmail is connected, the demo inbox is off and the app shows your real inbox.
+**Review** lists Oscar's decisions to score, and **Evals** shows the results. From
+the command line, `python -m oscar reviews` lists every decision you disagreed with.
+
+Google keeps the connection for 7 days while the app is in testing mode, so you may
+need to connect again after that.
+
 ## Run the API
 
 ```bash
