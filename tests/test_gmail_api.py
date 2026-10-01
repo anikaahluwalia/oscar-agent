@@ -16,7 +16,7 @@ def setup(tmp_path, monkeypatch):
     app.dependency_overrides[get_real_history] = lambda: real
     app.dependency_overrides[get_http] = fake.http
     app.dependency_overrides[get_history] = lambda: real if state["tokens"].load() else demo
-    yield TestClient(app), state, real, demo, tmp_path
+    yield TestClient(app, headers={"content-type": "application/json"}), state, real, demo, tmp_path
     app.dependency_overrides.clear()
 
 
@@ -36,13 +36,13 @@ def test_start_without_google_keys_says_so(setup, monkeypatch):
 def test_callback_needs_a_state_we_issued(setup):
     client, *_ = setup
     r = client.get("/auth/google/callback?state=forged&code=x", follow_redirects=False)
-    assert "gmail=error" in r.headers["location"]
+    assert r.headers["location"].endswith("/settings?gmail=expired")
 
 
 def test_sync_review_and_summary(setup):
     client, state, real, demo, tmp_path = setup
     state["tokens"] = connected(tmp_path)
-    assert client.post("/gmail/sync").json() == {"new": 1}
+    assert client.post("/gmail/sync").json() == {"new": 1, "skipped": 0}
     item = client.get("/decisions").json()[0]
     assert item["decision"]["source"] == "gmail" and item["review"] is None
     r = client.post("/reviews", json={"decision_id": item["decision"]["id"], "label": "QUESTIONED_TOO_MUCH",
@@ -70,3 +70,15 @@ def test_disconnect_keeps_decisions_and_reviews(setup):
     assert client.post("/gmail/disconnect").json() == {"ok": True}
     assert state["tokens"].load() is None
     assert len(real.decisions) == 1
+
+
+def test_posts_must_be_json(setup):
+    client, *_ = setup
+    # What another website could send without asking first: no JSON content type.
+    r = client.post("/gmail/disconnect", headers={"content-type": "text/plain"})
+    assert r.status_code == 415
+
+
+def test_unknown_hosts_are_refused(setup):
+    client, *_ = setup
+    assert client.get("/gmail", headers={"host": "evil.example"}).status_code == 400

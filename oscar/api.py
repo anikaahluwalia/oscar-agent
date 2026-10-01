@@ -4,20 +4,23 @@ import time
 from functools import lru_cache
 from pathlib import Path
 
+from urllib.parse import urlencode, urlparse
+
 import httpx
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 from oscar import gmail
-from oscar.config import WEB_URL
+from oscar.config import API_URL, WEB_URL
 
 from oscar.agent import decide
 from oscar.chat import ChatReply, answer
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
-from oscar.inbox import sync
+from oscar.inbox import AlreadySyncing, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import autonomy, brief
 from oscar.review import Review, ReviewError, ReviewLabel, record_review, summary
@@ -35,6 +38,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Only answer to the names the API is meant to be reached by, so another website
+# can't get at it through a DNS trick.
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["localhost", "127.0.0.1", "testserver", urlparse(API_URL).hostname or "localhost"],
+)
+
+
+@app.middleware("http")
+async def json_only_posts(request: Request, call_next):
+    """Every POST must say it's JSON. A browser only sends that cross-site after asking the
+    API first (CORS), so another website can't quietly trigger a sync or a disconnect."""
+    if request.method == "POST" and not request.headers.get("content-type", "").startswith("application/json"):
+        return JSONResponse({"detail": "Send JSON."}, status_code=415)
+    return await call_next(request)
 
 DEMO_EMAILS = Path(__file__).resolve().parent.parent / "emails"
 
@@ -47,17 +65,23 @@ def demo_history() -> History:
     return History(default_data_dir())
 
 
+GMAIL_DIR = default_data_dir() / "gmail"
+ACCOUNT_FILE = GMAIL_DIR / "account.txt"  # the last Gmail address connected
+
+
 @lru_cache
-def real_history() -> History:
-    return History(default_data_dir() / "gmail")
+def real_history(address: str) -> History:
+    """Each Gmail account gets its own history, so connecting a different one never mixes them."""
+    return History(GMAIL_DIR / "accounts" / address.replace("/", "_"))
 
 
 def get_real_history() -> History:
-    return real_history()
+    address = ACCOUNT_FILE.read_text().strip() if ACCOUNT_FILE.exists() else "none"
+    return real_history(address)
 
 
 def get_tokens() -> gmail.TokenStore:
-    return gmail.TokenStore(default_data_dir() / "gmail" / "token.json")
+    return gmail.TokenStore(GMAIL_DIR / "token.json")
 
 
 def get_http() -> httpx.Client:
@@ -191,17 +215,17 @@ def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens)) -> dict:
     }
 
 
-def _back_to_settings(**params: str) -> RedirectResponse:
-    from urllib.parse import urlencode
-
-    return RedirectResponse(f"{WEB_URL}/settings?{urlencode(params)}")
+def _back_to_settings(gmail_result: str) -> RedirectResponse:
+    """Back to Settings with a short code saying how it went. The web app turns codes into words,
+    so a crafted link can't make Oscar say anything."""
+    return RedirectResponse(f"{WEB_URL}/settings?{urlencode({'gmail': gmail_result})}")
 
 
 @app.get("/auth/google/start")
 def google_start() -> RedirectResponse:
     """Send the user to Google to give Oscar read-only access to Gmail."""
     if not gmail.configured():
-        return _back_to_settings(gmail="not_configured")
+        return _back_to_settings("not_configured")
     now = time.time()
     for state, expires in list(_states.items()):
         if expires < now:
@@ -220,26 +244,34 @@ def google_callback(
     http: httpx.Client = Depends(get_http),
 ) -> RedirectResponse:
     if _states.pop(state, 0) < time.time():
-        return _back_to_settings(gmail="error", reason="That sign-in link expired. Try connecting again.")
+        return _back_to_settings("expired")
     if error or not code:
-        return _back_to_settings(gmail="error", reason="Google sign-in was cancelled.")
+        return _back_to_settings("cancelled")
+    # Try the new connection on its own first, so a failed attempt never breaks one that works.
+    trial = gmail.TokenStore(tokens.path.with_name("token.new.json"))
     try:
         granted = gmail.exchange_code(code, http)
         if "refresh_token" not in granted:
-            raise gmail.GmailError("Google didn't give Oscar lasting access. Remove Oscar in your Google account and connect again.")
-        tokens.save({
+            return _back_to_settings("no_lasting_access")
+        trial.save({
             "refresh_token": granted["refresh_token"],
             "access_token": granted["access_token"],
             "expires_at": time.time() + granted.get("expires_in", 3600),
             "connected_at": time.time(),
         })
-        saved = tokens.load()
-        saved["address"] = gmail.GmailClient(tokens, http).address()
-        tokens.save(saved)
+        saved = trial.load()
+        saved["address"] = gmail.GmailClient(trial, http).address()
     except gmail.GmailError as e:
-        tokens.delete()
-        return _back_to_settings(gmail="error", reason=str(e))
-    return _back_to_settings(gmail="connected")
+        trial.delete()
+        return _back_to_settings("not_granted" if "wasn't granted" in str(e) else "google_error")
+    except httpx.HTTPError:
+        trial.delete()
+        return _back_to_settings("google_error")
+    trial.delete()
+    tokens.save(saved)
+    ACCOUNT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    ACCOUNT_FILE.write_text(saved["address"])
+    return _back_to_settings("connected")
 
 
 @app.post("/gmail/sync")
@@ -254,13 +286,17 @@ def gmail_sync(
     if not saved:
         raise HTTPException(409, "Gmail isn't connected.")
     try:
-        new = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100))
+        result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100))
+    except AlreadySyncing as e:
+        raise HTTPException(409, str(e))
     except gmail.GmailError as e:
         raise HTTPException(502, str(e))
+    except httpx.HTTPError:
+        raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
     saved = tokens.load() or saved
     saved["last_sync"] = time.time()
     tokens.save(saved)
-    return {"new": len(new)}
+    return result.model_dump()
 
 
 @app.post("/gmail/disconnect")

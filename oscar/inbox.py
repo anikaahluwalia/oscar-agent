@@ -5,11 +5,13 @@ the decision with where it came from. Nothing is done in Gmail. Decisions are
 logged before anyone reviews them, so reviews score what Oscar decided on his own.
 
 It also notes what you did with recent emails since (still in the inbox? still
-unread?), as a second opinion next to your reviews.
+unread? deleted?), as a second opinion next to your reviews.
 """
 
+import threading
 from datetime import datetime, timedelta
 
+import httpx
 from pydantic import BaseModel, Field
 
 from oscar.agent import decide
@@ -20,6 +22,14 @@ from oscar.preferences import Preferences
 from oscar.version import policy_version
 
 FOLLOW_UP_DAYS = 7  # how long after a decision Oscar keeps checking what you did with the email
+MAX_PAGES = 4  # how far back to look for emails that arrived since the last check
+
+# Two checks at once would both decide the same new emails, so only one runs at a time.
+_syncing = threading.Lock()
+
+
+class AlreadySyncing(RuntimeError):
+    pass
 
 
 class FollowUp(BaseModel):
@@ -30,29 +40,56 @@ class FollowUp(BaseModel):
     decision_id: str
     in_inbox: bool
     unread: bool
-    gone: bool = False  # deleted, or Oscar can't see it anymore
+    gone: bool = False  # deleted: Gmail no longer has it
 
 
-def sync(history: History, gmail: GmailClient, limit: int = 25) -> list[Decision]:
-    """Decide on new inbox emails. Returns the new decisions, newest first."""
+class SyncResult(BaseModel):
+    new: int
+    skipped: int  # emails Oscar couldn't read this time; they're tried again next check
+
+
+def sync(history: History, gmail: GmailClient, limit: int = 25) -> SyncResult:
+    """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first."""
+    if not _syncing.acquire(blocking=False):
+        raise AlreadySyncing("I'm already checking your inbox.")
+    try:
+        return _sync(history, gmail, limit)
+    finally:
+        _syncing.release()
+
+
+def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
     seen = {d.email_id for d in history.decisions.values()}
-    new = []
-    for ref in gmail.inbox(limit):
-        if ref["id"] in seen:
+    # Walk back through the inbox, so emails that arrived since the last check
+    # aren't missed when there are more of them than one page.
+    unseen, page = [], None
+    for _ in range(MAX_PAGES):
+        refs, page = gmail.inbox(limit, page)
+        unseen += [r for r in refs if r["id"] not in seen]
+        if len(unseen) >= limit or not page:
+            break
+    version = policy_version()
+    new = skipped = 0
+    for ref in reversed(unseen[:limit]):
+        try:
+            email, info = _read(gmail, ref["id"])
+        except (GmailError, httpx.HTTPError):
+            skipped += 1
             continue
-        email, info = _read(gmail, ref["id"])
         decision = decide(email, Preferences.from_feedback(history.feedback), read_only=True)
-        decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": policy_version()})
-        history.add_decision(decision)
-        new.append(decision)
+        history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version}))
+        new += 1
     follow_up(history, gmail)
-    return new
+    return SyncResult(new=new, skipped=skipped)
 
 
 def _read(gmail: GmailClient, message_id: str):
     email, info = parse_message(gmail.message(message_id))
-    info.thread_length = gmail.thread_length(info.thread_id)
-    info.emailed_before = gmail.emailed_before(email.sender) if email.sender != "unknown" else None
+    try:
+        info.thread_length = gmail.thread_length(info.thread_id)
+        info.emailed_before = gmail.emailed_before(email.sender) if email.sender != "unknown" else None
+    except (GmailError, httpx.HTTPError):
+        pass  # nice to have; the decision doesn't depend on them
     return email, info
 
 
@@ -60,14 +97,18 @@ def follow_up(history: History, gmail: GmailClient) -> None:
     """Note where recent emails are now, only when something changed since last time."""
     cutoff = now() - timedelta(days=FOLLOW_UP_DAYS)
     last = {f.decision_id: f for f in history.follow_ups}
-    for decision in history.decisions.values():
+    for decision in list(history.decisions.values()):
         if decision.source != "gmail" or decision.created_at < cutoff or not decision.gmail:
             continue
         try:
             labels = gmail.labels(decision.gmail.message_id)
             state = dict(in_inbox="INBOX" in labels, unread="UNREAD" in labels, gone=False)
-        except GmailError:
+        except GmailError as e:
+            if e.status != 404:
+                continue  # a hiccup (rate limit, outage) says nothing about what you did
             state = dict(in_inbox=False, unread=False, gone=True)
+        except httpx.HTTPError:
+            continue
         before = last.get(decision.id)
         if before is None or (before.in_inbox, before.unread, before.gone) != tuple(state.values()):
             history.add_follow_up(FollowUp(decision_id=decision.id, **state))

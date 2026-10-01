@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
-from oscar.overview import brief, latest_per_email, needs_you
+from oscar.overview import brief, is_read_only, latest_per_email, needs_you
 from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS
 from oscar.voice import describe_learning
@@ -64,6 +64,12 @@ def _needs_you(history: History) -> ChatReply:
                                                          AutonomyLevel.PROCEED_AND_NOTIFY))
     if not for_you and not waiting and not told:
         return ChatReply(reply="Nothing needs you right now. I'll bring you anything new.")
+    if is_read_only(history):
+        parts = [f"I'd bring you {_subjects(for_you)}." if for_you else "",
+                 f"I'd ask you about {_subjects(waiting)}." if waiting else "",
+                 f"I'd tell you about {_subjects(told)}." if told else "",
+                 "I'm only reading your inbox for now, so review these on the Review page."]
+        return ChatReply(reply=" ".join(p for p in parts if p), decisions=[d.id for d in for_you + waiting + told])
     parts = []
     if for_you:
         parts.append(f"For you: {_subjects(for_you)}.")
@@ -78,6 +84,15 @@ def _handled(history: History) -> ChatReply:
     current = latest_per_email(history)
     quiet = [d for d in current if d.autonomy_level == AutonomyLevel.PROCEED_SILENTLY]
     told = [d for d in current if d.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY]
+    if is_read_only(history):
+        if not quiet and not told:
+            return ChatReply(reply="I'm only reading your inbox for now, and so far I'd have checked with you on everything.")
+        parts = ["I'm only reading your inbox for now, so I haven't done anything."]
+        if quiet:
+            parts.append(f"I'd have handled {len(quiet)} quietly: {_subjects(quiet)}.")
+        if told:
+            parts.append(f"I'd have done {len(told)} and told you: {_subjects(told)}.")
+        return ChatReply(reply=" ".join(parts), decisions=[d.id for d in quiet + told])
     if not quiet and not told:
         return ChatReply(reply="I haven't done anything on my own yet. So far I've been checking with you.")
     parts = []

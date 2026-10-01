@@ -50,8 +50,8 @@ def test_parses_a_message():
 def test_sync_logs_what_oscar_would_do(tmp_path):
     fake = FakeGmail(INBOX, sent_to={"friend@example.com"})
     history = History()
-    new = sync(history, GmailClient(connected(tmp_path), fake.http()))
-    assert len(new) == 3
+    assert sync(history, GmailClient(connected(tmp_path), fake.http())).new == 3
+    new = list(history.decisions.values())
     by_id = {d.email_id: d for d in new}
     assert all(d.source == "gmail" and d.policy_version for d in new)
     assert by_id["m3"].gmail.emailed_before is True
@@ -63,7 +63,7 @@ def test_sync_logs_what_oscar_would_do(tmp_path):
         assert not d.message.startswith(("Handled it", "Heads up: I")), d.message
         assert d.steps[-1].startswith("Would ")
     # Seen emails aren't decided again.
-    assert sync(history, GmailClient(connected(tmp_path), fake.http())) == []
+    assert sync(history, GmailClient(connected(tmp_path), fake.http())).new == 0
 
 
 def test_refreshes_an_expired_token(tmp_path):
@@ -94,3 +94,75 @@ def test_no_feedback_on_the_real_inbox(tmp_path):
     decision = next(iter(history.decisions.values()))
     with pytest.raises(FeedbackError, match="only reading your real inbox"):
         record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
+
+
+# --- review fixes ------------------------------------------------------------
+
+import base64  # noqa: E402
+
+import httpx  # noqa: E402
+
+from oscar import inbox as inbox_module  # noqa: E402
+from oscar.chat import answer  # noqa: E402
+from oscar.gmail import body_text  # noqa: E402
+from oscar.overview import brief  # noqa: E402
+
+
+def test_one_bad_email_doesnt_stop_the_check(tmp_path):
+    fake = FakeGmail(INBOX)
+    real_handler = fake.handler
+
+    def flaky(request: httpx.Request):
+        if request.url.path.endswith("/messages/m2") and request.url.params.get("format") == "full":
+            return httpx.Response(500, json={})
+        return real_handler(request)
+
+    fake.handler = flaky
+    history = History()
+    result = sync(history, GmailClient(connected(tmp_path), httpx.Client(transport=httpx.MockTransport(flaky))))
+    assert (result.new, result.skipped) == (2, 1)
+    # It's tried again next time.
+    fake.handler = real_handler
+    assert sync(history, GmailClient(connected(tmp_path), fake.http())).new == 1
+
+
+def test_only_one_check_at_a_time(tmp_path):
+    inbox_module._syncing.acquire()
+    try:
+        with pytest.raises(inbox_module.AlreadySyncing):
+            sync(History(), GmailClient(connected(tmp_path), FakeGmail(INBOX).http()))
+    finally:
+        inbox_module._syncing.release()
+
+
+def test_a_gmail_hiccup_isnt_a_deleted_email(tmp_path):
+    fake = FakeGmail(INBOX)
+    history = History()
+    sync(history, GmailClient(connected(tmp_path), fake.http()))
+    before = len(history.follow_ups)
+
+    def busy(request: httpx.Request):
+        if request.url.params.get("format") == "minimal" and "/messages/" in request.url.path:
+            return httpx.Response(429, json={})
+        return fake.handler(request)
+
+    sync(history, GmailClient(connected(tmp_path), httpx.Client(transport=httpx.MockTransport(busy))))
+    assert len(history.follow_ups) == before
+    assert not any(f.gone for f in history.follow_ups)
+
+
+def test_reads_the_emails_charset():
+    data = base64.urlsafe_b64encode("Überweisung fällig".encode("latin-1")).decode()
+    part = {"mimeType": "text/plain", "headers": [{"name": "Content-Type", "value": 'text/plain; charset="ISO-8859-1"'}],
+            "body": {"data": data}}
+    assert body_text(part) == "Überweisung fällig"
+
+
+def test_chat_and_brief_say_what_oscar_would_do(tmp_path):
+    history = History()
+    sync(history, GmailClient(connected(tmp_path), FakeGmail(INBOX).http()))
+    summary = brief(history)["summary"]
+    assert summary.startswith("I read 3 emails. I'd have") and "left to review" in summary
+    handled = answer(history, "what did you handle?").reply
+    assert handled.startswith("I'm only reading your inbox") and "I handled" not in handled
+    assert "I did these" not in answer(history, "what needs me?").reply

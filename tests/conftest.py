@@ -12,5 +12,5 @@ def client(tmp_path):
     app.dependency_overrides[get_history] = lambda: history
     # Never the real token file: tests run as if Gmail isn't connected.
     app.dependency_overrides[get_tokens] = lambda: TokenStore(tmp_path / "token.json")
-    yield TestClient(app)
+    yield TestClient(app, headers={"content-type": "application/json"})
     app.dependency_overrides.clear()

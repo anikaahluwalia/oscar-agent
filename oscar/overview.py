@@ -11,6 +11,11 @@ ANSWERS = {FeedbackKind.APPROVE, FeedbackKind.REJECT, FeedbackKind.UNDO, Feedbac
 TREND_WINDOW = 12  # compare the first and the latest this many decisions
 
 
+def is_read_only(history: History) -> bool:
+    """True for the real inbox in Stage 9: Oscar only read it, so nothing was done."""
+    return any(d.source == "gmail" for d in history.decisions.values())
+
+
 def latest_per_email(history: History) -> list[Decision]:
     """Oscar's latest decision on each email, newest first."""
     seen, out = set(), []
@@ -24,7 +29,8 @@ def latest_per_email(history: History) -> list[Decision]:
 def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
     """What's still on your list, newest first: emails for you, asks you haven't answered,
     and things Oscar did and told you about that you haven't checked."""
-    answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS}
+    # On the real inbox, reviewing a decision is how you deal with it.
+    answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS} | {r.decision_id for r in history.reviews}
     levels = (AutonomyLevel.ESCALATE, AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY)
     current = latest_per_email(history)
     return {level: [d for d in current if d.autonomy_level == level and d.id not in answered] for level in levels}
@@ -47,6 +53,16 @@ def brief(history: History) -> dict:
     done = [part for n, part in ((handled, f"handled {handled} quietly"), (told, f"told you about {told}")) if n]
     did = f"I {' and '.join(done)}." if done else ""
     needs = waiting + for_you + told_unchecked
+    if is_read_only(history):
+        # Nothing was done, so say what he'd have done, and leave out the trend and habits.
+        would = [part for n, part in ((handled, f"handled {handled} quietly"), (told, f"told you about {told}"),
+                                      (count(AutonomyLevel.ASK_FIRST), f"asked about {count(AutonomyLevel.ASK_FIRST)}"),
+                                      (count(AutonomyLevel.ESCALATE), f"stopped {count(AutonomyLevel.ESCALATE)}")) if n]
+        to_review = len(current) - len({r.decision_id for r in history.reviews} & {d.id for d in current})
+        summary = (f"I read {len(current)} {'email' if len(current) == 1 else 'emails'}. I'd have {', '.join(would)}. "
+                   f"{to_review} left to review." if current else "I haven't read anything yet.")
+        return {"handled": handled, "told": told, "waiting": waiting, "for_you": for_you,
+                "summary": summary, "trend": None, "learned": None}
     if not current:
         summary = "Your inbox is empty. When emails come in I'll sort them for you."
     elif needs == 0:

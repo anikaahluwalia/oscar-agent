@@ -37,7 +37,9 @@ BODY_LIMIT = 5000  # characters of the body Oscar reads; only the first 160 are 
 
 
 class GmailError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status  # Gmail's HTTP status, when the error came from Gmail
 
 
 def client_id() -> str:
@@ -145,15 +147,16 @@ class GmailClient:
             headers={"Authorization": f"Bearer {self._access_token()}"},
         )
         if response.status_code != 200:
-            raise GmailError(f"Gmail said no ({response.status_code}).")
+            raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code)
         return response.json()
 
     def address(self) -> str:
         return self._get("/profile")["emailAddress"]
 
-    def inbox(self, limit: int) -> list[dict]:
-        """The newest messages in the inbox, as {id, threadId}."""
-        return self._get("/messages", labelIds="INBOX", maxResults=limit).get("messages", [])
+    def inbox(self, limit: int, page: str | None = None) -> tuple[list[dict], str | None]:
+        """A page of inbox messages, newest first, as {id, threadId}, and the token for the next page."""
+        found = self._get("/messages", labelIds="INBOX", maxResults=limit, pageToken=page)
+        return found.get("messages", []), found.get("nextPageToken")
 
     def message(self, message_id: str) -> dict:
         return self._get(f"/messages/{message_id}", format="full")
@@ -178,8 +181,21 @@ CATEGORIES = {
 }
 
 
-def _decode(data: str) -> str:
-    return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode("utf-8", errors="replace")
+def _charset(part: dict) -> str:
+    for h in part.get("headers", []):
+        if h.get("name", "").lower() == "content-type":
+            found = re.search(r'charset="?([\w-]+)"?', h.get("value", ""), re.I)
+            if found:
+                return found.group(1)
+    return "utf-8"
+
+
+def _decode(data: str, charset: str = "utf-8") -> str:
+    raw = base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))
+    try:
+        return raw.decode(charset, errors="replace")
+    except LookupError:  # a charset Python doesn't know
+        return raw.decode("utf-8", errors="replace")
 
 
 def _strip_html(text: str) -> str:
@@ -196,9 +212,9 @@ def body_text(payload: dict) -> str:
         mime = part.get("mimeType", "")
         data = part.get("body", {}).get("data")
         if data and mime == "text/plain":
-            plain.append(_decode(data))
+            plain.append(_decode(data, _charset(part)))
         elif data and mime == "text/html":
-            rich.append(_strip_html(_decode(data)))
+            rich.append(_strip_html(_decode(data, _charset(part))))
         for child in part.get("parts", []):
             walk(child)
 
