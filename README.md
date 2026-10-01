@@ -26,9 +26,9 @@ side effects.
 
 ![Oscar's home screen](assets/home.png)
 
-| Triage | Autonomy |
+| On a phone | Settings |
 |---|---|
-| ![Triage](assets/triage.png) | ![Autonomy](assets/autonomy.png) |
+| ![Oscar on a phone](assets/phone.png) | ![Settings](assets/settings.png) |
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -74,12 +74,17 @@ npm run dev
 ```
 
 Open http://localhost:3000. Until Gmail is connected, the inbox is the example
-emails: open the **⋯** menu and click **Bring in the demo emails**. Say yes to the
-newsletter a few times (on Home or in **Triage**) and bring the emails in again to
-watch Oscar learn. **Activity** has everything that's done, and **Autonomy** shows
-what he does on his own for each sender. The panel on the right shows Oscar's
-working notes as emails come in (**Live**), and you can ask him things or teach him
-a rule in **Chat**, like "always archive emails from digest@morningbrew-weekly.example".
+emails: click **Bring in the demo emails** on Home (it's also in **Settings**).
+
+- **Home** has what needs you. Swipe the cards under **Okay!** to answer Oscar,
+  and talk to him at the bottom: ask what needs you, or teach him a rule like
+  "always archive emails from digest@morningbrew-weekly.example".
+- **Activity** has everything that's done.
+- **Settings** shows what Oscar does on his own for each sender, and lets you
+  change it.
+
+Say yes to the newsletter a few times and bring the emails in again to watch
+Oscar learn. Open any email and tap **Why?** to see how he decided.
 
 ## Run the API
 

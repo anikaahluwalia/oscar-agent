@@ -643,3 +643,21 @@ for show (a device switcher, an evals tab, fake emails arriving on a timer).
 Bugs found while checking it: the chat's scroll effect returned a Promise and
 crashed React; "don't ask me about ..." was read as "always ask me"; the undo toast
 covered the chat box; and the Why? answer repeated what Oscar noticed.
+
+### Fourth pass: simpler
+
+The panel made every page two things at once, and on a normal laptop window it
+shrank to a button you could miss. So the app went down to three places, in a menu
+down the side (along the bottom on phones):
+
+- **Home:** what needs you. "For you" emails, the swipe cards under **Okay!**, what
+  Oscar told you about, and a chat with him. The swipe cards used to be their own
+  Triage page; now they're the main way to answer him, right on Home.
+- **Activity:** everything that's done (**Done!**).
+- **Settings:** what Oscar does on his own for each sender (the old Autonomy page),
+  light or dark, and the demo inbox.
+
+Oscar's working notes moved from the Live feed into each email: open it and tap
+**Why?**. Rows lost their outlines and the details list, to look more like
+wajo.ai: soft cards, one big sentence from Oscar, and colour only from the four
+level squares. /triage and /autonomy redirect to the new places.
