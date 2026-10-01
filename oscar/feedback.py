@@ -58,7 +58,9 @@ REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None) -> None:
     level = decision.autonomy_level
-    if kind in (FeedbackKind.APPROVE, FeedbackKind.REJECT) and level != AutonomyLevel.ASK_FIRST:
+    if kind == FeedbackKind.APPROVE and level not in (AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY):
+        raise FeedbackError("I only need an okay on things I asked about or told you about.")
+    if kind == FeedbackKind.REJECT and level != AutonomyLevel.ASK_FIRST:
         raise FeedbackError("I only need a yes or no on things I asked you about.")
     if kind == FeedbackKind.UNDO and level not in OSCAR_ACTED:
         raise FeedbackError("I didn't do anything with that one, so there's nothing to undo.")
@@ -89,6 +91,8 @@ def record_feedback(
         raise FeedbackError(f"I can't find decision {decision_id}.")
     check_allowed(decision, kind, edited_text)
     reply = REPLIES[kind]
+    if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY:
+        reply = "Thanks. Good to know."
     blocked = False
     if kind == FeedbackKind.ALWAYS_DO_THIS:
         blocked_reply = floor_reply(decision)

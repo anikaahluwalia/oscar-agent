@@ -28,11 +28,9 @@ def test_newsletter_archive_asks_then_notifies_then_goes_silent():
     for _ in range(10):
         decision = decide_with(history, email)
         levels.append(decision.autonomy_level)
-        if decision.autonomy_level == AutonomyLevel.ASK_FIRST:
+        if decision.autonomy_level != AutonomyLevel.PROCEED_SILENTLY:
             record_feedback(history, decision.id, FeedbackKind.APPROVE)
-        else:
-            # Oscar acted and the user kept it. Nothing to record yet.
-            pass
 
     assert levels[:3] == [AutonomyLevel.ASK_FIRST] * 3
-    assert levels[3] == AutonomyLevel.PROCEED_AND_NOTIFY
+    assert levels[3:8] == [AutonomyLevel.PROCEED_AND_NOTIFY] * 5
+    assert levels[8:] == [AutonomyLevel.PROCEED_SILENTLY] * 2

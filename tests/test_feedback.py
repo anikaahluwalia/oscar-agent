@@ -150,3 +150,15 @@ def test_cannot_edit_then_send_an_escalated_reply(history):
     history.add_decision(decision)
     with pytest.raises(FeedbackError):
         record_feedback(history, decision.id, FeedbackKind.EDIT_THEN_SEND, "I agree")
+
+
+def test_approve_a_notification(history):
+    decision = decision_for(history, "manager_question.json")  # DRAFT_REPLY, PROCEED_AND_NOTIFY
+    _, reply = record_feedback(history, decision.id, FeedbackKind.APPROVE)
+    assert reply == "Thanks. Good to know."
+
+
+def test_cannot_reject_a_notification(history):
+    decision = decision_for(history, "manager_question.json")
+    with pytest.raises(FeedbackError):
+        record_feedback(history, decision.id, FeedbackKind.REJECT)
