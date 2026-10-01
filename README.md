@@ -13,10 +13,12 @@ For each incoming email Oscar proposes one action and decides how much autonomy 
 | `ASK_FIRST` | Action is proposed to user, user must accept or decline |
 | `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Stage 5 — preference learning.** Oscar uses a keyword classifier, a fixed
+**Status: Stage 6 — calibration evals.** Oscar uses a keyword classifier, a fixed
 action → level table, what he has learned from your feedback, and a safety floor
-that neither the table nor learning can lower. Synthetic emails only; no real side
-effects.
+that neither the table nor learning can lower. There is now an eval harness with
+measured results in [evals/RESULTS.md](evals/RESULTS.md), and example transcripts
+in [examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md). Synthetic emails only; no
+real side effects.
 See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
 
 ## Setup
@@ -70,4 +72,11 @@ the list with the reason for each one:
 
 ```bash
 .venv/bin/pytest -rx
+```
+
+## Evals
+
+```bash
+.venv/bin/python -m evals              # writes evals/RESULTS.md
+.venv/bin/python -m evals.transcripts  # writes examples/TRANSCRIPTS.md
 ```
