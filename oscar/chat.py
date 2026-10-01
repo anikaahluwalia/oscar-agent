@@ -61,7 +61,7 @@ def _why(decision: Decision) -> ChatReply:
 def _needs_you(history: History) -> ChatReply:
     answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS}
     current = latest_per_email(history)
-    for_you = [d for d in current if d.autonomy_level == AutonomyLevel.ESCALATE]
+    for_you = [d for d in current if d.autonomy_level == AutonomyLevel.ESCALATE and d.id not in answered]
     waiting = [d for d in current if d.autonomy_level == AutonomyLevel.ASK_FIRST and d.id not in answered]
     if not for_you and not waiting:
         return ChatReply(reply="Nothing needs you right now. I'll bring you anything new.")

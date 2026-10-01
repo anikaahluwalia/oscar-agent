@@ -7,7 +7,7 @@ from oscar.policy import autonomy_for
 from oscar.preferences import CEILINGS, Preferences
 from oscar.safety import ACTION_FLOORS, apply_floor
 
-ANSWERS = {FeedbackKind.APPROVE, FeedbackKind.REJECT, FeedbackKind.UNDO, FeedbackKind.EDIT_THEN_SEND}
+ANSWERS = {FeedbackKind.APPROVE, FeedbackKind.REJECT, FeedbackKind.UNDO, FeedbackKind.EDIT_THEN_SEND, FeedbackKind.SEEN}
 TREND_WINDOW = 12  # compare the first and the latest this many decisions
 
 
@@ -30,12 +30,15 @@ def brief(history: History) -> dict:
     answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS}
     count = lambda level: sum(d.autonomy_level == level for d in current)  # noqa: E731
     waiting = sum(d.autonomy_level == AutonomyLevel.ASK_FIRST and d.id not in answered for d in current)
-    for_you = count(AutonomyLevel.ESCALATE)
+    for_you = sum(d.autonomy_level == AutonomyLevel.ESCALATE and d.id not in answered for d in current)
     handled, told = count(AutonomyLevel.PROCEED_SILENTLY), count(AutonomyLevel.PROCEED_AND_NOTIFY)
+
+    # Things Oscar did and told you about wait for a "looks good" or an undo, so they're on your list too.
+    told_unchecked = sum(d.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY and d.id not in answered for d in current)
 
     done = [part for n, part in ((handled, f"handled {handled} quietly"), (told, f"told you about {told}")) if n]
     did = f"I {' and '.join(done)}." if done else ""
-    needs = waiting + for_you
+    needs = waiting + for_you + told_unchecked
     if not current:
         summary = "Your inbox is empty. When emails come in I'll sort them for you."
     elif needs == 0:

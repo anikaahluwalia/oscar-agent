@@ -23,6 +23,7 @@ class FeedbackKind(str, Enum):
     EDIT_THEN_SEND = "EDIT_THEN_SEND"
     ALWAYS_DO_THIS = "ALWAYS_DO_THIS"
     ALWAYS_ASK_ME = "ALWAYS_ASK_ME"
+    SEEN = "SEEN"  # "got it" on an email Oscar brought to you; it teaches him nothing
 
 
 class FeedbackEvent(BaseModel):
@@ -50,6 +51,7 @@ REPLIES: dict[FeedbackKind, str] = {
     FeedbackKind.EDIT_THEN_SEND: "Sent with your changes. I'll pay attention to how you write these.",
     FeedbackKind.ALWAYS_DO_THIS: "Got it. I'll remember you're fine with this.",
     FeedbackKind.ALWAYS_ASK_ME: "Okay. I'll always check with you on these.",
+    FeedbackKind.SEEN: "Okay. It's in your hands.",
 }
 
 OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
@@ -64,6 +66,8 @@ def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | Non
         raise FeedbackError("I only need a yes or no on things I asked you about.")
     if kind == FeedbackKind.UNDO and level not in OSCAR_ACTED:
         raise FeedbackError("I didn't do anything with that one, so there's nothing to undo.")
+    if kind == FeedbackKind.SEEN and level != AutonomyLevel.ESCALATE:
+        raise FeedbackError("Got it is only for emails I brought to you.")
     if kind == FeedbackKind.EDIT_THEN_SEND:
         if level == AutonomyLevel.ESCALATE:
             raise FeedbackError("I'm not sending anything on this one. You'll need to reply yourself.")

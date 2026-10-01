@@ -1,5 +1,5 @@
 from oscar.agent import decide
-from oscar.feedback import FeedbackKind, record_feedback
+from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.models import AutonomyLevel, Email
 from oscar.overview import TREND_WINDOW, autonomy, brief
@@ -102,3 +102,33 @@ def test_endpoints(client):
     client.post("/demo/inbox")
     assert "summary" in client.get("/brief").json()
     assert len(client.get("/autonomy").json()) > 0
+
+
+def test_got_it_takes_an_escalated_email_off_your_list():
+    history = History()
+    wire = add(history, WIRE)
+    assert brief(history)["for_you"] == 1
+    _, reply = record_feedback(history, wire.id, FeedbackKind.SEEN)
+    assert reply == "Okay. It's in your hands."
+    assert brief(history)["for_you"] == 0
+    # Got it is about the email, not about how much Oscar should do.
+    assert Preferences.from_feedback(history.feedback).summary() == []
+
+
+def test_got_it_is_only_for_escalated_emails():
+    history = History()
+    newsletter = add(history, NEWSLETTER)
+    try:
+        record_feedback(history, newsletter.id, FeedbackKind.SEEN)
+        raise AssertionError("expected an error")
+    except FeedbackError as e:
+        assert "only for emails I brought to you" in str(e)
+
+
+def test_told_you_emails_count_until_checked():
+    history = History()
+    draft = add(history, DRAFT)
+    assert draft.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY
+    assert brief(history)["summary"].startswith("1 email needs you.")
+    record_feedback(history, draft.id, FeedbackKind.APPROVE)
+    assert brief(history)["summary"].startswith("All done.")
