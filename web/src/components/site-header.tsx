@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/triage", label: "Triage" },
+  { href: "/activity", label: "Activity" },
   { href: "/autonomy", label: "Autonomy" },
 ];
 
@@ -54,14 +55,16 @@ export function SiteHeader() {
         <OscarAvatar size={30} />
         <span className="hidden font-heading text-lg font-semibold sm:inline">Oscar</span>
       </Link>
-      <nav className="mr-auto flex gap-1">
+      <nav className="mr-auto flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none]">
         {LINKS.map((l) => (
           <Link
             key={l.href}
             href={l.href}
             className={cn(
-              "rounded-full px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:px-3",
+              "shrink-0 rounded-full px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:px-3",
               path === l.href && "bg-muted text-foreground",
+              // On a phone the logo takes you home, which leaves room for the rest.
+              l.href === "/" && "hidden sm:block",
             )}
           >
             {l.label}

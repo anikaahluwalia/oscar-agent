@@ -69,7 +69,7 @@ export function EmailRow({ item, index = 0, onFeedback }: Props) {
   return (
     <motion.li
       initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: answered ? 0.55 : 1, y: 0 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index, 8) * 0.03 }}
       className="rounded-2xl border bg-card"
     >

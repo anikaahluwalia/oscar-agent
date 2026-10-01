@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmailRow } from "@/components/email-row";
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
 import type { DecisionWithFeedback, Level } from "@/lib/api";
 import { LEVELS } from "@/lib/labels";
-import { API_DOWN, isAnswered, useOscar } from "@/lib/use-oscar";
+import { API_DOWN, isAnswered, isDone, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 function inboxMood(items: DecisionWithFeedback[]): Mood {
@@ -40,10 +39,10 @@ function Section({ level, title, items, children }: { level: Level; title: strin
 
 export function Home() {
   const { data, error, loading, feedback } = useOscar();
-  const [showHandled, setShowHandled] = useState(false);
   const items = data?.items ?? [];
-  const of = (level: Level) =>
-    items.filter((i) => i.decision.autonomy_level === level).sort((a, b) => Number(isAnswered(a)) - Number(isAnswered(b)));
+  const open = items.filter((i) => !isDone(i));
+  const done = items.length - open.length;
+  const of = (level: Level) => open.filter((i) => i.decision.autonomy_level === level);
   const rows = (list: DecisionWithFeedback[]) => (
     <ul className="flex flex-col gap-2">
       {list.map((item, index) => (
@@ -51,7 +50,6 @@ export function Home() {
       ))}
     </ul>
   );
-  const handled = of("PROCEED_SILENTLY");
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pb-16">
@@ -87,19 +85,14 @@ export function Home() {
           <Section level="ESCALATE" title="For you" items={of("ESCALATE").length}>{rows(of("ESCALATE"))}</Section>
           <Section level="ASK_FIRST" title="Waiting for your okay" items={of("ASK_FIRST").length}>{rows(of("ASK_FIRST"))}</Section>
           <Section level="PROCEED_AND_NOTIFY" title="Told you" items={of("PROCEED_AND_NOTIFY").length}>{rows(of("PROCEED_AND_NOTIFY"))}</Section>
-          <Section level="PROCEED_SILENTLY" title="Handled quietly" items={handled.length}>
-            {showHandled ? (
-              rows(handled)
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowHandled(true)}
-                className="rounded-2xl border border-dashed p-3 text-left text-sm text-muted-foreground hover:text-foreground"
-              >
-                I took care of {handled.length} {handled.length === 1 ? "email" : "emails"} without bothering you. Show them
-              </button>
-            )}
-          </Section>
+          {done > 0 && (
+            <Link
+              href="/activity"
+              className="rounded-2xl border border-dashed p-3 text-sm text-muted-foreground hover:text-foreground"
+            >
+              {done} {done === 1 ? "email is" : "emails are"} done, handled by me or answered by you. See them in Activity
+            </Link>
+          )}
         </>
       )}
     </main>
