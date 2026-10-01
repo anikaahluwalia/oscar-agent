@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from oscar.agent import decide
+from oscar.chat import ChatReply, answer
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
 from oscar.models import Decision, Email
@@ -67,6 +68,17 @@ def get_brief(history: History = Depends(get_history)) -> dict:
 def get_autonomy(history: History = Depends(get_history)) -> list[dict]:
     """How much Oscar does on his own for each sender and action, and the limits."""
     return autonomy(history)
+
+
+class ChatRequest(BaseModel):
+    message: str
+    decision_id: str | None = None
+
+
+@app.post("/chat", response_model=ChatReply)
+def chat(request: ChatRequest, history: History = Depends(get_history)) -> ChatReply:
+    """Talk to Oscar. decision_id is set when the user asks about a specific email."""
+    return answer(history, request.message, request.decision_id)
 
 
 @app.post("/demo/inbox", response_model=list[Decision])
