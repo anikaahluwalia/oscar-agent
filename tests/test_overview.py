@@ -29,7 +29,7 @@ def test_brief_counts_latest_decision_per_email():
     add(history, WIRE)
     b = brief(history)
     assert (b["waiting"], b["for_you"]) == (1, 1)
-    assert b["summary"] == "2 need you."
+    assert b["summary"] == "2 emails need you."
 
 
 def test_summary_wording():
@@ -37,7 +37,7 @@ def test_summary_wording():
     add(history, Email(id="f", sender="c@x.example", subject="FYI", body="fyi"))
     assert brief(history)["summary"] == "All done. I handled 1 quietly. Nothing needs you."
     add(history, WIRE)
-    assert brief(history)["summary"] == "I handled 1 quietly. 1 needs you."
+    assert brief(history)["summary"] == "1 email needs you. I handled 1 quietly."
 
 
 def test_answered_emails_dont_need_you():

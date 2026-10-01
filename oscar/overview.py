@@ -41,7 +41,8 @@ def brief(history: History) -> dict:
     elif needs == 0:
         summary = f"All done. {did} Nothing needs you.".replace("  ", " ")
     else:
-        summary = f"{did} {needs} {'needs' if needs == 1 else 'need'} you.".strip()
+        # What needs you comes first, and spelled out, so it doesn't run into the numbers before it.
+        summary = f"{needs} {'email needs' if needs == 1 else 'emails need'} you. {did}".strip()
 
     # Is Oscar asking less than when you started? Only said once there's enough history.
     trend = None
