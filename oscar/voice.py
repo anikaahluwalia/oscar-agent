@@ -49,9 +49,10 @@ LEVEL_HABITS: dict[AutonomyLevel, str] = {
 def describe_learning(row: dict) -> str:
     """One line on what Oscar has learned about an action."""
     action = row["action"].value.lower().replace("_", " ")
+    what = f"{action} from {row['sender']}"
     if row["level"] is None:
-        return f"{action}: {row['reason']}."
-    return f"{action}: {row['reason']}, so {LEVEL_HABITS[row['level']]}."
+        return f"{what}: {row['reason']}."
+    return f"{what}: {row['reason']}, so {LEVEL_HABITS[row['level']]}."
 
 
 # Used when Oscar is being more careful than usual because of feedback.

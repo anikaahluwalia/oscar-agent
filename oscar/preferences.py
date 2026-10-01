@@ -1,7 +1,9 @@
 """What Oscar has learned from feedback.
 
-For each action Oscar keeps a Beta(yes, no) count of how often the user was fine
-with it, starting from Beta(1, 1). The mean yes / (yes + no) is how sure he is
+For each sender and action Oscar keeps a Beta(yes, no) count of how often the
+user was fine with it, starting from Beta(1, 1). Learning is per sender because
+the same action can be right for one sender and wrong for another (archiving
+most newsletters, but not the one you read). The mean yes / (yes + no) is how sure he is
 that the user is fine with him doing it. Once he has enough evidence he asks less:
 
     3 or more, mean >= 0.8  ->  PROCEED_AND_NOTIFY
@@ -79,9 +81,12 @@ class ActionPreference:
         return "you said no to this before"
 
 
+Key = tuple[str, Action]  # (sender, action)
+
+
 class Preferences:
     def __init__(self) -> None:
-        self.by_action: dict[Action, ActionPreference] = {}
+        self.by_key: dict[Key, ActionPreference] = {}
 
     @classmethod
     def from_feedback(cls, events: list[FeedbackEvent]) -> "Preferences":
@@ -95,7 +100,7 @@ class Preferences:
         # how much autonomy Oscar should have.
         if event.blocked_by_floor or event.autonomy_level == AutonomyLevel.ESCALATE:
             return
-        pref = self.by_action.setdefault(event.action, ActionPreference())
+        pref = self.by_key.setdefault((event.sender, event.action), ActionPreference())
         if event.kind == FeedbackKind.ALWAYS_ASK_ME:
             pref.always_ask = True
             return
@@ -107,11 +112,12 @@ class Preferences:
         pref.counts[event.kind] += 1
 
     def summary(self) -> list[dict]:
-        """What Oscar has learned, one row per action with feedback."""
+        """What Oscar has learned, one row per sender and action with feedback."""
         rows = []
-        for action, pref in self.by_action.items():
-            suggestion = self.suggest(action, autonomy_for(action)[0])
+        for (sender, action), pref in self.by_key.items():
+            suggestion = self.suggest(action, autonomy_for(action)[0], sender)
             rows.append({
+                "sender": sender,
                 "action": action,
                 "yes": pref.yes - PRIOR_YES,
                 "no": pref.no - PRIOR_NO,
@@ -122,12 +128,12 @@ class Preferences:
             })
         return rows
 
-    def get(self, action: Action) -> ActionPreference:
-        return self.by_action.get(action, ActionPreference())
+    def get(self, action: Action, sender: str) -> ActionPreference:
+        return self.by_key.get((sender, action), ActionPreference())
 
-    def suggest(self, action: Action, level: AutonomyLevel) -> tuple[AutonomyLevel, str] | None:
+    def suggest(self, action: Action, level: AutonomyLevel, sender: str) -> tuple[AutonomyLevel, str] | None:
         """The level feedback says Oscar should use, or None if feedback has nothing to say."""
-        pref = self.get(action)
+        pref = self.get(action, sender)
         if pref.always_ask:
             if level == AutonomyLevel.ESCALATE:
                 return None

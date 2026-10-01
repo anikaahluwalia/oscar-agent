@@ -19,7 +19,7 @@ def decide(email: Email, preferences: Preferences | None = None) -> Decision:
     level, reason = autonomy_for(action)
 
     learned = careful = False
-    suggestion = preferences.suggest(action, level) if preferences else None
+    suggestion = preferences.suggest(action, level, email.sender) if preferences else None
     if suggestion:
         careful = is_stricter(suggestion[0], level)
         level, reason = suggestion

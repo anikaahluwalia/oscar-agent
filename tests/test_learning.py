@@ -109,7 +109,7 @@ def test_learned_summary_through_the_api(client):
         decision = client.post("/decide", json=email).json()
         client.post("/feedback", json={"decision_id": decision["id"], "kind": "APPROVE"})
     rows = client.get("/learned").json()
-    assert rows == [{"action": "ARCHIVE", "yes": 3.0, "no": 0.0, "mean": 0.8, "always_ask": False,
+    assert rows == [{"sender": "digest@morningbrew-weekly.example", "action": "ARCHIVE", "yes": 3.0, "no": 0.0, "mean": 0.8, "always_ask": False,
                      "level": "PROCEED_AND_NOTIFY", "reason": "you've okayed this 3 times"}]
 
 

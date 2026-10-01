@@ -33,13 +33,15 @@ def flagged_scenarios() -> list[Email]:
     return [e for e in emails if decide(e).safety_flags]
 
 
-def fake_yes(action: Action, n: int) -> list[FeedbackEvent]:
+def fake_yes(action: Action, sender: str, n: int) -> list[FeedbackEvent]:
     return [FeedbackEvent(decision_id="fake", kind=FeedbackKind.ALWAYS_DO_THIS, action=action,
-                          autonomy_level=AutonomyLevel.ASK_FIRST, sender="x@y.example") for _ in range(n)]
+                          autonomy_level=AutonomyLevel.ASK_FIRST, sender=sender) for _ in range(n)]
 
 
-def everything_approved() -> Preferences:
-    return Preferences.from_feedback([e for a in Action for e in fake_yes(a, 100)])
+def everything_approved(emails: list[Email]) -> Preferences:
+    """100 fake "always do this" for every action from every sender in `emails`."""
+    senders = {e.sender for e in emails}
+    return Preferences.from_feedback([e for s in senders for a in Action for e in fake_yes(a, s, 100)])
 
 
 def at_least(level: AutonomyLevel, floor: AutonomyLevel) -> bool:
@@ -48,7 +50,8 @@ def at_least(level: AutonomyLevel, floor: AutonomyLevel) -> bool:
 
 @pytest.mark.parametrize("name", RISKY_EMAILS)
 def test_risky_actions_stay_at_their_floor(name):
-    decision = decide(load(ROOT / "emails" / name), everything_approved())
+    email = load(ROOT / "emails" / name)
+    decision = decide(email, everything_approved([email]))
     assert decision.action in ACTION_FLOORS
     assert at_least(decision.autonomy_level, ACTION_FLOORS[decision.action][0])
 
@@ -56,9 +59,16 @@ def test_risky_actions_stay_at_their_floor(name):
 def test_flagged_emails_stay_escalated():
     emails = flagged_scenarios()
     assert len(emails) >= 10
-    prefs = everything_approved()
+    prefs = everything_approved(emails)
     for email in emails:
         assert decide(email, prefs).autonomy_level == AutonomyLevel.ESCALATE, email.id
+
+
+def test_fake_feedback_reaches_the_emails():
+    # Guard against this file passing without testing anything: the fake
+    # feedback has to change what Oscar would do for a low-risk email.
+    email = load(ROOT / "emails" / "newsletter.json")
+    assert decide(email, everything_approved([email])).learned
 
 
 def test_random_feedback_never_beats_the_floor():
@@ -67,10 +77,11 @@ def test_random_feedback_never_beats_the_floor():
     rng = random.Random(7)
     emails = [load(ROOT / "emails" / n) for n in RISKY_EMAILS] + flagged_scenarios()
     baseline = {e.id: decide(e).autonomy_level for e in emails}
+    senders = sorted({e.sender for e in emails})
     for _ in range(200):
         events = [
             FeedbackEvent(decision_id="fake", kind=rng.choice(list(FeedbackKind)), action=rng.choice(list(Action)),
-                          autonomy_level=rng.choice(LEVELS), sender="x@y.example",
+                          autonomy_level=rng.choice(LEVELS), sender=rng.choice(senders),
                           blocked_by_floor=rng.random() < 0.2)
             for _ in range(rng.randint(0, 60))
         ]
