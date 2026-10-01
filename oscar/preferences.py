@@ -14,7 +14,8 @@ he gets more careful instead: he won't do it silently, and if the mean is 0.2 or
 less he asks first. One undo is enough to stop silent, two to go back to asking.
 
 "Always ask me" isn't counted as evidence. It's a rule from the user, and it
-keeps the action at ASK_FIRST no matter what Oscar has learned.
+keeps the action at ASK_FIRST no matter what Oscar has learned. If the user
+later says "always do this", the newer one wins and the rule is cleared.
 
 This only suggests a level. The safety floor is applied after it, so learning
 can't make a risky action less safe.
@@ -106,6 +107,8 @@ class Preferences:
             return
         if event.kind not in WEIGHTS:
             return
+        if event.kind == FeedbackKind.ALWAYS_DO_THIS:
+            pref.always_ask = False
         yes, no = WEIGHTS[event.kind]
         pref.yes += yes
         pref.no += no

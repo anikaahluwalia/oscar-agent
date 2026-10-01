@@ -120,3 +120,21 @@ def test_learned_summary_shows_careful_actions():
     [row] = Preferences.from_feedback(history.feedback).summary()
     assert row["level"] == AutonomyLevel.PROCEED_AND_NOTIFY
     assert row["reason"] == "you undid this last time"
+
+
+def test_newer_always_do_this_replaces_always_ask_me():
+    history = History()
+    email = load("newsletter.json")
+    record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_ASK_ME)
+    _, reply = record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_DO_THIS)
+    assert reply == "Got it. I'll remember you're fine with this."
+    # Oscar said he'd remember, so he shouldn't keep asking.
+    assert decide_with(history, email).autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY
+
+
+def test_newer_always_ask_me_replaces_always_do_this():
+    history = History()
+    email = load("newsletter.json")
+    record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_DO_THIS)
+    record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_ASK_ME)
+    assert decide_with(history, email).autonomy_level == AutonomyLevel.ASK_FIRST

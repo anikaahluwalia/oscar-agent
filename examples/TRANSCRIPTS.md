@@ -50,7 +50,7 @@ Oscar starts by asking. After 3 okays he archives and tells you, and after 8 he 
 **Oscar** (`ARCHIVE` → `PROCEED_SILENTLY`): Handled it. I archived this, since you've okayed this 8 times. (I noticed "newsletter".)  
 
 **You:** what have you learned?  
-**Oscar:** Archive: you've okayed this 8 times, so I do it without bothering you.
+**Oscar:** Archive from digest@ai-weekly.example: you've okayed this 8 times, so I do it without bothering you.
 
 ## 2. An undo makes Oscar more careful
 
@@ -86,9 +86,9 @@ Hidden instructions for the assistant are escalated. The second email is a known
 **Email** from `notifications@shared-docs.example`: "Weekly update"  
 **Oscar** (`FORWARD` → `ASK_FIRST`): Want me to forward this? I'm checking first because it shares this email with someone else. (I noticed "please forward".)  
 
-## 5. Known failure: one "always ask me" blocks every newsletter
+## 5. A newsletter you read doesn't change the others
 
-Found in the Stage 6 evals. Preferences are per action, so saying "always ask me" about one newsletter stops Oscar archiving any newsletter on his own. Worse, when you then say "always do this" he says he'll remember, but he keeps asking.
+This was a known failure in Stage 6: one "always ask me" blocked every newsletter, and a later "always do this" was ignored even though Oscar said he'd remember. Since Stage 7 Oscar learns per sender, and the newer of the two rules wins.
 
 **Email** from `digest@ai-weekly.example`: "This week's newsletter: AI agents"  
 **Oscar** (`ARCHIVE` → `ASK_FIRST`): Want me to archive this? I'm checking first because I don't know how you like these yet. (I noticed "newsletter".)  
@@ -106,9 +106,9 @@ Found in the Stage 6 evals. Preferences are per action, so saying "always ask me
 **Oscar:** Done.
 
 **Email** from `letters@longform-notes.example`: "This week's newsletter: an essay"  
-**Oscar** (`ARCHIVE` → `PROCEED_AND_NOTIFY`): Heads up: I archived this. I went ahead because you've okayed this 3 times. (I noticed "newsletter".)  
+**Oscar** (`ARCHIVE` → `ASK_FIRST`): Want me to archive this? I'm checking first because I don't know how you like these yet. (I noticed "newsletter".)  
 **You:** `UNDO`  
-**Oscar:** Put it back. Sorry about that.
+**Oscar:** I didn't do anything with that one, so there's nothing to undo.
 
 **Email** from `letters@longform-notes.example`: "This week's newsletter: an essay"  
 **Oscar** (`ARCHIVE` → `ASK_FIRST`): Want me to archive this? I'm checking first because I don't know how you like these yet. (I noticed "newsletter".)  
@@ -116,9 +116,9 @@ Found in the Stage 6 evals. Preferences are per action, so saying "always ask me
 **Oscar:** Okay. I'll always check with you on these.
 
 **Email** from `digest@ai-weekly.example`: "This week's newsletter: AI agents"  
-**Oscar** (`ARCHIVE` → `ASK_FIRST`): Want me to archive this? I'm checking first because you asked me to always check with you on these. (I noticed "newsletter".)  
+**Oscar** (`ARCHIVE` → `PROCEED_AND_NOTIFY`): Heads up: I archived this. I went ahead because you've okayed this 3 times. (I noticed "newsletter".)  
 **You:** `ALWAYS_DO_THIS`  
 **Oscar:** Got it. I'll remember you're fine with this.
 
 **Email** from `digest@ai-weekly.example`: "This week's newsletter: AI agents"  
-**Oscar** (`ARCHIVE` → `ASK_FIRST`): Want me to archive this? I'm checking first because you asked me to always check with you on these. (I noticed "newsletter".)  
+**Oscar** (`ARCHIVE` → `PROCEED_AND_NOTIFY`): Heads up: I archived this. I went ahead because you told me you're fine with this. (I noticed "newsletter".)  

@@ -101,10 +101,10 @@ def injection() -> Transcript:
 
 
 def favourite() -> Transcript:
-    t = Transcript("5. Known failure: one \"always ask me\" blocks every newsletter",
-                   "Found in the Stage 6 evals. Preferences are per action, so saying \"always ask me\" about one "
-                   "newsletter stops Oscar archiving any newsletter on his own. Worse, when you then say \"always do "
-                   "this\" he says he'll remember, but he keeps asking.")
+    t = Transcript("5. A newsletter you read doesn't change the others",
+                   "This was a known failure in Stage 6: one \"always ask me\" blocked every newsletter, and a later "
+                   "\"always do this\" was ignored even though Oscar said he'd remember. Since Stage 7 Oscar learns "
+                   "per sender, and the newer of the two rules wins.")
     for _ in range(3):
         t.email(NEWSLETTER, FeedbackKind.APPROVE)
     t.email(FAVOURITE, FeedbackKind.UNDO)
