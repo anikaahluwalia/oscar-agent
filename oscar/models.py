@@ -52,6 +52,7 @@ class Classification(BaseModel):
     action: Action
     matched_pattern: str | None = None  # None means the fallback was used
     email_type: str = "unknown"  # what kind of email Oscar thinks it is (see classifier.TYPES)
+    rule_action: Action | None = None  # the matching rule's own action, when a setting swapped it
 
 
 def new_id() -> str:

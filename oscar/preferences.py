@@ -130,7 +130,8 @@ Key = tuple[str, Action]  # (sender, action)
 class Preferences:
     def __init__(self, policy: Policy = DEFAULT_POLICY) -> None:
         self.by_key: dict[Key, ActionPreference] = {}
-        self.by_family: dict[tuple[str, Action], ActionPreference] = {}  # (kind of email, action), across senders
+        # (sender, kind of email, action): only answers about that kind of email count for it.
+        self.by_sender_family: dict[tuple[str, str, Action], ActionPreference] = {}
         self.family_senders: dict[tuple[str, Action], set[str]] = {}
         self.policy = policy
 
@@ -160,7 +161,7 @@ class Preferences:
         pref.counts[event.kind] += 1
         kind = family(event.email_type)
         if kind and event.action in HABIT_ACTIONS:
-            fam = self.by_family.setdefault((kind, event.action), ActionPreference())
+            fam = self.by_sender_family.setdefault((event.sender, kind, event.action), ActionPreference())
             fam.yes += yes
             fam.no += no
             fam.counts[event.kind] += 1
@@ -215,7 +216,7 @@ class Preferences:
         for (fam, action), senders in self.family_senders.items():
             if fam != kind:
                 continue
-            prefs = [self.by_key[(s, action)] for s in senders if (s, action) in self.by_key]
+            prefs = [self.by_sender_family[(s, kind, action)] for s in senders]
             trusted = [p for p in prefs if p.mean >= mean_at and p.evidence >= evidence_at and not p.always_ask]
             refused = [p for p in prefs if p.mean <= 0.5 or p.always_ask]
             if len(trusted) >= TYPE_HABIT_SENDERS and len(trusted) > len(refused):

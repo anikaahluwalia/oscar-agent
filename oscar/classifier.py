@@ -113,10 +113,11 @@ def classify(email: Email, bulk_action: Action | None = None) -> Classification:
         for pattern in patterns:
             match = re.search(pattern, text, re.MULTILINE)
             if match:
-                email_type = TYPES[action]
+                email_type, rule_action = TYPES[action], None
                 if bulk and bulk_action and action == Action.ARCHIVE:
-                    action = bulk_action
-                return Classification(action=action, matched_pattern=match.group(0), email_type=email_type)
+                    action, rule_action = bulk_action, action
+                return Classification(action=action, matched_pattern=match.group(0), email_type=email_type,
+                                      rule_action=rule_action)
     if bulk:
         # Still a guess: nothing in the email said what it is, so Oscar asks before doing it.
         # Without this, list mail he didn't understand (a security alert from a no-reply

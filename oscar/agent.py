@@ -42,20 +42,32 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     never the level or the action."""
     classification = classify(email, bulk_action)
     action = classification.action
+    guess = classification.matched_pattern is None
     # What you've taught Oscar for this sender's routine email carries over, even when the rules
-    # picked a different low-risk action. Safety checks still run after this.
-    habit = preferences.habit(email.sender) if preferences and action in HABIT_ACTIONS else None
+    # picked a different low-risk action. Only for email he recognised: a habit for a sender's
+    # newsletters says nothing about a notice from them he couldn't read. Safety runs after this.
+    habit = preferences.habit(email.sender) if preferences and action in HABIT_ACTIONS and not guess else None
     if habit and habit != action and not preferences.by_key.get((email.sender, action)):
         action = habit
     level, reason = autonomy_for(action)
+    if classification.rule_action:
+        # A setting swapped the action (mark promos read instead of archiving): it changes what he
+        # does, not how sure he is, so a new sender is still asked about first.
+        rule_level, rule_reason = autonomy_for(classification.rule_action)
+        if is_stricter(rule_level, level):
+            level, reason = rule_level, rule_reason
     source = "policy"
-    if classification.matched_pattern is None:
+    if guess:
         # Nothing matched, so the action is only a guess. Don't act on a guess alone.
         level, reason = AutonomyLevel.ASK_FIRST, "I'm not sure what this one needs"
         source = "guess"
 
     learned = careful = False
     suggestion = preferences.suggest(action, level, email.sender) if preferences else None
+    if suggestion and guess and is_stricter(AutonomyLevel.PROCEED_AND_NOTIFY, suggestion[0]):
+        # You've okayed this for the sender, but he still couldn't tell what this email is,
+        # so he does it and tells you rather than doing it quietly.
+        suggestion = AutonomyLevel.PROCEED_AND_NOTIFY, suggestion[1]
     if suggestion:
         careful = is_stricter(suggestion[0], level)
         level, reason = suggestion
@@ -66,8 +78,8 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     # the same low-risk action for newsletters (say) from several senders, he does it for a new
     # one too, but tells you, since it's a new sender. Never quietly, and safety still runs after.
     kind_habit = None
-    if (preferences and preferences.policy.kind_habits and not suggestion and not preferences.knows(email.sender)
-            and action in HABIT_ACTIONS):
+    if (preferences and preferences.policy.kind_habits and not suggestion and not guess
+            and not preferences.knows(email.sender) and action in HABIT_ACTIONS):
         kind_habit = preferences.kind_habit(classification.email_type)
     if kind_habit and is_stricter(level, AutonomyLevel.PROCEED_AND_NOTIFY):
         action, senders = kind_habit
