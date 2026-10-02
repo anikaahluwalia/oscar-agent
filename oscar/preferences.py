@@ -41,9 +41,34 @@ WEIGHTS: dict[FeedbackKind, tuple[float, float]] = {
     FeedbackKind.UNDO: (0, 2),
 }
 
-NOTIFY_AT = (0.8, 3)  # (mean, evidence)
-SILENT_AT = (0.9, 8)
-ASK_AT_OR_BELOW = 0.2
+@dataclass(frozen=True)
+class Policy:
+    """How much feedback it takes for Oscar to do more on his own. Named, so runs with
+    different thresholds can be compared, and recorded with every eval run."""
+
+    name: str
+    notify_at: tuple[float, float] = (0.8, 3)  # (mean, evidence) to do it and tell you
+    silent_at: tuple[float, float] = (0.9, 8)  # (mean, evidence) to do it quietly
+    ask_at_or_below: float = 0.2  # mean at or below which he goes back to asking
+
+    def describe(self) -> dict:
+        return {"name": self.name, "notify_at": list(self.notify_at), "silent_at": list(self.silent_at),
+                "ask_at_or_below": self.ask_at_or_below}
+
+
+DEFAULT_POLICY = Policy("default-p1")
+POLICIES: dict[str, Policy] = {
+    p.name: p for p in (
+        DEFAULT_POLICY,
+        Policy("careful-p1", notify_at=(0.85, 5), silent_at=(0.95, 12), ask_at_or_below=0.3),
+        Policy("independent-p1", notify_at=(0.75, 2), silent_at=(0.85, 5), ask_at_or_below=0.15),
+    )
+}
+
+# Kept for code that reads the default thresholds directly.
+NOTIFY_AT = DEFAULT_POLICY.notify_at
+SILENT_AT = DEFAULT_POLICY.silent_at
+ASK_AT_OR_BELOW = DEFAULT_POLICY.ask_at_or_below
 
 # The most autonomy an action can ever learn. Drafts stop at notify: a draft
 # you don't know about is no use to you.
@@ -86,12 +111,13 @@ Key = tuple[str, Action]  # (sender, action)
 
 
 class Preferences:
-    def __init__(self) -> None:
+    def __init__(self, policy: Policy = DEFAULT_POLICY) -> None:
         self.by_key: dict[Key, ActionPreference] = {}
+        self.policy = policy
 
     @classmethod
-    def from_feedback(cls, events: list[FeedbackEvent]) -> "Preferences":
-        preferences = cls()
+    def from_feedback(cls, events: list[FeedbackEvent], policy: Policy = DEFAULT_POLICY) -> "Preferences":
+        preferences = cls(policy)
         for event in events:
             preferences.add(event)
         return preferences
@@ -141,12 +167,13 @@ class Preferences:
             if level == AutonomyLevel.ESCALATE:
                 return None
             return AutonomyLevel.ASK_FIRST, "you asked me to always check with you on these"
-        if pref.mean >= SILENT_AT[0] and pref.evidence >= SILENT_AT[1] and action not in CEILINGS:
+        silent_at, notify_at = self.policy.silent_at, self.policy.notify_at
+        if pref.mean >= silent_at[0] and pref.evidence >= silent_at[1] and action not in CEILINGS:
             return AutonomyLevel.PROCEED_SILENTLY, pref.reason()
-        if pref.mean >= NOTIFY_AT[0] and pref.evidence >= NOTIFY_AT[1]:
+        if pref.mean >= notify_at[0] and pref.evidence >= notify_at[1]:
             return AutonomyLevel.PROCEED_AND_NOTIFY, pref.reason()
         if pref.no > PRIOR_NO:
-            careful = AutonomyLevel.ASK_FIRST if pref.mean <= ASK_AT_OR_BELOW else AutonomyLevel.PROCEED_AND_NOTIFY
+            careful = AutonomyLevel.ASK_FIRST if pref.mean <= self.policy.ask_at_or_below else AutonomyLevel.PROCEED_AND_NOTIFY
             if is_stricter(careful, level):
                 return careful, pref.careful_reason()
         return None

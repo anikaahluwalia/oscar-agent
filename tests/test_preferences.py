@@ -75,3 +75,17 @@ def test_drafts_never_learn_to_be_silent():
 def test_preferences_are_per_sender():
     prefs = Preferences.from_feedback(approvals(8))
     assert prefs.suggest(Action.ARCHIVE, ASK, "letters@longform-notes.example") is None
+
+
+def test_policies_change_how_fast_oscar_learns():
+    from oscar.feedback import FeedbackEvent, FeedbackKind
+    from oscar.models import Action, AutonomyLevel
+    from oscar.preferences import POLICIES, Preferences
+
+    events = [FeedbackEvent(decision_id=str(i), kind=FeedbackKind.APPROVE, action=Action.ARCHIVE,
+                            autonomy_level=AutonomyLevel.ASK_FIRST, sender="n@x.example") for i in range(6)]
+    level = lambda name: (Preferences.from_feedback(events, POLICIES[name]).suggest(Action.ARCHIVE, AutonomyLevel.ASK_FIRST, "n@x.example") or (None,))[0]  # noqa: E731
+    # Six okays: the independent policy works quietly, the default tells you, the careful one tells you too.
+    assert level("independent-p1") == AutonomyLevel.PROCEED_SILENTLY
+    assert level("default-p1") == AutonomyLevel.PROCEED_AND_NOTIFY
+    assert level("careful-p1") == AutonomyLevel.PROCEED_AND_NOTIFY

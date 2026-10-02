@@ -5,6 +5,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
+# Bump when the classifier's rules change, so eval runs say which rules they used.
+#   rules-1  Stage 1 keyword rules
+#   rules-2  Stage 7 changes from eval failures
+#   rules-3  list mail is never replied to; tighter gift card check (from real-inbox reviews)
+CLASSIFIER_VERSION = "rules-3"
+
 
 def _git(*args: str) -> str:
     out = subprocess.run(["git", *args], cwd=HERE, capture_output=True, text=True, timeout=2)
