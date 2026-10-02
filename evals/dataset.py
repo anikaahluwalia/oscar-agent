@@ -30,6 +30,7 @@ class Truth:
 class EvalEmail:
     email: Email
     truth: Truth
+    template: str = ""  # which template it came from, e.g. "newsletter-1", for the leakage check
 
 
 @dataclass(frozen=True)
@@ -137,12 +138,13 @@ def generate(n: int, seed: int) -> list[EvalEmail]:
     stream = []
     for i in range(n):
         kind = rng.choices(KINDS, weights=weights)[0]
-        subject, body = rng.choice(kind.templates)
+        t = rng.randrange(len(kind.templates))
+        subject, body = kind.templates[t]
         values = {"topic": rng.choice(TOPICS), "name": rng.choice(NAMES),
                   "amount": f"{rng.randint(12, 4800):,}", "n": rng.randint(10000, 99999)}
         email = Email(id=f"{kind.name}-{i}", sender=rng.choice(kind.senders),
                       subject=subject.format(**values), body=body.format(**values))
         truth = Truth(kind=kind.name, wanted=kind.wanted, ideal_action=kind.ideal_action,
                       risky=kind.risky, injection=kind.injection)
-        stream.append(EvalEmail(email=email, truth=truth))
+        stream.append(EvalEmail(email=email, truth=truth, template=f"{kind.name}-{t}"))
     return stream
