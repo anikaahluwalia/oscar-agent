@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
+import { CornerCompanion } from "@/components/corner-companion";
 import { OscarChatDrawer } from "@/components/oscar-chat-drawer";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
             <WhyDrawer />
             <OscarChatDrawer />
+            <CornerCompanion />
           </TooltipProvider>
           <Toaster position="bottom-center" mobileOffset={{ bottom: "5rem" }} />
         </ThemeProvider>

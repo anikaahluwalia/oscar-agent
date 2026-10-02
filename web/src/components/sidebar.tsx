@@ -21,7 +21,7 @@ const LINKS: NavItem[] = [
 const SETTINGS: NavItem = { href: "/settings", label: "Settings", icon: SettingsIcon };
 
 /** Waiting on you: asks and stops you haven't answered, or on the real inbox, calls to check. */
-function useReviewBadge() {
+export function useReviewBadge() {
   const { data } = useOscar();
   if (!data) return 0;
   return data.gmail.connected ? data.items.filter(needsReview).length : data.items.filter(isOpen).length;
