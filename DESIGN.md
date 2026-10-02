@@ -711,6 +711,44 @@ Nothing here is made up: where the backend has no data (Gmail, notifications,
 the autonomy preference), the app says so instead of showing a fake value.
 
 
+### Seventh pass: four pages, built around what needs you
+
+The app had grown to nine pages, and it was dark, flat and grey. This pass follows
+a mock-up of a light, airy Oscar (white cards, a blue-to-violet accent, the Shih
+Tzu), checked against what Wajo's Fo does. Fo turned out not to be an inbox
+assistant at all: it's an errand agent with its own email address and phone that
+you text. So Oscar living inside your own inbox is what sets him apart. From Fo I
+kept the idea of showing outcomes ("Marked 37 as read") instead of big stat
+numbers. I left out its cream-and-green look, its pixel confetti and its cheeky
+tone; Oscar is warm and calm.
+
+- **Look.** Light by default, Plus Jakarta Sans, white cards with a soft shadow on a
+  faintly blue page, greys dark enough to read, and a gradient on one headline
+  phrase at most. Dark mode is still in Settings.
+- **Pages.** Home, Review, All email and How he's doing, with Settings at the
+  bottom; tabs along the bottom on phones. Needs You became a tab of Review (next
+  to checking his calls on the real inbox), Inbox and Activity became All email
+  (with search and day headings), and Evals and the real-inbox results became How
+  he's doing. Old addresses redirect.
+- **Home answers "do I need to do anything?"** The headline is a count of what's
+  waiting on you, never a total of everything he read, since "I read 1,000 emails"
+  doesn't help anyone. Under it are the top five things that need you, and what he
+  did since yesterday, grouped by what he did, so it stays short however much
+  email comes in.
+- **Settings holds how Oscar behaves.** What Oscar can do has the ladder for each
+  kind of email (from a new `GET /permissions`, so it can't drift from the rules),
+  the promotions setting, what he's learned (was What Oscar Knows), and what
+  always comes to you. You only change these now and then, so they don't need
+  their own pages. The autonomy preference was removed: it never did anything.
+- **Corner companion.** Oscar peeks in from the right edge with a count of what
+  needs you. It's off unless you turn it on, sits still for risky email and when
+  motion is reduced, and isn't shown on phones.
+
+What the mock-up showed but the app doesn't, on purpose: "time saved", trend
+arrows and a "helpfulness" score, which nothing measures yet, and an "auto-reply"
+setting, since Oscar never sends anything on his own. Oscar inside Gmail (labels on
+each email and a sidebar) comes with Stages 11 and 12, as a Chrome extension.
+
 ## How Oscar is evaluated, and what comes next
 
 Oscar is evaluated in two layers. Synthetic evals are the benchmark. A real inbox

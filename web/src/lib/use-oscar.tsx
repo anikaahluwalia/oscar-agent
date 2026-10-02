@@ -109,7 +109,7 @@ const UNDO_WINDOW_MS = 10_000;
 /**
  * After new emails come in, tell you about what Oscar did with a heads-up, with a
  * chance to undo it. That's what PROCEED_AND_NOTIFY means. Silent actions stay
- * silent; they can still be undone from Activity or the Inbox.
+ * silent; they can still be undone from All email.
  */
 export function offerUndo(decisions: Decision[]) {
   const told = decisions.filter((d) => d.autonomy_level === "PROCEED_AND_NOTIFY");

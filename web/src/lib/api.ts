@@ -281,7 +281,7 @@ export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", 
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 export const getEmailContent = (decisionId: string) =>
   call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
-/** A saved eval run (evals/results/runs). Every number on the Evals page comes from one of these. */
+/** A saved eval run (evals/results/runs). Every test number on How he's doing comes from one of these. */
 export interface EvalRun {
   run_id: string;
   created_at: string;

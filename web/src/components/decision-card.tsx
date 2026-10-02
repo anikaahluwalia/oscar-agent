@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   item: DecisionWithFeedback;
   onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean>;
-  /** On the Needs You page each card shows who it's from and links to the email. */
+  /** On Home and Review each card shows who it's from and links to the email. */
   compact?: boolean;
 };
 
