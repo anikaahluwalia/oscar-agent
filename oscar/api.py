@@ -26,7 +26,7 @@ from oscar.history import History, default_data_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import autonomy, brief
-from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, record_review, summary
+from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
 from oscar.preferences import Preferences
 from oscar.voice import describe_learning
 
@@ -151,6 +151,7 @@ class DecisionWithFeedback(BaseModel):
     decision: Decision
     feedback: list[FeedbackEvent]
     review: Review | None = None  # real inbox only: your latest review
+    answer: dict | None = None  # real inbox only: what you said he should have done, and how this decision does
 
 
 @app.get("/decisions", response_model=list[DecisionWithFeedback])
@@ -158,7 +159,8 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     """Every decision, newest first, with the feedback given on it."""
     decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
     return [
-        DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id))
+        DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id),
+                             answer=graded(history, d) if d.source == "gmail" else None)
         for d in decisions
     ]
 

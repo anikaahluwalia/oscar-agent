@@ -79,29 +79,61 @@ def test_summary_counts_latest_review_and_ignores_skips():
     assert s["by_version"]["v2"]["scored"] == 0 and s["by_version"]["v2"]["agreement"] is None
 
 
-def test_a_reread_that_decided_the_same_keeps_your_review():
+def reread(history, of, id, seconds, **changes):
+    d = of.model_copy(update={"id": id, "recheck_of": of.id, "policy_version": f"v{seconds}",
+                              "created_at": of.created_at + timedelta(seconds=seconds), **changes})
+    history.add_decision(d)
+    return d
+
+
+def test_an_old_half_answer_only_carries_over_when_the_reread_decided_the_same():
     from oscar.models import Action, AutonomyLevel
     from oscar.overview import needs_you
     history = History()
     first = real(history, "e1")
-    record_review(history, Review(decision_id=first.id, label=ReviewLabel.CORRECT,
-                                  reviewed_at=first.created_at + timedelta(seconds=1)))
-    same = first.model_copy(update={"id": "re1", "recheck_of": first.id, "policy_version": "v2",
-                                    "created_at": first.created_at + timedelta(seconds=2)})
-    history.add_decision(same)
-    assert history.review_carried_over(same.id).label == ReviewLabel.CORRECT
+    record_review(history, Review(decision_id=first.id, label=ReviewLabel.INCORRECT_ACTION,
+                                  should_be_action=Action.ARCHIVE, reviewed_at=first.created_at + timedelta(seconds=1)))
+    same = reread(history, first, "re1", 2)
+    assert history.review_carried_over(same.id).label == ReviewLabel.INCORRECT_ACTION
     assert all(same.id not in [d.id for d in ds] for ds in needs_you(history).values())
-
-    # The opposite: a re-read that changed its mind is a new decision to check.
-    changed = same.model_copy(update={"id": "re2", "recheck_of": same.id, "action": Action.ARCHIVE,
-                                      "autonomy_level": AutonomyLevel.ASK_FIRST, "policy_version": "v3",
-                                      "created_at": first.created_at + timedelta(seconds=3)})
-    history.add_decision(changed)
+    # A re-read that changed its mind is a new decision to check.
+    changed = reread(history, same, "re2", 3, action=Action.ARCHIVE, autonomy_level=AutonomyLevel.ASK_FIRST)
     assert history.review_carried_over(changed.id) is None
     record_review(history, Review(decision_id=changed.id, label=ReviewLabel.CORRECT,
                                   reviewed_at=changed.created_at + timedelta(seconds=1)))
     s = summary(history)
     assert s["reviewed"] == 1 and s["rereads"]["reviewed"] == 1, "a re-read's review is counted, on its own"
+
+
+def test_a_full_answer_grades_a_reread_that_changed_its_mind():
+    from oscar.models import Action, AutonomyLevel
+    from oscar.review import answer as full_answer, graded
+    history = History()
+    first = real(history, "e1")
+    review = full_answer(first, AutonomyLevel.PROCEED_SILENTLY, Action.MARK_READ, why="preference")
+    review.reviewed_at = first.created_at + timedelta(seconds=1)
+    record_review(history, review)
+    fixed = reread(history, first, "re1", 2, action=Action.MARK_READ, autonomy_level=AutonomyLevel.PROCEED_SILENTLY)
+    assert graded(history, fixed) == {"level": AutonomyLevel.PROCEED_SILENTLY, "action": Action.MARK_READ,
+                                      "error": "none", "from_earlier": True}
+    s = summary(history)
+    assert s["graded"]["n"] == 1 and s["graded"]["passed"] == 0, "the first read was wrong"
+    assert s["rereads"]["graded"]["passed"] == 1, "the re-read gets it right, measured on the same email"
+    assert s["rereads"]["reviewed"] == 0, "and you didn't have to review it again"
+
+
+def test_old_half_answers_are_counted_apart_never_guessed():
+    from oscar.models import Action
+    history = History()
+    d = real(history, "e1")
+    record_review(history, Review(decision_id=d.id, label=ReviewLabel.INCORRECT_ACTION,
+                                  should_be_action=Action.ARCHIVE, reviewed_at=d.created_at + timedelta(seconds=1)))
+    s = summary(history)
+    assert s["old_way"] == 1 and s["graded"] == {"n": 0, "held_back": True}
+    # A "Yes" alongside it isn't graded alone: that would show 100% while the "No" waits.
+    d2 = real(history, "e2")
+    record_review(history, Review(decision_id=d2.id, label=ReviewLabel.CORRECT, reviewed_at=d2.created_at + timedelta(seconds=1)))
+    assert summary(history)["graded"] == {"n": 1, "held_back": True}
 
 
 # --- full answers: what Oscar should have done -------------------------------

@@ -60,7 +60,7 @@ def brief(history: History) -> dict:
         would = [part for n, part in ((handled, f"handled {handled} quietly"), (told, f"told you about {told}"),
                                       (count(AutonomyLevel.ASK_FIRST), f"asked about {count(AutonomyLevel.ASK_FIRST)}"),
                                       (count(AutonomyLevel.ESCALATE), f"stopped {count(AutonomyLevel.ESCALATE)}")) if n]
-        to_review = len(current) - len({r.decision_id for r in history.reviews} & {d.id for d in current})
+        to_review = sum(history.review_carried_over(d.id) is None for d in current)
         summary = (f"I read {len(current)} {'email' if len(current) == 1 else 'emails'}! I'd have {', '.join(would)}. "
                    f"{to_review} left to review." if current else "I haven't read anything yet.")
         return {"handled": handled, "told": told, "waiting": waiting, "for_you": for_you,

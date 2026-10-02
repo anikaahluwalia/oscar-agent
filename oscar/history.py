@@ -59,16 +59,19 @@ class History:
         return next((r for r in reversed(self.reviews) if r.decision_id == decision_id), None)
 
     def review_carried_over(self, decision_id: str) -> Review | None:
-        """The review that stands for a decision: its own, or, for a re-read that decided the same
-        thing as before, the review of the earlier read. A re-read that changed its mind is new."""
-        decision = self.decisions.get(decision_id)
+        """The review that stands for a decision: its own, or one of an earlier read of the same email.
+        A full answer (what Oscar should have done) is about the email, so it carries over whatever
+        the re-read decided, and the re-read is graded against it. An old half-answer only carries
+        over when the re-read decided the same thing; one that changed its mind goes back to review."""
+        decision, same = self.decisions.get(decision_id), True
         while decision is not None:
             review = self.review_for(decision.id)
             if review:
-                return review
+                return review if same or review.has_answer else None
             earlier = self.decisions.get(decision.recheck_of) if decision.recheck_of else None
-            if earlier is None or (earlier.action, earlier.autonomy_level) != (decision.action, decision.autonomy_level):
+            if earlier is None:
                 return None
+            same = same and (earlier.action, earlier.autonomy_level) == (decision.action, decision.autonomy_level)
             decision = earlier
         return None
 
