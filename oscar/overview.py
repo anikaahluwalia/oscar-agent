@@ -59,14 +59,14 @@ def brief(history: History) -> dict:
                                       (count(AutonomyLevel.ASK_FIRST), f"asked about {count(AutonomyLevel.ASK_FIRST)}"),
                                       (count(AutonomyLevel.ESCALATE), f"stopped {count(AutonomyLevel.ESCALATE)}")) if n]
         to_review = len(current) - len({r.decision_id for r in history.reviews} & {d.id for d in current})
-        summary = (f"I read {len(current)} {'email' if len(current) == 1 else 'emails'}. I'd have {', '.join(would)}. "
+        summary = (f"I read {len(current)} {'email' if len(current) == 1 else 'emails'}! I'd have {', '.join(would)}. "
                    f"{to_review} left to review." if current else "I haven't read anything yet.")
         return {"handled": handled, "told": told, "waiting": waiting, "for_you": for_you,
                 "summary": summary, "trend": None, "learned": None}
     if not current:
-        summary = "Your inbox is empty. When emails come in I'll sort them for you."
+        summary = "Your inbox is empty! When emails come in, I'll sort them for you."
     elif needs == 0:
-        summary = f"All done. {did} Nothing needs you.".replace("  ", " ")
+        summary = f"All done! {did} Nothing needs you.".replace("  ", " ")
     else:
         # What needs you comes first, and spelled out, so it doesn't run into the numbers before it.
         summary = f"{needs} {'email needs' if needs == 1 else 'emails need'} you. {did}".strip()
@@ -77,14 +77,14 @@ def brief(history: History) -> dict:
     if len(ordered) >= 2 * TREND_WINDOW:
         then, now = ask_rate(ordered[:TREND_WINDOW]), ask_rate(ordered[-TREND_WINDOW:])
         if then > 0 and now == 0:
-            trend = "I haven't needed to ask you anything lately."
+            trend = "I haven't needed to ask you anything lately!"
         elif then > 0 and now < then:
-            trend = f"I'm asking you about {round((then - now) / then * 100)}% less than when we started."
+            trend = f"I'm asking you about {round((then - now) / then * 100)}% less than when we started!"
 
     habits = sum(1 for row in Preferences.from_feedback(history.feedback).summary() if row["level"])
     learned = None
     if habits:
-        learned = f"I've picked up {habits} of your habits so far." if habits > 1 else "I've picked up one of your habits so far."
+        learned = f"I've picked up {habits} of your habits so far!" if habits > 1 else "I've picked up one of your habits so far!"
 
     return {"handled": handled, "told": told, "waiting": waiting, "for_you": for_you,
             "summary": summary, "trend": trend, "learned": learned}

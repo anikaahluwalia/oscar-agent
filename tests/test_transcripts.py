@@ -7,4 +7,4 @@ def test_transcripts_run():
 
 
 def test_money_transcript_refuses_always_do_this():
-    assert "I can't take that one on myself." in transcripts.money().text()
+    assert "I'll always bring these to you." in transcripts.money().text()

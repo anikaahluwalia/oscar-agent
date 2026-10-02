@@ -45,13 +45,13 @@ class FeedbackError(ValueError):
 
 
 REPLIES: dict[FeedbackKind, str] = {
-    FeedbackKind.APPROVE: "Done.",
-    FeedbackKind.REJECT: "Okay, I left it alone.",
-    FeedbackKind.UNDO: "Put it back. Sorry about that.",
-    FeedbackKind.EDIT_THEN_SEND: "Sent with your changes. I'll pay attention to how you write these.",
-    FeedbackKind.ALWAYS_DO_THIS: "Got it. I'll remember you're fine with this.",
-    FeedbackKind.ALWAYS_ASK_ME: "Okay. I'll always check with you on these.",
-    FeedbackKind.SEEN: "Okay. It's in your hands.",
+    FeedbackKind.APPROVE: "Done! One less thing.",
+    FeedbackKind.REJECT: "Okay! I left it alone.",
+    FeedbackKind.UNDO: "Put it back! My mistake, I'll be more careful with these.",
+    FeedbackKind.EDIT_THEN_SEND: "Sent with your changes! I'll pay attention to how you write these.",
+    FeedbackKind.ALWAYS_DO_THIS: "Got it! I'll start taking care of these for you.",
+    FeedbackKind.ALWAYS_ASK_ME: "You got it! I'll always check with you on these.",
+    FeedbackKind.SEEN: "Okay! It's all yours.",
 }
 
 OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
@@ -84,10 +84,10 @@ def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | Non
 def floor_reply(decision: Decision) -> str | None:
     """Oscar's reply when "always do this" would go below the floor, else None."""
     if decision.autonomy_level == AutonomyLevel.ESCALATE or decision.safety_flags:
-        return "I can't take that one on myself. I'll keep bringing these to you."
+        return "I'll always bring these to you. Some things I'm not going to guess on."
     floor = ACTION_FLOORS.get(decision.action)
     if floor:
-        return f"I'll keep asking before I {ACTION_PHRASES[decision.action]}, since {floor[1]}."
+        return f"I'll keep checking with you before I {ACTION_PHRASES[decision.action]}, since {floor[1]}."
     return None
 
 
@@ -100,7 +100,7 @@ def record_feedback(
     check_allowed(decision, kind, edited_text)
     reply = REPLIES[kind]
     if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY:
-        reply = "Thanks. Good to know."
+        reply = "Thanks! Good to know I got that one right."
     blocked = False
     if kind == FeedbackKind.ALWAYS_DO_THIS:
         blocked_reply = floor_reply(decision)

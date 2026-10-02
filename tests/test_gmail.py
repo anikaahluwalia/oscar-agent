@@ -162,9 +162,9 @@ def test_chat_and_brief_say_what_oscar_would_do(tmp_path):
     history = History()
     sync(history, GmailClient(connected(tmp_path), FakeGmail(INBOX).http()))
     summary = brief(history)["summary"]
-    assert summary.startswith("I read 3 emails. I'd have") and "left to review" in summary
+    assert summary.startswith("I read 3 emails! I'd have") and "left to review" in summary
     handled = answer(history, "what did you handle?").reply
-    assert handled.startswith("I'm only reading your inbox") and "I handled" not in handled
+    assert handled.startswith("I'm only watching your inbox") and "I handled" not in handled
     assert "I did these" not in answer(history, "what needs me?").reply
 
 

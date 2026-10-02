@@ -35,7 +35,7 @@ def test_brief_counts_latest_decision_per_email():
 def test_summary_wording():
     history = History()
     add(history, Email(id="f", sender="c@x.example", subject="FYI", body="fyi"))
-    assert brief(history)["summary"] == "All done. I handled 1 quietly. Nothing needs you."
+    assert brief(history)["summary"] == "All done! I handled 1 quietly. Nothing needs you."
     add(history, WIRE)
     assert brief(history)["summary"] == "1 email needs you. I handled 1 quietly."
 
@@ -54,8 +54,8 @@ def test_trend_shows_when_oscar_asks_less():
             record_feedback(history, d.id, FeedbackKind.APPROVE)
     b = brief(history)
     # First 12: asked 3 times. Last 12: no asks.
-    assert b["trend"] == "I haven't needed to ask you anything lately."
-    assert b["learned"] == "I've picked up one of your habits so far."
+    assert b["trend"] == "I haven't needed to ask you anything lately!"
+    assert b["learned"] == "I've picked up one of your habits so far!"
 
 
 def test_trend_as_a_percentage():
@@ -64,7 +64,7 @@ def test_trend_as_a_percentage():
         add(history, NEWSLETTER, f"a{i}")
     for i in range(TREND_WINDOW):  # second window: half ask, half are FYIs Oscar handles
         add(history, NEWSLETTER if i % 2 else Email(id="f", sender="c@x.example", subject="FYI", body="fyi"), f"b{i}")
-    assert brief(history)["trend"] == "I'm asking you about 50% less than when we started."
+    assert brief(history)["trend"] == "I'm asking you about 50% less than when we started!"
 
 
 def test_no_trend_without_enough_history():
@@ -109,7 +109,7 @@ def test_got_it_takes_an_escalated_email_off_your_list():
     wire = add(history, WIRE)
     assert brief(history)["for_you"] == 1
     _, reply = record_feedback(history, wire.id, FeedbackKind.SEEN)
-    assert reply == "Okay. It's in your hands."
+    assert reply == "Okay! It's all yours."
     assert brief(history)["for_you"] == 0
     # Got it is about the email, not about how much Oscar should do.
     assert Preferences.from_feedback(history.feedback).summary() == []
@@ -131,4 +131,4 @@ def test_told_you_emails_count_until_checked():
     assert draft.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY
     assert brief(history)["summary"].startswith("1 email needs you.")
     record_feedback(history, draft.id, FeedbackKind.APPROVE)
-    assert brief(history)["summary"].startswith("All done.")
+    assert brief(history)["summary"].startswith("All done!")

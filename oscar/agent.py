@@ -52,7 +52,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
                 break
         level = AutonomyLevel.ESCALATE
         source = "safety_check"
-        message = f"This one's for you. {flags[0].reason}."
+        message = f"I stopped this one. {flags[0].reason}."
         noticed = flags[0].matched
 
     return Decision(

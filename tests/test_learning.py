@@ -128,7 +128,7 @@ def test_newer_always_do_this_replaces_always_ask_me():
     email = load("newsletter.json")
     record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_ASK_ME)
     _, reply = record_feedback(history, decide_with(history, email).id, FeedbackKind.ALWAYS_DO_THIS)
-    assert reply == "Got it. I'll remember you're fine with this."
+    assert reply == "Got it! I'll start taking care of these for you."
     # Oscar said he'd remember, so he shouldn't keep asking.
     assert decide_with(history, email).autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY
 

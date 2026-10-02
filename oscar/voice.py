@@ -1,4 +1,9 @@
-"""How Oscar words things. Everything the user reads about a decision comes from here."""
+"""How Oscar words things. Everything the user reads about a decision comes from here.
+
+His voice: a small, loyal, cheerful Shih Tzu who watches the door for you. Upbeat
+about good news (exclamation marks welcome), calm and firm about anything risky,
+always short. No dog puns.
+"""
 
 from oscar.models import Action, AutonomyLevel, SafetyCategory
 
@@ -32,10 +37,10 @@ ACTION_DONE: dict[Action, str] = {
 }
 
 TEMPLATES: dict[AutonomyLevel, str] = {
-    AutonomyLevel.PROCEED_SILENTLY: "Handled it. I {done}, since {reason}.",
-    AutonomyLevel.PROCEED_AND_NOTIFY: "Heads up: I {done}. I went ahead because {reason}.",
-    AutonomyLevel.ASK_FIRST: "Want me to {phrase}? I'm checking first because {reason}.",
-    AutonomyLevel.ESCALATE: "This one's for you. It looks like a request to {phrase}, and {reason}.",
+    AutonomyLevel.PROCEED_SILENTLY: "All sorted! I {done}, since {reason}.",
+    AutonomyLevel.PROCEED_AND_NOTIFY: "Heads up! I {done}. I went ahead because {reason}.",
+    AutonomyLevel.ASK_FIRST: "Want me to {phrase}? I'm checking with you first because {reason}.",
+    AutonomyLevel.ESCALATE: "I stopped this one. It looks like a request to {phrase}, and {reason}.",
 }
 
 
@@ -57,15 +62,15 @@ def describe_learning(row: dict) -> str:
 
 # On a real inbox in Stage 9 Oscar only reads, so he says what he would do.
 READ_ONLY_TEMPLATES: dict[AutonomyLevel, str] = {
-    AutonomyLevel.PROCEED_SILENTLY: "I'd {phrase} without bothering you, since {reason}.",
-    AutonomyLevel.PROCEED_AND_NOTIFY: "I'd {phrase} and let you know, since {reason}.",
+    AutonomyLevel.PROCEED_SILENTLY: "Easy one! I'd {phrase} without bothering you, since {reason}.",
+    AutonomyLevel.PROCEED_AND_NOTIFY: "I'd {phrase} and give you a heads up, since {reason}.",
     AutonomyLevel.ASK_FIRST: TEMPLATES[AutonomyLevel.ASK_FIRST],
     AutonomyLevel.ESCALATE: TEMPLATES[AutonomyLevel.ESCALATE],
 }
-READ_ONLY_CAREFUL = "I'd {phrase} and tell you, because {reason}."
+READ_ONLY_CAREFUL = "I'd {phrase} and give you a heads up, because {reason}."
 
 # Used when Oscar is being more careful than usual because of feedback.
-CAREFUL_NOTIFY = "Heads up: I {done}. I'm telling you because {reason}."
+CAREFUL_NOTIFY = "Heads up! I {done}. I'm telling you because {reason}."
 
 
 def explain(action: Action, level: AutonomyLevel, reason: str, careful: bool = False, read_only: bool = False) -> str:

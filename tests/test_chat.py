@@ -44,16 +44,16 @@ def test_what_needs_me_matches_the_brief():
             record_feedback(history, d.id, FeedbackKind.REJECT)
         elif level == AutonomyLevel.PROCEED_AND_NOTIFY:
             record_feedback(history, d.id, FeedbackKind.APPROVE)
-    assert answer(history, "What needs me?").reply.startswith("Nothing needs you")
+    assert answer(history, "What needs me?").reply.startswith("All quiet!")
 
 
 def test_what_did_you_handle():
     r = answer(inbox(), "what did you handle today?")
-    assert "I handled 3 quietly" in r.reply
+    assert "I quietly handled 3" in r.reply
 
 
 def test_what_do_you_know_before_feedback():
-    assert answer(inbox(), "what do you know about me?").reply.startswith("I haven't learned anything yet")
+    assert answer(inbox(), "what do you know about me?").reply.startswith("Nothing yet!")
 
 
 def test_why_about_an_email():
@@ -73,7 +73,7 @@ def test_why_without_an_email():
 def test_teach_a_rule():
     history = inbox()
     r = answer(history, "Always archive emails from digest@morningbrew-weekly.example")
-    assert r.reply == "Got it. I'll remember you're fine with this."
+    assert r.reply == "Got it! I'll start taking care of these for you."
     assert history.feedback[-1].kind == FeedbackKind.ALWAYS_DO_THIS
     # The rule took effect: the newsletter is no longer asked about.
     again = decide(Email.model_validate_json((EMAILS_DIR / "newsletter.json").read_text()), Preferences.from_feedback(history.feedback))
@@ -83,28 +83,28 @@ def test_teach_a_rule():
 def test_always_ask_me_rule():
     history = inbox()
     r = answer(history, "always ask me about emails from casey@company.example")
-    assert r.reply == "Okay. I'll always check with you on these."
+    assert r.reply == "You got it! I'll always check with you on these."
 
 
 def test_safety_floor_answers_in_chat():
     history = inbox()
     r = answer(history, "always pay invoices from accounts@supplier.example")
-    assert r.reply.startswith("I can't take that one on myself.")
+    assert r.reply.startswith("I'll always bring these to you.")
     assert history.feedback == []
 
 
 def test_floor_for_ask_first_actions():
     history = inbox()
     r = answer(history, "always forward emails from alex@company.example")
-    assert r.reply.startswith("I'll keep asking before I forward this")
+    assert r.reply.startswith("I'll keep checking with you before I forward this")
 
 
 def test_unknown_sender():
-    assert "haven't seen that from" in answer(inbox(), "always archive emails from nobody@x.example").reply
+    assert "haven't seen anything from" in answer(inbox(), "always archive emails from nobody@x.example").reply
 
 
 def test_unknown_request_is_honest():
-    assert answer(inbox(), "book me a flight to Toronto").reply.startswith("I can't do that yet.")
+    assert answer(inbox(), "book me a flight to Toronto").reply.startswith("That one's beyond me for now.")
 
 
 def test_chat_endpoint(client):
