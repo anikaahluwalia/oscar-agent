@@ -1,5 +1,6 @@
 """Summaries for the web app: Oscar's brief and how much he does for each sender."""
 
+from oscar.classifier import TYPES
 from oscar.feedback import FeedbackKind
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
@@ -126,3 +127,25 @@ def autonomy(history: History) -> list[dict]:
             "decision_id": decision.id,
         })
     return sorted(rows, key=lambda r: (r["sender"], r["action"].value))
+
+
+def permissions(history: History) -> list[dict]:
+    """What Oscar may do on his own with each kind of email, straight from the rules: the policy level,
+    the floor learning can't go below, and the ceiling it can't go above. For the Settings page, so it
+    never drifts from the code."""
+    bulk = history.settings.get("bulk_action")
+    rows = []
+    for action, email_type in TYPES.items():
+        level, reason = autonomy_for(action)
+        floor = ACTION_FLOORS.get(action)
+        rows.append({
+            "action": action,
+            "email_type": email_type,
+            "level": level,
+            "reason": reason,
+            "floor": floor[0] if floor else None,
+            "ceiling": CEILINGS.get(action),
+            # Your promotions setting: list mail that would be archived is marked as read instead.
+            "instead": Action(bulk) if bulk and action == Action.ARCHIVE and bulk != action.value else None,
+        })
+    return rows

@@ -25,7 +25,7 @@ from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_fe
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
-from oscar.overview import autonomy, brief
+from oscar.overview import autonomy, brief, permissions
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
 from oscar.preferences import Preferences
 from oscar.voice import describe_learning
@@ -174,6 +174,12 @@ def get_brief(history: History = Depends(get_history)) -> dict:
 def get_autonomy(history: History = Depends(get_history)) -> list[dict]:
     """How much Oscar does on his own for each sender and action, and the limits."""
     return autonomy(history)
+
+
+@app.get("/permissions")
+def get_permissions(history: History = Depends(get_history)) -> list[dict]:
+    """What Oscar may do on his own with each kind of email, and what learning can't change."""
+    return permissions(history)
 
 
 class ChatRequest(BaseModel):

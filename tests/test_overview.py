@@ -132,3 +132,17 @@ def test_told_you_emails_count_until_checked():
     assert brief(history)["summary"].startswith("1 email needs you.")
     record_feedback(history, draft.id, FeedbackKind.APPROVE)
     assert brief(history)["summary"].startswith("All done!")
+
+
+def test_permissions_come_from_the_rules():
+    from oscar.history import History
+    from oscar.models import Action, AutonomyLevel
+    from oscar.overview import permissions
+    history = History()
+    rows = {r["action"]: r for r in permissions(history)}
+    assert rows[Action.MOVE_MONEY]["floor"] == AutonomyLevel.ESCALATE
+    assert rows[Action.DRAFT_REPLY]["ceiling"] == AutonomyLevel.PROCEED_AND_NOTIFY
+    assert rows[Action.APPLY_LABEL]["level"] == AutonomyLevel.PROCEED_SILENTLY
+    assert rows[Action.ARCHIVE]["instead"] is None
+    history.set_setting("bulk_action", "MARK_READ")
+    assert {r["action"]: r for r in permissions(history)}[Action.ARCHIVE]["instead"] == Action.MARK_READ
