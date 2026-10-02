@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { sendReview, type Action, type DecisionWithFeedback, type Level, type Reason, type Review, type ReviewInput, type Why } from "@/lib/api";
-import { ACTIONS, REVIEW_LABELS, whatOscarDid } from "@/lib/labels";
+import { ACTIONS, REVIEW_LABELS, isOldWay, whatOscarDid } from "@/lib/labels";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +44,23 @@ const REASONS: { reason: Reason; label: string }[] = [
   { reason: "IMPORTANT", label: "It's just important to me" },
 ];
 const risky = (reasons: Reason[]) => reasons.some((r) => r !== "IMPORTANT");
+const ACTED: Level[] = ["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY"];
+
+/**
+ * Would Oscar's choice pass this answer? Mirrors expected_answer and grade_answer in oscar/review.py:
+ * "only tell me, it's just important" passes asking or stopping it; "ask me, I'll handle it" passes
+ * any ask; a quiet "Other" passes nothing, since none of his actions was right.
+ */
+function passes(oscar: { autonomy_level: Level; action: Action }, level: Level, choice: Choice | null, reasons: Reason[]) {
+  if (level === "ESCALATE" && reasons.length && !risky(reasons)) {
+    return oscar.autonomy_level === "ASK_FIRST" || oscar.autonomy_level === "ESCALATE";
+  }
+  if (oscar.autonomy_level !== level) return false;
+  if (level === "ESCALATE") return true;
+  if (choice === "OTHER") return false;
+  if (choice === "NOTHING" || choice === null) return level === "ASK_FIRST";
+  return choice === oscar.action;
+}
 
 const WHY: { why: Why; label: string }[] = [
   { why: "preference", label: "Yes, I'd just handle it differently" },
@@ -83,10 +100,6 @@ function describeReview(review: Review): string {
   const extra = [review.should_be_action && ACTIONS[review.should_be_action], review.actual_type].filter(Boolean);
   return [REVIEW_LABELS[review.label].label, ...extra].join(" · ");
 }
-
-/** Reviews from before the full answer: a "No" that saved only half of it. */
-export const isOldWay = (review: Review | null) =>
-  !!review && !review.complete && review.label !== "CORRECT" && review.label !== "SKIP";
 
 function Chip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -165,6 +178,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
 
   function pickLevel(next: Level) {
     setLevel(next);
+    if (why === "risk" && next !== "ASK_FIRST") setWhy(null);
     // Keep the action if it still fits, so changing only the level is one tap.
     if (choice && choice !== "OTHER" && !(choice === "NOTHING" ? next === "ASK_FIRST" : ACTIONS_FOR[next].includes(choice))) {
       setChoice(null);
@@ -200,7 +214,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
     note: note.trim() || null,
   });
 
-  const same = level === decision.autonomy_level && (level === "ESCALATE" || action === decision.action);
+  const same = !!level && !(level !== "ESCALATE" && !choice) && passes(decision, level, choice, reasons);
   const missing = !level
     ? "Pick what he should have done."
     : level === "ESCALATE"
@@ -217,26 +231,37 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
   const sameHint = same && finalWhy !== "misread" && !note.trim() ? "That's what Oscar picked. Change something, or go back and press Yes." : null;
   const problem = missing ?? whyMissing ?? typeMissing ?? sameHint;
 
-  // Your last full "No", offered again for emails like it. Not if it's what Oscar already picked here.
+  // Your last full "No", offered again for emails like it. Not an "Other" (its note is about that
+  // email), and not if it's what Oscar already picked here.
+  const lastChoice: Choice | null = last?.should_be_action ?? (last?.should_be_level === "ASK_FIRST" ? "NOTHING" : null);
   const lastAnswer =
     last?.complete && last.should_be_level && last.decision_id !== decision.id &&
-    !(last.should_be_level === decision.autonomy_level && (last.should_be_level === "ESCALATE" || last.should_be_action === decision.action))
+    !(ACTED.includes(last.should_be_level) && !last.should_be_action) &&
+    !passes(decision, last.should_be_level, lastChoice, last.reasons)
       ? last
       : null;
 
   // Already reviewed: say what you said, with a way to change it.
   if (review && !editing) {
-    const now = graded?.from_earlier
-      ? graded.error === "none"
-        ? "Oscar gets this right now."
-        : `Oscar now: ${whatOscarDid(decision).toLowerCase()}, still not right.`
-      : null;
+    // When your answer was on an earlier read: how this read does against it, compared with that one.
+    const now = !graded?.from_earlier
+      ? null
+      : graded.error === "none"
+        ? graded.earlier_error === "none"
+          ? "Oscar still gets this right."
+          : "Oscar gets this right now."
+        : graded.earlier_error === "none"
+          ? `Oscar now: ${whatOscarDid(decision).toLowerCase()}, which is different from what you said was right.`
+          : `Oscar now: ${whatOscarDid(decision).toLowerCase()}, still not right.`;
+    const plainYes = review.label === "CORRECT" && !review.complete;
+    const said = review.label === "SKIP" ? "Not sure" : plainYes ? "Yes, that's right" : describeReview(review);
+    const prefix = graded?.from_earlier ? "About an earlier read, you said" : "You said";
     return (
       <div className="flex flex-col gap-1 rounded-xl border border-dashed px-4 py-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p>
-            {review.label === "CORRECT" && !review.complete ? "You said: " : "You said he should: "}
-            <span className="font-medium">{review.label === "CORRECT" && !review.complete ? "Yes, that's right" : describeReview(review)}</span>
+            {plainYes || review.label === "SKIP" ? `${prefix}: ` : `${prefix} he should: `}
+            <span className="font-medium">{said}</span>
             {isOldWay(review) && <span className="text-muted-foreground"> (half an answer, from the old review screen)</span>}
           </p>
           <button
@@ -269,6 +294,11 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
           <Button size="sm" variant="ghost" disabled={busy} onClick={() => save({ decision_id: decision.id, label: "SKIP" })}>
             Not sure
           </Button>
+          {review && (
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+              Back
+            </Button>
+          )}
         </div>
         {lastAnswer && lastAnswer.should_be_level && (
           <button
@@ -289,6 +319,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
             className="self-start text-left text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             No, same as the last one: {describeAnswer(lastAnswer.should_be_level, lastAnswer.should_be_action, lastAnswer.reasons).toLowerCase()}
+            {lastAnswer.why === "misread" && lastAnswer.actual_type && <>, he misread it (it&apos;s {lastAnswer.actual_type.toLowerCase()})</>}
           </button>
         )}
         <p className="text-xs text-muted-foreground">This checks Oscar&apos;s work. He doesn&apos;t learn from it.</p>
@@ -368,7 +399,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
       {level && !missing && !autoRisk && (
         <Question title="Did he understand what this email is?">
           <div className="flex flex-wrap gap-1.5">
-            {WHY.map((w) => (
+            {WHY.filter((w) => w.why !== "risk" || level === "ASK_FIRST").map((w) => (
               <Chip key={w.why} selected={why === w.why} onClick={() => setWhy(w.why)}>
                 {w.label}
               </Chip>

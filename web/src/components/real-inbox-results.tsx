@@ -74,7 +74,7 @@ function GradedPart({ tally }: { tally: ReviewTally }) {
     return (
       <p className="rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">
         {tally.old_way} {tally.old_way === 1 ? "review is" : "reviews are"} only half an answer, from the old review screen. Finish{" "}
-        {tally.old_way === 1 ? "it" : "them"} below to see how Oscar does measured the same way as the evals. Until then
+        {tally.old_way === 1 ? "it" : "them"} on the Review page, under Finish these, to see how Oscar does measured the same way as the evals. Until then
         it would mostly count your Yeses, and look much better than he is.
       </p>
     );

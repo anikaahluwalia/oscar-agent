@@ -112,6 +112,8 @@ export type ReviewInput =
       note: string | null;
     };
 
+export type GradeError = "none" | "too_cautious" | "too_permissive" | "wrong_action";
+
 export interface Rate {
   rate: number | null;
   of: number;
@@ -194,7 +196,13 @@ export interface DecisionWithFeedback {
   feedback: FeedbackEvent[];
   review: Review | null;
   // Real inbox: what you said he should have done, and how this decision does against it.
-  answer: { level: Level; action: Action | null; error: "none" | "too_cautious" | "too_permissive" | "wrong_action"; from_earlier: boolean } | null;
+  answer: {
+    level: Level;
+    action: Action | null;
+    error: GradeError;
+    from_earlier: boolean; // your answer was given on an earlier read of this email
+    earlier_error: GradeError | null; // how that earlier read did against it
+  } | null;
 }
 
 export interface LearnedRow {

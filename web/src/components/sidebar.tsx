@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OscarAvatar } from "@/components/oscar-avatar";
+import { needsReview } from "@/lib/labels";
 import { countsOf, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const { data } = useOscar();
   const counts = data ? countsOf(data.items) : null;
   const waiting = counts ? counts.ASK_FIRST + counts.ESCALATE : 0;
-  const toReview = data ? data.items.filter((i) => i.decision.source === "gmail" && !i.review).length : 0;
+  const toReview = data ? data.items.filter(needsReview).length : 0;
   return (
     <>
       <nav className="flex flex-col gap-0.5">

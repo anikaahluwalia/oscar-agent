@@ -1,6 +1,6 @@
 // Plain-language labels for what the API returns.
 
-import type { Action, Decision, FeedbackKind, Level, ReviewLabel } from "@/lib/api";
+import type { Action, Decision, DecisionWithFeedback, FeedbackKind, Level, Review, ReviewLabel } from "@/lib/api";
 
 /** What each autonomy level is called in the app. */
 export const STATUS: Record<Level, { label: string; would: string; pill: string; dot: string }> = {
@@ -138,3 +138,10 @@ export const PROTECTED_RULES: ProtectedRule[] = [
   { title: "Irreversible actions", rule: "Always asks first", why: "Deleting for good and unsubscribing can't be taken back.", kind: "ask" },
   { title: "Anything in your name", rule: "Always asks first", why: "Sending replies, forwarding, and accepting invites.", kind: "ask" },
 ];
+
+/** Reviews from before the full answer: a "No" that saved only half of it, still to finish. */
+export const isOldWay = (review: Review | null) =>
+  !!review && !review.complete && review.label !== "CORRECT" && review.label !== "SKIP";
+
+/** Real-inbox emails still waiting on you in the Review page: not reviewed, or only half-answered. */
+export const needsReview = (i: DecisionWithFeedback) => i.decision.source === "gmail" && (!i.review || isOldWay(i.review));

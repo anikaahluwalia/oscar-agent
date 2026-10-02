@@ -5,7 +5,7 @@ import { DecisionCard } from "@/components/decision-card";
 import { EmptyState } from "@/components/empty-state";
 import { Loading, Page, PageHeader, Section } from "@/components/page";
 import { RealInboxResults } from "@/components/real-inbox-results";
-import { isOldWay } from "@/components/review-panel";
+import { isOldWay } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { checkGmail } from "@/lib/demo";
 import { useOscar } from "@/lib/use-oscar";
