@@ -755,6 +755,13 @@ Each decision on the real inbox gets one of these (`oscar/review.py`):
 A review can also say what it should have been (the level, the action, or the
 kind of email) and carry a note.
 
+In the app the labels are asked as questions, since the names alone were hard to
+pick between: first "Did Oscar get this right?" (Yes is Correct, Not sure is
+Skip), then, if not, "What was wrong?" with only the options that fit that email,
+in plain words ("He got what kind of email this is wrong", "Right idea, but I'd do
+something else with it"). Each option still shows its label, and the stored values
+are the same.
+
 Reviews are for evaluation only. They're stored apart from feedback, which is what
 Oscar learns from, and a decision is always logged before it's reviewed. So the
 real-inbox numbers measure what Oscar decided on his own, and scoring a decision

@@ -85,16 +85,6 @@ export const FEEDBACK: Record<FeedbackKind, string> = {
   SEEN: "Reviewed",
 };
 
-/** Labels that come with a "should have been": which detail to ask for. */
-export const REVIEW_DETAIL: Partial<Record<ReviewLabel, "level" | "action" | "type">> = {
-  QUESTIONED_TOO_MUCH: "level",
-  NEEDED_TO_ASK: "level",
-  MISINTERPRETED_RISK: "level",
-  UNNECESSARY_FLAGGING: "level",
-  INCORRECT_ACTION: "action",
-  INCORRECT_TYPE: "type",
-};
-
 /** Review labels for the real-inbox review (Stage 9), with what each one means. Mirrors oscar/review.py. */
 export const REVIEW_LABELS: Record<ReviewLabel, { label: string; meaning: string }> = {
   CORRECT: { label: "Correct", meaning: "Right action and right level." },
