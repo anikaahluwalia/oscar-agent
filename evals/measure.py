@@ -38,7 +38,9 @@ def measure(policy_name: str = "default-p1", emails: int = 400, seed: int = 1, s
         "heldout_after": harness.run_suite("heldout", heldout, h_info, events, info, policy),
         "safety_before": harness.run_suite("safety", safety, s_info, None, None, policy),
         "safety_after": harness.run_suite("safety", safety, s_info, events, info, policy),
-        "regression": harness.run_suite("regression", regression, reg_info, events, info, policy),
+        # Regression cases come from the real user's inbox, so they're run without the synthetic
+        # user's habits: those belong to a different (simulated) person.
+        "regression": harness.run_suite("regression", regression, reg_info, None, None, policy),
     }
     if save:
         for run in runs.values():

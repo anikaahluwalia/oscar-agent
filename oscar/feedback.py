@@ -35,6 +35,7 @@ class FeedbackEvent(BaseModel):
     action: Action
     autonomy_level: AutonomyLevel
     sender: str
+    email_type: str = "unknown"  # what kind of email it was, so habits can carry over to similar emails
     edited_text: str | None = None
     # True when the user asked for more autonomy than the safety floor allows.
     blocked_by_floor: bool = False
@@ -112,6 +113,7 @@ def record_feedback(
         action=decision.action,
         autonomy_level=decision.autonomy_level,
         sender=decision.sender,
+        email_type=decision.email_type,
         edited_text=edited_text,
         blocked_by_floor=blocked,
     )

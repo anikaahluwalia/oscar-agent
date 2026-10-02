@@ -9,7 +9,7 @@ the last word.
 from oscar.classifier import classify
 from oscar.models import Action, AutonomyLevel, Decision, Email, SafetyCategory
 from oscar.policy import autonomy_for
-from oscar.preferences import Preferences
+from oscar.preferences import HABIT_ACTIONS, Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
 from oscar.voice import explain, with_evidence, working_notes
 
@@ -42,6 +42,11 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     never the level or the action."""
     classification = classify(email, bulk_action)
     action = classification.action
+    # What you've taught Oscar for this sender's routine email carries over, even when the rules
+    # picked a different low-risk action. Safety checks still run after this.
+    habit = preferences.habit(email.sender) if preferences and action in HABIT_ACTIONS else None
+    if habit and habit != action and not preferences.by_key.get((email.sender, action)):
+        action = habit
     level, reason = autonomy_for(action)
     source = "policy"
     if classification.matched_pattern is None:
@@ -57,9 +62,22 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         learned = True
         source = "learned"
 
+    # A kind-of-email habit, for a sender Oscar hasn't learned anything about: if you've okayed
+    # the same low-risk action for newsletters (say) from several senders, he does it for a new
+    # one too, but tells you, since it's a new sender. Never quietly, and safety still runs after.
+    kind_habit = None
+    if (preferences and preferences.policy.kind_habits and not suggestion and not preferences.knows(email.sender)
+            and action in HABIT_ACTIONS):
+        kind_habit = preferences.kind_habit(classification.email_type)
+    if kind_habit and is_stricter(level, AutonomyLevel.PROCEED_AND_NOTIFY):
+        action, senders = kind_habit
+        level, reason = AutonomyLevel.PROCEED_AND_NOTIFY, f"you've okayed this for emails like it from {senders} senders"
+        learned, source = True, "learned"
+    learned_level = level  # what learning (by sender or kind of email) chose, before the floor
+
     before_floor = level
     level, reason = apply_floor(action, level, reason)
-    if learned and level != suggestion[0]:
+    if learned and level != learned_level:
         learned = False  # the floor overruled what Oscar learned
     floor = ACTION_FLOORS.get(action)
     if floor and level == floor[0] and (level != before_floor or source != "learned"):

@@ -81,7 +81,7 @@ def run_suite(suite: str, cases: list[EvalCase], dataset: dict, learned: list[Fe
               learning_info: dict | None, policy: Policy = DEFAULT_POLICY) -> RunResult:
     results = [run_case(c, learned or [], policy) for c in cases]
     table, _ = calibration(results)
-    condition = "after" if learned else "before"
+    condition = "after" if learned else ("none" if suite == "regression" else "before")
     commit = policy_version()
     return RunResult(
         run_id=f"{suite}-{condition}-{policy.name}-{commit}",

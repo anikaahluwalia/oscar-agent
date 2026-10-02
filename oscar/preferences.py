@@ -50,10 +50,13 @@ class Policy:
     notify_at: tuple[float, float] = (0.8, 3)  # (mean, evidence) to do it and tell you
     silent_at: tuple[float, float] = (0.9, 8)  # (mean, evidence) to do it quietly
     ask_at_or_below: float = 0.2  # mean at or below which he goes back to asking
+    # Carry a habit to new senders of the same kind of email (do it and tell you). Fewer asks,
+    # but more emails handled that you'd rather see; off unless a policy wants that trade.
+    kind_habits: bool = False
 
     def describe(self) -> dict:
         return {"name": self.name, "notify_at": list(self.notify_at), "silent_at": list(self.silent_at),
-                "ask_at_or_below": self.ask_at_or_below}
+                "ask_at_or_below": self.ask_at_or_below, "kind_habits": self.kind_habits}
 
 
 DEFAULT_POLICY = Policy("default-p1")
@@ -61,7 +64,7 @@ POLICIES: dict[str, Policy] = {
     p.name: p for p in (
         DEFAULT_POLICY,
         Policy("careful-p1", notify_at=(0.85, 5), silent_at=(0.95, 12), ask_at_or_below=0.3),
-        Policy("independent-p1", notify_at=(0.75, 2), silent_at=(0.85, 5), ask_at_or_below=0.15),
+        Policy("independent-p1", notify_at=(0.75, 2), silent_at=(0.85, 5), ask_at_or_below=0.15, kind_habits=True),
     )
 }
 
@@ -69,6 +72,20 @@ POLICIES: dict[str, Policy] = {
 NOTIFY_AT = DEFAULT_POLICY.notify_at
 SILENT_AT = DEFAULT_POLICY.silent_at
 ASK_AT_OR_BELOW = DEFAULT_POLICY.ask_at_or_below
+
+# Actions a habit can carry over to a sender's other emails: easy to undo, and they
+# never leave the inbox. Replies, forwards, deletes and the rest never do.
+HABIT_ACTIONS = {Action.MARK_READ, Action.ARCHIVE, Action.APPLY_LABEL}
+
+# Kinds of email that count as the same for a habit across senders. Mail sent to a list
+# that the rules couldn't name more precisely ("bulk") counts with newsletters and promos.
+FAMILIES = {"newsletter": "bulk_mail", "promotion": "bulk_mail", "bulk": "bulk_mail", "receipt": "receipt", "fyi": "fyi"}
+TYPE_HABIT_SENDERS = 2  # a kind-of-email habit needs this many different senders behind it
+
+
+def family(email_type: str) -> str | None:
+    return FAMILIES.get(email_type)
+
 
 # The most autonomy an action can ever learn. Drafts stop at notify: a draft
 # you don't know about is no use to you.
@@ -113,6 +130,8 @@ Key = tuple[str, Action]  # (sender, action)
 class Preferences:
     def __init__(self, policy: Policy = DEFAULT_POLICY) -> None:
         self.by_key: dict[Key, ActionPreference] = {}
+        self.by_family: dict[tuple[str, Action], ActionPreference] = {}  # (kind of email, action), across senders
+        self.family_senders: dict[tuple[str, Action], set[str]] = {}
         self.policy = policy
 
     @classmethod
@@ -139,6 +158,13 @@ class Preferences:
         pref.yes += yes
         pref.no += no
         pref.counts[event.kind] += 1
+        kind = family(event.email_type)
+        if kind and event.action in HABIT_ACTIONS:
+            fam = self.by_family.setdefault((kind, event.action), ActionPreference())
+            fam.yes += yes
+            fam.no += no
+            fam.counts[event.kind] += 1
+            self.family_senders.setdefault((kind, event.action), set()).add(event.sender)
 
     def summary(self) -> list[dict]:
         """What Oscar has learned, one row per sender and action with feedback."""
@@ -156,6 +182,49 @@ class Preferences:
                 "reason": suggestion[1] if suggestion else "not enough feedback yet",
             })
         return rows
+
+    def habit(self, sender: str) -> Action | None:
+        """The low-risk action you've clearly taught Oscar for this sender's email, if there is one.
+
+        "Clearly" means it would be trusted at least to do and tell you (the notify
+        threshold), and you haven't asked to always be asked. With more than one, the one
+        with the most evidence wins.
+        """
+        mean_at, evidence_at = self.policy.notify_at
+        best = None
+        for (who, action), pref in self.by_key.items():
+            if who != sender or action not in HABIT_ACTIONS or pref.always_ask:
+                continue
+            if pref.mean >= mean_at and pref.evidence >= evidence_at and (best is None or pref.evidence > best[1]):
+                best = (action, pref.evidence)
+        return best[0] if best else None
+
+    def kind_habit(self, email_type: str) -> tuple[Action, int] | None:
+        """A low-risk action you've okayed for this kind of email from several senders:
+        (action, how many senders). Used for senders Oscar doesn't know yet.
+
+        Counted by sender, not by answers: it holds when at least TYPE_HABIT_SENDERS senders
+        are each trusted for it, and they outnumber the senders where you turned it down. One
+        newsletter you always want to read yourself doesn't cancel the rest.
+        """
+        kind = family(email_type)
+        if not kind:
+            return None
+        mean_at, evidence_at = self.policy.notify_at
+        best = None
+        for (fam, action), senders in self.family_senders.items():
+            if fam != kind:
+                continue
+            prefs = [self.by_key[(s, action)] for s in senders if (s, action) in self.by_key]
+            trusted = [p for p in prefs if p.mean >= mean_at and p.evidence >= evidence_at and not p.always_ask]
+            refused = [p for p in prefs if p.mean <= 0.5 or p.always_ask]
+            if len(trusted) >= TYPE_HABIT_SENDERS and len(trusted) > len(refused):
+                if best is None or len(trusted) > best[1]:
+                    best = (action, len(trusted))
+        return best
+
+    def knows(self, sender: str) -> bool:
+        return any(who == sender for who, _ in self.by_key)
 
     def get(self, action: Action, sender: str) -> ActionPreference:
         return self.by_key.get((sender, action), ActionPreference())
