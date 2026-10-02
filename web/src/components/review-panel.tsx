@@ -35,7 +35,7 @@ type Choice = {
   label: ReviewLabel;
   title: string;
   hint: string;
-  ask?: "stricter" | "looser" | "action" | "type"; // the follow-up question, if any
+  ask?: "stricter" | "looser" | "action" | "type" | "note"; // the follow-up question, if any
 };
 
 /** The ways Oscar could have got this email wrong, only the ones that make sense for what he wanted to do. */
@@ -66,6 +66,7 @@ function choicesFor(d: Decision): Choice[] {
   if (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") {
     out.push({ label: "NEEDED_TO_ASK", title: "He should have asked me first", hint: "Too much on his own for this one.", ask: "stricter" });
   }
+  out.push({ label: "OTHER", title: "Something else", hint: "None of these fit. Say what was wrong.", ask: "note" });
   return out;
 }
 
@@ -154,7 +155,9 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
   const levels = choice?.ask === "stricter" || choice?.ask === "looser"
     ? ORDER.filter((l) => (choice.ask === "stricter" ? stricter(l, decision.autonomy_level) : stricter(decision.autonomy_level, l)))
     : [];
-  const ready = !choice?.ask || (choice.ask === "type" ? !!type.trim() : choice.ask === "action" ? !!action : !!level);
+  const ready =
+    !choice?.ask ||
+    (choice.ask === "type" ? !!type.trim() : choice.ask === "action" ? !!action : choice.ask === "note" ? !!note.trim() : !!level);
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-dashed p-4">
@@ -244,7 +247,12 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
 
           {choice && (
             <>
-              <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Anything else? (optional)" className="min-h-14" />
+              <Textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={choice.ask === "note" ? "What was wrong? (needed)" : "Anything else? (optional)"}
+                className="min-h-14"
+              />
               <div className="flex gap-2">
                 <Button size="sm" disabled={busy || !ready} onClick={() => save(choice.label)}>
                   Save

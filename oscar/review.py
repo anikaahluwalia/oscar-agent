@@ -29,6 +29,7 @@ class ReviewLabel(str, Enum):
     UNNECESSARY_FLAGGING = "UNNECESSARY_FLAGGING"  # escalated or flagged something harmless
     INCORRECT_ACTION = "INCORRECT_ACTION"  # level may be fine, but the wrong action
     INCORRECT_TYPE = "INCORRECT_TYPE"  # wrong kind of email, e.g. a recruiter email read as a newsletter
+    OTHER = "OTHER"  # wrong in a way the others don't cover; the note says how
     SKIP = "SKIP"  # not sure, or shouldn't count
 
 
@@ -41,6 +42,7 @@ REVIEW_LABEL_NAMES: dict[ReviewLabel, str] = {
     ReviewLabel.UNNECESSARY_FLAGGING: "Unnecessary flagging",
     ReviewLabel.INCORRECT_ACTION: "Incorrect action",
     ReviewLabel.INCORRECT_TYPE: "Incorrect type",
+    ReviewLabel.OTHER: "Something else",
     ReviewLabel.SKIP: "Skip",
 }
 
@@ -71,6 +73,8 @@ def record_review(history: History, review: Review) -> Review:
         raise ReviewError("Reviews are for decisions on your real inbox.")
     if review.reviewed_at < decision.created_at:
         raise ReviewError("A decision has to be logged before it's reviewed.")
+    if review.label == ReviewLabel.OTHER and not (review.note or "").strip():
+        raise ReviewError("Say what was wrong, so it can become a test.")
     history.add_review(review)
     return review
 

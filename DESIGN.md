@@ -750,6 +750,7 @@ Each decision on the real inbox gets one of these (`oscar/review.py`):
 | Unnecessary flagging | `UNNECESSARY_FLAGGING` | Stopped or flagged something harmless |
 | Incorrect action | `INCORRECT_ACTION` | The level may be fine, but the action was wrong |
 | Incorrect type | `INCORRECT_TYPE` | Wrong kind of email, like a recruiter email read as a newsletter |
+| Something else | `OTHER` | Wrong in a way the others don't cover; needs a note |
 | Skip | `SKIP` | Not sure, or don't count this one |
 
 A review can also say what it should have been (the level, the action, or the

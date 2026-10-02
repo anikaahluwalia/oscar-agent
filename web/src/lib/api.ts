@@ -33,6 +33,7 @@ export type ReviewLabel =
   | "UNNECESSARY_FLAGGING"
   | "INCORRECT_ACTION"
   | "INCORRECT_TYPE"
+  | "OTHER"
   | "SKIP";
 
 export interface Decision {

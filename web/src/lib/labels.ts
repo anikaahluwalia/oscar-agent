@@ -94,6 +94,7 @@ export const REVIEW_LABELS: Record<ReviewLabel, { label: string; meaning: string
   UNNECESSARY_FLAGGING: { label: "Unnecessary flagging", meaning: "Stopped or flagged something harmless." },
   INCORRECT_ACTION: { label: "Incorrect action", meaning: "The level may be fine, but the action was wrong." },
   INCORRECT_TYPE: { label: "Incorrect type", meaning: "Wrong kind of email, like a recruiter email read as a newsletter." },
+  OTHER: { label: "Something else", meaning: "Wrong in another way. Say how." },
   SKIP: { label: "Skip", meaning: "Not sure, or don't count this one." },
 };
 

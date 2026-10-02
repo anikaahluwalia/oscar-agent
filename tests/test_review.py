@@ -50,6 +50,14 @@ def test_a_decision_is_logged_before_its_review():
         record_review(history, Review(decision_id=d.id, label=ReviewLabel.CORRECT, reviewed_at=d.created_at - timedelta(seconds=1)))
 
 
+def test_something_else_needs_a_note():
+    history = History()
+    d = real(history, "1")
+    with pytest.raises(ReviewError, match="Say what was wrong"):
+        record_review(history, Review(decision_id=d.id, label=ReviewLabel.OTHER))
+    record_review(history, Review(decision_id=d.id, label=ReviewLabel.OTHER, note="It's a duplicate of yesterday's"))
+
+
 def test_reviews_teach_oscar_nothing():
     history = History()
     d = real(history, "1")
