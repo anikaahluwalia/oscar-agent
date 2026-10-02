@@ -82,3 +82,19 @@ def test_posts_must_be_json(setup):
 def test_unknown_hosts_are_refused(setup):
     client, *_ = setup
     assert client.get("/gmail", headers={"host": "evil.example"}).status_code == 400
+
+
+def test_shows_the_whole_real_email(setup):
+    client, state, real, demo, tmp_path = setup
+    state["tokens"] = connected(tmp_path)
+    client.post("/gmail/sync")
+    decision_id = next(iter(real.decisions))
+    body = client.get(f"/emails/{decision_id}/content").json()
+    assert "Top stories" in body["text"]
+    # Nothing new is stored: only the decision Oscar logged.
+    assert len(real.decisions) == 1
+
+
+def test_no_content_for_demo_emails(setup):
+    client, *_ = setup
+    assert client.get("/emails/nope/content").status_code == 404

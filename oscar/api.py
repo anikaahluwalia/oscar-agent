@@ -316,6 +316,30 @@ def gmail_disconnect(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx
     return {"ok": True}
 
 
+@app.get("/emails/{decision_id}/content")
+def email_content(
+    decision_id: str,
+    tokens: gmail.TokenStore = Depends(get_tokens),
+    http: httpx.Client = Depends(get_http),
+    real: History = Depends(get_real_history),
+) -> dict:
+    """The whole real email, fetched from Gmail when you open it so you can see what it is.
+    Read-only, and nothing is saved: Oscar's history keeps only the first 160 characters."""
+    decision = real.get_decision(decision_id)
+    if decision is None or decision.source != "gmail" or not decision.gmail:
+        raise HTTPException(404, "That isn't one of your real emails.")
+    if not tokens.load():
+        raise HTTPException(409, "Gmail isn't connected.")
+    try:
+        return gmail.email_content(gmail.GmailClient(tokens, http).message(decision.gmail.message_id))
+    except gmail.GmailError as e:
+        if e.status == 404:
+            raise HTTPException(404, "Gmail doesn't have this email anymore.")
+        raise HTTPException(502, str(e))
+    except httpx.HTTPError:
+        raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
+
+
 class ReviewRequest(BaseModel):
     decision_id: str
     label: ReviewLabel

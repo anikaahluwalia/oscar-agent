@@ -181,3 +181,20 @@ def test_keeps_gmails_preview():
     raw["snippet"] = "&zwnj; Free shipping &amp; returns \u200c"
     _, info = parse_message(raw)
     assert info.preview == "Free shipping & returns"
+
+
+def test_email_content_for_showing():
+    from oscar.gmail import email_content
+
+    raw = message("h", "shop@x.example", "Sale", (
+        '<html><head><meta http-equiv="refresh" content="0;url=https://evil.example"><script>alert(1)</script>'
+        '<link rel="stylesheet" href="https://x.example/a.css"></head>'
+        '<body onload="steal()"><p>Big &amp; bold</p><a href="javascript:alert(1)">x</a>'
+        '<a href="https://shop.example">Shop</a><img src="https://t.example/pixel.gif"><form action="/x"><input></form>'
+        '<iframe src="https://evil.example"></iframe></body></html>'), html=True)
+    content = email_content(raw)
+    page = content["html"]
+    for bad in ("<script", "http-equiv", "onload", "javascript:", "<form", "<iframe", "<link"):
+        assert bad not in page.lower(), bad
+    assert "https://shop.example" in page and "Big &amp; bold" in page
+    assert "Big & bold" in content["text"]

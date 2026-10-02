@@ -228,6 +228,44 @@ def body_text(payload: dict) -> str:
     return clean_text(text)[:BODY_LIMIT]
 
 
+DISPLAY_LIMIT = 200_000  # characters of an email shown in the app; it's fetched live and never stored
+
+
+def _strip_active(markup: str) -> str:
+    """Remove what could run or redirect. The app also shows email in a sandboxed frame with
+    scripts off; this is a second layer, not the only one."""
+    markup = re.sub(r"(?is)<(script|iframe|object|embed|frame|frameset|applet|form)\b.*?(</\1\s*>|$)", "", markup)
+    markup = re.sub(r"(?is)<(script|iframe|object|embed|frame|frameset|applet|form|base|link)\b[^>]*>", "", markup)
+    markup = re.sub(r"(?is)<meta\b[^>]*http-equiv[^>]*>", "", markup)
+    markup = re.sub(r"(?i)\s+on[a-z]+\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s>]+)", "", markup)
+    markup = re.sub(r"(?i)(href|src)\s*=\s*([\"']?)\s*javascript:[^\"'>\s]*\2", r'\1="#"', markup)
+    return markup
+
+
+def email_content(raw: dict) -> dict:
+    """The whole email for showing in the app: its HTML (with anything active removed) and its text."""
+    html_parts, text_parts = [], []
+
+    def walk(part: dict) -> None:
+        mime = part.get("mimeType", "")
+        data = part.get("body", {}).get("data")
+        if data and mime == "text/html":
+            html_parts.append(_decode(data, _charset(part)))
+        elif data and mime == "text/plain":
+            text_parts.append(_decode(data, _charset(part)))
+        for child in part.get("parts", []):
+            walk(child)
+
+    walk(raw.get("payload", {}))
+    markup = "\n".join(html_parts)
+    text = "\n\n".join(text_parts) or (_strip_html(markup) if markup else raw.get("snippet", ""))
+    text = INVISIBLE.sub("", html.unescape(text)).replace("\u00a0", " ")
+    return {
+        "html": _strip_active(markup)[:DISPLAY_LIMIT] if markup else None,
+        "text": re.sub(r"[ \t]+", " ", re.sub(r"\n{3,}", "\n\n", text)).strip()[:DISPLAY_LIMIT],
+    }
+
+
 def clean_text(text: str) -> str:
     """Entities decoded, invisible padding removed, spaces collapsed."""
     text = INVISIBLE.sub("", html.unescape(text)).replace("\u00a0", " ")
