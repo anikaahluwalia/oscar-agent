@@ -1,131 +1,127 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ChartColumnIcon,
-  ClipboardCheckIcon,
-  HistoryIcon,
-  HouseIcon,
-  InboxIcon,
-  LightbulbIcon,
-  MenuIcon,
-  SettingsIcon,
-  UserIcon,
-  UserRoundCheckIcon,
-  XIcon,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ClipboardCheckIcon, GaugeIcon, HouseIcon, MailIcon, SettingsIcon, UserIcon } from "lucide-react";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { needsReview } from "@/lib/labels";
-import { countsOf, useOscar } from "@/lib/use-oscar";
+import { isOpen, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: typeof HouseIcon; realInboxOnly?: boolean };
+type NavItem = { href: string; label: string; short?: string; icon: typeof HouseIcon };
 
+// Four pages and Settings. How Oscar behaves (what he can do, what he's learned, the
+// rules he never breaks) lives in Settings, since you only change it now and then.
 const LINKS: NavItem[] = [
   { href: "/home", label: "Home", icon: HouseIcon },
-  { href: "/inbox", label: "Inbox", icon: InboxIcon },
-  { href: "/needs-you", label: "Needs You", icon: UserRoundCheckIcon },
-  { href: "/review", label: "Review", icon: ClipboardCheckIcon, realInboxOnly: true },
-  { href: "/activity", label: "Activity", icon: HistoryIcon },
-  { href: "/memory", label: "What Oscar Knows", icon: LightbulbIcon },
-  { href: "/evals", label: "Evals", icon: ChartColumnIcon },
+  { href: "/review", label: "Review", icon: ClipboardCheckIcon },
+  { href: "/email", label: "All email", short: "Email", icon: MailIcon },
+  { href: "/results", label: "How he's doing", short: "Results", icon: GaugeIcon },
 ];
+const SETTINGS: NavItem = { href: "/settings", label: "Settings", icon: SettingsIcon };
 
-function NavLink({ href, label, icon: Icon, badge, onClick }: NavItem & { badge?: number; onClick?: () => void }) {
-  const path = usePathname();
-  const active = path === href;
+/** Waiting on you: asks and stops you haven't answered, or on the real inbox, calls to check. */
+function useReviewBadge() {
+  const { data } = useOscar();
+  if (!data) return 0;
+  return data.gmail.connected ? data.items.filter(needsReview).length : data.items.filter(isOpen).length;
+}
+
+function NavLink({ href, label, icon: Icon, badge }: NavItem & { badge?: number }) {
+  const active = usePathname() === href;
   return (
     <Link
       href={href}
-      onClick={onClick}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground",
-        active && "bg-sidebar-accent text-foreground",
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground",
+        active && "bg-sidebar-accent text-sidebar-accent-foreground",
       )}
     >
-      <Icon className="size-4" />
+      <Icon className="size-[18px]" />
       <span className="flex-1">{label}</span>
-      {!!badge && <span className="rounded-full bg-status-needs/15 px-1.5 text-xs font-medium text-status-needs">{badge}</span>}
+      {!!badge && <span className="rounded-full bg-status-needs/15 px-2 text-xs font-semibold text-status-needs">{badge}</span>}
     </Link>
   );
 }
 
-function Nav({ onNavigate }: { onNavigate?: () => void }) {
+function Account() {
   const { data } = useOscar();
-  const counts = data ? countsOf(data.items) : null;
-  const waiting = counts ? counts.ASK_FIRST + counts.ESCALATE : 0;
-  const toReview = data ? data.items.filter(needsReview).length : 0;
+  // Until Gmail is connected there's no real account, so say so instead of inventing one.
   return (
-    <>
-      <nav className="flex flex-col gap-0.5">
-        {LINKS.filter((l) => !l.realInboxOnly || data?.gmail.connected).map((l) => (
-          <NavLink key={l.href} {...l} badge={l.href === "/needs-you" ? waiting : l.href === "/review" ? toReview : undefined} onClick={onNavigate} />
-        ))}
-      </nav>
-      <div className="mt-auto flex flex-col gap-0.5">
-        <NavLink href="/settings" label="Settings" icon={SettingsIcon} onClick={onNavigate} />
-        {/* Until Gmail is connected there's no real account, so say so instead of inventing one. */}
-        <div className="flex items-center gap-3 px-3 py-2 text-sm">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <UserIcon className="size-4" />
-          </span>
-          <span className="flex min-w-0 flex-col leading-tight">
-            <span className="truncate">{data?.gmail.connected ? data.gmail.address : "Demo inbox"}</span>
-            <span className="text-xs text-muted-foreground">{data?.gmail.connected ? "Gmail · read-only" : "Gmail not connected"}</span>
-          </span>
-        </div>
-      </div>
-    </>
+    <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-sm">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <UserIcon className="size-4" />
+      </span>
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="truncate font-medium">{data?.gmail.connected ? data.gmail.address : "Demo inbox"}</span>
+        <span className="text-xs text-muted-foreground">{data?.gmail.connected ? "Gmail · read-only for now" : "Gmail not connected"}</span>
+      </span>
+    </div>
   );
 }
 
-function Logo({ onClick }: { onClick?: () => void }) {
+function Logo() {
   return (
-    <Link href="/home" onClick={onClick} className="flex items-center gap-2 px-3">
-      <OscarAvatar size={28} />
-      <span className="text-base font-semibold">Oscar</span>
+    <Link href="/home" className="flex items-center gap-2.5 px-3">
+      <OscarAvatar size={32} />
+      <span className="text-xl font-extrabold tracking-tight">Oscar</span>
     </Link>
   );
 }
 
-/** The menu: a sidebar on bigger screens, a top bar with a menu button on phones. */
-export function Sidebar() {
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+/** A tab in the phone's bottom bar. */
+function Tab({ href, label, short, icon: Icon, badge }: NavItem & { badge?: number }) {
+  const active = usePathname() === href;
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold text-muted-foreground",
+        active && "text-sidebar-accent-foreground",
+      )}
+    >
+      <Icon className="size-5" />
+      {short ?? label}
+      {!!badge && (
+        <span className="absolute top-1.5 left-1/2 ml-2 min-w-4 rounded-full bg-status-needs px-1 text-center text-[10px] leading-4 text-white">
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
+    </Link>
+  );
+}
 
+/** The menu: a sidebar on bigger screens; on phones, a slim top bar and tabs along the bottom. */
+export function Sidebar() {
+  const badge = useReviewBadge();
   return (
     <>
-      <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col gap-6 border-r border-sidebar-border bg-sidebar px-3 py-5 md:flex">
+      <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col gap-6 border-r border-sidebar-border bg-sidebar px-3 py-6 md:flex">
         <Logo />
-        <Nav />
+        <nav aria-label="Main" className="flex flex-col gap-1">
+          {LINKS.map((l) => (
+            <NavLink key={l.href} {...l} badge={l.href === "/review" ? badge : undefined} />
+          ))}
+        </nav>
+        <div className="mt-auto flex flex-col gap-2">
+          <NavLink {...SETTINGS} />
+          <Account />
+        </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 px-2 py-2 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex items-center border-b bg-background/95 px-2 py-3 backdrop-blur md:hidden">
         <Logo />
-        <Button variant="ghost" size="icon" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
-          <MenuIcon />
-        </Button>
       </header>
-      {open && (
-        <div role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col gap-6 bg-sidebar px-3 py-3 md:hidden">
-          <div className="flex items-center justify-between">
-            <Logo onClick={() => setOpen(false)} />
-            <Button autoFocus variant="ghost" size="icon" aria-label="Close menu" onClick={() => setOpen(false)}>
-              <XIcon />
-            </Button>
-          </div>
-          <Nav onNavigate={() => setOpen(false)} />
-        </div>
-      )}
+      <nav
+        aria-label="Main"
+        className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      >
+        {[...LINKS, SETTINGS].map((l) => (
+          <Tab key={l.href} {...l} badge={l.href === "/review" ? badge : undefined} />
+        ))}
+      </nav>
     </>
   );
 }

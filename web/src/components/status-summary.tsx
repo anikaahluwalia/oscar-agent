@@ -5,10 +5,10 @@ import type { Counts } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 const ORDER: { level: Level; href: string }[] = [
-  { level: "PROCEED_SILENTLY", href: "/activity" },
-  { level: "PROCEED_AND_NOTIFY", href: "/activity" },
-  { level: "ASK_FIRST", href: "/needs-you" },
-  { level: "ESCALATE", href: "/needs-you" },
+  { level: "PROCEED_SILENTLY", href: "/email" },
+  { level: "PROCEED_AND_NOTIFY", href: "/email" },
+  { level: "ASK_FIRST", href: "/review" },
+  { level: "ESCALATE", href: "/review" },
 ];
 
 /** A row of small counts: 3 Handled · 1 FYI · 0 Needs You · 0 Blocked. */

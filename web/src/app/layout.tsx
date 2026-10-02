@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <WhyDrawer />
             <OscarChatDrawer />
           </TooltipProvider>
-          <Toaster position="bottom-center" />
+          <Toaster position="bottom-center" mobileOffset={{ bottom: "5rem" }} />
         </ThemeProvider>
       </body>
     </html>

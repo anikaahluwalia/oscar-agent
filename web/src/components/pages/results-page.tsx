@@ -72,7 +72,8 @@ function CaseRow({ c }: { c: EvalCaseResult }) {
   );
 }
 
-export function EvalsPage() {
+/** How Oscar is doing: your reviews of his calls on your inbox, then the tests he's measured on. */
+export function ResultsPage() {
   const { data } = useOscar();
   const [runs, setRuns] = useState<Record<string, EvalRun> | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -110,7 +111,29 @@ export function EvalsPage() {
 
   return (
     <Page className="max-w-4xl">
-      <PageHeader title="Evals" text="Oscar's measured results. Every number here comes from a saved run of python -m evals.measure." />
+      <PageHeader title="How he's doing" text="Every number here comes from your reviews or a saved test run. Nothing is estimated." />
+
+      {data?.gmail.connected && (
+        <Section title="On your inbox">
+          <p className="-mt-1 text-sm text-muted-foreground">
+            From your reviews of Oscar&apos;s calls on your Gmail, which he only reads. Kept apart from the test results below.
+          </p>
+          {data.reviews.decisions ? (
+            <RealInboxResults summary={data.reviews} />
+          ) : (
+            <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
+              No reviews yet. Check a few of his calls on the <Link href="/review" className="underline underline-offset-4">Review</Link> page.
+            </p>
+          )}
+        </Section>
+      )}
+
+      <div className="flex flex-col gap-1 border-t pt-8">
+        <h2 className="text-2xl font-semibold tracking-tight">Tested before every change</h2>
+        <p className="text-muted-foreground">
+          Hundreds of made-up emails he never saw while being built, scored by <code className="font-mono text-sm">python -m evals.measure</code>.
+        </p>
+      </div>
       {problem && <p className="text-sm text-muted-foreground">{problem}</p>}
       {runs && !held && <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">No saved runs yet. Run python -m evals.measure.</p>}
 
@@ -259,18 +282,6 @@ export function EvalsPage() {
         </>
       )}
 
-      <Section title="Real inbox (reported separately)">
-        <p className="-mt-1 text-sm text-muted-foreground">
-          From your reviews of Oscar&apos;s decisions on your Gmail, which he only reads. Never added to the synthetic numbers above.
-        </p>
-        {data?.reviews.decisions ? (
-          <RealInboxResults summary={data.reviews} />
-        ) : (
-          <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
-            No real-inbox results yet. Connect Gmail in <Link href="/settings" className="underline underline-offset-4">Settings</Link> and review a few of Oscar&apos;s decisions.
-          </p>
-        )}
-      </Section>
     </Page>
   );
 }

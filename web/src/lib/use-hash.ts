@@ -7,7 +7,7 @@ function subscribe(onChange: () => void) {
   return () => window.removeEventListener("hashchange", onChange);
 }
 
-/** The part of the URL after #, without the #. Links like /inbox#<id> use it to pick an email. */
+/** The part of the URL after #, without the #. Links like /email#<id> use it to pick an email. */
 export function useHash() {
   return useSyncExternalStore(subscribe, () => window.location.hash.slice(1), () => "");
 }

@@ -129,7 +129,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           {compact && (
             <Button asChild size="sm" variant="outline">
-              <Link href={`/inbox#${decision.id}`}>Review email</Link>
+              <Link href={`/email#${decision.id}`}>Review email</Link>
             </Button>
           )}
           {!answered && (

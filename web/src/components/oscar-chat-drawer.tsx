@@ -24,7 +24,7 @@ export function OscarChatDrawer() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full border bg-card py-1.5 pr-4 pl-1.5 text-sm font-medium shadow-lg hover:bg-surface-hover"
+          className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex md:right-5 md:bottom-5 items-center gap-2 rounded-full border bg-card py-1.5 pr-4 pl-1.5 text-sm font-medium shadow-lg hover:bg-surface-hover"
         >
           <OscarAvatar size={28} />
           Ask Oscar
