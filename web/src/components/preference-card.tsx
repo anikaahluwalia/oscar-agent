@@ -61,7 +61,7 @@ export function PreferenceCard({ learned, limits, answers, onFeedback, readOnly 
   const level = limits?.level;
   const anyAnswers = answers.approved + answers.declined + answers.undone > 0;
   return (
-    <li className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
+    <li className="flex flex-col gap-3 rounded-2xl border bg-card shadow-card p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate font-medium">{learned.sender}</p>

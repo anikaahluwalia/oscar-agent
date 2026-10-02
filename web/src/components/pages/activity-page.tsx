@@ -30,7 +30,7 @@ export function ActivityPage() {
         byDay(data.items).map(([day, items]) => (
           <section key={day} className="flex flex-col gap-2">
             <h2 className="px-4 text-sm font-medium text-muted-foreground">{day}</h2>
-            <ul className="flex flex-col rounded-2xl border bg-card p-1.5">
+            <ul className="flex flex-col rounded-2xl border bg-card shadow-card p-1.5">
               {items.map((i) => (
                 <ActivityRow key={i.decision.id} decision={i.decision} />
               ))}

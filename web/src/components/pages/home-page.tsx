@@ -68,7 +68,7 @@ export function HomePage() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-8">
             <Section title="Recent activity" link={<More href="/activity">View all</More>}>
-              <ul className="flex flex-col rounded-2xl border bg-card p-1.5">
+              <ul className="flex flex-col rounded-2xl border bg-card shadow-card p-1.5">
                 {data.items.slice(0, 5).map((i) => (
                   <ActivityRow key={i.decision.id} decision={i.decision} />
                 ))}
@@ -79,7 +79,7 @@ export function HomePage() {
               {known.length ? (
                 <ul className="grid gap-3 sm:grid-cols-3">
                   {known.map((row) => (
-                    <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-1 rounded-2xl border bg-card p-4">
+                    <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-1 rounded-2xl border bg-card shadow-card p-4">
                       <p className="truncate text-sm font-medium">{row.sender}</p>
                       <p className="text-sm text-muted-foreground">
                         {ACTIONS[row.action]} · {row.always_ask ? "always asks you" : DOES[levelOf(row.sender, row.action) ?? "ASK_FIRST"].toLowerCase()}
@@ -96,7 +96,7 @@ export function HomePage() {
             </Section>
           </div>
 
-          <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card p-5 lg:sticky lg:top-8">
+          <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card shadow-card p-5 lg:sticky lg:top-8">
             <div className="flex flex-col gap-1">
               <h2 className="text-lg font-semibold">Talk to Oscar</h2>
               <p className="text-sm text-muted-foreground">Ask me what needs you, what I handled, or teach me a rule!</p>

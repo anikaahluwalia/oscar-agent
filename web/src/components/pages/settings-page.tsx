@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 function Group({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card p-5">
+    <section className="flex flex-col gap-4 rounded-2xl border bg-card shadow-card p-5">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="font-semibold">{title}</h2>
         {note && <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{note}</span>}

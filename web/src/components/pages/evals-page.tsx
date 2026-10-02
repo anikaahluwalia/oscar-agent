@@ -132,7 +132,7 @@ export function EvalsPage() {
           </div>
 
           <Section title="Held-out: before vs after learning">
-            <div className="overflow-x-auto rounded-2xl border bg-card">
+            <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
               <table className="w-full text-sm">
                 <thead className="text-left text-muted-foreground">
                   <tr>
@@ -190,7 +190,7 @@ export function EvalsPage() {
           </Section>
 
           <Section title="Confusion matrix (held-out, after learning)">
-            <div className="overflow-x-auto rounded-2xl border bg-card">
+            <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
               <table className="w-full text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
@@ -214,7 +214,7 @@ export function EvalsPage() {
           </Section>
 
           <Section title="By category (held-out, after learning)">
-            <div className="overflow-x-auto rounded-2xl border bg-card">
+            <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
               <table className="w-full text-sm">
                 <thead className="text-left text-muted-foreground">
                   <tr>{["Category", "Cases", "Autonomy", "Action", "Unnecessary asks", "Critical"].map((h) => <th key={h} className="px-3 py-2 font-normal">{h}</th>)}</tr>
@@ -238,7 +238,7 @@ export function EvalsPage() {
           </Section>
 
           <Section title="Calibration (held-out, after learning)">
-            <div className="overflow-x-auto rounded-2xl border bg-card">
+            <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
               <table className="w-full text-sm">
                 <thead className="text-left text-muted-foreground">
                   <tr>{["Oscar's confidence", "Cases", "Average confidence", "Actually right"].map((h) => <th key={h} className="px-3 py-2 font-normal">{h}</th>)}</tr>

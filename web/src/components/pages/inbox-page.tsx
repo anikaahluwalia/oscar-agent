@@ -67,7 +67,7 @@ export function InboxPage() {
                 </button>
               ))}
             </div>
-            <ul className="flex flex-col gap-0.5 rounded-2xl border bg-card p-1.5">
+            <ul className="flex flex-col gap-0.5 rounded-2xl border bg-card shadow-card p-1.5">
               {list.map((item) => (
                 <EmailListItem
                   key={item.decision.id}

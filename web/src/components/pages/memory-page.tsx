@@ -58,7 +58,7 @@ export function MemoryPage() {
           {showAll ? (
             <ul className="flex flex-col gap-3">
               {others.map((row) => (
-                <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
+                <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-3 rounded-2xl border bg-card shadow-card p-4">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{row.sender}</p>
                     <p className="text-sm text-muted-foreground">{ACTIONS[row.action]} · no feedback yet</p>

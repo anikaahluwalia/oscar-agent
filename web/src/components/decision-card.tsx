@@ -68,7 +68,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
   // The real inbox is read-only for now: show what Oscar would have done, and let you review it.
   if (decision.source === "gmail") {
     return (
-      <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5">
+      <div className="flex flex-col gap-4 rounded-2xl border bg-card shadow-card p-5">
         {from}
         <div className="flex items-center gap-3">
           <OscarAvatar size={32} mood={level === "ESCALATE" ? "alert" : level === "ASK_FIRST" ? "curious" : "calm"} />
@@ -145,7 +145,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
 
   if (level === "ASK_FIRST") {
     return (
-      <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5">
+      <div className="flex flex-col gap-4 rounded-2xl border bg-card shadow-card p-5">
         {from}
         {!compact && (
           <div className="flex items-center gap-3">
@@ -204,7 +204,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
   // Handled and FYI: Oscar already did it, so keep it quiet. You can check it or undo it.
   const undone = feedback.some((f) => f.kind === "UNDO");
   return (
-    <div className={cn("flex flex-col gap-3 rounded-2xl border bg-card p-5", level === "PROCEED_SILENTLY" && "bg-card/60")}>
+    <div className={cn("flex flex-col gap-3 rounded-2xl border bg-card shadow-card p-5", level === "PROCEED_SILENTLY" && "bg-card/60")}>
       {from}
       <p className="font-medium">
         {undone ? "Undone. It's back the way it was." : `Oscar: ${whatOscarDid(decision).toLowerCase()}.`}

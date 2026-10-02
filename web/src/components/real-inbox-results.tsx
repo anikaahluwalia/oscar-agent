@@ -99,7 +99,7 @@ export function RealInboxResults({ summary }: { summary: ReviewSummary }) {
   const rereads = summary.rereads;
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-2xl border bg-card p-5">
+      <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-2xl border bg-card shadow-card p-5">
         <p>
           <span className="text-2xl font-semibold tabular-nums">{pct(summary.agreement)}</span>{" "}
           <span className="text-sm text-muted-foreground">you said were right</span>
