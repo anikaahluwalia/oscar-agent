@@ -2,7 +2,11 @@
 
 Every meaningful mistake Oscar makes on the real inbox becomes a case here
 **before** his logic changes. `python -m oscar reviews` lists the decisions
-you disagreed with.
+you disagreed with. For reviews from the new review screen it prints an
+`Expect:` line, which is the case's `expect` as it is. It also says whether he
+misread the email or you'd just handle it differently: only a misread (or a
+missed risk) is a mistake in his rules. A preference is something he should
+learn, so it doesn't need a rule change.
 
 How to write one:
 
