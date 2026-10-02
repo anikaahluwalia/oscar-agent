@@ -17,7 +17,7 @@ from oscar import gmail
 from oscar.config import API_URL, WEB_URL
 
 from oscar.agent import decide
-from oscar.chat import ChatReply, answer
+from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
 from oscar.inbox import AlreadySyncing, sync
@@ -141,12 +141,19 @@ def get_autonomy(history: History = Depends(get_history)) -> list[dict]:
 class ChatRequest(BaseModel):
     message: str
     decision_id: str | None = None
+    history: list[Turn] = []  # the conversation so far, so Oscar can follow it
 
 
-@app.post("/chat", response_model=ChatReply)
-def chat(request: ChatRequest, history: History = Depends(get_history)) -> ChatReply:
-    """Talk to Oscar. decision_id is set when the user asks about a specific email."""
-    return answer(history, request.message, request.decision_id)
+@app.post("/chat", response_model=ModelReply)
+def chat(request: ChatRequest, history: History = Depends(get_history), http: httpx.Client = Depends(get_http)) -> ModelReply:
+    """Talk to Oscar. With a model key he uses read-only tools on his own records; without one, the basic chat."""
+    return talk(history, request.message, request.history, http, request.decision_id)
+
+
+@app.get("/chat/status")
+def chat_status() -> dict:
+    """Which model the chat uses, or null for the basic chat."""
+    return {"model": model_name()}
 
 
 @app.post("/demo/inbox", response_model=list[Decision])

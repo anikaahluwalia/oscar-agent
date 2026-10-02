@@ -6,6 +6,14 @@ from oscar.gmail import TokenStore
 from oscar.history import History
 
 
+@pytest.fixture(autouse=True)
+def no_real_keys(monkeypatch):
+    """Tests never use the keys in .env: no real Gemini or Google calls from a test run."""
+    for name in ("GEMINI_API_KEY", "OSCAR_CHAT_API_KEY", "OSCAR_CHAT_BASE_URL", "OSCAR_CHAT_MODEL",
+                 "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def client(tmp_path):
     history = History()
