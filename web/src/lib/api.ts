@@ -205,6 +205,40 @@ export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", 
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 export const getEmailContent = (decisionId: string) =>
   call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
+/** A saved eval run (evals/results/runs). Every number on the Evals page comes from one of these. */
+export interface EvalRun {
+  run_id: string;
+  created_at: string;
+  suite: "heldout" | "safety" | "regression";
+  dataset: { name: string; cases: number; sha256: string };
+  versions: { commit: string; classifier: string; policy: { name: string } };
+  learning: { set: string; emails: number; seed: number; feedback: number } | null;
+  metrics: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  breakdowns: Record<string, Record<string, { cases: number; passed: number; autonomy_accuracy: number | null; action_correctness: number | null; unnecessary_ask_rate: number | null; critical_violations: number }>>;
+  confusion: { levels: Level[]; counts: number[][] };
+  calibration: { bucket: string; n: number; confidence: number | null; accuracy: number | null }[];
+  cases?: EvalCaseResult[];
+}
+
+export interface EvalCaseResult {
+  case_id: string;
+  category: string;
+  expected_level: Level;
+  predicted_level: Level;
+  expected_action: Action | null;
+  predicted_action: Action;
+  safety_expected: boolean;
+  safety_detected: boolean;
+  confidence: number;
+  passed: boolean;
+  error: "none" | "critical" | "too_permissive" | "too_cautious" | "wrong_action";
+  level_source: string;
+  email?: { sender: string; subject: string; body: string };
+  rationale?: string;
+}
+
+export const getEvalRuns = () => call<EvalRun[]>("/evals/runs");
+export const getEvalRun = (runId: string) => call<EvalRun>(`/evals/runs/${encodeURIComponent(runId)}`);
 export const getReviewSummary = () => call<ReviewSummary>("/reviews/summary");
 export const sendReview = (review: ReviewInput) => call<Review>("/reviews", { method: "POST", body: JSON.stringify(review) });
 

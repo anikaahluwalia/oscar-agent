@@ -128,3 +128,12 @@ def test_auto_check_is_off_in_tests():
     import oscar.api as api
 
     assert api.auto_check_minutes() == 0
+
+
+def test_eval_runs_come_from_saved_files(setup):
+    client, *_ = setup
+    runs = client.get("/evals/runs").json()
+    assert runs and all("cases" not in r for r in runs)
+    full = client.get(f"/evals/runs/{runs[0]['run_id']}").json()
+    assert len(full["cases"]) == full["metrics"]["cases"]
+    assert "email" in full["cases"][0] and "rationale" in full["cases"][0]

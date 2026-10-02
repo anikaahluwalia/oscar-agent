@@ -405,3 +405,41 @@ def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_his
 @app.get("/reviews/summary")
 def review_summary(real: History = Depends(get_real_history)) -> dict:
     return summary(real)
+
+
+# --- Eval runs (Stage 10) -----------------------------------------------------
+
+EVAL_RUNS = Path(__file__).resolve().parent.parent / "evals" / "results" / "runs"
+EVAL_CASES = Path(__file__).resolve().parent.parent / "evals" / "cases"
+
+
+def _runs() -> list[dict]:
+    import json
+
+    return [json.loads(p.read_text()) for p in sorted(EVAL_RUNS.glob("*.json"))]
+
+
+@app.get("/evals/runs")
+def eval_runs() -> list[dict]:
+    """Saved eval runs, newest first, without their per-case results. Every number comes from a run file."""
+    runs = sorted(_runs(), key=lambda r: r["created_at"], reverse=True)
+    return [{k: v for k, v in r.items() if k != "cases"} for r in runs]
+
+
+@app.get("/evals/runs/{run_id}")
+def eval_run(run_id: str) -> dict:
+    """One run with every case result, and each case's email and ground truth, so a number can be traced to its cases."""
+    import json
+
+    from evals.harness import load, regression_suite
+
+    run = next((r for r in _runs() if r["run_id"] == run_id), None)
+    if run is None:
+        raise HTTPException(404, "No run with that id.")
+    cases = {c.id: c for path in EVAL_CASES.glob("*.jsonl") for c in load(path)} | {c.id: c for c in regression_suite()}
+    for result in run["cases"]:
+        case = cases.get(result["case_id"])
+        if case:
+            result["email"] = case.email.model_dump()
+            result["rationale"] = case.rationale
+    return run
