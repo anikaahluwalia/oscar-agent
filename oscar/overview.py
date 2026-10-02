@@ -33,6 +33,8 @@ def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
     answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS} | {r.decision_id for r in history.reviews}
     levels = (AutonomyLevel.ESCALATE, AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY)
     current = latest_per_email(history)
+    # A re-read that decided the same as before keeps the review you gave the first read.
+    answered |= {d.id for d in current if d.recheck_of and history.review_carried_over(d.id)}
     return {level: [d for d in current if d.autonomy_level == level and d.id not in answered] for level in levels}
 
 

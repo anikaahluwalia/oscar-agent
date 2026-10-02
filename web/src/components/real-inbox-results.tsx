@@ -16,6 +16,12 @@ export function RealInboxResults({ summary }: { summary: ReviewSummary }) {
         <p className="self-end text-sm text-muted-foreground">
           {summary.reviewed} of {summary.decisions} decisions reviewed · {summary.scored} counted
         </p>
+        {summary.rereads && summary.rereads.scored > 0 && (
+          <p className="w-full text-sm text-muted-foreground">
+            Re-reads: {pct(summary.rereads.agreement)} agreement on {summary.rereads.scored} reviewed, kept out of the
+            number above because some of those emails helped fix Oscar.
+          </p>
+        )}
       </div>
       <ul className="grid gap-2 sm:grid-cols-2">
         {(Object.keys(REVIEW_LABELS) as ReviewLabel[]).map((label) => (

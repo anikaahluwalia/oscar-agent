@@ -158,7 +158,7 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     """Every decision, newest first, with the feedback given on it."""
     decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
     return [
-        DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_for(d.id))
+        DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id))
         for d in decisions
     ]
 

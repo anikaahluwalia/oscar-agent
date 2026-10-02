@@ -95,6 +95,7 @@ export interface ReviewTally {
 
 export interface ReviewSummary extends ReviewTally {
   by_version: Record<string, ReviewTally>;
+  rereads?: ReviewTally;
 }
 
 export interface GmailStatus {

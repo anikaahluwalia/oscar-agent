@@ -104,4 +104,8 @@ def summary(history: History) -> dict:
     by_version: dict[str, set[str]] = {}
     for d in real:
         by_version.setdefault(d.policy_version or "unknown", set()).add(d.id)
-    return {**tally({d.id for d in real}), "by_version": {v: tally(ids) for v, ids in sorted(by_version.items())}}
+    # Reviews of re-reads are counted on their own, so they aren't lost, but kept out of the headline.
+    rereads = [d for d in history.decisions.values() if d.source == "gmail" and d.recheck_of]
+    reviewed.update({d.id: r for d in rereads if (r := history.review_for(d.id))})
+    return {**tally({d.id for d in real}), "by_version": {v: tally(ids) for v, ids in sorted(by_version.items())},
+            "rereads": tally({d.id for d in rereads})}

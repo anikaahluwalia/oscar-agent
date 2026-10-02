@@ -58,6 +58,20 @@ class History:
         """The latest review of a decision. Reviewing again replaces the earlier one."""
         return next((r for r in reversed(self.reviews) if r.decision_id == decision_id), None)
 
+    def review_carried_over(self, decision_id: str) -> Review | None:
+        """The review that stands for a decision: its own, or, for a re-read that decided the same
+        thing as before, the review of the earlier read. A re-read that changed its mind is new."""
+        decision = self.decisions.get(decision_id)
+        while decision is not None:
+            review = self.review_for(decision.id)
+            if review:
+                return review
+            earlier = self.decisions.get(decision.recheck_of) if decision.recheck_of else None
+            if earlier is None or (earlier.action, earlier.autonomy_level) != (decision.action, decision.autonomy_level):
+                return None
+            decision = earlier
+        return None
+
     def add_follow_up(self, follow_up: FollowUp) -> None:
         self.follow_ups.append(follow_up)
         self._append("follow_ups.jsonl", follow_up.model_dump_json())

@@ -77,3 +77,28 @@ def test_summary_counts_latest_review_and_ignores_skips():
     assert s["agreement"] == 0.5
     assert s["labels"]["CORRECT"] == 1 and s["labels"]["NEEDED_TO_ASK"] == 0
     assert s["by_version"]["v2"]["scored"] == 0 and s["by_version"]["v2"]["agreement"] is None
+
+
+def test_a_reread_that_decided_the_same_keeps_your_review():
+    from oscar.models import Action, AutonomyLevel
+    from oscar.overview import needs_you
+    history = History()
+    first = real(history, "e1")
+    record_review(history, Review(decision_id=first.id, label=ReviewLabel.CORRECT,
+                                  reviewed_at=first.created_at + timedelta(seconds=1)))
+    same = first.model_copy(update={"id": "re1", "recheck_of": first.id, "policy_version": "v2",
+                                    "created_at": first.created_at + timedelta(seconds=2)})
+    history.add_decision(same)
+    assert history.review_carried_over(same.id).label == ReviewLabel.CORRECT
+    assert all(same.id not in [d.id for d in ds] for ds in needs_you(history).values())
+
+    # The opposite: a re-read that changed its mind is a new decision to check.
+    changed = same.model_copy(update={"id": "re2", "recheck_of": same.id, "action": Action.ARCHIVE,
+                                      "autonomy_level": AutonomyLevel.ASK_FIRST, "policy_version": "v3",
+                                      "created_at": first.created_at + timedelta(seconds=3)})
+    history.add_decision(changed)
+    assert history.review_carried_over(changed.id) is None
+    record_review(history, Review(decision_id=changed.id, label=ReviewLabel.CORRECT,
+                                  reviewed_at=changed.created_at + timedelta(seconds=1)))
+    s = summary(history)
+    assert s["reviewed"] == 1 and s["rereads"]["reviewed"] == 1, "a re-read's review is counted, on its own"
