@@ -444,11 +444,13 @@ def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_his
             review = answer(decision, request.should_be_level, request.should_be_action, why=request.why,
                             reasons=request.reasons, actual_type=request.actual_type, label_name=request.label_name,
                             note=request.note)
-        elif request.label is not None:
-            review = Review(decision_id=request.decision_id, label=request.label, actual_type=request.actual_type,
-                            note=request.note)
+        elif request.label in (ReviewLabel.CORRECT, ReviewLabel.SKIP):
+            review = Review(decision_id=request.decision_id, label=request.label, note=request.note)
+        elif decision is None:
+            raise ReviewError(f"I can't find decision {request.decision_id}.")
         else:
-            raise ReviewError("Say whether Oscar got it right." if decision else f"I can't find decision {request.decision_id}.")
+            # Half-answers ("Incorrect action" alone) hold back grading, so new ones aren't taken.
+            raise ReviewError("Say what Oscar should have done.")
         return record_review(real, review)
     except ReviewError as e:
         raise HTTPException(400, str(e))

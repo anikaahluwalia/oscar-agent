@@ -66,16 +66,32 @@ class History:
         """The latest review of a decision. Reviewing again replaces the earlier one."""
         return next((r for r in reversed(self.reviews) if r.decision_id == decision_id), None)
 
+    def reviews_for_email(self, email_id: str) -> list[tuple[Decision, Review]]:
+        """Your latest review of each read of one email, oldest first."""
+        out = [(d, r) for d in self.decisions.values() if d.email_id == email_id and (r := self.review_for(d.id))]
+        return sorted(out, key=lambda pair: pair[1].reviewed_at)
+
+    def answer_for_email(self, email_id: str) -> tuple[Decision, Review] | None:
+        """Your latest full answer (what Oscar should have done) for an email, on whichever read of it."""
+        full = [(d, r) for d, r in self.reviews_for_email(email_id) if r.has_answer]
+        return full[-1] if full else None
+
     def review_carried_over(self, decision_id: str) -> Review | None:
-        """The review that stands for a decision: its own, or one of an earlier read of the same email.
-        A full answer (what Oscar should have done) is about the email, so it carries over whatever
-        the re-read decided, and the re-read is graded against it. An old half-answer only carries
-        over when the re-read decided the same thing; one that changed its mind goes back to review."""
-        decision, same = self.decisions.get(decision_id), True
+        """The review that stands for a decision. A full answer (what Oscar should have done) is about
+        the email, so it stands for every read of it, and each read is graded against it. An old
+        half-answer only carries over to a re-read that decided the same thing; one that changed
+        its mind goes back to review."""
+        decision = self.decisions.get(decision_id)
+        if decision is None:
+            return None
+        full = self.answer_for_email(decision.email_id)
+        if full:
+            return full[1]
+        same = True
         while decision is not None:
             review = self.review_for(decision.id)
             if review:
-                return review if same or review.has_answer else None
+                return review if same else None
             earlier = self.decisions.get(decision.recheck_of) if decision.recheck_of else None
             if earlier is None:
                 return None

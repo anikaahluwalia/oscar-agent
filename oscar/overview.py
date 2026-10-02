@@ -5,6 +5,7 @@ from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.policy import autonomy_for
 from oscar.preferences import CEILINGS, Preferences
+from oscar.review import half_answered
 from oscar.safety import ACTION_FLOORS, apply_floor
 
 ANSWERS = {FeedbackKind.APPROVE, FeedbackKind.REJECT, FeedbackKind.UNDO, FeedbackKind.EDIT_THEN_SEND, FeedbackKind.SEEN}
@@ -61,8 +62,10 @@ def brief(history: History) -> dict:
                                       (count(AutonomyLevel.ASK_FIRST), f"asked about {count(AutonomyLevel.ASK_FIRST)}"),
                                       (count(AutonomyLevel.ESCALATE), f"stopped {count(AutonomyLevel.ESCALATE)}")) if n]
         to_review = sum(history.review_carried_over(d.id) is None for d in current)
+        to_finish = sum(half_answered(history, d) for d in current)
+        left = f"{to_review} left to review" + (f", {to_finish} to finish" if to_finish else "")
         summary = (f"I read {len(current)} {'email' if len(current) == 1 else 'emails'}! I'd have {', '.join(would)}. "
-                   f"{to_review} left to review." if current else "I haven't read anything yet.")
+                   f"{left}." if current else "I haven't read anything yet.")
         return {"handled": handled, "told": told, "waiting": waiting, "for_you": for_you,
                 "summary": summary, "trend": None, "learned": None}
     if not current:

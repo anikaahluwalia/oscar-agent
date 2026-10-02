@@ -16,9 +16,9 @@ from pathlib import Path
 from oscar.agent import decide
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
-from oscar.models import Email
+from oscar.models import Action, Email
 from oscar.preferences import Preferences
-from oscar.review import REVIEW_LABEL_NAMES, ReviewLabel, answer_for, summary
+from oscar.review import OTHER_ACTION, REVIEW_LABEL_NAMES, ReviewLabel, answer_for, summary
 from oscar.voice import describe_learning
 
 DEFAULT_DIR = Path(__file__).resolve().parent.parent / "emails"
@@ -90,10 +90,12 @@ def run_reviews(history: History) -> None:
         print(f"   Subject: {decision.subject}")
         print(f"   Oscar:   {decision.action.value} → {decision.autonomy_level.value}")
         if found:
-            level, action = found[1]
+            right = found[1]
             # Ready to paste into a regression case's "expect".
-            expect = {"level": level.value, **({"action": action.value} if action else {})}
-            print(f"   Expect:  {json.dumps(expect)}")
+            expect = {"level": right.level.value, **({"action": right.action.value} if isinstance(right.action, Action) else {})}
+            extra = ("  (none of Oscar's actions: see the note)" if right.action == OTHER_ACTION else
+                     "  (bringing it to you is fine too)" if right.escalate_ok else "")
+            print(f"   Expect:  {json.dumps(expect)}{extra}")
             details = [x for x in (review.why and f"why: {review.why}", review.actual_type and f"really: {review.actual_type}",
                                    review.reasons and "reasons: " + ", ".join(r.value for r in review.reasons),
                                    review.label_name and f"label: {review.label_name}") if x]

@@ -115,7 +115,7 @@ def test_a_full_answer_grades_a_reread_that_changed_its_mind():
     record_review(history, review)
     fixed = reread(history, first, "re1", 2, action=Action.MARK_READ, autonomy_level=AutonomyLevel.PROCEED_SILENTLY)
     assert graded(history, fixed) == {"level": AutonomyLevel.PROCEED_SILENTLY, "action": Action.MARK_READ,
-                                      "error": "none", "from_earlier": True}
+                                      "error": "none", "from_earlier": True, "earlier_error": "too_cautious"}
     s = summary(history)
     assert s["graded"]["n"] == 1 and s["graded"]["passed"] == 0, "the first read was wrong"
     assert s["rereads"]["graded"]["passed"] == 1, "the re-read gets it right, measured on the same email"
@@ -149,7 +149,7 @@ def test_old_half_answers_are_counted_apart_never_guessed():
 # --- full answers: what Oscar should have done -------------------------------
 
 from oscar.models import Action, AutonomyLevel  # noqa: E402
-from oscar.review import Reason, answer, derive_label, expected_answer  # noqa: E402
+from oscar.review import Answer, Reason, answer, derive_label, expected_answer  # noqa: E402
 
 S, N, A, E = (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY, AutonomyLevel.ASK_FIRST,
               AutonomyLevel.ESCALATE)
@@ -169,7 +169,7 @@ def oscar_did(level, action):
     ((A, Action.ARCHIVE), (A, Action.ARCHIVE), "misread", ReviewLabel.INCORRECT_TYPE),
 ])
 def test_the_label_is_worked_out_from_the_answer(oscar, right, why, label):
-    assert derive_label(oscar_did(*oscar), *right, why) == label
+    assert derive_label(oscar_did(*oscar), Answer(*right), why) == label
 
 
 def test_risky_reasons_mean_he_missed_a_risk():
@@ -179,13 +179,13 @@ def test_risky_reasons_mean_he_missed_a_risk():
 
 def test_just_important_is_graded_as_ask_me_not_as_a_missed_scam():
     review = answer(oscar_did(S, Action.MARK_READ), E, reasons=[Reason.IMPORTANT])
-    assert expected_answer(review, None) == (A, None)
+    assert expected_answer(review, None) == Answer(A, None, escalate_ok=True)
     assert review.label == ReviewLabel.NEEDED_TO_ASK
 
 
 def test_a_yes_is_a_full_answer_and_old_half_answers_are_not():
     d = oscar_did(A, Action.ARCHIVE)
-    assert expected_answer(Review(decision_id=d.id, label=ReviewLabel.CORRECT), d) == (A, Action.ARCHIVE)
+    assert expected_answer(Review(decision_id=d.id, label=ReviewLabel.CORRECT), d) == Answer(A, Action.ARCHIVE)
     old = Review(decision_id=d.id, label=ReviewLabel.INCORRECT_ACTION, should_be_action=Action.MARK_READ)
     assert expected_answer(old, d) is None
 
@@ -215,3 +215,74 @@ def test_a_label_name_is_kept():
     review = answer(d, S, Action.APPLY_LABEL, label_name="Internships", why="preference")
     review.reviewed_at = d.created_at + timedelta(seconds=1)
     assert record_review(history, review).label_name == "Internships"
+
+
+# --- found by the check after the review redesign -----------------------------
+
+def history_with_reread(changed: bool):
+    from oscar.models import Action, AutonomyLevel
+    history = History()
+    first = real(history, "e1")
+    record_review(history, Review(decision_id=first.id, label=ReviewLabel.NEEDED_TO_ASK,
+                                  should_be_level=AutonomyLevel.ASK_FIRST, reviewed_at=first.created_at + timedelta(seconds=1)))
+    changes = {"action": Action.ARCHIVE, "autonomy_level": AutonomyLevel.PROCEED_SILENTLY} if changed else {}
+    return history, first, reread(history, first, "re1", 2, **changes)
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_finishing_an_old_review_on_a_reread_counts_for_the_email(changed):
+    history, first, again = history_with_reread(changed)
+    review = answer(again, A, Action.ARCHIVE, why="preference")
+    review.reviewed_at = again.created_at + timedelta(seconds=1)
+    record_review(history, review)
+    s = summary(history)
+    assert s["old_way"] == 0 and s["graded"]["n"] == 1, "the first read is graded against the answer"
+    assert s["rereads"]["graded"]["n"] == 1
+
+
+def test_just_important_passes_when_a_reread_brings_it_to_you():
+    from oscar.review import graded
+    history = History()
+    first = real(history, "e1")
+    history.decisions[first.id] = first = first.model_copy(update={"autonomy_level": S, "action": Action.ARCHIVE})
+    review = answer(first, E, reasons=[Reason.IMPORTANT], why="preference")
+    review.reviewed_at = first.created_at + timedelta(seconds=1)
+    record_review(history, review)
+    stopped = reread(history, first, "re1", 2, autonomy_level=E, action=Action.MARK_READ)
+    assert graded(history, stopped)["error"] == "none"
+
+
+def test_other_at_the_same_level_means_his_action_was_wrong():
+    history = History()
+    d = real(history, "e1")
+    history.decisions[d.id] = d = d.model_copy(update={"autonomy_level": S, "action": Action.ARCHIVE})
+    review = answer(d, S, None, why="preference", note="should have starred it")
+    review.reviewed_at = d.created_at + timedelta(seconds=1)
+    assert record_review(history, review).label == ReviewLabel.INCORRECT_ACTION
+    assert summary(history)["graded"]["passed"] == 0
+
+
+@pytest.mark.parametrize("oscar, level, action, reasons", [
+    ((A, Action.ARCHIVE), A, None, []),  # "nothing, I'll handle it": asking already leaves it to you
+    ((E, Action.MOVE_MONEY), E, None, [Reason.SCAM]),  # he already stopped it
+    ((A, Action.ARCHIVE), E, None, [Reason.IMPORTANT]),  # he already left it to you
+])
+def test_a_no_that_grades_as_what_oscar_did_needs_a_note(oscar, level, action, reasons):
+    history = History()
+    d = real(history, "e1")
+    history.decisions[d.id] = d = d.model_copy(update={"autonomy_level": oscar[0], "action": oscar[1]})
+    review = answer(d, level, action, reasons=reasons, why=None if reasons and reasons != [Reason.IMPORTANT] else "preference")
+    review.reviewed_at = d.created_at + timedelta(seconds=1)
+    with pytest.raises(ReviewError, match="That's what Oscar picked"):
+        record_review(history, review)
+
+
+@pytest.mark.parametrize("level, action, reasons", [(S, Action.ARCHIVE, []), (E, None, [Reason.IMPORTANT])])
+def test_missed_a_risk_needs_a_careful_answer(level, action, reasons):
+    history = History()
+    d = real(history, "e1")
+    history.decisions[d.id] = d = d.model_copy(update={"autonomy_level": N, "action": Action.DRAFT_REPLY})
+    review = answer(d, level, action, reasons=reasons, why="risk")
+    review.reviewed_at = d.created_at + timedelta(seconds=1)
+    with pytest.raises(ReviewError, match="missed a risk"):
+        record_review(history, review)

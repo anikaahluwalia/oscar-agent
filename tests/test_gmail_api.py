@@ -170,3 +170,13 @@ def test_recheck_makes_new_decisions_and_keeps_the_old(setup, monkeypatch):
     assert len(redo) == 1 and old.id in real.decisions
     assert client.get("/decisions").json()[0]["decision"]["id"] == redo[0].id  # the newest is what's shown
     assert client.get("/reviews/summary").json()["decisions"] == 1  # the re-read isn't counted
+
+
+def test_new_half_answers_are_refused(setup):
+    client, state, real, demo, tmp_path = setup
+    state["tokens"] = connected(tmp_path)
+    client.post("/gmail/sync")
+    d = client.get("/decisions").json()[0]["decision"]
+    r = client.post("/reviews", json={"decision_id": d["id"], "label": "INCORRECT_ACTION", "should_be_action": "ARCHIVE"})
+    assert r.status_code == 400 and "should have done" in r.json()["detail"]
+    assert client.post("/reviews", json={"decision_id": d["id"], "label": "SKIP"}).status_code == 200
