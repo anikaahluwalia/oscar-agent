@@ -12,6 +12,8 @@ def no_real_keys(monkeypatch):
     for name in ("GEMINI_API_KEY", "OSCAR_CHAT_API_KEY", "OSCAR_CHAT_BASE_URL", "OSCAR_CHAT_MODEL",
                  "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"):
         monkeypatch.delenv(name, raising=False)
+    # Never check a real Gmail on a timer during tests.
+    monkeypatch.setenv("OSCAR_AUTO_CHECK_MINUTES", "0")
 
 
 @pytest.fixture

@@ -47,7 +47,7 @@ export function HomePage() {
             <StatusSummary counts={counts} readOnly={data.gmail.connected} />
             {data.gmail.connected && (
               <Button variant="outline" size="sm" className="rounded-full" onClick={checkGmail}>
-                Check for new email
+                Check now
               </Button>
             )}
           </div>
@@ -57,7 +57,7 @@ export function HomePage() {
       {data.items.length === 0 ? (
         data.gmail.connected ? (
           <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
-            <Button onClick={checkGmail}>Check for new email</Button>
+            <Button onClick={checkGmail}>Check now</Button>
           </EmptyState>
         ) : (
           <EmptyState title="Nothing new yet." text="Connect Gmail in Settings, or try Oscar on a set of example emails.">

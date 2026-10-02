@@ -98,3 +98,33 @@ def test_shows_the_whole_real_email(setup):
 def test_no_content_for_demo_emails(setup):
     client, *_ = setup
     assert client.get("/emails/nope/content").status_code == 404
+
+
+def test_checks_on_its_own(setup, monkeypatch):
+    import threading
+
+    import oscar.api as api
+
+    client, state, real, demo, tmp_path = setup
+    state["tokens"] = connected(tmp_path)
+    fake_client = api.app.dependency_overrides[get_http]()  # made before httpx.Client is swapped out
+    monkeypatch.setattr(api, "get_tokens", lambda: state["tokens"])
+    monkeypatch.setattr(api, "get_real_history", lambda: real)
+    monkeypatch.setattr(api.httpx, "Client", lambda **_: fake_client)
+
+    class Stop(threading.Event):
+        calls = 0
+
+        def wait(self, timeout=None):  # first the start-up pause, then stop after one check
+            Stop.calls += 1
+            return Stop.calls > 1
+
+    api._auto_check(Stop(), 300)
+    assert len(real.decisions) == 1
+    assert state["tokens"].load()["last_sync"]
+
+
+def test_auto_check_is_off_in_tests():
+    import oscar.api as api
+
+    assert api.auto_check_minutes() == 0

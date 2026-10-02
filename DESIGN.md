@@ -798,6 +798,13 @@ in Gmail changes. This is the first step of the rollout above.
   Oscar that made it. Only the first 160 characters of the body are stored.
 - **Wording.** `decide(read_only=True)` says "I'd archive this" instead of "I
   archived this". The level and action are the same either way.
+- **Checking on its own.** While the API runs, a background timer checks Gmail every
+  5 minutes (`OSCAR_AUTO_CHECK_MINUTES`; 0 turns it off, and the tests do), and the
+  app refreshes every minute while it's open. Check now is still there.
+- **Seeing the email.** Opening a real email fetches it from Gmail and shows it the
+  way Gmail does, in a sandboxed frame with scripts off. Images stay off until you
+  ask, so reviewing doesn't tell senders you opened their email. Nothing extra is
+  saved.
 - **What you did later.** Each check also notes whether recent emails are still in
   the inbox, still unread, or gone. It's a second opinion next to your reviews.
 - **Kept apart.** The real inbox has its own history in `data/gmail/accounts/`,
@@ -847,7 +854,6 @@ email.
 
 - **Deploying.** The API has no sign-in, so it must only run on your own machine
   while it can read a real inbox. Deploying needs sign-in first.
-- **Checking on a timer.** Oscar reads new email when you press Check for new email.
 - **Long threads.** Oscar decides on the newest message and only knows how long the
   thread is, not what was said earlier in it.
 - **Google's 7-day limit** while the app is in testing mode.

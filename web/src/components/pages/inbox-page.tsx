@@ -43,7 +43,7 @@ export function InboxPage() {
       {data.items.length === 0 ? (
         data.gmail.connected ? (
           <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
-            <Button onClick={checkGmail}>Check for new email</Button>
+            <Button onClick={checkGmail}>Check now</Button>
           </EmptyState>
         ) : (
           <EmptyState title="Your inbox is empty." text="Bring in the demo emails from Settings to see Oscar at work." />

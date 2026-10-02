@@ -179,12 +179,15 @@ function load(changed = true) {
 
 const onChanged = () => load();
 const onFocus = () => load(false);
+const REFRESH_MS = 60_000; // Oscar checks Gmail on his own, so look for his new decisions now and then
+let refresh: ReturnType<typeof setInterval> | null = null;
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
   if (listeners.size === 1) {
     window.addEventListener(CHANGED, onChanged);
     window.addEventListener("focus", onFocus);
+    refresh = setInterval(() => document.visibilityState === "visible" && load(false), REFRESH_MS);
   }
   // Each new page refreshes, so moving around the app never shows old data for long.
   load(false);
@@ -193,6 +196,8 @@ function subscribe(listener: () => void) {
     if (!listeners.size) {
       window.removeEventListener(CHANGED, onChanged);
       window.removeEventListener("focus", onFocus);
+      if (refresh) clearInterval(refresh);
+      refresh = null;
     }
   };
 }

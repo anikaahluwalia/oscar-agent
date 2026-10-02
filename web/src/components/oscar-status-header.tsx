@@ -10,14 +10,14 @@ export function statusCopy(items: DecisionWithFeedback[], realInbox = false): { 
   if (realInbox) {
     // Read-only: Oscar didn't do anything, so the question is how he would have done.
     const toReview = items.filter((i) => !i.review).length;
-    if (!items.length) return { headline: "Ready when you are!", sentence: "Check for new email and I'll take a look at your inbox.", mood: "calm" };
+    if (!items.length) return { headline: "Ready when you are!", sentence: "I'll take a look at your inbox in a moment, or press Check now.", mood: "calm" };
     if (toReview)
       return {
         headline: `${plural(toReview, "call", "calls")} for you to check!`,
         sentence: `I read ${plural(items.length, "email", "emails")} and noted what I'd do with each. I didn't touch anything in Gmail.`,
         mood: "curious",
       };
-    return { headline: "All reviewed!", sentence: "Thanks for checking my work! Check for new email whenever you want me to read more.", mood: "sleepy" };
+    return { headline: "All reviewed!", sentence: "Thanks for checking my work! I'll keep an eye out for new email.", mood: "sleepy" };
   }
   const counts = countsOf(items);
   const total = items.length;

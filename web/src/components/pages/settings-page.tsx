@@ -127,11 +127,13 @@ function GmailAccount() {
           <p className="text-sm font-medium">{gmail.address}</p>
           <p className="text-sm text-muted-foreground">
             {gmail.last_sync ? `Last checked ${new Date(gmail.last_sync * 1000).toLocaleString()}` : "Not checked yet"}
+            {gmail.auto_check_minutes > 0 &&
+              ` · Oscar checks every ${gmail.auto_check_minutes} ${gmail.auto_check_minutes === 1 ? "minute" : "minutes"} while the API is running`}
           </p>
         </div>
         <div className="flex gap-2">
           <Button size="sm" onClick={checkGmail}>
-            Check for new email
+            Check now
           </Button>
           <Button size="sm" variant="outline" onClick={disconnectGmailAccount}>
             Disconnect

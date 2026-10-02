@@ -100,6 +100,7 @@ export interface GmailStatus {
   address: string | null;
   connected_at: number | null;
   last_sync: number | null;
+  auto_check_minutes: number; // 0 means Oscar only checks when you ask
   read_only: boolean;
 }
 

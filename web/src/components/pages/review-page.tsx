@@ -33,7 +33,7 @@ export function ReviewPage() {
       >
         {data.gmail.connected && (
           <Button size="sm" variant="outline" onClick={checkGmail}>
-            Check for new email
+            Check now
           </Button>
         )}
       </PageHeader>
@@ -44,8 +44,8 @@ export function ReviewPage() {
         <EmptyState title="Gmail isn't connected." text="Connect it in Settings and Oscar will start reading your inbox." />
       )}
       {data.gmail.connected && !real.length && (
-        <EmptyState title="Nothing read yet." text="Check for new email and Oscar will read your inbox.">
-          <Button onClick={checkGmail}>Check for new email</Button>
+        <EmptyState title="Nothing read yet." text="Oscar checks your inbox every few minutes, or press Check now.">
+          <Button onClick={checkGmail}>Check now</Button>
         </EmptyState>
       )}
 

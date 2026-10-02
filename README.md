@@ -113,7 +113,9 @@ in the app, and mistakes become regression tests (see DESIGN.md, Stage 9).
    `http://localhost:8000/auth/google/callback`
 5. Copy `.env.example` to `.env` and fill in the client ID and secret. `.env` is
    ignored by git.
-6. Restart the API, open **Settings → Connect Gmail**, then **Check for new email**.
+6. Restart the API and open **Settings → Connect Gmail**. Oscar checks for new email
+   every 5 minutes on his own while the API runs (change it with
+   `OSCAR_AUTO_CHECK_MINUTES` in `.env`), or press **Check now**.
 
 While Gmail is connected, the demo inbox is off and the app shows your real inbox.
 **Review** lists Oscar's decisions to score, and **Evals** shows the results. From

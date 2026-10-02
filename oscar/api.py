@@ -1,6 +1,8 @@
 import os
 import secrets
+import threading
 import time
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
 
@@ -14,7 +16,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 from oscar import gmail
-from oscar.config import API_URL, WEB_URL
+from oscar.config import API_URL, WEB_URL, setting
 
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
@@ -27,7 +29,41 @@ from oscar.review import Review, ReviewError, ReviewLabel, record_review, summar
 from oscar.preferences import Preferences
 from oscar.voice import describe_learning
 
-app = FastAPI(title="Oscar", version="0.1.0")
+def auto_check_minutes() -> float:
+    """How often Oscar checks Gmail on his own. 0 turns it off (the tests do)."""
+    try:
+        return max(float(setting("OSCAR_AUTO_CHECK_MINUTES", "5")), 0)
+    except ValueError:
+        return 5
+
+
+def _auto_check(stop: threading.Event, every: float) -> None:
+    """Check Gmail every few minutes while the API is running, so you don't have to."""
+    if stop.wait(15):  # give the API a moment to start first
+        return
+    while True:
+        tokens = get_tokens()
+        if tokens.load():
+            try:
+                with httpx.Client(timeout=20) as http:
+                    check_gmail(tokens, http, get_real_history())
+            except (AlreadySyncing, gmail.GmailError, httpx.HTTPError) as e:
+                print(f"Oscar: automatic Gmail check skipped. {e}")
+        if stop.wait(every):
+            return
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    stop = threading.Event()
+    minutes = auto_check_minutes()
+    if minutes:
+        threading.Thread(target=_auto_check, args=(stop, minutes * 60), daemon=True, name="oscar-auto-check").start()
+    yield
+    stop.set()
+
+
+app = FastAPI(title="Oscar", version="0.1.0", lifespan=lifespan)
 
 # The web app runs on its own port in development. OSCAR_WEB_ORIGINS (comma
 # separated) overrides the default, e.g. when running a second copy on another port.
@@ -218,6 +254,7 @@ def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens)) -> dict:
         "address": saved.get("address"),
         "connected_at": saved.get("connected_at"),
         "last_sync": saved.get("last_sync"),
+        "auto_check_minutes": auto_check_minutes(),
         "read_only": True,
     }
 
@@ -288,22 +325,29 @@ def gmail_sync(
     http: httpx.Client = Depends(get_http),
     real: History = Depends(get_real_history),
 ) -> dict:
-    """Read the newest emails and log what Oscar would do with each. Nothing changes in Gmail."""
-    saved = tokens.load()
-    if not saved:
+    """Read the newest emails and log what Oscar would do with each. Nothing changes in Gmail.
+    Oscar also does this on his own every few minutes; this is for checking right now."""
+    if not tokens.load():
         raise HTTPException(409, "Gmail isn't connected.")
     try:
-        result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100))
+        result = check_gmail(tokens, http, real, limit)
     except AlreadySyncing as e:
         raise HTTPException(409, str(e))
     except gmail.GmailError as e:
         raise HTTPException(502, str(e))
     except httpx.HTTPError:
         raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
-    saved = tokens.load() or saved
-    saved["last_sync"] = time.time()
-    tokens.save(saved)
     return result.model_dump()
+
+
+def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, limit: int = 25):
+    """One check for new email, by you or by the timer, and note when it happened."""
+    result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100))
+    saved = tokens.load()
+    if saved:
+        saved["last_sync"] = time.time()
+        tokens.save(saved)
+    return result
 
 
 @app.post("/gmail/disconnect")
