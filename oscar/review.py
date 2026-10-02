@@ -195,6 +195,21 @@ def answer_for(history: History, decision: Decision) -> tuple[Review, tuple[Auto
     return (review, expected) if expected else None
 
 
+def half_answered(history: History, decision: Decision) -> bool:
+    """No full answer stands for this email, but you did say (the old way) that Oscar got it wrong:
+    on this decision or an earlier read of the same email. Those are left out of grading, and they
+    aren't a random few, so grading waits until they're finished."""
+    if answer_for(history, decision):
+        return False
+    d = decision
+    while d is not None:
+        review = history.review_for(d.id)
+        if review and not review.has_answer and review.label != ReviewLabel.SKIP:
+            return True
+        d = history.get_decision(d.recheck_of) if d.recheck_of else None
+    return False
+
+
 def graded(history: History, decision: Decision) -> dict | None:
     """For the app: your answer for this email and how this decision does against it."""
     found = answer_for(history, decision)
@@ -263,7 +278,7 @@ def summary(history: History) -> dict:
             found = answer_for(history, d)
             if found:
                 answered.append((d, found[1], found[0].why))
-        old_way = sum(not r.has_answer and r.label != ReviewLabel.SKIP for r in own)
+        old_way = sum(half_answered(history, d) for d in decisions)
         return {
             "decisions": len(decisions),
             "reviewed": sum(counts.values()),

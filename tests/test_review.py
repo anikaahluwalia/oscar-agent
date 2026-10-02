@@ -122,6 +122,16 @@ def test_a_full_answer_grades_a_reread_that_changed_its_mind():
     assert s["rereads"]["reviewed"] == 0, "and you didn't have to review it again"
 
 
+def test_rereads_of_half_answered_emails_hold_back_grading():
+    from oscar.models import Action, AutonomyLevel
+    history = History()
+    first = real(history, "e1")
+    record_review(history, Review(decision_id=first.id, label=ReviewLabel.INCORRECT_ACTION,
+                                  should_be_action=Action.ARCHIVE, reviewed_at=first.created_at + timedelta(seconds=1)))
+    reread(history, first, "re1", 2, action=Action.ARCHIVE, autonomy_level=AutonomyLevel.ASK_FIRST)
+    assert summary(history)["rereads"]["old_way"] == 1 and summary(history)["rereads"]["graded"]["held_back"]
+
+
 def test_old_half_answers_are_counted_apart_never_guessed():
     from oscar.models import Action
     history = History()
