@@ -34,7 +34,7 @@ export function NeedsYouPage() {
               : "Nothing is waiting on you."
         }
       />
-      {n === 0 && !told.length && <EmptyState title="All clear." text="When Oscar needs a yes or stops something, it shows up here." mood="sleepy" />}
+      {n === 0 && !told.length && <EmptyState title="All clear!" text="When Oscar needs a yes or stops something, it shows up here." mood="sleepy" />}
 
       {asks.length > 0 && (
         <Section title={readOnly ? "He'd ask you about these" : "Waiting for your okay"}>

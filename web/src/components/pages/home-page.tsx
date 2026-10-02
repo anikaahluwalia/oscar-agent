@@ -90,7 +90,7 @@ export function HomePage() {
                 </ul>
               ) : (
                 <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
-                  Nothing yet. Approve or undo a few things and I&apos;ll start picking up your habits.
+                  Nothing yet! Approve or undo a few things and I&apos;ll start picking up your habits.
                 </p>
               )}
             </Section>
@@ -99,7 +99,7 @@ export function HomePage() {
           <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card p-5 lg:sticky lg:top-8">
             <div className="flex flex-col gap-1">
               <h2 className="text-lg font-semibold">Talk to Oscar</h2>
-              <p className="text-sm text-muted-foreground">Ask what needs you, what I handled, or teach me a rule.</p>
+              <p className="text-sm text-muted-foreground">Ask me what needs you, what I handled, or teach me a rule!</p>
             </div>
             <ChatPanel variant="compact" />
           </aside>

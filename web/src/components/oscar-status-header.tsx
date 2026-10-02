@@ -10,14 +10,14 @@ export function statusCopy(items: DecisionWithFeedback[], realInbox = false): { 
   if (realInbox) {
     // Read-only: Oscar didn't do anything, so the question is how he would have done.
     const toReview = items.filter((i) => !i.review).length;
-    if (!items.length) return { headline: "Nothing read yet.", sentence: "Check for new email and I'll read your inbox.", mood: "calm" };
+    if (!items.length) return { headline: "Ready when you are!", sentence: "Check for new email and I'll take a look at your inbox.", mood: "calm" };
     if (toReview)
       return {
-        headline: `${plural(toReview, "decision", "decisions")} to review.`,
-        sentence: `I read ${plural(items.length, "email", "emails")} and noted what I'd do with each. Nothing in Gmail was changed.`,
+        headline: `${plural(toReview, "call", "calls")} for you to check!`,
+        sentence: `I read ${plural(items.length, "email", "emails")} and noted what I'd do with each. I didn't touch anything in Gmail.`,
         mood: "curious",
       };
-    return { headline: "All reviewed.", sentence: "Thanks. Check for new email when you want me to read more.", mood: "sleepy" };
+    return { headline: "All reviewed!", sentence: "Thanks for checking my work! Check for new email whenever you want me to read more.", mood: "sleepy" };
   }
   const counts = countsOf(items);
   const total = items.length;
@@ -32,10 +32,10 @@ export function statusCopy(items: DecisionWithFeedback[], realInbox = false): { 
     .filter(Boolean)
     .join(" and ");
 
-  if (!total) return { headline: "Nothing new yet.", sentence: "When emails come in, I'll sort them for you.", mood: "calm" };
+  if (!total) return { headline: "Nothing new yet!", sentence: "When emails come in, I'll sort them for you.", mood: "calm" };
   if (needs) {
     const also = blocked ? `I also stopped ${plural(blocked, "email", "emails")} for you to look at.` : did ? `I ${did}.` : "";
-    return { headline: `I need you for ${plural(needs, "thing", "things")}.`, sentence: also, mood: "curious" };
+    return { headline: `I need you for ${plural(needs, "thing", "things")}!`, sentence: also, mood: "curious" };
   }
   if (blocked) {
     return {
@@ -45,12 +45,12 @@ export function statusCopy(items: DecisionWithFeedback[], realInbox = false): { 
     };
   }
   return {
-    headline: "All done.",
+    headline: "All done!",
     sentence: unchecked
-      ? `I ${did}. Take a look at ${unchecked === 1 ? "the one" : `the ${unchecked}`} I told you about when you can.`
+      ? `I ${did}. Have a look at ${unchecked === 1 ? "the one" : `the ${unchecked}`} I gave you a heads up about when you can!`
       : did
-        ? `I ${did}. Nothing needs you.`
-        : "Nothing needs you right now.",
+        ? `I ${did}. Nothing needs you!`
+        : "All quiet! I'll come get you if anything shows up.",
     mood: "sleepy",
   };
 }

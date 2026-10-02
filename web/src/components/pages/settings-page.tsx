@@ -68,7 +68,7 @@ function Toggle({ id, label, text }: { id: string; label: string; text: string }
 /** After Google sends you back, say how connecting went, then tidy the URL. */
 // The API sends back a short code; only these fixed words are ever shown, so a crafted link can't put words in Oscar's mouth.
 const GMAIL_RESULTS: Record<string, string> = {
-  connected: "Gmail is connected. I'll only read it; nothing in Gmail will change.",
+  connected: "Gmail is connected! I'll only read it, so nothing in Gmail will change.",
   not_configured: "Gmail isn't set up yet. Add your Google keys to .env first.",
   expired: "That sign-in took too long. Try connecting again.",
   cancelled: "Google sign-in was cancelled.",

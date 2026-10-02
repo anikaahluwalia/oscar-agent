@@ -17,7 +17,7 @@ type ChatState = { messages: ChatMessage[]; busy: boolean };
 
 const GREETING: ChatMessage = {
   from: "oscar",
-  text: "Hi, I'm Oscar. Ask me what needs you, why I made a call, or teach me a rule.",
+  text: "Hi, I'm Oscar! Ask me what needs you, why I made a call, or teach me a rule.",
 };
 
 let state: ChatState = { messages: [GREETING], busy: false };

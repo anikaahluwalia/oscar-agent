@@ -7,7 +7,7 @@ export async function bringInDemo() {
   try {
     const decisions = await loadDemoInbox();
     notifyChanged();
-    oscarSays("New emails are in. I've sorted them.");
+    oscarSays("New emails are in, and I've sorted them!");
     offerUndo(decisions);
   } catch {
     oscarSays("I can't reach my API right now.");
@@ -18,7 +18,7 @@ export async function startOver() {
   try {
     await resetDemo();
     notifyChanged();
-    oscarSays("Fresh start. I've forgotten everything.");
+    oscarSays("Fresh start! I've forgotten everything.");
   } catch {
     oscarSays("I can't reach my API right now.");
   }
@@ -31,11 +31,13 @@ let checking = false;
 export async function checkGmail() {
   if (checking) return; // a second click while the first check is running does nothing
   checking = true;
-  oscarSays("Checking your inbox...");
+  oscarSays("On it! Checking your inbox...");
   try {
     const { new: count, skipped } = await syncGmail();
     notifyChanged();
-    const read = count ? `I read ${count} new ${count === 1 ? "email" : "emails"}. Nothing was changed in Gmail.` : "Nothing new in your inbox.";
+    const read = count
+      ? `I read ${count} new ${count === 1 ? "email" : "emails"}! I didn't touch anything in Gmail.`
+      : "Nothing new in your inbox. All quiet!";
     oscarSays(skipped ? `${read} I couldn't open ${skipped}; I'll try again next time.` : read);
   } catch (e) {
     oscarSays(e instanceof Error ? e.message : "I can't reach my API right now.");
@@ -48,7 +50,7 @@ export async function disconnectGmailAccount() {
   try {
     await disconnectGmail();
     notifyChanged();
-    oscarSays("Disconnected. I've kept my decisions and your reviews.");
+    oscarSays("Disconnected! I've kept my decisions and your reviews.");
   } catch {
     oscarSays("I can't reach my API right now.");
   }

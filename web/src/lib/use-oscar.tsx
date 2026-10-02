@@ -114,7 +114,7 @@ const UNDO_WINDOW_MS = 10_000;
 export function offerUndo(decisions: Decision[]) {
   const told = decisions.filter((d) => d.autonomy_level === "PROCEED_AND_NOTIFY");
   if (told.length > 3) {
-    toast(`Heads up: I took care of ${told.length} emails.`, {
+    toast(`Heads up! I took care of ${told.length} emails.`, {
       icon: <OscarAvatar size={22} />,
       description: "They're marked FYI in your inbox if you want to check or undo any.",
       duration: UNDO_WINDOW_MS,
