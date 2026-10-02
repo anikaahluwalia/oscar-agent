@@ -87,7 +87,11 @@ export function EvalsPage() {
       const newest = list[0];
       const same = list.filter((r) => r.versions.commit === newest.versions.commit && r.versions.policy.name === newest.versions.policy.name);
       const byName: Record<string, EvalRun> = {};
-      same.forEach((r) => (byName[r.suite === "regression" ? "regression" : `${r.suite}_${r.learning ? "after" : "before"}`] = r));
+      // Lead with the newest held-out set (v2 was written blind after v1's failures were looked at).
+      const heldoutName = same.filter((r) => r.suite === "heldout").map((r) => r.dataset.name).sort().at(-1);
+      same
+        .filter((r) => r.suite !== "heldout" || r.dataset.name === heldoutName)
+        .forEach((r) => (byName[r.suite === "regression" ? "regression" : `${r.suite}_${r.learning ? "after" : "before"}`] = r));
       setRuns(byName);
       if (byName.heldout_after) setAfter(await getEvalRun(byName.heldout_after.run_id));
       if (byName.safety_after) setSafety(await getEvalRun(byName.safety_after.run_id));

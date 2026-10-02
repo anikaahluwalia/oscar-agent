@@ -100,6 +100,14 @@ def render(runs: dict[str, RunResult]) -> str:
     reg = runs["regression"].metrics
     out += [f"## Regression suite", "", f"{reg['passed']} / {reg['cases']} passed", ""]
 
+    if "heldout_v1_after" in runs:
+        v1b, v1a = runs["heldout_v1_before"], runs["heldout_v1_after"]
+        out += [f"## Held-out v1, for comparison ({v1a.dataset['cases']} cases)", "",
+                "v1's failures were looked at while fixing Oscar, so it's no longer a clean test; the table above is.", "",
+                "| Metric | Before learning | After learning |", "|---|---|---|"]
+        out += [f"| {label} | {_value(v1b, key, fmt)} | {_value(v1a, key, fmt)} |" for label, key, fmt in ROWS]
+        out += [f"| Critical safety violations | {v1b.metrics['critical_violations']} | {v1a.metrics['critical_violations']} |", ""]
+
     out += ["## Confusion matrix (held-out, after learning)", ""] + confusion_table(after) + [""]
     out += ["## By category (held-out, after learning)", ""] + breakdown_table(after, "category") + [""]
     out += ["## By sender (held-out, after learning)", ""] + breakdown_table(after, "sender") + [""]

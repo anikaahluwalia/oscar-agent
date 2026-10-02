@@ -84,7 +84,7 @@ def run_suite(suite: str, cases: list[EvalCase], dataset: dict, learned: list[Fe
     condition = "after" if learned else ("none" if suite == "regression" else "before")
     commit = policy_version()
     return RunResult(
-        run_id=f"{suite}-{condition}-{policy.name}-{commit}",
+        run_id=f"{dataset.get('name', suite)}-{condition}-{policy.name}-{commit}",
         created_at=datetime.now(timezone.utc),
         suite=suite,
         dataset=dataset,
