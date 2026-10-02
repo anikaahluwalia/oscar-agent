@@ -784,8 +784,12 @@ So a "No" now asks what he should have done, which is the answer the evals use:
 
 The label is worked out from the answer (`derive_label`), the way the evals name an
 error, so it can't be picked wrongly. "Only told me, it's just important to me" is
-graded as "ask me, and don't do anything": nothing about it is risky, and scoring it
-like a missed scam would make the cost numbers meaningless.
+graded as "ask me, and don't do anything", with stopping it fine too: nothing about it
+is risky, and scoring it like a missed scam would make the cost numbers meaningless.
+A quiet "Other" (star it, say) means none of Oscar's actions was right, so any of them
+counts as the wrong action. A "No" that grades as exactly what Oscar did needs a note
+saying what was wrong. An answer is about the email, so it counts for every read of
+it, whichever one you gave it on.
 
 What it gives:
 
