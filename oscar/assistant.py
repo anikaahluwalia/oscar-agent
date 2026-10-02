@@ -29,7 +29,7 @@ from oscar.models import Action, AutonomyLevel, Decision
 from oscar.overview import brief, is_read_only, latest_per_email, needs_you
 from oscar.preferences import Preferences
 from oscar.review import REVIEW_LABEL_NAMES, summary
-from oscar.voice import ACTION_PHRASES, describe_learning
+from oscar.voice import describe_learning
 
 DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
 DEFAULT_MODEL = "gemini-flash-latest"
@@ -181,6 +181,22 @@ def run_tool(history: History, name: str, args: dict) -> tuple[object, Proposal 
     return {"error": f"unknown tool {name}"}, None
 
 
+# How an action reads in a rule about many emails: "archive emails from X", not "archive this".
+RULE_PHRASES: dict[Action, str] = {
+    Action.MARK_READ: "mark emails from {who} as read",
+    Action.ARCHIVE: "archive emails from {who}",
+    Action.APPLY_LABEL: "label emails from {who}",
+    Action.DRAFT_REPLY: "draft replies to {who}",
+    Action.SEND_REPLY: "send replies to {who}",
+    Action.FORWARD: "forward emails from {who}",
+    Action.UNSUBSCRIBE: "unsubscribe you from {who}",
+    Action.ACCEPT_MEETING: "accept invites from {who}",
+    Action.PERMANENTLY_DELETE: "delete emails from {who} for good",
+    Action.SEND_CREDENTIALS: "send credentials to {who}",
+    Action.MOVE_MONEY: "move money for {who}",
+}
+
+
 def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
     if is_read_only(history):
         return {"error": "rules are off while Oscar only reads the real inbox"}, None
@@ -203,9 +219,9 @@ def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
         check_allowed(decision, kind, None)
     except FeedbackError as e:
         return {"error": str(e)}, None
-    phrase = ACTION_PHRASES[decision.action]
-    text = (f"Always {phrase} for emails from {decision.sender}?" if kind == FeedbackKind.ALWAYS_DO_THIS
-            else f"Always ask you before I {phrase} for emails from {decision.sender}?")
+    phrase = RULE_PHRASES[decision.action].format(who=decision.sender)
+    text = (f"Always {phrase}?" if kind == FeedbackKind.ALWAYS_DO_THIS
+            else f"Always ask you before I {phrase}?")
     proposal = Proposal(decision_id=decision.id, kind=kind, text=text)
     return {"proposed": text, "note": "shown to the user as a Yes / No card; not saved"}, proposal
 

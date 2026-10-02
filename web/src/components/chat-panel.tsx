@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpIcon } from "lucide-react";
 import { EmailLink } from "@/components/email-link";
 import { Button } from "@/components/ui/button";
-import { askOscar, useChat } from "@/lib/chat-store";
+import { answerProposal, askOscar, useChat } from "@/lib/chat-store";
 import { openChat } from "@/lib/drawers";
 import { useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,8 @@ export function ChatPanel({ variant }: { variant: "compact" | "drawer" }) {
   const [draft, setDraft] = useState("");
   const list = useRef<HTMLDivElement>(null);
   // The greeting is only worth showing in the drawer; the compact card has its own intro.
-  const shown = variant === "compact" ? messages.slice(1) : messages;
+  const skip = variant === "compact" ? 1 : 0;
+  const shown = messages.slice(skip);
 
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });
@@ -47,6 +48,23 @@ export function ChatPanel({ variant }: { variant: "compact" | "drawer" }) {
               >
                 {m.text}
               </p>
+              {m.proposal && (
+                <div className="flex max-w-[90%] flex-col gap-2 rounded-2xl border p-3 text-sm">
+                  <p>{m.proposal.text}</p>
+                  {m.answered ? (
+                    <p className="text-xs text-muted-foreground">{m.answered === "yes" ? "You said yes." : "You said no."}</p>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => answerProposal(i + skip, true)}>
+                        Yes
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => answerProposal(i + skip, false)}>
+                        No
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
               {!!m.decisions?.length && (
                 <div className="flex max-w-[90%] flex-wrap gap-1">
                   {m.decisions.slice(0, 6).map((id) => {

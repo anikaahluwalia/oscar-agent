@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { getGmailStatus, gmailConnectUrl } from "@/lib/api";
+import { getChatStatus, getGmailStatus, gmailConnectUrl } from "@/lib/api";
 import { bringInDemo, checkGmail, disconnectGmailAccount, startOver } from "@/lib/demo";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { useLocalSetting } from "@/lib/local-setting";
@@ -145,6 +145,34 @@ function GmailAccount() {
   );
 }
 
+function ChatSetting() {
+  const [model, setModel] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    getChatStatus().then((s) => setModel(s.model), () => setModel(null));
+  }, []);
+  if (model === undefined) return <p className="text-sm text-muted-foreground">Checking...</p>;
+  if (!model) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Basic chat: Oscar understands a few questions. For a smarter chat, add a free Gemini key to <code>.env</code> as{" "}
+        <code>GEMINI_API_KEY</code> and restart the API.
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <p>
+        Using <span className="font-medium">{model}</span>.
+      </p>
+      <p className="text-muted-foreground">
+        When you ask about emails, their sender, subject and preview are sent to Google. On Gemini&apos;s free tier, Google
+        may use them to improve its products. Oscar never sends whole emails, and the chat can&apos;t change anything without
+        your yes.
+      </p>
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { data } = useOscar();
@@ -179,6 +207,10 @@ export function SettingsPage() {
       )}
 
       {/* These two aren't connected to Oscar yet, so they say so instead of pretending. */}
+      <Group title="Chat">
+        <ChatSetting />
+      </Group>
+
       <Group title="Notifications" note="Saved on this device · coming soon">
         <Toggle id="in-app" label="In-app" text="Heads-ups while you have Oscar open." />
         <Toggle id="push" label="Push" text="When something needs you." />

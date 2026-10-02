@@ -103,10 +103,21 @@ export interface GmailStatus {
   read_only: boolean;
 }
 
+/** A rule Oscar suggests in the chat. Nothing changes until you say yes. */
+export interface Proposal {
+  decision_id: string;
+  kind: FeedbackKind;
+  text: string;
+}
+
 export interface ChatReply {
   reply: string;
   decisions: string[];
+  proposal: Proposal | null;
+  source: "model" | "basic"; // basic: the keyword chat answered (no model key, or the model failed)
 }
+
+export type ChatTurn = { role: "you" | "oscar"; text: string };
 
 export interface FeedbackEvent {
   id: string;
@@ -189,11 +200,12 @@ export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", 
 export const getReviewSummary = () => call<ReviewSummary>("/reviews/summary");
 export const sendReview = (review: ReviewInput) => call<Review>("/reviews", { method: "POST", body: JSON.stringify(review) });
 
-export const sendChat = (message: string, decisionId?: string) =>
+export const sendChat = (message: string, history: ChatTurn[], decisionId?: string) =>
   call<ChatReply>("/chat", {
     method: "POST",
-    body: JSON.stringify({ message, decision_id: decisionId ?? null }),
+    body: JSON.stringify({ message, history, decision_id: decisionId ?? null }),
   });
+export const getChatStatus = () => call<{ model: string | null }>("/chat/status");
 
 export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string) =>
   call<{ event: FeedbackEvent; reply: string }>("/feedback", {
