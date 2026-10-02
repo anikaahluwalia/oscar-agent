@@ -145,3 +145,18 @@ export const isOldWay = (review: Review | null) =>
 
 /** Real-inbox emails still waiting on you in the Review page: not reviewed, or only half-answered. */
 export const needsReview = (i: DecisionWithFeedback) => i.decision.source === "gmail" && (!i.review || isOldWay(i.review));
+
+/** What each kind of email (classifier.TYPES) is called in Settings. */
+export const KIND_NAMES: Record<string, string> = {
+  receipt: "Receipts and orders",
+  fyi: "FYIs, nothing to do",
+  newsletter: "Newsletters and promos",
+  question: "Questions from people",
+  promotion: "Mail you might unsubscribe from",
+  meeting_invite: "Meeting invites",
+  confirmation_request: "Asks you to confirm something",
+  forward_request: "Asks you to forward something",
+  deletion_request: "Asks you to delete something",
+  money_request: "Asks for money",
+  credential_request: "Asks for a password or code",
+};

@@ -257,6 +257,18 @@ export const getDecisions = () => call<DecisionWithFeedback[]>("/decisions");
 export const getLearned = () => call<LearnedRow[]>("/learned");
 export const getBrief = () => call<Brief>("/brief");
 export const getAutonomy = () => call<AutonomyRow[]>("/autonomy");
+
+/** What Oscar may do on his own with each kind of email, from the rules (GET /permissions). */
+export interface PermissionRow {
+  action: Action;
+  email_type: string;
+  level: Level;
+  reason: string;
+  floor: Level | null;
+  ceiling: Level | null;
+  instead: Action | null; // your promotions setting swaps archiving for this
+}
+export const getPermissions = () => call<PermissionRow[]>("/permissions");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
 export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "POST" });
 

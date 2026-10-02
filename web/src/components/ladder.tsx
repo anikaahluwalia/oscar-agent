@@ -15,15 +15,17 @@ const STEPS: { level: Level; label: string }[] = [
 const ORDER: Level[] = ["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY", "ASK_FIRST", "ESCALATE"];
 export const stricter = (a: Level, b: Level) => ORDER.indexOf(a) > ORDER.indexOf(b);
 
+type Limits = Pick<AutonomyRow, "level" | "floor" | "floor_reason" | "ceiling">;
+
 /** Why Oscar can't go to a step, or null if he can. */
-export function lockFor(row: AutonomyRow, step: Level): string | null {
+export function lockFor(row: Limits, step: Level): string | null {
   if (row.floor && stricter(row.floor, step)) return row.floor_reason ? `Locked: ${row.floor_reason}` : "Locked by a protected rule";
   // The ceiling is the most Oscar can learn, so steps less strict than it are locked.
   if (row.ceiling && stricter(row.ceiling, step)) return "Locked: I always give you a heads up on these";
   return null;
 }
 
-export function Ladder({ row }: { row: AutonomyRow }) {
+export function Ladder({ row }: { row: Limits }) {
   if (row.floor === "ESCALATE") {
     return (
       <p className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-sm text-muted-foreground">
