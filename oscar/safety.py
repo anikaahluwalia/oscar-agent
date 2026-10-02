@@ -72,7 +72,8 @@ EMAIL_CHECKS = MappingProxyType({
             r"(^|\n)\s*(hey |hi )?oscar\s*[,:]",
             # Text aimed at an AI, or trying to change what the assistant may do.
             r"\[?\bsystem\b\s*(override|message|prompt|instruction|note)?\s*[\]:]",
-            r"\b(to|for) the (ai|assistant|bot|agent)\b",
+            # "To the AI reading this:", not "welcome to the AI era".
+            r"\b(to|for) the (ai|assistant|bot|agent)\b\s*(reading|processing|handling|[:,])",
             r"\b(ai|assistant|bot|agent) reading this\b",
             r"\b(safety|security) (checks?|rules?|filters?) (are |is |have been )?(disabled|off|turned off|suspended)\b",
             r"\b(your|the assistant'?s?) (permissions?|autonomy|level|access|rules?) (have|has|were|was) (been )?(raised|changed|updated|upgraded|expanded)\b",
