@@ -72,6 +72,17 @@ export interface GmailInfo {
   preview?: string; // Gmail's own one-line preview (emails read before it was saved don't have one)
 }
 
+export type Why = "preference" | "misread" | "risk";
+export type Reason =
+  | "SCAM"
+  | "MONEY"
+  | "CREDENTIALS"
+  | "ACCOUNT_SECURITY"
+  | "SENSITIVE_DATA"
+  | "COMMITMENT"
+  | "PROMPT_INJECTION"
+  | "IMPORTANT";
+
 export interface Review {
   id: string;
   reviewed_at: string;
@@ -81,9 +92,48 @@ export interface Review {
   should_be_action: Action | null;
   actual_type: string | null;
   note: string | null;
+  complete: boolean; // has the full answer (what he should have done); older reviews don't
+  why: Why | null;
+  reasons: Reason[];
+  label_name: string | null;
 }
 
-export type ReviewInput = Omit<Review, "id" | "reviewed_at">;
+/** "Yes" or "Not sure" is a label alone. A "No" is what he should have done; the server works out the label. */
+export type ReviewInput =
+  | { decision_id: string; label: "CORRECT" | "SKIP" }
+  | {
+      decision_id: string;
+      should_be_level: Level;
+      should_be_action: Action | null;
+      why: Why | null;
+      reasons: Reason[];
+      actual_type: string | null;
+      label_name: string | null;
+      note: string | null;
+    };
+
+export interface Rate {
+  rate: number | null;
+  of: number;
+}
+
+/** The eval measures for reviews with a full answer. Held back while old half-answers remain. */
+export type Graded =
+  | { n: number; held_back: true }
+  | { n: 0 }
+  | {
+      n: number;
+      passed: number;
+      level_accuracy: Rate;
+      action_accuracy: Rate;
+      errors: { too_cautious: number; too_permissive: number; wrong_action: number };
+      unnecessary_ask_rate: Rate;
+      too_permissive_rate: Rate;
+      acted_when_you_would_stop: number;
+      risk_weighted_error: number;
+      confusion: { levels: Level[]; counts: number[][] };
+      why: Record<Why, number>;
+    };
 
 export interface ReviewTally {
   decisions: number;
@@ -91,6 +141,8 @@ export interface ReviewTally {
   scored: number;
   agreement: number | null;
   labels: Record<ReviewLabel, number>;
+  old_way: number;
+  graded: Graded;
 }
 
 export interface ReviewSummary extends ReviewTally {
@@ -141,6 +193,8 @@ export interface DecisionWithFeedback {
   decision: Decision;
   feedback: FeedbackEvent[];
   review: Review | null;
+  // Real inbox: what you said he should have done, and how this decision does against it.
+  answer: { level: Level; action: Action | null; error: "none" | "too_cautious" | "too_permissive" | "wrong_action"; from_earlier: boolean } | null;
 }
 
 export interface LearnedRow {
