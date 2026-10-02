@@ -198,6 +198,9 @@ export const getGmailStatus = () => call<GmailStatus>("/gmail");
 export const gmailConnectUrl = `${API}/auth/google/start`;
 export const syncGmail = () => call<{ new: number; skipped: number }>("/gmail/sync", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
+/** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
+export const getEmailContent = (decisionId: string) =>
+  call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
 export const getReviewSummary = () => call<ReviewSummary>("/reviews/summary");
 export const sendReview = (review: ReviewInput) => call<Review>("/reviews", { method: "POST", body: JSON.stringify(review) });
 

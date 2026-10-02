@@ -1,4 +1,5 @@
 import { DecisionCard } from "@/components/decision-card";
+import { EmailBody } from "@/components/email-body";
 import { Highlight } from "@/components/highlight";
 import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
@@ -45,6 +46,27 @@ function EmailPreview({ decision }: { decision: DecisionWithFeedback["decision"]
   );
 }
 
+/** Under a real email: what Oscar noticed, and the email in Gmail. */
+function EmailLinks({ decision }: { decision: DecisionWithFeedback["decision"] }) {
+  const link = gmailLink(decision);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+      {decision.noticed ? (
+        <span>
+          Oscar noticed <mark className="rounded-sm bg-brand/20 px-0.5 text-foreground">&ldquo;{decision.noticed}&rdquo;</mark>
+        </span>
+      ) : (
+        <span />
+      )}
+      {link && (
+        <a href={link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 underline-offset-4 hover:text-foreground hover:underline">
+          Open in Gmail <ExternalLinkIcon className="size-3.5" />
+        </a>
+      )}
+    </div>
+  );
+}
+
 /** The selected email, and Oscar's decision underneath it. */
 export function EmailDetail({ item, onFeedback }: Props) {
   const { decision } = item;
@@ -59,7 +81,14 @@ export function EmailDetail({ item, onFeedback }: Props) {
           {decision.sender} · {dayLabel(decision.created_at)}, {formatTime(decision.created_at)}
         </p>
       </header>
-      <EmailPreview decision={decision} />
+      {decision.source === "gmail" ? (
+        <div className="flex flex-col gap-2">
+          <EmailBody decisionId={decision.id} />
+          <EmailLinks decision={decision} />
+        </div>
+      ) : (
+        <EmailPreview decision={decision} />
+      )}
       <DecisionCard key={decision.id} item={item} onFeedback={onFeedback} />
     </article>
   );
