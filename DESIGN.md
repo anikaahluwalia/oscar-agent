@@ -753,20 +753,69 @@ Each decision on the real inbox gets one of these (`oscar/review.py`):
 | Something else | `OTHER` | Wrong in a way the others don't cover; needs a note |
 | Skip | `SKIP` | Not sure, or don't count this one |
 
-A review can also say what it should have been (the level, the action, or the
-kind of email) and carry a note.
+A review can also carry a note.
 
-In the app the labels are asked as questions, since the names alone were hard to
-pick between: first "Did Oscar get this right?" (Yes is Correct, Not sure is
-Skip), then, if not, "What was wrong?" with only the options that fit that email,
-in plain words ("He got what kind of email this is wrong", "Right idea, but I'd do
-something else with it"). Each option still shows its label, and the stored values
-are the same.
+#### What Oscar should have done (from commit 9e984e4)
+
+The labels above turned out to be the wrong question. Of the first 133 reviews,
+none of the 110 "No"s said both how much Oscar should have done on his own *and*
+what. Each label saved one half: "Incorrect action" saved an action, "Needed to
+ask" a level. The biggest group was 34 reviews of "draft a reply, should be mark as
+read", where we still don't know if that meant quietly or with a heads up. And 13
+contradicted their own label, like "Needed to ask" with the note "should have just
+notified me". The categories overlap, so the same mistake fits under three names.
+
+So a "No" now asks what he should have done, which is the answer the evals use:
+
+1. **What should he have done?** Handled it quietly / Handled it and told me /
+   Asked me first / Only told me, I'll deal with it. Oscar's own pick is shown but
+   not preselected, so the answer isn't nudged towards his.
+2. **Then, depending on that:** what he should have done with it (mark as read,
+   archive, label, draft a reply, or Other with a note), what he should have asked
+   to do (any action, or "Nothing, I'll handle it"), or why it should come to you
+   (a scam, money, a password or code, account security, personal info, a
+   commitment, instructions aimed at Oscar, or "it's just important to me").
+   Only answers some version of Oscar could pass are offered: the floor never lets
+   him quietly reply, and money and passwords always come to you.
+3. **Did he understand what this email is?** Yes, I'd just handle it differently /
+   No, it's actually a… / He missed that it's risky. This is what says whether a
+   mistake is in his rules (a misread) or is a preference he should learn. That
+   matters now, since the main limit is that he recognises too little.
+
+The label is worked out from the answer (`derive_label`), the way the evals name an
+error, so it can't be picked wrongly. "Only told me, it's just important to me" is
+graded as "ask me, and don't do anything": nothing about it is risky, and scoring it
+like a missed scam would make the cost numbers meaningless.
+
+What it gives:
+
+- **Real-inbox results measured like the evals** (`oscar/grading.py`, shared with
+  `evals/scoring.py`): right level, right action, unnecessary asks, acting when he
+  should have waited, cost and the level-by-level table, each with what it's out
+  of. There's no "critical violation" count, since that needs to know whether a
+  safety rule should have fired, and a review doesn't say; "acted when you'd have
+  stopped it" is counted instead.
+- **Held back until it's fair.** Old half-answers are never filled in by guessing.
+  While any remain, the graded numbers aren't shown, because the graded set would
+  be mostly the Yeses: on the first 133 reviews it would have said 100% right
+  (23 of 23) while 110 "No"s waited. The review page has a list to finish them,
+  starting from the half that was saved.
+- **Fixes measured on your own emails.** A full answer is about the email, so it
+  carries over when a newer Oscar re-reads it, whatever he decides, and the re-read
+  is graded against it without reviewing again. Re-reads stay out of the headline,
+  since some of those emails were used to write regression tests.
+- **Regression cases straight from a review.** `python -m oscar reviews` prints the
+  case's `expect` as it is.
+- **"Same as the last one"** for runs of similar emails: about half the reviews were
+  the same promo mistake again.
 
 Reviews are for evaluation only. They're stored apart from feedback, which is what
 Oscar learns from, and a decision is always logged before it's reviewed. So the
 real-inbox numbers measure what Oscar decided on his own, and scoring a decision
-never teaches him about that same decision.
+never teaches him about that same decision. Letting "I'd just handle it
+differently" answers teach him is possible, with a date split (learn from reviews
+before a cutoff, grade only on emails after it). That's left for Stage 11, when he
+can act on the inbox.
 
 ### Rollout
 
