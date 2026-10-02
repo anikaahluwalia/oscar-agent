@@ -51,6 +51,7 @@ class Email(BaseModel):
 class Classification(BaseModel):
     action: Action
     matched_pattern: str | None = None  # None means the fallback was used
+    email_type: str = "unknown"  # what kind of email Oscar thinks it is (see classifier.TYPES)
 
 
 def new_id() -> str:
@@ -93,6 +94,8 @@ class Decision(BaseModel):
     # what Oscar learned, the safety floor for the action, or a safety check on the email.
     level_source: Literal["policy", "guess", "learned", "floor", "safety_check"] = "policy"
     steps: list[str] = Field(default_factory=list)  # Oscar's working notes, in order
+    email_type: str = "unknown"  # what kind of email Oscar thinks it is
+    confidence: float = 0.5  # how sure Oscar is that the level is right (see agent.confidence_for)
     # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he
     # didn't do anything; the decision is what he would have done.
     source: Literal["demo", "gmail"] = "demo"

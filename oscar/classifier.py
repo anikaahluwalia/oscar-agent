@@ -73,6 +73,21 @@ RULES: list[tuple[Action, list[str]]] = [
     ]),
 ]
 
+# What kind of email each rule means. Safety checks can replace it (see agent.py).
+TYPES: dict[Action, str] = {
+    Action.MOVE_MONEY: "money_request",
+    Action.SEND_CREDENTIALS: "credential_request",
+    Action.PERMANENTLY_DELETE: "deletion_request",
+    Action.ACCEPT_MEETING: "meeting_invite",
+    Action.UNSUBSCRIBE: "promotion",
+    Action.ARCHIVE: "newsletter",
+    Action.APPLY_LABEL: "receipt",
+    Action.FORWARD: "forward_request",
+    Action.SEND_REPLY: "confirmation_request",
+    Action.DRAFT_REPLY: "question",
+    Action.MARK_READ: "fyi",
+}
+
 FALLBACK = Action.MARK_READ
 REPLIES = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
@@ -98,12 +113,13 @@ def classify(email: Email, bulk_action: Action | None = None) -> Classification:
         for pattern in patterns:
             match = re.search(pattern, text, re.MULTILINE)
             if match:
+                email_type = TYPES[action]
                 if bulk and bulk_action and action == Action.ARCHIVE:
                     action = bulk_action
-                return Classification(action=action, matched_pattern=match.group(0))
+                return Classification(action=action, matched_pattern=match.group(0), email_type=email_type)
     if bulk:
         # Still a guess: nothing in the email said what it is, so Oscar asks before doing it.
         # Without this, list mail he didn't understand (a security alert from a no-reply
         # address, say) would be handled silently. The held-out check caught that.
-        return Classification(action=bulk_action or Action.MARK_READ, matched_pattern=None)
-    return Classification(action=FALLBACK, matched_pattern=None)
+        return Classification(action=bulk_action or Action.MARK_READ, matched_pattern=None, email_type="bulk")
+    return Classification(action=FALLBACK, matched_pattern=None, email_type="unknown")

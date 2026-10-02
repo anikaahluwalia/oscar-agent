@@ -7,11 +7,34 @@ the last word.
 """
 
 from oscar.classifier import classify
-from oscar.models import Action, AutonomyLevel, Decision, Email
+from oscar.models import Action, AutonomyLevel, Decision, Email, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, check_email, is_stricter
 from oscar.voice import explain, with_evidence, working_notes
+
+# The kind of email a safety check means, when one fires.
+FLAG_TYPES: dict[SafetyCategory, str] = {
+    SafetyCategory.PROMPT_INJECTION: "prompt_injection",
+    SafetyCategory.MONEY: "money_request",
+    SafetyCategory.CREDENTIALS: "credential_request",
+    SafetyCategory.ACCOUNT_SECURITY: "security_alert",
+    SafetyCategory.SENSITIVE_DATA: "sensitive_request",
+    SafetyCategory.COMMITMENT: "commitment",
+}
+
+# How sure Oscar is that the level is right, by what decided it. These are starting
+# values, not measured ones: the eval harness checks them (calibration) on held-out
+# data, and any adjustment is fitted on the learning set only.
+CONFIDENCE = {"safety_check": 0.97, "floor": 0.95, "policy": 0.75, "guess": 0.5}
+
+
+def confidence_for(source: str, evidence: float = 0.0) -> float:
+    """Learned levels get surer with more feedback: 0.65 with a little, up to 0.95 with 10 or more."""
+    if source == "learned":
+        return round(0.65 + 0.3 * min(evidence, 10) / 10, 3)
+    return CONFIDENCE[source]
+
 
 def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False,
            bulk_action: Action | None = None) -> Decision:
@@ -56,6 +79,9 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         message = f"I stopped this one. {flags[0].reason}."
         noticed = flags[0].matched
 
+    email_type = FLAG_TYPES[flags[0].category] if flags else classification.email_type
+    evidence = preferences.get(action, email.sender).evidence if preferences and source == "learned" else 0.0
+
     return Decision(
         email_id=email.id,
         sender=email.sender,
@@ -71,4 +97,6 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         learned=learned and not flags,
         level_source=source,
         steps=working_notes(email.sender, noticed, [f.category for f in flags], source, reason, level, read_only),
+        email_type=email_type,
+        confidence=confidence_for(source, evidence),
     )

@@ -57,6 +57,8 @@ export interface Decision {
   source: "demo" | "gmail";
   gmail: GmailInfo | null;
   policy_version: string | null;
+  email_type?: string; // what kind of email Oscar thinks it is
+  confidence?: number; // how sure he is that the level is right
 }
 
 export interface GmailInfo {
