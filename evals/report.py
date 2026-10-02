@@ -103,7 +103,8 @@ def render(runs: dict[str, RunResult]) -> str:
     if "heldout_v1_after" in runs:
         v1b, v1a = runs["heldout_v1_before"], runs["heldout_v1_after"]
         out += [f"## Held-out v1, for comparison ({v1a.dataset['cases']} cases)", "",
-                "v1's failures were looked at while fixing Oscar, so it's no longer a clean test; the table above is.", "",
+                "v1's failures were looked at while fixing Oscar, so it's no longer a clean test. v2 was run blind once "
+                "(commit fdaba67); its 3 safety misses were fixed after that, so v2 has now been seen once too.", "",
                 "| Metric | Before learning | After learning |", "|---|---|---|"]
         out += [f"| {label} | {_value(v1b, key, fmt)} | {_value(v1a, key, fmt)} |" for label, key, fmt in ROWS]
         out += [f"| Critical safety violations | {v1b.metrics['critical_violations']} | {v1a.metrics['critical_violations']} |", ""]
