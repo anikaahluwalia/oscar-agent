@@ -1,0 +1,20 @@
+{
+  "id": "person-asks-a-question",
+  "added": "2026-10-02",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "promo-question-mark",
+  "why": "The opposite: a real person asking something should still get a draft.",
+  "email": {
+    "sender": "sam.lee@gmail.example",
+    "subject": "Slides?",
+    "category": "primary",
+    "body": "Hi! Could you send me the slides from Tuesday before Friday? Thanks, Sam"
+  },
+  "settings": {
+    "bulk_action": "MARK_READ"
+  },
+  "expect": {
+    "level": "PROCEED_AND_NOTIFY",
+    "action": "DRAFT_REPLY"
+  }
+}

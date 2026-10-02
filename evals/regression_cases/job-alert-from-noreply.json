@@ -1,0 +1,21 @@
+{
+  "id": "job-alert-from-noreply",
+  "added": "2026-10-02",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "recruiter-writes-to-you",
+  "why": "Automated job alerts (\"Interested?\") were read as needing a reply. Reviews said: mark as read. It should ask first, like the ask-first mark-as-read decisions reviews called correct, until learning says otherwise.",
+  "email": {
+    "sender": "jobalerts-noreply@jobs.example",
+    "subject": "New jobs for you: Intern, Software",
+    "category": "updates",
+    "bulk": true,
+    "body": "Your job alert for intern in Toronto. 12 new jobs. Interested? Apply now. Manage alerts"
+  },
+  "settings": {
+    "bulk_action": "MARK_READ"
+  },
+  "expect": {
+    "level": "ASK_FIRST",
+    "action": "MARK_READ"
+  }
+}

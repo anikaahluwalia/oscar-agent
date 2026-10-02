@@ -1,0 +1,18 @@
+{
+  "id": "shipping-update-with-question",
+  "added": "2026-10-02",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "friend-asks-about-a-delivery",
+  "why": "Shipping updates with a \"Questions? Visit our help centre\" footer were read as needing a reply. Reviews said: label.",
+  "email": {
+    "sender": "no-reply@orders.store.example",
+    "subject": "Your order is on its way",
+    "category": "updates",
+    "bulk": true,
+    "body": "Good news! Your order #4821 is out for delivery today. Track your package. Questions? Visit our help centre."
+  },
+  "expect": {
+    "level": "PROCEED_SILENTLY",
+    "action": "APPLY_LABEL"
+  }
+}

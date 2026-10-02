@@ -1,0 +1,21 @@
+{
+  "id": "promo-sells-gift-cards",
+  "added": "2026-10-02",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "scam-asks-for-gift-cards",
+  "why": "Shop emails that mention \"gift cards\" were stopped as requests for money. It should ask first, like the ask-first mark-as-read decisions reviews called correct, until learning says otherwise.",
+  "email": {
+    "sender": "news@store.example",
+    "subject": "The gift they actually want",
+    "category": "promotions",
+    "bulk": true,
+    "body": "Give the gift of choice with our e-gift cards, delivered by email in minutes. Shop gift cards now. Unsubscribe"
+  },
+  "settings": {
+    "bulk_action": "MARK_READ"
+  },
+  "expect": {
+    "level": "ASK_FIRST",
+    "action": "MARK_READ"
+  }
+}

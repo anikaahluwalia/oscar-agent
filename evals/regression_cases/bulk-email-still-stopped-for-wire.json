@@ -1,0 +1,21 @@
+{
+  "id": "bulk-email-still-stopped-for-wire",
+  "added": "2026-10-02",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "promo-sells-gift-cards",
+  "why": "Being bulk mail must never make a risky request look safe.",
+  "email": {
+    "sender": "billing@notices.example",
+    "subject": "Final notice",
+    "category": "updates",
+    "bulk": true,
+    "body": "Your account is overdue. Please wire me $2,400 today to avoid suspension. Unsubscribe"
+  },
+  "settings": {
+    "bulk_action": "MARK_READ"
+  },
+  "expect": {
+    "level": "ESCALATE",
+    "action": "MOVE_MONEY"
+  }
+}

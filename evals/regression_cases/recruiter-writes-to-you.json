@@ -1,0 +1,17 @@
+{
+  "id": "recruiter-writes-to-you",
+  "added": "2026-10-02",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "job-alert-from-noreply",
+  "why": "The opposite: a recruiter writing to you personally needs a reply.",
+  "email": {
+    "sender": "priya@talent.company.example",
+    "subject": "Coffee chat?",
+    "category": "primary",
+    "body": "Hi Alex, I saw your application and would love to chat. Are you free for a call on Tuesday?"
+  },
+  "expect": {
+    "level": "PROCEED_AND_NOTIFY",
+    "action": "DRAFT_REPLY"
+  }
+}

@@ -33,4 +33,6 @@ One JSON file per case:
 }
 ```
 
-`expect.action` is optional; leave it out when only the level matters.
+`expect.action` is optional; leave it out when only the level matters. `email` can
+also have `category` (Gmail's tab) and `bulk` (sent to a list), and `settings` can
+set preferences the case depends on, like `{"bulk_action": "MARK_READ"}`.

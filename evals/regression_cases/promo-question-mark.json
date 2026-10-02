@@ -1,0 +1,21 @@
+{
+  "id": "promo-question-mark",
+  "added": "2026-10-02",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "person-asks-a-question",
+  "why": "Promo emails full of \"?\" were read as messages that need a reply. Reviews said: mark as read. It should ask first, like the ask-first mark-as-read decisions reviews called correct, until learning says otherwise.",
+  "email": {
+    "sender": "hello@shop.example",
+    "subject": "Can you believe these prices?",
+    "category": "promotions",
+    "bulk": true,
+    "body": "Ready for fall? New arrivals are here. Shop now and get free shipping. Unsubscribe | Privacy"
+  },
+  "settings": {
+    "bulk_action": "MARK_READ"
+  },
+  "expect": {
+    "level": "ASK_FIRST",
+    "action": "MARK_READ"
+  }
+}

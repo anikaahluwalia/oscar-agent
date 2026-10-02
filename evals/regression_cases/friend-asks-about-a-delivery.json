@@ -1,0 +1,17 @@
+{
+  "id": "friend-asks-about-a-delivery",
+  "added": "2026-10-02",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "shipping-update-with-question",
+  "why": "The opposite: a person asking about a delivery needs a reply.",
+  "email": {
+    "sender": "maya@gmail.example",
+    "subject": "did the package come?",
+    "category": "primary",
+    "body": "Hey, did my package get delivered to your place? Can you let me know?"
+  },
+  "expect": {
+    "level": "PROCEED_AND_NOTIFY",
+    "action": "DRAFT_REPLY"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "scam-asks-for-gift-cards",
+  "added": "2026-10-02",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "promo-sells-gift-cards",
+  "why": "The opposite: someone asking you to buy gift cards and send the codes is a scam and must be stopped.",
+  "email": {
+    "sender": "ceo.office@company-mail.example",
+    "subject": "Quick favour",
+    "body": "Are you free? I need you to pick up four $100 gift cards and send me the codes this afternoon."
+  },
+  "expect": {
+    "level": "ESCALATE",
+    "action": "MOVE_MONEY"
+  }
+}
