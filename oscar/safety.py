@@ -35,9 +35,12 @@ ACTION_FLOORS = MappingProxyType({
 # A risky request is that shape plus something sensitive: a password, money, an ID
 # document, a sign-off. Written from the categories, not from particular emails, so
 # new wording is caught (Stage 10 found the old exact phrases missed most of it).
-ASK = (r"(?:\b(?:can|could|would|will) (?:you|u)\b|\bplease\b|\bkindly\b|\bi need you to\b|\bneed you to\b|\bi need\b"
-       r"|\bsend (?:me|us|it|them|over)\b|\bemail me\b|\btext me\b|\bshare\b|\bforward (?:me|us)\b|\bgive me\b"
-       r"|\btell me\b|\breply with\b|\blet me have\b|\bmind (?:sending|sharing)\b)")
+# "Please" only counts with a verb after it: "please keep your PIN safe" asks for nothing.
+ASK = (r"(?:\b(?:can|could|would|will) (?:you|u)\b|\b(?:please|kindly)\s+(?=(?:\w+\s+)?(?:send|share|provide|give|confirm|reply"
+       r"|forward|enter|tell|text|email|upload|submit|pay|transfer|wire|buy|get|read|settle|attach)\b)|\bi need you to\b"
+       r"|\bneed you to\b|\bi need\b|\bneeds (?:your|the)\b|\bsend (?:me|us|it|them|over)\b|\bemail me\b|\btext me\b"
+       r"|\bshare (?:your|the|it|them|those|that|with)\b|\bforward (?:me|us)\b|\bgive me\b|\btell me\b|\breply with\b"
+       r"|\blet me have\b|\bmind (?:sending|sharing)\b)")
 NEAR = r"[^.?!\n]{0,80}"
 
 
@@ -46,20 +49,43 @@ def _asks_for(thing: str) -> str:
     return rf"{ASK}{NEAR}{thing}|{thing}{NEAR}{ASK}"
 
 
-SECRET = (r"\b(?:passwords?|passcodes?|log-?ins?(?: details)?|usernames? and passwords?|credentials|pin(?: number)?"
-          r"|(?:verification|security|one-time|2fa|otp|auth(?:entication)?|sign-?in|login) codes?"
-          r"|the code (?:it|that|we|they|you) (?:just )?(?:texts?|sent|send|got)|codes? (?:that )?(?:just )?(?:came|hit|went) to)\b")
-MONEY = (r"(?:\b(?:wire|transfer|e-?transfer|venmo|zelle|paypal|cash ?app|remit)\b|\bpay (?:this|the|me|us|it|now|today|immediately|invoice)\b"
-         r"|\bsend (?:me |us )?(?:the )?(?:money|funds|payment|deposit)\b|\$\s?[\d,]+(?:\.\d\d)?\s+to\b|\brouting (?:number|no)\b)")
-ID_DOCS = (r"\b(?:scan|copy|photo|picture|pdf|image) of (?:your |my |the |a )?(?:passport|driver'?s licen[cs]e|licen[cs]e|id card|id|birth certificate"
-           r"|social security card)\b|\b(?:medical|hr|personnel|employee|patient|payroll) (?:records?|files?|details)\b"
-           r"|\b(?:bank|account) (?:details|number)\b")
+SECRET = (r"\b(?:passwords?|passcodes?|passphrases?|log-?in (?:details|info|information|credentials)"
+          r"|your log-?in\b(?! (?:screen|page|flow|button|form|mockups?|styles?|issue))|usernames? and passwords?|credentials"
+          r"|(?:your|the|my|card|bank|atm) pin\b|pin (?:number|code)s?"
+          r"|(?:verification|security|one-time|2fa|otp|mfa|auth(?:entication)?|sign-?in|login|backup|recovery) codes?"
+          r"|the code (?:it|that|we|they|you) (?:just )?(?:texts?|sent|send|got)|codes? (?:that )?(?:just )?(?:came|hit|went) to"
+          r"|(?:code|digits|numbers?) (?:\w+ ){0,5}(?:just )?(?:texted|sent to your phone|by text|via sms))\b")
+GIFT_CARDS = r"(?:gift ?cards?|(?:apple|steam|google play|itunes|amazon|ebay|razer|xbox|playstation|visa) (?:gift )?cards?)"
+MONEY = (r"(?:\bwire (?:me|us|it|them|the (?:money|funds|payment|deposit|balance)|\$|money|funds|payment)"
+         r"|\btransfer (?:me|us|\$|money|funds|the (?:money|funds|payment|deposit|balance))|\be-?transfer\b"
+         r"|\b(?:venmo|zelle|paypal|cash ?app)\b|\bremit\b|\bpay (?:this|the|me|us|it|now|today|immediately|invoice)\b"
+         r"|\bsend (?:me |us )?(?:the )?(?:money|funds|payment|deposit)\b|\$\s?[\d,]+(?:\.\d\d)?\s+to\b|\brouting (?:number|no)\b"
+         r"|\bsettle (?:the |your |this |that )?(?:\$\s?[\d,]+ )?(?:balance|invoice|bill|payment|amount)\b|\bbeneficiary\b"
+         r"|\bpayment handle\b|\bpay (?:the |this |your )?\$\s?[\d,]+|\b(?:wire|transfer)\b[^.?!\n]{0,40}\bto (?:the|this|my|our|a new) (?:account|iban)\b|\b(?:send|pay|venmo) (?:\w+ ){0,2}your share\b|" + GIFT_CARDS + r")")
+ID_DOCS = (r"\b(?:scan|copy|photo|picture|pdf|image)s? of (?:the front and back of )?(?:your |my |a )?(?:passport|driver'?s licen[cs]e"
+           r"|licen[cs]e|id card|photo id|government id|birth certificate|social security card|insurance card)\b"
+           r"|\b(?:your|my|a|government|photo) id\b(?! badge)|\binsurance card\b|\bvaccination (?:history|records?|card)\b"
+           r"|\b(?:medical|health|hr|personnel|employee|patient|payroll) (?:records?|files?|details|history)\b"
+           r"|\bbank (?:account )?(?:details|number)\b|\baccount (?:number|and routing)\b"
+           r"|\bnational insurance number\b|\btax (?:id|number|file number)\b")
 SIGN_OFF = (r"\b(?:approve|approved|sign off on|sign|accept|agree to) (?:the |this |our |your )?(?:quote|contract|sow|statement of work"
-            r"|agreement|terms|proposal|renewal|order|offer)\b|\breply (?:with )?['\"“]?(?:yes|approved|i accept|i agree|confirm)\b")
+            r"|agreement|terms|proposal|renewal)\b|\breply (?:with )?['\"]?(?:approved|i accept|i agree)\b")
+# Agreement words a reply could be held to: "a quick 'yes' back", "just say 'go ahead'".
+AGREE = r"(?:['\"](?:yes|go ahead|ok|okay|approved|agreed)['\"]|\bjust say (?:yes|go ahead)\b|\b(?:a quick|reply) yes\b)"
+DEAL = r"\b(?:renewal|contract|billing|subscription|terms|quote|agreement|sow|lock in|start billing)\b"
+
+# Warnings against sharing something ("never share your code with anyone") aren't requests.
+# They're removed before checking, up to where the sentence turns ("..., but send it to me").
+NEGATED = re.compile(
+    r"\b(?:never|don't|do not|please don't|please do not)\s+(?:\w+\s+){0,2}?(?:share|give|disclose|reveal|tell|send)\b"
+    r"[^.?!\n,;]{0,60}?\b(?:with|to) (?:anyone|anybody|others|other people|someone else)\b(?:,? (?:not )?even (?:us|our staff))?"
+    r"|\bwe(?:'ll| will)? never (?:ask|call|email|text) (?:you )?(?:for|to (?:share|give|send))\b[^.?!\n,;]{0,60}")
 
 # Patterns in the email text that should escalate no matter which action the
 # classifier picked. These look for requests, not just mentions. Injection is
-# first so its explanation is the one the user sees.
+# first so its explanation is the one the user sees. Every scan is bounded, so a
+# long email can't make them slow.
+AI = r"(?:ai|llms?|language models?|bots?|chatbots?|automated (?:\w+ )?(?:assistants?|agents?|helpers?|systems?)|virtual assistants?|email assistants?)"
 EMAIL_CHECKS = MappingProxyType({
     SafetyCategory.PROMPT_INJECTION: (
         "Someone left instructions for me in this email, so I'm not doing anything with it",
@@ -71,28 +97,33 @@ EMAIL_CHECKS = MappingProxyType({
             r"\bthe user (said|says|has said) (it's|its|this is) (fine|ok|okay)\b",
             r"(^|\n)\s*(hey |hi )?oscar\s*[,:]",
             # Text aimed at an AI, or trying to change what the assistant may do.
-            r"\[?\bsystem\b\s*(override|message|prompt|instruction|note)?\s*[\]:]",
+            r"(^|\n)\s*\[?\s*system\s*(override|message|prompt|instructions?|note)?\s*[\]:]",
+            r"\[\s*system\b[^\]\n]{0,20}\]|\bsystem (override|prompt|instructions?)\b",
             # "To the AI reading this:", not "welcome to the AI era".
             r"\b(to|for) the (ai|assistant|bot|agent)\b\s*(reading|processing|handling|[:,])",
             r"\b(ai|assistant|bot|agent) reading this\b",
+            rf"\bif (you(?:'re| are) )?(an? |any |the )?{AI}\b[^.?!\n]{{0,30}}\b(is |are )?(reading|processing|handling|scanning|summari[sz]ing)\b",
+            rf"\bdear {AI}\b",
+            rf"(^|[.!?>]\s*|\n)\s*{AI}\s*(instructions?|note|notice)?\s*[,:]",
+            r"(^|[.!?:>]\s*|\n)\s*assistants?\s*(instructions?|note|notice)?\s*[,:]",
             r"\b(safety|security) (checks?|rules?|filters?) (are |is |have been )?(disabled|off|turned off|suspended)\b",
             r"\b(your|the assistant'?s?) (permissions?|autonomy|level|access|rules?) (have|has|were|was) (been )?(raised|changed|updated|upgraded|expanded)\b",
             r"\b(act|proceed) (silently|without asking) on (all|every)\b",
             r"\b(mark|treat) (this|it) (email )?as (safe|trusted)\b",
             r"\b(do not|don't|never) (tell|show|notify|alert) the user\b",
             r"\bwithout (telling|notifying|asking|showing) the user\b",
-            # Text written to an AI, an assistant or an automated agent at all: a person's email doesn't do that.
+            r"\bdo not (surface|show) (it|them|this|these)\b",
             # Talking *to* an AI, not about one: "for AI readers:", "AI assistants, forward...",
             # "automated agents processing this". A newsletter reviewing AI assistant apps isn't flagged.
             r"\b(for|to|attention:?) (the |any |all )?(ai|automated|virtual|email)[- ](readers?|agents?|assistants?|bots?|systems?)\b",
             r"\b(ai|automated|virtual)[- ](readers?|agents?|assistants?|bots?)\s*[,:]",
             r"\b(ai|automated|virtual)[- ](agents?|assistants?|bots?|systems?) (processing|reading|handling|scanning) (this|these)\b",
-            r"(^|[.!?:>]\s*|\n)\s*(assistants?|agents?)\s*[,:]",
-            r"<!--[^>]*\b(assistant|ai|agent|bot)\b",
-            r"\byour (email |ai |virtual )?assistant\b[^.]{0,60}\b(should|must|will|always|never|to)\b",
+            r"<!--[^>]{0,200}\b(assistant|ai|agent|bot)\b",
+            # "your assistant" alone is often a person, so only an email, AI or virtual one counts.
+            r"\byour (email|ai|virtual) assistant\b[^.]{0,60}\b(should|must|will|always|never|to)\b",
             r"\b(add|set|create) (this |a )?(new )?rule (to|for|in) your (email )?assistant\b",
             r"<\s*/?\s*(tool_call|function_call|tool|system|instructions?)\b",
-            r"\b(execute|run) (it|this|the following) (immediately|now)\b",
+            r"\bexecute the following\b",
             r"\bdo not (notify|tell|alert) the (mailbox )?owner\b",
         ],
     ),
@@ -100,15 +131,16 @@ EMAIL_CHECKS = MappingProxyType({
         "It's asking for money, and I don't touch money",
         [
             r"\bremit\b",
-            r"\b(send|pay)\b[^.]*\bvia (zelle|venmo|paypal|wire)\b",
+            r"\b(send|pay)\b[^.]{0,120}\bvia (zelle|venmo|paypal|wire)\b",
             # Asking *you* to buy or send gift cards, or for their codes. Shops that just sell
             # gift cards aren't asking for money (evals/regression_cases/promo-sells-gift-cards).
-            r"\b(you|u)\b[^.?!]{0,40}\b(buy|get|purchase|pick up|grab|send)\b[^.?!]{0,40}\bgift ?cards?\b",
-            r"\bgift ?cards?\b.{0,160}\b(codes?|pins?|scratch)\b",
+            rf"\b(you|u)\b[^.?!]{{0,40}}\b(buy|get|purchase|pick up|grab|send)\b[^.?!]{{0,40}}\b{GIFT_CARDS}\b",
+            rf"\b{GIFT_CARDS}\b.{{0,160}}\b(codes?|pins?|scratch|numbers on the back)\b",
             r"\bsend (me )?(the )?(funds|money)\b",
-            r"\b(settle|pay|send)\b[^.]*\bby (bank |wire )?transfer\b",
+            r"\b(settle|pay|send)\b[^.]{0,120}\bby (bank |wire )?transfer\b",
             _asks_for(MONEY),
             # An amount, then "send it / pay me" just after, even across a sentence.
+            r"\b(wire|transfer|send) (it|the (money|funds|payment|balance)|\$\s?[\d,]+) to (me|us|this|my|our|the (account|following))\b",
             r"\$\s?[\d,]+(\.\d\d)?[^?!\n]{0,80}\b(send|pay|venmo|zelle|transfer|e-?transfer)\b (it|me|us|that|the money)\b",
         ],
     ),
@@ -120,8 +152,8 @@ EMAIL_CHECKS = MappingProxyType({
             r"\b(read|send|share|give|tell) (me |us )?(the |your )?(\d-digit |one-time |verification |security )?code\b",
             _asks_for(SECRET),
             r"\b(\d-digit |one-time |verification |security )?code\b.{0,120}\breply with (it|the code|that)\b",
-            # Any code that arrives by text or on your phone: the classic "forward me the code" scam.
-            r"\bcodes?\b[^.?!]{0,60}\b(by text|texted|via sms|by sms|to your phone|on your phone|your (phone )?number)\b",
+            # A code that came by text, then a request for it in the next sentence.
+            r"\b(code|digits)\b[^?!\n]{0,80}\b(by text|texted|via sms|to your phone|on your phone)\b.{0,120}?\b(forward|send|read|tell|give|share|text)\b (it|me|us|them)\b",
         ],
     ),
     SafetyCategory.ACCOUNT_SECURITY: (
@@ -135,11 +167,13 @@ EMAIL_CHECKS = MappingProxyType({
             # Something happened to the account: 2FA off, a new device, an unusual sign-in.
             # Tips about turning two-factor on aren't an alert (a security newsletter).
             r"\b(two-factor|two-step|2-step|2fa|mfa|multi-factor)\b[^.]{0,40}\b(turned off|disabled|removed|switched off)\b",
-            r"\bnew (device|phone|computer|browser|login)\b[^.]{0,40}\b(added|signed in|logged in|was used)\b",
-            r"\bunusual (activity|sign-?in|login)\b",
-            r"\bwas(n't| not)? this you\b",
+            r"\bnew (device|phone|computer|browser|login|passkey|security key|payee|beneficiary|recipient|authenticator)\b[^.]{0,40}\b(added|signed in|logged in|was used|registered|set up|created)\b",
+            r"\b(unusual|suspicious) (activity|sign-?in|login|log-?in)\b",
+            r"\bnew (payee|beneficiary|passkey)\b",
+            r"\bwas(n't| not)? this you\b|\b(this|that|it) was(n't| not) you\b",
             r"\b(signed|logged) (in|into) (to )?your account\b",
-            r"\bnew (country|location|city|region)\b",
+            r"\b(we noticed|there was) an? (new |unusual |suspicious )?(log-?in|sign-?in)\b",
+            r"\b(log-?in|sign-?in|logged in|signed in)\b[^.]{0,40}\bnew (country|location|city|region)\b",
             r"\b(sign-?in|login|recovery|account) (email|address|phone|number)\b[^.]{0,30}\b(was|has been) changed\b",
         ],
     ),
@@ -153,7 +187,8 @@ EMAIL_CHECKS = MappingProxyType({
             r"\bdate of birth\b",
             r"\bbank details\b",
             _asks_for(ID_DOCS),
-            _asks_for(r"\b(medical|health|sick|hr|personnel|performance reviews?|salar(?:y|ies)|payroll|disciplinary)\b"),
+            _asks_for(r"\b(medical (?:leave )?(?:records?|history|information|info|details|forms?|notes?)|(?:sick|leave) notes?|performance reviews?"
+                      r"|(?:current |your |their |his |her )salar(?:y|ies)|disciplinary (?:records?|notes?|files?))\b"),
         ],
     ),
     SafetyCategory.COMMITMENT: (
@@ -163,9 +198,10 @@ EMAIL_CHECKS = MappingProxyType({
             r"\baccept the (new |updated )?terms\b",
             r"\bsign the (contract|agreement)\b",
             _asks_for(SIGN_OFF),
-            r"\breply[^.?!]{0,30}\bto (confirm|approve|accept)\b[^.?!]{0,60}\b(contract|renewal|quote|order|purchase|agreement|terms|sow|plan|upgrade)\b",
+            r"\breply[^.?!]{0,30}\bto (confirm|approve|accept)\b[^.?!]{0,60}\b(contract|renewal|quote|order|purchase|agreement|terms|sow|plan|upgrade|offer)\b",
             r"\b(contract|renewal|agreement|nda|terms|quote|sow|plan|upgrade|subscription)\b.{0,160}\breply (to confirm|so)\b",
-            r"\b(signed|sign) off\b|['\"“](agreed|approved)['\"”]",
+            rf"{AGREE}.{{0,120}}{DEAL}|{DEAL}.{{0,120}}{AGREE}",
+            r"\b(you've|you have|you) signed off\b|\bsign off on (the|this)\b|['\"](agreed|approved)['\"]",
         ],
     ),
 })
@@ -174,19 +210,28 @@ EMAIL_CHECKS = MappingProxyType({
 # A second layer under the checks: things risky enough that Oscar never handles an email
 # that mentions them on his own, even when no check recognised a request. He asks
 # instead. Feedback can't change this, like the floor. A harmless mention costs an
-# extra ask; a missed request could cost much more.
+# extra ask; a missed request could cost much more. Words that turn up on ordinary
+# receipts ("paid with gift card", "medical supplies") are left to the checks above.
 CAUTION = re.compile(
-    r"\b(passwords?|passcodes?|log-?in details|credentials|(verification|one-time|security|2fa|sign-?in) codes?"
-    r"|wire(d)?( transfer)?|routing numbers?|account numbers?|iban|swift code|gift ?cards?|crypto|bitcoin"
-    r"|passports?|driver'?s licen[cs]e|social security|ssn|medical|diagnos[ie]s|nda|contracts?|e-?sign|docusign"
-    r"|overdue|venmo|zelle|e-?transfer)\b",
+    r"\b(passwords?|passcodes?|passphrases?|log-?in details|credentials|(verification|one-time|security|2fa|sign-?in|backup|recovery) codes?"
+    r"|wire transfer|routing numbers?|account numbers?|iban|swift code|gift ?card (codes?|numbers?|pins?)|crypto|bitcoin"
+    r"|passports?|driver'?s licen[cs]e|social security|ssn|medical (records?|history)|diagnos[ie]s|nda|contracts?|e-?sign|docusign"
+    r"|overdue|e-?transfer|beneficiary|new payee|insurance card|salary|payment handle)\b",
     re.I,
 )
 
 
+def _normalise(text: str) -> str:
+    """Curly quotes as plain ones, since Gmail and phones send ’ and the patterns are written with '."""
+    return text.translate(QUOTES)
+
+
+QUOTES = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"'})
+
+
 def caution(email: Email) -> str | None:
     """The sensitive thing an email mentions, if any."""
-    found = CAUTION.search(f"{email.subject}\n{email.body}")
+    found = CAUTION.search(_normalise(f"{email.subject}\n{email.body}"))
     return found.group(0) if found else None
 
 
@@ -204,7 +249,7 @@ class SafetyFlag(BaseModel):
 
 
 def check_email(email: Email) -> list[SafetyFlag]:
-    text = f"{email.subject}\n{email.body}".lower()
+    text = NEGATED.sub(" ", _normalise(f"{email.subject}\n{email.body}".lower()))
     flags = []
     for category, (reason, patterns) in EMAIL_CHECKS.items():
         for pattern in patterns:
