@@ -73,6 +73,7 @@ export const LEVEL_SOURCES: Record<Decision["level_source"], string> = {
   learned: "What you've taught me",
   floor: "A protected rule",
   safety_check: "Something in the email looked risky",
+  caution: "It mentions something sensitive, so I checked with you",
 };
 
 export const FEEDBACK: Record<FeedbackKind, string> = {

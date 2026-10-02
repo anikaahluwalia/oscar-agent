@@ -10,7 +10,7 @@ from oscar.classifier import classify
 from oscar.models import Action, AutonomyLevel, Decision, Email, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import Preferences
-from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, check_email, is_stricter
+from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
 from oscar.voice import explain, with_evidence, working_notes
 
 # The kind of email a safety check means, when one fires.
@@ -26,7 +26,7 @@ FLAG_TYPES: dict[SafetyCategory, str] = {
 # How sure Oscar is that the level is right, by what decided it. These are starting
 # values, not measured ones: the eval harness checks them (calibration) on held-out
 # data, and any adjustment is fitted on the learning set only.
-CONFIDENCE = {"safety_check": 0.97, "floor": 0.95, "policy": 0.75, "guess": 0.5}
+CONFIDENCE = {"safety_check": 0.97, "floor": 0.95, "policy": 0.75, "guess": 0.5, "caution": 0.6}
 
 
 def confidence_for(source: str, evidence: float = 0.0) -> float:
@@ -69,7 +69,11 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
 
     # A risky request in the email escalates, whatever the action is.
     flags = check_email(email)
-    if flags:
+    # When the protected rule for this action already stopped it (money, credentials), the
+    # check only agrees: keep the rule as the reason. Otherwise the check is what stops it.
+    already_floored = source == "floor" and level == AutonomyLevel.ESCALATE and all(
+        FLAG_ACTIONS.get(f.category) == action for f in flags if f.category in FLAG_ACTIONS)
+    if flags and not already_floored:
         for flag in flags:
             if flag.category in FLAG_ACTIONS:
                 action = FLAG_ACTIONS[flag.category]
@@ -78,6 +82,14 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         source = "safety_check"
         message = f"I stopped this one. {flags[0].reason}."
         noticed = flags[0].matched
+
+    # The backstop: an email that mentions something sensitive is never handled alone.
+    sensitive = None if flags else caution(email)
+    if sensitive and level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY):
+        level, source, learned = AutonomyLevel.ASK_FIRST, "caution", False
+        reason = f'it mentions "{sensitive}"'
+        message = explain(action, level, reason, False, read_only)
+        noticed = sensitive
 
     email_type = FLAG_TYPES[flags[0].category] if flags else classification.email_type
     evidence = preferences.get(action, email.sender).evidence if preferences and source == "learned" else 0.0

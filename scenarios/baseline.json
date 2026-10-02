@@ -369,7 +369,7 @@
       "level": "ASK_FIRST"
     },
     "why": "A tips article about security, not an account change.",
-    "known_failure": "Left on purpose: skipping security checks for anything that looks like a newsletter would let phishing in by adding 'View in browser'."
+    "known_failure": null
   },
   {
     "id": "money_send_payment",

@@ -9,7 +9,8 @@ HERE = Path(__file__).resolve().parent
 #   rules-1  Stage 1 keyword rules
 #   rules-2  Stage 7 changes from eval failures
 #   rules-3  list mail is never replied to; tighter gift card check (from real-inbox reviews)
-CLASSIFIER_VERSION = "rules-3"
+#   rules-4  safety checks look for the shape of a risky request, not exact phrases; a caution backstop
+CLASSIFIER_VERSION = "rules-4"
 
 
 def _git(*args: str) -> str:
