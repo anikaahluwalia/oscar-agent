@@ -1,3 +1,7 @@
+> **Stage 6–7 method, kept for the record.** Learning and measuring here happen on the
+> same generated stream, so "Learning, last 100" isn't measured on held-out data. For
+> current results see `evals/results/REPORT.md` (`python -m evals.measure`, Stage 10).
+
 # Oscar eval results
 
 5 seeds × 400 synthetic emails, simulated user. "Learning, last 100" is the end of each run, after Oscar has had time to learn.

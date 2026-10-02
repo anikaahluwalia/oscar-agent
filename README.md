@@ -148,7 +148,17 @@ the list with the reason for each one:
 ## Evals
 
 ```bash
-.venv/bin/python -m evals              # writes evals/RESULTS.md
-.venv/bin/python -m evals.transcripts  # writes examples/TRANSCRIPTS.md
-.venv/bin/python -m evals.heldout      # writes evals/results/heldout.md
+.venv/bin/python -m evals.measure                 # learn, check for leakage, score; writes evals/results/REPORT.md
+.venv/bin/python -m evals.measure --policy careful-p1    # the same with another policy
+.venv/bin/python -m evals.compare OLD.json NEW.json      # two saved runs side by side
+.venv/bin/python -m evals.regressions             # just the regression cases
 ```
+
+`evals.measure` learns only from a generated learning inbox, scores the held-out
+set (215 cases) before and after learning, the safety suite (57 cases) and the
+regression cases, saves every run with every case's result in
+`evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The
+Evals page in the app shows those saved runs. The method is in DESIGN.md (Stage 10).
+
+The older `python -m evals` (writes `evals/RESULTS.md`) is the Stage 6–7 method, kept
+for the record.
