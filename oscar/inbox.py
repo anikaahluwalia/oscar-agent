@@ -84,6 +84,37 @@ def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
     return SyncResult(new=new, skipped=skipped)
 
 
+def recheck(history: History, gmail: GmailClient, limit: int = 50) -> SyncResult:
+    """Decide again on the most recent emails with the current Oscar. The old decisions are kept;
+    the new ones point back at them (recheck_of) and become what the app shows."""
+    if not _syncing.acquire(blocking=False):
+        raise AlreadySyncing("I'm already checking your inbox.")
+    try:
+        latest: dict[str, Decision] = {}
+        for d in sorted(history.decisions.values(), key=lambda d: d.created_at):
+            if d.source == "gmail":
+                latest[d.email_id] = d
+        recent = sorted(latest.values(), key=lambda d: d.created_at, reverse=True)[:limit]
+        version = policy_version()
+        bulk_action = Action(history.settings["bulk_action"]) if history.settings.get("bulk_action") else None
+        new = skipped = 0
+        for old in reversed(recent):
+            if old.policy_version == version:
+                continue  # already decided by this version
+            try:
+                email, info = _read(gmail, old.email_id)
+            except (GmailError, httpx.HTTPError):
+                skipped += 1
+                continue
+            decision = decide(email, Preferences.from_feedback(history.feedback), read_only=True, bulk_action=bulk_action)
+            history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
+                                                             "recheck_of": old.id}))
+            new += 1
+        return SyncResult(new=new, skipped=skipped)
+    finally:
+        _syncing.release()
+
+
 def _read(gmail: GmailClient, message_id: str):
     email, info = parse_message(gmail.message(message_id))
     try:

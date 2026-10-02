@@ -85,7 +85,8 @@ def summary(history: History) -> dict:
     Skips don't count either way. Agreement is Correct out of everything else.
     Results are also split by policy_version, so a fix can be compared with what came before.
     """
-    real = [d for d in history.decisions.values() if d.source == "gmail"]
+    # Re-reads by a newer Oscar are left out: some of those emails were used to write regression tests.
+    real = [d for d in history.decisions.values() if d.source == "gmail" and not d.recheck_of]
     latest = {d.id: history.review_for(d.id) for d in real}
     reviewed = {i: r for i, r in latest.items() if r is not None}
 

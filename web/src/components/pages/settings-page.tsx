@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { getChatStatus, getGmailStatus, getInboxSettings, gmailConnectUrl, setInboxSettings, type BulkAction } from "@/lib/api";
-import { bringInDemo, checkGmail, disconnectGmailAccount, startOver } from "@/lib/demo";
+import { bringInDemo, checkGmail, disconnectGmailAccount, recheckRecent, startOver } from "@/lib/demo";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { useLocalSetting } from "@/lib/local-setting";
 import { cn } from "@/lib/utils";
@@ -143,6 +143,15 @@ function GmailAccount() {
       <p className="text-sm text-muted-foreground">
         Oscar can read your inbox but can&apos;t change anything in it. Disconnecting keeps his decisions and your reviews.
       </p>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
+        <p className="max-w-md text-sm text-muted-foreground">
+          Re-read your 50 most recent emails with the latest Oscar. His old decisions and your reviews are kept; re-reads
+          aren&apos;t counted in the real-inbox results.
+        </p>
+        <Button size="sm" variant="outline" onClick={recheckRecent}>
+          Re-read recent emails
+        </Button>
+      </div>
     </div>
   );
 }

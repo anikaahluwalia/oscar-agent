@@ -201,6 +201,7 @@ export const getGmailStatus = () => call<GmailStatus>("/gmail");
 /** A link, not a fetch: it takes you to Google and back. */
 export const gmailConnectUrl = `${API}/auth/google/start`;
 export const syncGmail = () => call<{ new: number; skipped: number }>("/gmail/sync", { method: "POST" });
+export const recheckGmail = () => call<{ new: number; skipped: number }>("/gmail/recheck", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 export const getEmailContent = (decisionId: string) =>

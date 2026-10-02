@@ -101,3 +101,6 @@ class Decision(BaseModel):
     source: Literal["demo", "gmail"] = "demo"
     gmail: GmailInfo | None = None
     policy_version: str | None = None  # the git commit that made this decision
+    # Set when this is a re-read of an email Oscar already decided on, with a newer version of
+    # him. Re-reads are left out of real-inbox results: some of those emails helped write tests.
+    recheck_of: str | None = None

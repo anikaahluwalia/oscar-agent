@@ -23,7 +23,7 @@ from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir
-from oscar.inbox import AlreadySyncing, sync
+from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import autonomy, brief
 from oscar.review import Review, ReviewError, ReviewLabel, record_review, summary
@@ -367,6 +367,23 @@ def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, lim
         saved["last_sync"] = time.time()
         tokens.save(saved)
     return result
+
+
+@app.post("/gmail/recheck")
+def gmail_recheck(
+    tokens: gmail.TokenStore = Depends(get_tokens),
+    http: httpx.Client = Depends(get_http),
+    real: History = Depends(get_real_history),
+) -> dict:
+    """Re-read recent emails with the latest Oscar. Old decisions and reviews are kept."""
+    if not tokens.load():
+        raise HTTPException(409, "Gmail isn't connected.")
+    try:
+        return recheck(real, gmail.GmailClient(tokens, http)).model_dump()
+    except AlreadySyncing as e:
+        raise HTTPException(409, str(e))
+    except (gmail.GmailError, httpx.HTTPError):
+        raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
 
 
 @app.post("/gmail/disconnect")

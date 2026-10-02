@@ -148,3 +148,19 @@ def test_promo_setting_applies_to_new_emails(setup):
     decision = next(iter(real.decisions.values()))
     assert decision.action.value == "ARCHIVE"  # the newsletter is list mail
     assert client.post("/inbox-settings", json={"bulk_action": "DELETE"}).status_code == 422
+
+
+def test_recheck_makes_new_decisions_and_keeps_the_old(setup, monkeypatch):
+    import oscar.inbox as inbox
+
+    client, state, real, demo, tmp_path = setup
+    state["tokens"] = connected(tmp_path)
+    client.post("/gmail/sync")
+    old = next(iter(real.decisions.values()))
+    assert client.post("/gmail/recheck").json() == {"new": 0, "skipped": 0}  # same version: nothing to redo
+    monkeypatch.setattr(inbox, "policy_version", lambda: "newer")
+    assert client.post("/gmail/recheck").json() == {"new": 1, "skipped": 0}
+    redo = [d for d in real.decisions.values() if d.recheck_of == old.id]
+    assert len(redo) == 1 and old.id in real.decisions
+    assert client.get("/decisions").json()[0]["decision"]["id"] == redo[0].id  # the newest is what's shown
+    assert client.get("/reviews/summary").json()["decisions"] == 1  # the re-read isn't counted
