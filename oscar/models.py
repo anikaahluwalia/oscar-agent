@@ -67,6 +67,7 @@ class GmailInfo(BaseModel):
     category: str | None = None  # Gmail's tab: promotions, updates, social, forums, or primary
     thread_length: int = 1
     emailed_before: bool | None = None  # have you ever sent this person an email
+    preview: str = ""  # Gmail's own one-line preview, for showing the email in the app
 
 
 class Decision(BaseModel):

@@ -223,11 +223,15 @@ def body_text(payload: dict) -> str:
 
     walk(payload)
     text = "\n".join(plain) if plain else "\n".join(rich)
-    # Plain-text parts often have HTML entities written out too ("&zwnj;", "&amp;").
-    text = html.unescape(text)
-    # Invisible characters marketing emails use as padding, and soft hyphens.
-    text = INVISIBLE.sub("", text).replace("\u00a0", " ")
-    return re.sub(r"\s+", " ", text).strip()[:BODY_LIMIT]
+    # Plain-text parts often have HTML entities written out too ("&zwnj;", "&amp;"), and
+    # marketing emails pad the start with invisible characters.
+    return clean_text(text)[:BODY_LIMIT]
+
+
+def clean_text(text: str) -> str:
+    """Entities decoded, invisible padding removed, spaces collapsed."""
+    text = INVISIBLE.sub("", html.unescape(text)).replace("\u00a0", " ")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def parse_message(raw: dict) -> tuple[Email, GmailInfo]:
@@ -250,5 +254,6 @@ def parse_message(raw: dict) -> tuple[Email, GmailInfo]:
         received_at=datetime.fromtimestamp(int(received) / 1000, tz=timezone.utc) if received else None,
         labels=labels,
         category=next((CATEGORIES[label] for label in labels if label in CATEGORIES), None),
+        preview=clean_text(raw.get("snippet", "")),
     )
     return email, info

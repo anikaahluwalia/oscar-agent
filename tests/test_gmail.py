@@ -174,3 +174,10 @@ def test_marketing_padding_is_removed():
     plain = "&zwnj; &zwnj;&nbsp;&zwnj; ‌​͏­﻿ Free standard shipping &amp; returns"
     part = {"mimeType": "text/plain", "body": {"data": base64.urlsafe_b64encode(plain.encode()).decode()}}
     assert body_text(part) == "Free standard shipping & returns"
+
+
+def test_keeps_gmails_preview():
+    raw = message("p", "a@b.example", "Sale", "body")
+    raw["snippet"] = "&zwnj; Free shipping &amp; returns \u200c"
+    _, info = parse_message(raw)
+    assert info.preview == "Free shipping & returns"
