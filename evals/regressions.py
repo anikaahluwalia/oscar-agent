@@ -27,6 +27,7 @@ class Case(BaseModel):
     why: str
     twin: str | None = None
     email: dict
+    settings: dict = {}  # preferences the case depends on, e.g. {"bulk_action": "MARK_READ"}
     expect: Expect
 
 
@@ -36,7 +37,8 @@ def load() -> list[Case]:
 
 def check(case: Case) -> str | None:
     """None if Oscar gets the case right, else what he did instead."""
-    decision = decide(Email(id=case.id, **case.email))
+    bulk_action = Action(case.settings["bulk_action"]) if "bulk_action" in case.settings else None
+    decision = decide(Email(id=case.id, **case.email), bulk_action=bulk_action)
     got = (decision.autonomy_level, decision.action)
     if decision.autonomy_level != case.expect.level or (case.expect.action and decision.action != case.expect.action):
         return f"{got[1].value} → {got[0].value}"

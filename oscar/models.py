@@ -42,6 +42,10 @@ class Email(BaseModel):
     to: list[str] = Field(default_factory=list)
     subject: str
     body: str
+    # From Gmail, when the email is real: its tab (promotions, updates, social, forums,
+    # primary) and whether it was sent to a list (it has an unsubscribe header).
+    category: str | None = None
+    bulk: bool = False
 
 
 class Classification(BaseModel):

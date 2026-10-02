@@ -7,16 +7,17 @@ the last word.
 """
 
 from oscar.classifier import classify
-from oscar.models import AutonomyLevel, Decision, Email
+from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.policy import autonomy_for
 from oscar.preferences import Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, check_email, is_stricter
 from oscar.voice import explain, with_evidence, working_notes
 
-def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False) -> Decision:
+def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False,
+           bulk_action: Action | None = None) -> Decision:
     """Oscar's decision on one email. read_only only changes the wording ("I'd archive this"),
     never the level or the action."""
-    classification = classify(email)
+    classification = classify(email, bulk_action)
     action = classification.action
     level, reason = autonomy_for(action)
     source = "policy"

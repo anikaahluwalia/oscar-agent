@@ -51,7 +51,10 @@ EMAIL_CHECKS = MappingProxyType({
         [
             r"\bremit\b",
             r"\b(send|pay)\b[^.]*\bvia (zelle|venmo|paypal|wire)\b",
-            r"\bgift cards?\b",
+            # Asking *you* to buy or send gift cards, or for their codes. Shops that just sell
+            # gift cards aren't asking for money (evals/regression_cases/promo-sells-gift-cards).
+            r"\b(you|u)\b[^.?!]{0,40}\b(buy|get|purchase|pick up|grab|send)\b[^.?!]{0,40}\bgift ?cards?\b",
+            r"\bgift ?cards?\b[^.?!]{0,60}\b(codes?|pins?|scratch)\b",
             r"\bsend (me )?(the )?(funds|money)\b",
             r"\b(settle|pay|send)\b[^.]*\bby (bank |wire )?transfer\b",
         ],

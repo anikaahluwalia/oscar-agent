@@ -279,19 +279,23 @@ def parse_message(raw: dict) -> tuple[Email, GmailInfo]:
     to = [addr.lower() for _, addr in getaddresses([headers.get("to", "")]) if addr]
     labels = raw.get("labelIds", [])
     received = raw.get("internalDate")
+    category = next((CATEGORIES[label] for label in labels if label in CATEGORIES), None)
     email = Email(
         id=raw["id"],
         sender=sender,
         to=to,
         subject=headers.get("subject", "(no subject)"),
         body=body_text(raw.get("payload", {})) or raw.get("snippet", ""),
+        category=category,
+        # Sent to a list: it has an unsubscribe header, or says it's bulk mail.
+        bulk="list-unsubscribe" in headers or headers.get("precedence", "").lower() in ("bulk", "list"),
     )
     info = GmailInfo(
         message_id=raw["id"],
         thread_id=raw.get("threadId", raw["id"]),
         received_at=datetime.fromtimestamp(int(received) / 1000, tz=timezone.utc) if received else None,
         labels=labels,
-        category=next((CATEGORIES[label] for label in labels if label in CATEGORIES), None),
+        category=category,
         preview=clean_text(raw.get("snippet", "")),
     )
     return email, info

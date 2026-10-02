@@ -1,7 +1,9 @@
 """Baseline classifier: pick one proposed action from subject/body keyword patterns.
 
-Rules are checked top to bottom and the first match wins. This is deliberately
-naive — it reads the email text at face value and knows nothing about the sender.
+Rules are checked top to bottom and the first match wins. It reads the email text
+at face value, plus one thing about how it was sent: mail sent to a list (Gmail's
+Promotions, Updates, Social or Forums tabs, an unsubscribe header, or a no-reply
+address) is never something to reply to, however many question marks it has.
 """
 
 import re
@@ -44,6 +46,9 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\binvoice\b",
         r"\bhas shipped\b",
         r"\b(payment|transfer) (is )?complete\b",
+        r"\bout for delivery\b",
+        r"\byour (order|package|parcel) (is|has been) (on its way|delivered|confirmed)\b",
+        r"\btracking (number|info)\b",
     ]),
     (Action.FORWARD, [
         r"\bplease forward\b",
@@ -69,13 +74,36 @@ RULES: list[tuple[Action, list[str]]] = [
 ]
 
 FALLBACK = Action.MARK_READ
+REPLIES = {Action.DRAFT_REPLY, Action.SEND_REPLY}
+
+# Gmail tabs for mail sent to many people at once.
+BULK_TABS = {"promotions", "updates", "social", "forums"}
+NO_REPLY = re.compile(r"(^|[._+-])(no-?reply|do-?not-?reply|donotreply|notifications?|alerts?|mailer|newsletter)([._+-]|@)", re.I)
 
 
-def classify(email: Email) -> Classification:
+def is_bulk(email: Email) -> bool:
+    """Mail sent to a list rather than written to you. Only uses how it was sent, never its words,
+    so a colleague who mentions a newsletter still gets a reply."""
+    return email.bulk or email.category in BULK_TABS or bool(NO_REPLY.search(email.sender))
+
+
+def classify(email: Email, bulk_action: Action | None = None) -> Classification:
+    """The action for an email. bulk_action is what you want done with mail sent to a list
+    (mark as read, or archive); without it, list mail that matches nothing else is marked read."""
     text = f"{email.subject}\n{email.body}".lower()
+    bulk = is_bulk(email)
     for action, patterns in RULES:
+        if bulk and action in REPLIES:
+            continue  # nobody is waiting for a reply to a promo or a notification
         for pattern in patterns:
             match = re.search(pattern, text, re.MULTILINE)
             if match:
+                if bulk and bulk_action and action == Action.ARCHIVE:
+                    action = bulk_action
                 return Classification(action=action, matched_pattern=match.group(0))
+    if bulk:
+        # Still a guess: nothing in the email said what it is, so Oscar asks before doing it.
+        # Without this, list mail he didn't understand (a security alert from a no-reply
+        # address, say) would be handled silently. The held-out check caught that.
+        return Classification(action=bulk_action or Action.MARK_READ, matched_pattern=None)
     return Classification(action=FALLBACK, matched_pattern=None)
