@@ -26,7 +26,7 @@ from oscar.history import History, default_data_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import autonomy, brief
-from oscar.review import Review, ReviewError, ReviewLabel, record_review, summary
+from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, record_review, summary
 from oscar.preferences import Preferences
 from oscar.voice import describe_learning
 
@@ -421,19 +421,34 @@ def email_content(
 
 
 class ReviewRequest(BaseModel):
+    """Either a label alone ("Yes" is CORRECT, "Not sure" is SKIP), or what Oscar should have
+    done (should_be_level and the rest), which is a "No"; its label is worked out here."""
     decision_id: str
-    label: ReviewLabel
+    label: ReviewLabel | None = None
     should_be_level: AutonomyLevel | None = None
     should_be_action: Action | None = None
+    why: Why | None = None
+    reasons: list[Reason] = []
     actual_type: str | None = None
+    label_name: str | None = None
     note: str | None = None
 
 
 @app.post("/reviews", response_model=Review)
 def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_history)) -> Review:
     """Score one of Oscar's decisions on the real inbox. Oscar doesn't learn from this."""
+    decision = real.get_decision(request.decision_id)
     try:
-        return record_review(real, Review(**request.model_dump()))
+        if request.should_be_level is not None and decision is not None:
+            review = answer(decision, request.should_be_level, request.should_be_action, why=request.why,
+                            reasons=request.reasons, actual_type=request.actual_type, label_name=request.label_name,
+                            note=request.note)
+        elif request.label is not None:
+            review = Review(decision_id=request.decision_id, label=request.label, actual_type=request.actual_type,
+                            note=request.note)
+        else:
+            raise ReviewError("Say whether Oscar got it right." if decision else f"I can't find decision {request.decision_id}.")
+        return record_review(real, review)
     except ReviewError as e:
         raise HTTPException(400, str(e))
 

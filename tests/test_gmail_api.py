@@ -45,10 +45,16 @@ def test_sync_review_and_summary(setup):
     assert client.post("/gmail/sync").json() == {"new": 1, "skipped": 0}
     item = client.get("/decisions").json()[0]
     assert item["decision"]["source"] == "gmail" and item["review"] is None
-    r = client.post("/reviews", json={"decision_id": item["decision"]["id"], "label": "QUESTIONED_TOO_MUCH",
-                                      "should_be_level": "PROCEED_SILENTLY"})
-    assert r.status_code == 200
-    assert client.get("/decisions").json()[0]["review"]["label"] == "QUESTIONED_TOO_MUCH"
+    assert item["decision"]["autonomy_level"] in ("ASK_FIRST", "ESCALATE")
+    # What he should have done; the label is worked out from it.
+    r = client.post("/reviews", json={"decision_id": item["decision"]["id"], "should_be_level": "PROCEED_SILENTLY",
+                                      "should_be_action": "MARK_READ", "why": "preference"})
+    assert r.status_code == 200, r.text
+    assert client.get("/decisions").json()[0]["review"]["label"] in ("QUESTIONED_TOO_MUCH", "UNNECESSARY_FLAGGING")
+    # Something no version of Oscar could do is refused.
+    bad = client.post("/reviews", json={"decision_id": item["decision"]["id"], "should_be_level": "PROCEED_SILENTLY",
+                                        "should_be_action": "SEND_REPLY"})
+    assert bad.status_code == 400
     s = client.get("/reviews/summary").json()
     assert s["reviewed"] == 1 and s["agreement"] == 0.0
     # Feedback (what Oscar learns from) is refused on the real inbox.

@@ -102,3 +102,74 @@ def test_a_reread_that_decided_the_same_keeps_your_review():
                                   reviewed_at=changed.created_at + timedelta(seconds=1)))
     s = summary(history)
     assert s["reviewed"] == 1 and s["rereads"]["reviewed"] == 1, "a re-read's review is counted, on its own"
+
+
+# --- full answers: what Oscar should have done -------------------------------
+
+from oscar.models import Action, AutonomyLevel  # noqa: E402
+from oscar.review import Reason, answer, derive_label, expected_answer  # noqa: E402
+
+S, N, A, E = (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY, AutonomyLevel.ASK_FIRST,
+              AutonomyLevel.ESCALATE)
+
+
+def oscar_did(level, action):
+    d = decide(Email(id="e", sender="a@b.example", subject="s", body="hello"), read_only=True)
+    return d.model_copy(update={"source": "gmail", "autonomy_level": level, "action": action})
+
+
+@pytest.mark.parametrize("oscar, right, why, label", [
+    ((N, Action.DRAFT_REPLY), (S, Action.MARK_READ), None, ReviewLabel.QUESTIONED_TOO_MUCH),
+    ((E, Action.MOVE_MONEY), (S, Action.MARK_READ), None, ReviewLabel.UNNECESSARY_FLAGGING),
+    ((S, Action.MARK_READ), (A, Action.MARK_READ), None, ReviewLabel.NEEDED_TO_ASK),
+    ((N, Action.DRAFT_REPLY), (E, None), "risk", ReviewLabel.MISINTERPRETED_RISK),
+    ((A, Action.ARCHIVE), (A, Action.MARK_READ), None, ReviewLabel.INCORRECT_ACTION),
+    ((A, Action.ARCHIVE), (A, Action.ARCHIVE), "misread", ReviewLabel.INCORRECT_TYPE),
+])
+def test_the_label_is_worked_out_from_the_answer(oscar, right, why, label):
+    assert derive_label(oscar_did(*oscar), *right, why) == label
+
+
+def test_risky_reasons_mean_he_missed_a_risk():
+    review = answer(oscar_did(N, Action.DRAFT_REPLY), E, reasons=[Reason.MONEY])
+    assert review.label == ReviewLabel.MISINTERPRETED_RISK and review.why == "risk"
+
+
+def test_just_important_is_graded_as_ask_me_not_as_a_missed_scam():
+    review = answer(oscar_did(S, Action.MARK_READ), E, reasons=[Reason.IMPORTANT])
+    assert expected_answer(review, None) == (A, None)
+    assert review.label == ReviewLabel.NEEDED_TO_ASK
+
+
+def test_a_yes_is_a_full_answer_and_old_half_answers_are_not():
+    d = oscar_did(A, Action.ARCHIVE)
+    assert expected_answer(Review(decision_id=d.id, label=ReviewLabel.CORRECT), d) == (A, Action.ARCHIVE)
+    old = Review(decision_id=d.id, label=ReviewLabel.INCORRECT_ACTION, should_be_action=Action.MARK_READ)
+    assert expected_answer(old, d) is None
+
+
+@pytest.mark.parametrize("level, action, kwargs, message", [
+    (S, Action.SEND_REPLY, {}, "never does that without asking"),
+    (S, None, {}, "what he should have done"),
+    (A, Action.MOVE_MONEY, {}, "straight to you"),
+    (E, None, {}, "why this should come straight"),
+    (A, Action.ARCHIVE, {"why": "misread"}, "what kind of email"),
+    (A, Action.ARCHIVE, {"label_name": "Jobs"}, "only goes with Label"),
+    (N, Action.DRAFT_REPLY, {}, "That's what Oscar picked"),
+])
+def test_answers_no_oscar_could_pass_are_refused(level, action, kwargs, message):
+    history = History()
+    d = real(history, "e1")
+    history.decisions[d.id] = d = d.model_copy(update={"autonomy_level": N, "action": Action.DRAFT_REPLY})
+    review = answer(d, level, action, **kwargs)
+    review.reviewed_at = d.created_at + timedelta(seconds=1)
+    with pytest.raises(ReviewError, match=message):
+        record_review(history, review)
+
+
+def test_a_label_name_is_kept():
+    history = History()
+    d = real(history, "e1")
+    review = answer(d, S, Action.APPLY_LABEL, label_name="Internships", why="preference")
+    review.reviewed_at = d.created_at + timedelta(seconds=1)
+    assert record_review(history, review).label_name == "Internships"
