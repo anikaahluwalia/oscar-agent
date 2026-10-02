@@ -22,7 +22,7 @@ from oscar.config import API_URL, WEB_URL, setting
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
-from oscar.history import History, default_data_dir
+from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import autonomy, brief
@@ -107,14 +107,13 @@ ACCOUNT_FILE = GMAIL_DIR / "account.txt"  # the last Gmail address connected
 
 
 @lru_cache
-def real_history(address: str) -> History:
+def real_history(folder: Path) -> History:
     """Each Gmail account gets its own history, so connecting a different one never mixes them."""
-    return History(GMAIL_DIR / "accounts" / address.replace("/", "_"))
+    return History(folder)
 
 
 def get_real_history() -> History:
-    address = ACCOUNT_FILE.read_text().strip() if ACCOUNT_FILE.exists() else "none"
-    return real_history(address)
+    return real_history(real_inbox_dir())
 
 
 def get_tokens() -> gmail.TokenStore:

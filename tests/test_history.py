@@ -37,3 +37,11 @@ def test_history_is_saved_and_loaded(tmp_path):
     assert reloaded.get_decision(decision.id) == decision
     assert reloaded.feedback == [event]
 
+
+
+def test_the_real_inbox_folder_is_the_connected_account(tmp_path):
+    from oscar.history import real_inbox_dir
+    assert real_inbox_dir(tmp_path) == tmp_path / "gmail" / "accounts" / "none"
+    (tmp_path / "gmail").mkdir()
+    (tmp_path / "gmail" / "account.txt").write_text("me@example.com\n")
+    assert real_inbox_dir(tmp_path) == tmp_path / "gmail" / "accounts" / "me@example.com"

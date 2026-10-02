@@ -22,6 +22,14 @@ def default_data_dir() -> Path:
     return Path(os.environ.get("OSCAR_DATA_DIR", Path(__file__).resolve().parent.parent / "data"))
 
 
+def real_inbox_dir(data_dir: Path | None = None) -> Path:
+    """Where the real inbox's history is kept: one folder per Gmail account, for the last one connected."""
+    gmail = (data_dir or default_data_dir()) / "gmail"
+    account = gmail / "account.txt"
+    address = account.read_text().strip() if account.exists() else "none"
+    return gmail / "accounts" / address.replace("/", "_")
+
+
 class History:
     def __init__(self, data_dir: Path | None = None) -> None:
         self.decisions: dict[str, Decision] = {}

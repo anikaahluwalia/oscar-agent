@@ -9,15 +9,16 @@
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from oscar.agent import decide
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
-from oscar.history import History, default_data_dir
+from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.models import Email
 from oscar.preferences import Preferences
-from oscar.review import REVIEW_LABEL_NAMES, ReviewLabel, summary
+from oscar.review import REVIEW_LABEL_NAMES, ReviewLabel, answer_for, summary
 from oscar.voice import describe_learning
 
 DEFAULT_DIR = Path(__file__).resolve().parent.parent / "emails"
@@ -71,19 +72,37 @@ def run_reviews(history: History) -> None:
     for version, v in s["by_version"].items():
         va = "n/a" if v["agreement"] is None else f"{v['agreement'] * 100:.0f}%"
         print(f"  version {version}: {v['scored']} scored, agreement {va}")
+    g = s["graded"]
+    if g.get("held_back"):
+        print(f"  {s['old_way']} reviews are half answers from the old review screen; finish them in the app to grade him.")
+    elif g["n"]:
+        print(f"  measured like the evals: {g['passed']} of {g['n']} right, "
+              f"too cautious {g['errors']['too_cautious']}, too permissive {g['errors']['too_permissive']}, "
+              f"wrong action {g['errors']['wrong_action']}, acted when you'd have stopped it {g['acted_when_you_would_stop']}")
     print()
     for decision in sorted(history.decisions.values(), key=lambda d: d.created_at):
         review = history.review_for(decision.id)
         if review is None or review.label in (ReviewLabel.CORRECT, ReviewLabel.SKIP):
             continue
-        should = [x for x in (review.should_be_level and review.should_be_level.value,
-                              review.should_be_action and review.should_be_action.value, review.actual_type) if x]
+        found = answer_for(history, decision)
         print(f"── {REVIEW_LABEL_NAMES[review.label]}  (decision {decision.id})")
         print(f"   From:    {decision.sender}")
         print(f"   Subject: {decision.subject}")
         print(f"   Oscar:   {decision.action.value} → {decision.autonomy_level.value}")
-        if should:
-            print(f"   Should:  {' / '.join(should)}")
+        if found:
+            level, action = found[1]
+            # Ready to paste into a regression case's "expect".
+            expect = {"level": level.value, **({"action": action.value} if action else {})}
+            print(f"   Expect:  {json.dumps(expect)}")
+            details = [x for x in (review.why and f"why: {review.why}", review.actual_type and f"really: {review.actual_type}",
+                                   review.reasons and "reasons: " + ", ".join(r.value for r in review.reasons),
+                                   review.label_name and f"label: {review.label_name}") if x]
+            if details:
+                print(f"   {' · '.join(details)}")
+        else:
+            should = [x for x in (review.should_be_level and review.should_be_level.value,
+                                  review.should_be_action and review.should_be_action.value, review.actual_type) if x]
+            print(f"   Should:  {' / '.join(should) or '?'}  (half an answer, from the old review screen)")
         if review.note:
             print(f"   Note:    {review.note}")
         print()
@@ -108,7 +127,7 @@ def main(argv: list[str]) -> int:
     history = History(default_data_dir())
 
     if args.command == "reviews":
-        run_reviews(History(default_data_dir() / "gmail"))
+        run_reviews(History(real_inbox_dir()))
         return 0
     if args.command == "learned":
         run_learned(history)
