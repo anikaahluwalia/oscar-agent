@@ -1,3 +1,5 @@
+import type { Decision } from "@/lib/api";
+
 // Tidying email text for display. Decisions keep the text exactly as Oscar read it;
 // this only changes what's shown, so emails read before a fix still look right.
 
@@ -18,3 +20,15 @@ export function cleanText(text: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/** The best short preview of an email: Gmail's own if we have it, else the start of the text without links. */
+export function previewOf(decision: Decision): string {
+  if (decision.gmail?.preview) return decision.gmail.preview;
+  return cleanText(decision.snippet.replace(/\bhttps?:\/\/\S+/g, " "))
+    .replace(/^[\s|•·–-]+/, "")
+    .trim();
+}
+
+/** The email in Gmail's web app, for checking what it really looks like. */
+export const gmailLink = (decision: Decision) =>
+  decision.gmail ? `https://mail.google.com/mail/u/0/#all/${decision.gmail.message_id}` : null;

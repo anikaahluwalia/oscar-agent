@@ -2,10 +2,48 @@ import { DecisionCard } from "@/components/decision-card";
 import { Highlight } from "@/components/highlight";
 import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
-import { cleanText } from "@/lib/text";
+import { ExternalLinkIcon } from "lucide-react";
+import { gmailLink, previewOf } from "@/lib/text";
 import { dayLabel, formatTime } from "@/lib/time";
 
 type Props = { item: DecisionWithFeedback; onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean> };
+
+/**
+ * The start of the email, with what Oscar noticed marked. Oscar only keeps the start
+ * of each email, so for a real one there's a link to the whole thing in Gmail.
+ */
+function EmailPreview({ decision }: { decision: DecisionWithFeedback["decision"] }) {
+  const preview = previewOf(decision);
+  const noticed = decision.noticed;
+  const shown = noticed && preview.toLowerCase().includes(noticed.toLowerCase());
+  const link = gmailLink(decision);
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl bg-muted/40 p-4">
+      {preview ? (
+        <p className="leading-relaxed">
+          <Highlight text={preview} phrase={noticed} className="bg-brand/20" />
+        </p>
+      ) : (
+        <p className="text-sm italic text-muted-foreground">No preview. This email is mostly images or links.</p>
+      )}
+      {noticed && !shown && (
+        <p className="text-sm text-muted-foreground">
+          Oscar noticed <mark className="rounded-sm bg-brand/20 px-0.5 text-foreground">&ldquo;{noticed}&rdquo;</mark>
+        </p>
+      )}
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1.5 self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Open in Gmail <ExternalLinkIcon className="size-3.5" />
+        </a>
+      )}
+    </div>
+  );
+}
 
 /** The selected email, and Oscar's decision underneath it. */
 export function EmailDetail({ item, onFeedback }: Props) {
@@ -21,10 +59,7 @@ export function EmailDetail({ item, onFeedback }: Props) {
           {decision.sender} · {dayLabel(decision.created_at)}, {formatTime(decision.created_at)}
         </p>
       </header>
-      <p className="leading-relaxed">
-        {/* What Oscar noticed is marked, so you can see what he went on. */}
-        <Highlight text={cleanText(decision.snippet) || "(No text in this email.)"} phrase={decision.noticed} className="bg-brand/20" />
-      </p>
+      <EmailPreview decision={decision} />
       <DecisionCard key={decision.id} item={item} onFeedback={onFeedback} />
     </article>
   );

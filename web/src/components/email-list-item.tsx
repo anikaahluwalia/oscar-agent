@@ -1,6 +1,6 @@
 import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback } from "@/lib/api";
-import { cleanText } from "@/lib/text";
+import { previewOf } from "@/lib/text";
 import { formatTime } from "@/lib/time";
 import { isOpen } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,9 @@ export function EmailListItem({ item, selected, onSelect }: Props) {
         </span>
         <span className="truncate text-sm">{decision.subject}</span>
         <span className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{cleanText(decision.snippet)}</span>
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+            {previewOf(decision) || <span className="italic opacity-70">No preview</span>}
+          </span>
           <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} />
         </span>
       </button>

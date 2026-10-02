@@ -66,6 +66,7 @@ export interface GmailInfo {
   category: string | null;
   thread_length: number;
   emailed_before: boolean | null;
+  preview?: string; // Gmail's own one-line preview (emails read before it was saved don't have one)
 }
 
 export interface Review {
