@@ -48,6 +48,7 @@ export function ChatPanel({ variant }: { variant: "compact" | "drawer" }) {
               >
                 {m.text}
               </p>
+              {m.problem && <p className="max-w-[90%] text-xs text-muted-foreground">Basic answer. {m.problem}</p>}
               {m.proposal && (
                 <div className="flex max-w-[90%] flex-col gap-2 rounded-2xl border p-3 text-sm">
                   <p>{m.proposal.text}</p>

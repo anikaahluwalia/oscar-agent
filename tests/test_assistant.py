@@ -89,6 +89,16 @@ def test_falls_back_to_the_basic_chat_when_the_model_fails():
 
     reply = talk(inbox(), "what needs me?", [], httpx.Client(transport=httpx.MockTransport(down)))
     assert reply.source == "basic" and reply.reply.startswith("For you:")
+    assert "free limit" in reply.problem
+
+
+def test_says_when_google_blocks_the_key():
+    def blocked(request):
+        return httpx.Response(403, json=[{"error": {"code": 403, "details": [{"reason": "API_KEY_SERVICE_BLOCKED"}]}}])
+
+    reply = talk(inbox(), "hi", [], httpx.Client(transport=httpx.MockTransport(blocked)))
+    assert reply.source == "basic" and "aistudio.google.com/apikey" in reply.problem
+    assert "test-key" not in reply.problem
 
 
 def test_no_key_means_basic_chat(monkeypatch):

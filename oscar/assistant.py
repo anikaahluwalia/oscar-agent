@@ -69,6 +69,7 @@ class Proposal(BaseModel):
 class ModelReply(ChatReply):
     proposal: Proposal | None = None
     source: str = "model"  # "model", or "basic" when the keyword chat answered
+    problem: str | None = None  # why the model didn't answer, when it was supposed to
 
 
 SYSTEM = """You are Oscar, an email agent named after a Shih Tzu. You decide how much to do on your own with each email: handle it quietly, do it and tell the user (FYI), ask first (needs you), or stop it and bring it to them (blocked).
@@ -275,13 +276,43 @@ def ask_model(history: History, message: str, turns: list[Turn], http: httpx.Cli
     raise ValueError("too many tool calls")
 
 
+def _problem(error: Exception) -> str:
+    """Why the model failed, in plain words, without anything secret in it."""
+    if isinstance(error, httpx.HTTPStatusError):
+        status = error.response.status_code
+        try:
+            detail = error.response.json()
+            detail = (detail[0] if isinstance(detail, list) else detail).get("error", {})
+            reason = next((d.get("reason") for d in detail.get("details", []) if d.get("reason")), "")
+        except (ValueError, AttributeError, IndexError):
+            reason = ""
+        if reason == "API_KEY_SERVICE_BLOCKED" or status == 403:
+            return "Google blocked my key for Gemini. Make a key at aistudio.google.com/apikey, or allow the Generative Language API on this one."
+        if status in (400, 401) and reason in ("API_KEY_INVALID", ""):
+            return "Google didn't accept my key. Check GEMINI_API_KEY in .env."
+        if status == 404:
+            return "Google doesn't know that model. Try a different OSCAR_CHAT_MODEL in .env."
+        if status == 429:
+            return "I've hit Gemini's free limit for now. Try again in a bit."
+        return f"Gemini had a problem ({status})."
+    if isinstance(error, httpx.HTTPError):
+        return "I couldn't reach Gemini."
+    return "Gemini sent an answer I couldn't use."
+
+
 def talk(history: History, message: str, turns: list[Turn], http: httpx.Client | None,
          decision_id: str | None = None) -> ModelReply:
-    """The chat endpoint's answer: the model if there's a key and it works, else the basic chat."""
+    """The chat endpoint's answer: the model if there's a key and it works, else the basic chat.
+
+    When the model fails the basic chat still answers, and the reply says why, so a
+    broken key never just looks like a bad chat.
+    """
+    problem = None
     if api_key() and http is not None:
         try:
             return ask_model(history, message, turns, http, decision_id)
-        except (httpx.HTTPError, ValueError, KeyError, IndexError):
-            pass  # rate limit, outage, odd reply: answer anyway
+        except (httpx.HTTPError, ValueError, KeyError, IndexError) as e:
+            problem = _problem(e)
+            print(f"Oscar chat: falling back to the basic chat. {problem}")
     basic = answer(history, message, decision_id)
-    return ModelReply(reply=basic.reply, decisions=basic.decisions, source="basic")
+    return ModelReply(reply=basic.reply, decisions=basic.decisions, source="basic", problem=problem)

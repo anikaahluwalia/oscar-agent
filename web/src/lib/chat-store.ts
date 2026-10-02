@@ -10,6 +10,7 @@ export type ChatMessage = {
   text: string;
   decisions?: string[];
   proposal?: Proposal; // a rule waiting for your yes or no
+  problem?: string; // the model failed and the basic chat answered: why
   answered?: "yes" | "no";
 };
 type ChatState = { messages: ChatMessage[]; busy: boolean };
@@ -46,7 +47,13 @@ export async function askOscar(text: string, decisionId?: string) {
     set({
       messages: [
         ...state.messages,
-        { from: "oscar", text: reply.reply, decisions: reply.decisions, proposal: reply.proposal ?? undefined },
+        {
+          from: "oscar",
+          text: reply.reply,
+          decisions: reply.decisions,
+          proposal: reply.proposal ?? undefined,
+          problem: reply.problem ?? undefined,
+        },
       ],
     });
     notifyChanged(); // a rule may have changed what Oscar does

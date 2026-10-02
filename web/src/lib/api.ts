@@ -115,6 +115,7 @@ export interface ChatReply {
   decisions: string[];
   proposal: Proposal | null;
   source: "model" | "basic"; // basic: the keyword chat answered (no model key, or the model failed)
+  problem: string | null; // why the model didn't answer, when it should have
 }
 
 export type ChatTurn = { role: "you" | "oscar"; text: string };
