@@ -2,28 +2,41 @@
 
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
-import { ActivityRow } from "@/components/activity-row";
 import { ChatPanel } from "@/components/chat-panel";
+import { DecisionCard } from "@/components/decision-card";
 import { EmptyState } from "@/components/empty-state";
 import { OscarStatusHeader } from "@/components/oscar-status-header";
 import { Loading, Page, Section } from "@/components/page";
-import { answerLine, DOES } from "@/components/preference-card";
-import { StatusSummary } from "@/components/status-summary";
+import { SinceYesterday } from "@/components/since-yesterday";
 import { Button } from "@/components/ui/button";
+import type { DecisionWithFeedback } from "@/lib/api";
 import { bringInDemo, checkGmail } from "@/lib/demo";
-import { ACTIONS } from "@/lib/labels";
-import { answersFor, countsOf, useOscar } from "@/lib/use-oscar";
+import { isOldWay, needsReview } from "@/lib/labels";
+import { isOpen, useOscar, type OscarData } from "@/lib/use-oscar";
+
+const TOP = 5; // what needs you, before "see all"
 
 function More({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <Link href={href} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
       {children} <ArrowRightIcon className="size-3.5" />
     </Link>
   );
 }
 
+/** What's waiting on you, most urgent first: what he stopped, then what he asked about.
+ * On the real inbox (read-only), his calls to check, then old reviews to finish. */
+function waiting(data: OscarData): DecisionWithFeedback[] {
+  if (data.gmail.connected) {
+    const calls = data.items.filter(needsReview);
+    return [...calls.filter((i) => !isOldWay(i.review)), ...calls.filter((i) => isOldWay(i.review))];
+  }
+  const open = data.items.filter(isOpen);
+  return [...open.filter((i) => i.decision.autonomy_level === "ESCALATE"), ...open.filter((i) => i.decision.autonomy_level === "ASK_FIRST")];
+}
+
 export function HomePage() {
-  const { data, error } = useOscar();
+  const { data, error, feedback } = useOscar();
   if (!data) {
     return (
       <Page>
@@ -32,30 +45,22 @@ export function HomePage() {
     );
   }
 
-  const counts = countsOf(data.items);
-  // Most evidence first: the habits Oscar is surest about.
-  const known = [...data.learned].sort((a, b) => b.yes + b.no - (a.yes + a.no)).slice(0, 3);
-  // What Oscar will actually do, after the protected rules, not just what feedback says.
-  const levelOf = (sender: string, action: string) => data.autonomy.find((r) => r.sender === sender && r.action === action)?.level;
+  const readOnly = data.gmail.connected;
+  const needs = waiting(data);
 
   return (
     <Page>
-      <div className="flex flex-col gap-5">
-        <OscarStatusHeader items={data.items} brief={data.brief} realInbox={data.gmail.connected} />
-        {data.items.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusSummary counts={counts} readOnly={data.gmail.connected} />
-            {data.gmail.connected && (
-              <Button variant="outline" size="sm" className="rounded-full" onClick={checkGmail}>
-                Check now
-              </Button>
-            )}
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <OscarStatusHeader items={data.items} brief={data.brief} realInbox={readOnly} />
+        {readOnly && (
+          <Button variant="outline" className="rounded-full" onClick={checkGmail}>
+            Check now
+          </Button>
         )}
       </div>
 
       {data.items.length === 0 ? (
-        data.gmail.connected ? (
+        readOnly ? (
           <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
             <Button onClick={checkGmail}>Check now</Button>
           </EmptyState>
@@ -66,40 +71,31 @@ export function HomePage() {
         )
       ) : (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="flex flex-col gap-8">
-            <Section title="Recent activity" link={<More href="/activity">View all</More>}>
-              <ul className="flex flex-col rounded-2xl border bg-card shadow-card p-1.5">
-                {data.items.slice(0, 5).map((i) => (
-                  <ActivityRow key={i.decision.id} decision={i.decision} />
-                ))}
-              </ul>
-            </Section>
-
-            <Section title="What Oscar knows" link={<More href="/memory">View all preferences</More>}>
-              {known.length ? (
-                <ul className="grid gap-3 sm:grid-cols-3">
-                  {known.map((row) => (
-                    <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-1 rounded-2xl border bg-card shadow-card p-4">
-                      <p className="truncate text-sm font-medium">{row.sender}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {ACTIONS[row.action]} · {row.always_ask ? "always asks you" : DOES[levelOf(row.sender, row.action) ?? "ASK_FIRST"].toLowerCase()}
-                      </p>
-                      <p className="mt-auto pt-2 text-sm text-muted-foreground">{answerLine(answersFor(data.all, row.sender, row.action))}</p>
+          <div className="flex min-w-0 flex-col gap-8">
+            {needs.length > 0 && (
+              <Section
+                title={readOnly ? "Calls to check" : "Needs you"}
+                link={needs.length > TOP && <More href="/review">See all {needs.length.toLocaleString()}</More>}
+              >
+                <ul className="flex flex-col gap-3">
+                  {needs.slice(0, TOP).map((item) => (
+                    <li key={item.decision.id}>
+                      <DecisionCard compact item={item} onFeedback={(k, t) => feedback(item.decision.id, k, t)} />
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
-                  Nothing yet! Approve or undo a few things and I&apos;ll start picking up your habits.
-                </p>
-              )}
+              </Section>
+            )}
+
+            <Section title="Since yesterday" link={<More href="/email">All email</More>}>
+              <SinceYesterday items={data.items} readOnly={readOnly} />
             </Section>
           </div>
 
-          <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card shadow-card p-5 lg:sticky lg:top-8">
+          <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-8">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">Talk to Oscar</h2>
-              <p className="text-sm text-muted-foreground">Ask me what needs you, what I handled, or teach me a rule!</p>
+              <h2 className="text-lg font-semibold">Ask Oscar</h2>
+              <p className="text-sm text-muted-foreground">Ask me what needs you, what I&apos;d do with something, or teach me a rule!</p>
             </div>
             <ChatPanel variant="compact" />
           </aside>
