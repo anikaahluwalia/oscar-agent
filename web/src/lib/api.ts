@@ -51,7 +51,7 @@ export interface Decision {
   noticed: string | null;
   safety_flags: string[];
   learned: boolean;
-  level_source: "policy" | "guess" | "learned" | "floor" | "safety_check";
+  level_source: "policy" | "guess" | "learned" | "floor" | "safety_check" | "caution";
   steps: string[];
   /** "gmail" is a real inbox. Oscar only reads it for now, so the decision is what he would do. */
   source: "demo" | "gmail";
@@ -247,6 +247,10 @@ export const sendChat = (message: string, history: ChatTurn[], decisionId?: stri
     method: "POST",
     body: JSON.stringify({ message, history, decision_id: decisionId ?? null }),
   });
+export type BulkAction = "MARK_READ" | "ARCHIVE" | null;
+export const getInboxSettings = () => call<{ bulk_action: BulkAction }>("/inbox-settings");
+export const setInboxSettings = (bulk_action: BulkAction) =>
+  call<{ bulk_action: BulkAction }>("/inbox-settings", { method: "POST", body: JSON.stringify({ bulk_action }) });
 export const getChatStatus = () => call<{ model: string | null }>("/chat/status");
 
 export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string) =>

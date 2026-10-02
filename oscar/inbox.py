@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from oscar.agent import decide
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
-from oscar.models import Decision, new_id, now
+from oscar.models import Action, Decision, new_id, now
 from oscar.preferences import Preferences
 from oscar.version import policy_version
 
@@ -69,6 +69,7 @@ def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
         if len(unseen) >= limit or not page:
             break
     version = policy_version()
+    bulk_action = Action(history.settings["bulk_action"]) if history.settings.get("bulk_action") else None
     new = skipped = 0
     for ref in reversed(unseen[:limit]):
         try:
@@ -76,7 +77,7 @@ def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
         except (GmailError, httpx.HTTPError):
             skipped += 1
             continue
-        decision = decide(email, Preferences.from_feedback(history.feedback), read_only=True)
+        decision = decide(email, Preferences.from_feedback(history.feedback), read_only=True, bulk_action=bulk_action)
         history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version}))
         new += 1
     follow_up(history, gmail)

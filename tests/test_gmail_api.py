@@ -10,7 +10,7 @@ from tests.fake_gmail import FakeGmail, connected, message
 @pytest.fixture
 def setup(tmp_path, monkeypatch):
     real, demo = History(), History()
-    fake = FakeGmail([message("m1", "digest@newsletter.example", "Digest", "Top stories. Unsubscribe")])
+    fake = FakeGmail([message("m1", "digest@newsletter.example", "Digest", "Top stories. Unsubscribe", labels=("INBOX", "UNREAD", "CATEGORY_PROMOTIONS"))])
     state = {"tokens": TokenStore(tmp_path / "token.json")}
     app.dependency_overrides[get_tokens] = lambda: state["tokens"]
     app.dependency_overrides[get_real_history] = lambda: real
@@ -137,3 +137,14 @@ def test_eval_runs_come_from_saved_files(setup):
     full = client.get(f"/evals/runs/{runs[0]['run_id']}").json()
     assert len(full["cases"]) == full["metrics"]["cases"]
     assert "email" in full["cases"][0] and "rationale" in full["cases"][0]
+
+
+def test_promo_setting_applies_to_new_emails(setup):
+    client, state, real, demo, tmp_path = setup
+    state["tokens"] = connected(tmp_path)
+    assert client.get("/inbox-settings").json() == {"bulk_action": None}
+    assert client.post("/inbox-settings", json={"bulk_action": "ARCHIVE"}).json() == {"bulk_action": "ARCHIVE"}
+    client.post("/gmail/sync")
+    decision = next(iter(real.decisions.values()))
+    assert decision.action.value == "ARCHIVE"  # the newsletter is list mail
+    assert client.post("/inbox-settings", json={"bulk_action": "DELETE"}).status_code == 422

@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { getChatStatus, getGmailStatus, gmailConnectUrl } from "@/lib/api";
+import { getChatStatus, getGmailStatus, getInboxSettings, gmailConnectUrl, setInboxSettings, type BulkAction } from "@/lib/api";
 import { bringInDemo, checkGmail, disconnectGmailAccount, startOver } from "@/lib/demo";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { useLocalSetting } from "@/lib/local-setting";
@@ -147,6 +147,41 @@ function GmailAccount() {
   );
 }
 
+/** What Oscar does with promos and newsletters on this inbox. Applies to emails he reads from now on. */
+function PromoSetting() {
+  const [value, setValue] = useState<BulkAction | undefined>(undefined);
+  useEffect(() => {
+    getInboxSettings().then((s) => setValue(s.bulk_action), () => setValue(null));
+  }, []);
+  async function choose(next: BulkAction) {
+    try {
+      const saved = await setInboxSettings(next);
+      setValue(saved.bulk_action);
+      oscarSays(next === "MARK_READ" ? "Got it! I'll mark promos and newsletters as read." : next === "ARCHIVE" ? "Got it! I'll archive promos and newsletters." : "Okay! I'll go back to my default.");
+    } catch {
+      oscarSays("I can't reach my API right now.");
+    }
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <Segmented
+        label="Promotions and newsletters"
+        value={(value === undefined ? "" : value ?? "default") as "MARK_READ" | "ARCHIVE" | "default"}
+        onChange={(v) => choose(v === "default" ? null : v)}
+        options={[
+          { value: "MARK_READ", label: "Mark as read" },
+          { value: "ARCHIVE", label: "Archive" },
+          { value: "default", label: "Oscar's default" },
+        ]}
+      />
+      <p className="text-sm text-muted-foreground">
+        For mail sent to a list: promos, newsletters, job alerts. Oscar still asks first until you&apos;ve okayed a sender, and
+        anything risky is still stopped. Applies to emails he reads from now on.
+      </p>
+    </div>
+  );
+}
+
 function ChatSetting() {
   const [model, setModel] = useState<string | null | undefined>(undefined);
   useEffect(() => {
@@ -209,6 +244,10 @@ export function SettingsPage() {
       )}
 
       {/* These two aren't connected to Oscar yet, so they say so instead of pretending. */}
+      <Group title="Promotions and newsletters">
+        <PromoSetting />
+      </Group>
+
       <Group title="Chat">
         <ChatSetting />
       </Group>

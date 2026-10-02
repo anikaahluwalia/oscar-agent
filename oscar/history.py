@@ -30,6 +30,7 @@ class History:
         # which he learns from), and what you later did with each email in Gmail.
         self.reviews: list[Review] = []
         self.follow_ups: list[FollowUp] = []
+        self.settings: dict = {}  # this inbox's preferences, e.g. {"bulk_action": "MARK_READ"}
         self.data_dir = data_dir
         if data_dir is not None:
             data_dir.mkdir(parents=True, exist_ok=True)
@@ -61,6 +62,13 @@ class History:
         self.follow_ups.append(follow_up)
         self._append("follow_ups.jsonl", follow_up.model_dump_json())
 
+    def set_setting(self, name: str, value) -> None:
+        self.settings[name] = value
+        if self.data_dir is not None:
+            import json
+
+            (self.data_dir / "settings.json").write_text(json.dumps(self.settings))
+
     def clear(self) -> None:
         """Forget everything, including the saved files."""
         self.decisions.clear()
@@ -91,6 +99,11 @@ class History:
             self.reviews.append(Review.model_validate_json(line))
         for line in self._read_lines("follow_ups.jsonl"):
             self.follow_ups.append(FollowUp.model_validate_json(line))
+        settings = self.data_dir / "settings.json"
+        if settings.exists():
+            import json
+
+            self.settings = json.loads(settings.read_text())
 
     def _read_lines(self, filename: str) -> list[str]:
         path = self.data_dir / filename
