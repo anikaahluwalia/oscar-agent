@@ -1,5 +1,5 @@
-import { ActivityPage } from "@/components/pages/activity-page";
+import { InboxPage } from "@/components/pages/inbox-page";
 
 export default function Page() {
-  return <ActivityPage />;
+  return <InboxPage />;
 }
