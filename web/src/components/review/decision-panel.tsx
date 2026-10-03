@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TypePill } from "@/components/classify/type-pill";
+import { DraftBox } from "@/components/kit/draft-box";
 import { describeAnswer } from "@/components/review/answer";
 import { becauseOf, callLine, lower } from "@/components/review/call";
 import { DecisionControls } from "@/components/review/decision-controls";
@@ -366,6 +367,8 @@ export function DecisionPanel({
         </PanelSection>
       )}
 
+
+      <DraftBox item={item} />
 
       <PanelSection title="Why did I do this?" text="These facts mattered for my decision.">
         <WhyFactors item={item} />

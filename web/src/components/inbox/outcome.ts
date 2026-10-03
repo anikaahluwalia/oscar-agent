@@ -79,7 +79,10 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
   if (d.source === "gmail") {
     if (done) {
       const how = done.by === "you" ? "after you approved it" : "on my own";
-      const what = d.action === "APPLY_LABEL" ? `Added the "${labelName(item)}" label in Gmail` : `Done in Gmail (${action})`;
+      const what =
+        d.action === "APPLY_LABEL" ? `Added the "${labelName(item)}" label in Gmail`
+        : d.action === "DRAFT_REPLY" ? "Saved a draft reply in Gmail"
+        : `Done in Gmail (${action})`;
       if (done.undone_at) {
         return { tone: "undone", text: `${what} ${how}, ${when(done.done_at)}. Undone ${when(done.undone_at)}, so it's back the way it was.` };
       }

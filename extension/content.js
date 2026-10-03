@@ -23,7 +23,7 @@
     SEND_REPLY: "Reply", FORWARD: "Forward it", UNSUBSCRIBE: "Unsubscribe", ACCEPT_MEETING: "Accept the invite",
     PERMANENTLY_DELETE: "Delete it for good", SEND_CREDENTIALS: "Send login details", MOVE_MONEY: "Send money",
   };
-  const DID = { ARCHIVE: "Archived", MARK_READ: "Marked as read", APPLY_LABEL: "Labelled" };
+  const DID = { ARCHIVE: "Archived", MARK_READ: "Marked as read", APPLY_LABEL: "Labelled", DRAFT_REPLY: "Drafted a reply" };
   // What he did, naming the label for "Label it": 'Labelled "Receipts"'. The name is the one from
   // Oscar's Settings, sent by the API with each email.
   const didWords = (item, action) =>
@@ -294,7 +294,9 @@
     if (stopped) return { kind: "stopped", item: stopped };
     const asking = notify.approvals && s.waiting.find((i) => i.level === "ASK_FIRST" && !seen(i.id));
     if (asking) return { kind: "approval", item: asking };
-    const handled = notify.handled && (s.recent ?? []).find((i) => !seen(i.id));
+    // What he did on his own: shown when you turned that on, and always for what he does and tells
+    // you about ("Tell me"), like a reply he drafted.
+    const handled = (s.recent ?? []).find((i) => !seen(i.id) && (notify.handled || i.level === "PROCEED_AND_NOTIFY"));
     if (handled) return { kind: "handled", item: handled };
     if ((notify.approvals || notify.safety) && s.count && memory.quietCount !== s.count) return { kind: "attention" };
     if (!s.count && memory.quietDay !== today()) return { kind: "idle" };
@@ -443,6 +445,9 @@
       out.push(el("button", { class: "btn main wide", type: "button", disabled: state.busy, onclick: () => answer(item, "APPROVE") }, "Approve"));
       out.push(el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "REJECT") }, "Not this one"));
     } else if (item.undoable) {
+      if (item.done?.draft) {  // a reply he drafted: it's in this thread, and in Drafts
+        out.push(el("a", { class: "btn main wide", href: "https://mail.google.com/mail/u/0/#drafts", target: "_top" }, "Open draft"));
+      }
       out.push(el("button", { class: "btn wide", type: "button", disabled: state.busy, onclick: () => answer(item, "UNDO") }, "Undo"));
     } else if (item.level === "ESCALATE" && item.acting) {
       // "Got it": it's yours now, so it comes off your list. It teaches him nothing.
@@ -471,6 +476,11 @@
       el("div", { class: "box" },
         el("h3", { text: "Oscar recommends" }),
         el("div", { class: "rec" }, icon("pen", 18), recommends(item))),
+      // The reply he drafted, as text (it came from the model, so never as HTML). Never sent.
+      item.done?.draft && !item.done.undone ? el("div", { class: "box plain" },
+        el("h3", { text: "My draft, waiting in Gmail" }),
+        el("p", { class: "text ink", style: "white-space: pre-wrap", text: item.done.draft }),
+        el("p", { class: "text", text: "Nothing is sent until you send it." })) : null,
       el("button", { class: `state bg-${s.tone} ${s.tone}-t`, type: "button", "aria-expanded": String(state.whyOpen),
         onclick: () => { state.whyOpen = !state.whyOpen; render(); } },
       icon(s.icon, 18), el("span", { text: item.status }), el("i", { class: state.whyOpen ? "open" : "" }, icon("chevron"))),

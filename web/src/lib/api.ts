@@ -179,6 +179,7 @@ export interface ReviewSummary extends ReviewTally {
 }
 
 export interface GmailStatus {
+  can_draft?: boolean; // there's a model key, so he can write reply drafts
   rethinking?: boolean; // redoing his calls on recent emails after something you taught him
   configured: boolean;
   connected: boolean;
@@ -202,6 +203,8 @@ export interface ActionDone {
   removed: string[];
   done_at: string;
   undone_at: string | null;
+  draft_id?: string | null; // a reply he saved as a Gmail draft (never sent)
+  draft_text?: string | null; // and what it says
 }
 
 /** A rule Oscar suggests in the chat. Nothing changes until you say yes. */

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DecisionFacts } from "@/components/inbox/decision-facts";
+import { DraftBox } from "@/components/kit/draft-box";
 import { becauseOf, didIt, noteLine, outcomeOf, when } from "@/components/inbox/outcome";
 import { HoldButton } from "@/components/hold-button";
 import { LIKE_THIS, LikeThis, offersLikeThis } from "@/components/kit/like-this";
@@ -45,7 +46,7 @@ function poseOf(item: DecisionWithFeedback): OscarPose | null {
  * - asked: approve or decline; on Gmail, approving does it there
  * - told you: "Looks good"
  * - done: undo, only when he really did it (Gmail's record, or the demo)
- * There's no "edit and send": Oscar never writes or sends replies.
+ * There's no "edit and send": Oscar never sends. A reply he writes waits in Gmail Drafts (DraftBox).
  */
 export function OscarNote({ item, onFeedback, canExplain }: Props) {
   const { decision: d, feedback, review } = item;
@@ -96,7 +97,8 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
     }
     if (level === "ASK_FIRST" && !answered) {
       if (real) notes.push("Approving does it in Gmail. You can undo it after.");
-      else if (reply) notes.push("I don't write or send replies. Approving tells me asking was right; the reply is yours.");
+      else if (d.action === "DRAFT_REPLY") notes.push("Approving writes a draft reply in your Gmail. Nothing is sent.");
+      else if (reply) notes.push("I never send emails. Approving tells me asking was right; the reply is yours.");
       else if (hold) notes.push("Press and hold to approve.");
       buttons.push(
         hold ? (
@@ -149,6 +151,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
           )}
         </div>
       </div>
+      <DraftBox item={item} />
       <DecisionFacts decision={d} className="border-t pt-4" />
       {(notes.length > 0 || history.length > 0) && (
         <div className="flex flex-col gap-1 border-t pt-3 text-[13px] text-muted-foreground">

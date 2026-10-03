@@ -42,7 +42,8 @@ const DONE: Record<Action, string> = {
 };
 
 /** The only things Oscar does in Gmail (oscar/act.py). Mirrors CHANGES. */
-export const DOABLE = new Set<Action>(["MARK_READ", "ARCHIVE", "APPLY_LABEL"]);
+// What Oscar does in Gmail: three label changes, and saving a reply as a draft (never sending it).
+export const DOABLE = new Set<Action>(["MARK_READ", "ARCHIVE", "APPLY_LABEL", "DRAFT_REPLY"]);
 
 /**
  * A decision on the real inbox that's only ever what Oscar would do: made while he only read it,

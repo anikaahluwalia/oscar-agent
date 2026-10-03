@@ -4,7 +4,7 @@
 import type { Action, DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
 import { labelName } from "@/components/inbox/outcome";
-import { DOABLE, REPLIES, wouldOnly } from "@/lib/labels";
+import { DOABLE, wouldOnly } from "@/lib/labels";
 
 // Mirrors ACTION_PHRASES and ACTION_DONE in oscar/voice.py.
 const PHRASE: Record<Action, string> = {
@@ -89,14 +89,15 @@ export function becauseOf(item: DecisionWithFeedback): string | null {
   return `${reason}.${noticed ? ` ${noticed}` : ""}`;
 }
 
-/** The honest small print: no drafts, nothing changed in Gmail. */
+/** The honest small print: what he never does (send), and whether there's a draft. */
 export function smallPrint(item: DecisionWithFeedback): string | null {
   const d = item.decision;
   const real = d.source === "gmail";
-  if (REPLIES.has(d.action)) {
-    return real
-      ? "I don't write or send replies, so there's no draft. If it needs an answer, reply in Gmail yourself."
-      : "This is an example, so there's no draft to show. On your real inbox I never write or send replies.";
+  if (d.action === "SEND_REPLY") return "I never send emails. If it needs a reply, send it from Gmail yourself.";
+  if (d.action === "DRAFT_REPLY") {
+    if (!real) return "This is an example, so there's no draft. On your real inbox I save the draft in Gmail and never send it.";
+    if (item.done && !item.done.undone_at) return "Your draft is waiting in Gmail Drafts. Nothing is sent until you send it.";
+    return d.acting ? "I didn't write a draft for this one, so it's yours to answer." : "I was only reading your inbox then, so there's no draft.";
   }
   if (real && !d.acting) return "I was only reading your inbox then, so nothing changed in Gmail.";
   if (real && !DOABLE.has(d.action) && d.autonomy_level !== "ESCALATE") return "This isn't something I do in Gmail, so nothing changed there.";
