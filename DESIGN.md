@@ -1270,7 +1270,7 @@ Other changes that came with it:
   address or browser. Tracking pixels are taken out, and you can hide images. Since
   an email decides what gets fetched, Oscar only fetches public web addresses (never
   this computer or your network), checks every redirect, and only returns real
-  images up to 5 MB. No SVG. Tested in `tests/test_images.py`.
+  images up to 5 MB. SVG icons are allowed, served sandboxed so they can't run anything. Tested in `tests/test_images.py`.
 - **A test could write to the real data folder.** Connecting saved the account file
   to a path worked out when the API started, not the one tests point to. It's looked
   up each time now.

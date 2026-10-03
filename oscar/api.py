@@ -495,7 +495,7 @@ def email_image(url: str, http: httpx.Client = Depends(get_http)) -> Response:
         raise HTTPException(404, "No image there.")
     return Response(data, media_type=kind, headers={
         "Cache-Control": "private, max-age=86400",
-        "Content-Security-Policy": "default-src 'none'",
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         "X-Content-Type-Options": "nosniff",
     })
 

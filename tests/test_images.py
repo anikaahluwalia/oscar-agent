@@ -69,11 +69,24 @@ def test_follows_a_redirect_to_a_public_image():
     assert images.fetch("https://shop.example/x.png", http)[1] == "image/png"
 
 
-@pytest.mark.parametrize("content_type", ["text/html", "image/svg+xml", "application/javascript", ""])
+@pytest.mark.parametrize("content_type", ["text/html", "application/javascript", "application/octet-stream", ""])
 def test_only_images(content_type):
     http = server({"https://shop.example/x": httpx.Response(200, content=b"<script>", headers={"content-type": content_type})})
     with pytest.raises(images.ImageError):
         images.fetch("https://shop.example/x", http)
+
+
+def test_svg_icons_are_images():
+    # LinkedIn's icons are SVG. Shown as an <img>, an SVG can't run scripts.
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"></svg>'
+    http = server({"https://static.example/icon": httpx.Response(200, content=svg, headers={"content-type": "image/svg+xml"})})
+    assert images.fetch("https://static.example/icon", http) == (svg, "image/svg+xml")
+
+
+def test_an_image_sent_without_its_type():
+    # Some file hosts send images as "octet-stream": the first bytes say what it is.
+    http = server({"https://files.example/a": httpx.Response(200, content=PNG, headers={"content-type": "binary/octet-stream"})})
+    assert images.fetch("https://files.example/a", http) == (PNG, "image/png")
 
 
 def test_not_too_big():
@@ -100,7 +113,8 @@ def test_endpoint():
         r = client.get("/email-image", params={"url": "https://shop.example/x.png"})
         assert r.status_code == 200 and r.content == PNG and r.headers["content-type"] == "image/png"
         assert r.headers["x-content-type-options"] == "nosniff"
-        assert r.headers["content-security-policy"] == "default-src 'none'"
+        # Opened on its own (say, an SVG in a tab), it can't run anything or reach Oscar.
+        assert r.headers["content-security-policy"] == "default-src 'none'; style-src 'unsafe-inline'; sandbox"
         assert client.get("/email-image", params={"url": "http://127.0.0.1/x.png"}).status_code == 404
     finally:
         app.dependency_overrides.clear()
