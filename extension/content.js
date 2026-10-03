@@ -606,8 +606,30 @@
     });
   }
 
+  // While the panel is open, Gmail's page is made narrower by the panel's width, so the panel sits
+  // beside your email instead of on top of it. Gmail lays itself out again on a resize event. In a
+  // narrow window there isn't room for both, so the panel just goes on top as before.
+  const ROOM = 388; // the panel's 372px plus its 8px gaps
+  let roomMade = false;
+  function makeRoom(open) {
+    const want = open && window.innerWidth - ROOM >= 900;
+    if (want === roomMade) return;
+    roomMade = want;
+    let style = document.getElementById("oscar-room");
+    if (want && !style) {
+      style = document.createElement("style");
+      style.id = "oscar-room";
+      document.head.append(style);
+    }
+    if (style) style.textContent = want
+      ? `html { width: calc(100% - ${ROOM}px) !important; min-width: 0 !important; } body { width: auto !important; min-width: 0 !important; }`
+      : "";
+    window.dispatchEvent(new Event("resize"));
+  }
+
   function render() {
     if (!alive()) return retire();
+    makeRoom(state.open);
     dark = gmailIsDark();
     wrap.classList.toggle("dark", dark);
     const s = state.status;
@@ -773,6 +795,8 @@
     window.removeEventListener("hashchange", onHash);
     window.removeEventListener("resize", onResize);
     host.remove();
+    document.getElementById("oscar-room")?.remove(); // Gmail gets its full width back
+    window.dispatchEvent(new Event("resize"));
     for (const chip of document.querySelectorAll("[data-oscar-chip]")) chip.remove();
     for (const label of document.querySelectorAll("[data-oscar-hid]")) {
       label.style.display = "";
