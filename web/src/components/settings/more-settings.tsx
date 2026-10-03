@@ -14,7 +14,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Segmented, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
+import { Facts, Segmented, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
 import { getChatStatus } from "@/lib/api";
 import { bringInDemo, startOver } from "@/lib/demo";
 import { useLocalSetting } from "@/lib/local-setting";
@@ -28,23 +28,24 @@ export function NameRow() {
     <SettingsRow
       icon={UserIcon}
       title={<label htmlFor="settings-name">Your name</label>}
-      text="Oscar uses it to say hello on Home. Kept in this browser only."
-    >
-      <input
-        id="settings-name"
-        type="text"
-        value={draft ?? name}
-        maxLength={40}
-        autoComplete="given-name"
-        placeholder="Your first name"
-        onChange={(e) => {
-          setDraft(e.target.value);
-          setName(e.target.value.trim());
-        }}
-        onBlur={() => setDraft(null)}
-        className="h-11 w-full max-w-xs rounded-xl border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-10"
-      />
-    </SettingsRow>
+      text="Oscar uses it to say hello. Kept in this browser only."
+      control={
+        <input
+          id="settings-name"
+          type="text"
+          value={draft ?? name}
+          maxLength={40}
+          autoComplete="given-name"
+          placeholder="Your first name"
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setName(e.target.value.trim());
+          }}
+          onBlur={() => setDraft(null)}
+          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-10 sm:w-56"
+        />
+      }
+    />
   );
 }
 
@@ -57,29 +58,29 @@ export function ChatRow() {
       () => setModel(null),
     );
   }, []);
-  let text: React.ReactNode;
-  if (model === undefined) text = "Checking...";
-  else if (!model)
-    text = (
-      <>
-        Basic chat: Oscar understands a few questions. For a smarter chat, add a free Gemini key to <code>.env</code> as{" "}
-        <code>GEMINI_API_KEY</code> and restart the API.
-      </>
+  if (model === undefined) return <SettingsRow icon={MessageCircleIcon} title="Chat model" text="Checking..." />;
+  if (!model)
+    return (
+      <SettingsRow
+        icon={MessageCircleIcon}
+        title="Basic chat"
+        text={
+          <>
+            Oscar understands a few questions. For a smarter chat, add a free Gemini key to <code>.env</code> as{" "}
+            <code>GEMINI_API_KEY</code> and restart the API.
+          </>
+        }
+      />
     );
-  else
-    text = (
-      <div className="flex flex-col gap-1">
-        <p>
-          Using <span className="font-medium text-foreground">{model}</span>.
-        </p>
-        <p>
-          When you ask about emails, their sender, subject and preview are sent to Google. On Gemini&apos;s free tier, Google
-          may use them to improve its products. Oscar never sends whole emails, and the chat can&apos;t change anything without
-          your yes.
-        </p>
-      </div>
-    );
-  return <SettingsRow icon={MessageCircleIcon} title="Chat" text={text} />;
+  return (
+    <SettingsRow icon={MessageCircleIcon} title={<span className="break-all">{model}</span>} text="The model Oscar's chat uses.">
+      <p className="text-[13px] leading-normal text-muted-foreground">
+        When you ask about emails, their sender, subject and preview are sent to Google. On Gemini&apos;s free tier, Google may
+        use them to improve its products. Oscar never sends whole emails, and the chat can&apos;t change anything without your
+        yes.
+      </p>
+    </SettingsRow>
+  );
 }
 
 const NOTIFICATIONS = [
@@ -124,7 +125,7 @@ export function AppearanceRow() {
   return (
     <SettingsRow
       icon={PaletteIcon}
-      title="Appearance"
+      title="Light or dark"
       text="Kept in this browser only."
       control={
         <Segmented<"light" | "dark" | "system">
@@ -134,7 +135,7 @@ export function AppearanceRow() {
           options={[
             { value: "light", label: "Light" },
             { value: "dark", label: "Dark" },
-            { value: "system", label: "System" },
+            { value: "system", label: "Match my device" },
           ]}
         />
       }
@@ -146,28 +147,25 @@ const KEPT = [
   "Oscar's decisions, your answers and reviews, and what he's learned from them.",
   "Your Gmail sign-in, if you connect it.",
   "The demo inbox and your real inbox are kept apart, so what he learns on the examples never changes how he treats your real email.",
+  "Your name, notifications and appearance stay in this browser.",
 ];
 
 /** Where Oscar keeps things, and (on the demo inbox) bringing in emails or starting over. */
 export function DataSettings({ demo }: { demo: boolean }) {
   const [confirming, setConfirming] = useState(false);
   return (
-    <SettingsGroup title="Data">
+    <SettingsGroup title="Your data">
       <SettingsRow
         icon={FolderLockIcon}
         title="Where Oscar keeps things"
         text={
           <>
             On this computer, in the <code>data</code> folder. That folder is left out of git, so none of it ever ends up in the
-            repo. Your name, notifications and appearance stay in this browser.
+            repo.
           </>
         }
       >
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
-          {KEPT.map((k) => (
-            <li key={k}>{k}</li>
-          ))}
-        </ul>
+        <Facts items={KEPT} />
       </SettingsRow>
       {demo && (
         <SettingsRow

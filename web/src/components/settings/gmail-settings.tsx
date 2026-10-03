@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { HandIcon, MailIcon, RotateCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
+import { Facts, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
 import { getGmailStatus, gmailActUrl, gmailConnectUrl, setActing, type GmailStatus } from "@/lib/api";
 import { checkGmail, disconnectGmailAccount, recheckRecent } from "@/lib/demo";
 import { dayLabel, formatTime } from "@/lib/time";
@@ -55,59 +55,48 @@ function lastChecked(gmail: GmailStatus) {
   return parts.join(" · ");
 }
 
-/** The email account: connect, check now, disconnect, letting Oscar act, and re-reading recent emails. */
+
+/** The email account: who's connected, checking, disconnecting, letting Oscar act, and re-reading recent emails. */
 export function GmailSettings({ gmail }: { gmail: GmailStatus | undefined }) {
-  const note = gmail?.connected ? (gmail.acting ? "Oscar can act" : "Read-only") : undefined;
   return (
-    <SettingsGroup title="Email account" note={note}>
-      <AccountRow gmail={gmail} />
+    <SettingsGroup title="Gmail">
+      {gmail?.connected ? <AccountCard gmail={gmail} /> : <ConnectRow gmail={gmail} />}
       {gmail?.connected && <ActingRow gmail={gmail} />}
       {gmail?.connected && (
         <SettingsRow
           icon={RotateCwIcon}
           tone="muted"
           title="Re-read recent emails"
-          text="Re-read your 50 most recent emails with the latest Oscar. His old decisions and your reviews are kept; re-reads aren't counted in the real-inbox results."
+          text="Your 50 most recent emails, read again by the latest Oscar."
           control={
             <Button variant="outline" className={ROW_BUTTON} onClick={recheckRecent}>
               Re-read
             </Button>
           }
-        />
+        >
+          <p className="text-[13px] leading-normal text-muted-foreground">
+            His old decisions and your reviews are kept; re-reads aren&apos;t counted in the real-inbox results.
+          </p>
+        </SettingsRow>
       )}
     </SettingsGroup>
   );
 }
 
-function AccountRow({ gmail }: { gmail: GmailStatus | undefined }) {
+/** Before Gmail is connected: still checking, not set up yet, or ready to connect. */
+function ConnectRow({ gmail }: { gmail: GmailStatus | undefined }) {
   if (!gmail) return <SettingsRow icon={MailIcon} title="Gmail" text="Checking..." />;
 
-  if (!gmail.connected && !gmail.configured) {
+  if (!gmail.configured) {
     return (
       <SettingsRow
         icon={MailIcon}
         tone="muted"
-        title="Gmail"
+        title="Gmail isn't set up yet"
         text={
           <>
-            Gmail isn&apos;t set up yet. Copy <code>.env.example</code> to <code>.env</code>, add your Google client ID and
-            secret, and restart the API.
+            Copy <code>.env.example</code> to <code>.env</code>, add your Google client ID and secret, and restart the API.
           </>
-        }
-      />
-    );
-  }
-
-  if (!gmail.connected) {
-    return (
-      <SettingsRow
-        icon={MailIcon}
-        title="Gmail"
-        text="Oscar is working on example emails. Connect Gmail and he'll read your real inbox. He only reads it: nothing in Gmail changes, and you review what he would have done."
-        control={
-          <Button asChild className={ROW_BUTTON}>
-            <a href={gmailConnectUrl}>Connect Gmail</a>
-          </Button>
         }
       />
     );
@@ -116,29 +105,95 @@ function AccountRow({ gmail }: { gmail: GmailStatus | undefined }) {
   return (
     <SettingsRow
       icon={MailIcon}
-      tone="handled"
-      title={<span className="break-all">{gmail.address ?? "Gmail connected"}</span>}
-      text={
-        <div className="flex flex-col gap-2">
-          <p>{lastChecked(gmail)}</p>
-          <p>
-            {gmail.acting
-              ? "Oscar reads your inbox and does the undoable things below. Disconnecting keeps his decisions and your reviews."
-              : "Oscar can read your inbox but can't change anything in it. Disconnecting keeps his decisions and your reviews."}
-          </p>
-        </div>
-      }
+      title="Connect your Gmail"
+      text="Oscar is working on example emails. Connect Gmail and he'll read your real inbox. He only reads it: nothing in Gmail changes, and you review what he would have done."
       control={
-        <>
+        <Button asChild className={ROW_BUTTON}>
+          <a href={gmailConnectUrl}>Connect Gmail</a>
+        </Button>
+      }
+    />
+  );
+}
+
+/** Your Google photo, or your initial when Google didn't share one (or it won't load). */
+function Photo({ gmail, size }: { gmail: GmailStatus; size: number }) {
+  const [broken, setBroken] = useState(false);
+  const initial = (gmail.name ?? gmail.address ?? "?").trim().charAt(0).toUpperCase();
+  if (gmail.picture && !broken) {
+    return (
+      // A plain img: the photo is on Google's server, and Next's image optimiser shouldn't fetch it.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={gmail.picture}
+        alt=""
+        width={size}
+        height={size}
+        referrerPolicy="no-referrer"
+        onError={() => setBroken(true)}
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className="flex shrink-0 items-center justify-center rounded-full bg-muted font-bold text-foreground"
+      style={{ width: size, height: size, fontSize: size * 0.42 }}
+    >
+      {initial}
+    </span>
+  );
+}
+
+/** The connected account, like an account card: photo, name, address, and checking or disconnecting. */
+function AccountCard({ gmail }: { gmail: GmailStatus }) {
+  const title = gmail.name ?? gmail.address ?? "Gmail connected";
+  return (
+    <div className="flex flex-col gap-4 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <Photo gmail={gmail} size={56} />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h3 className="text-lg leading-tight font-bold break-words">{title}</h3>
+            {gmail.name && gmail.address && <p className="text-sm break-all text-muted-foreground">{gmail.address}</p>}
+            <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+              <span aria-hidden className="size-2 shrink-0 rounded-full bg-level-silent" />
+              {gmail.acting ? "Connected · Oscar can act" : "Connected · read-only"}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Button className={ROW_BUTTON} onClick={checkGmail}>
             Check now
           </Button>
           <Button variant="destructive" className={ROW_BUTTON} onClick={disconnectGmailAccount}>
             Disconnect
           </Button>
-        </>
-      }
-    />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1 text-[13px] leading-normal text-muted-foreground">
+        <p>{lastChecked(gmail)}</p>
+        <p>
+          {gmail.acting
+            ? "Oscar reads your inbox and does the undoable things below. Disconnecting keeps his decisions and your reviews."
+            : "Oscar can read your inbox but can't change anything in it. Disconnecting keeps his decisions and your reviews."}
+        </p>
+        {/* Connected before Oscar asked Google for your profile. Keep the permission to act if it was given. */}
+        {!gmail.name && (
+          <p>
+            <a
+              href={gmail.can_act ? gmailActUrl : gmailConnectUrl}
+              className="font-semibold text-foreground underline underline-offset-4 hover:no-underline"
+            >
+              Connect again
+            </a>{" "}
+            to show your name and photo.{gmail.acting && " Acting turns off until you switch it back on."}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -154,14 +209,6 @@ const ACTING_FACTS = [
  * with permission to change labels. He only marks read, archives and labels, and only new emails.
  */
 function ActingRow({ gmail }: { gmail: GmailStatus }) {
-  const facts = (
-    <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
-      {ACTING_FACTS.map((f) => (
-        <li key={f}>{f}</li>
-      ))}
-    </ul>
-  );
-
   if (!gmail.can_act) {
     return (
       <SettingsRow
@@ -174,7 +221,7 @@ function ActingRow({ gmail }: { gmail: GmailStatus }) {
           </Button>
         }
       >
-        {facts}
+        <Facts items={ACTING_FACTS} />
         <p className="text-xs text-muted-foreground">
           Google will ask you to allow Oscar to change your email&apos;s labels. You can turn acting off at any time.
         </p>
@@ -200,7 +247,7 @@ function ActingRow({ gmail }: { gmail: GmailStatus }) {
       text={gmail.acting ? "On. He does the easy ones and asks about the rest." : "Off. He only reads your inbox."}
       control={<Switch label="Let Oscar act in Gmail" on={gmail.acting} onChange={toggle} />}
     >
-      {facts}
+      <Facts items={ACTING_FACTS} />
     </SettingsRow>
   );
 }

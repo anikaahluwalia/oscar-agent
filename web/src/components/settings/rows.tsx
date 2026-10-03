@@ -1,22 +1,22 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** A titled white card of settings rows, split by thin lines, like the mock-up. */
+/** A short heading, then a white card of settings rows split by thin lines. */
 export function SettingsGroup({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 px-1">
-        <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
-        {note && <span className="rounded-full border bg-card px-2 py-0.5 text-xs text-muted-foreground">{note}</span>}
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-lg font-bold">{title}</h2>
+        {note && <span className="text-[13px] text-muted-foreground">{note}</span>}
       </div>
-      <div className="flex flex-col divide-y rounded-2xl border bg-card shadow-card">{children}</div>
+      <div className="flex flex-col divide-y rounded-[20px] border bg-card">{children}</div>
     </section>
   );
 }
 
 /**
- * One setting: an icon, what it is, a short line about it, and its control on the right.
- * Anything longer (a list of facts, a choice of options) goes in `children`, under the text.
+ * One setting: an icon, what it is, one short line about it, and its control on the right
+ * (under the text on a phone). Anything longer (a list of facts) goes in `children`, under the text.
  */
 export function SettingsRow({
   icon: Icon,
@@ -37,27 +37,38 @@ export function SettingsRow({
   inline?: boolean;
 }) {
   const tint = {
-    primary: "bg-primary/10 text-primary",
+    primary: "bg-muted text-foreground",
     handled: "bg-status-handled/10 text-status-handled",
     blocked: "bg-status-blocked/10 text-status-blocked",
     muted: "bg-muted text-muted-foreground",
   }[tone];
   return (
-    <div className="flex gap-3 p-4 sm:p-5">
-      <span aria-hidden className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", tint)}>
-        <Icon className="size-[18px]" />
+    <div className="flex gap-3.5 p-4 sm:px-5 sm:py-[18px]">
+      <span aria-hidden className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", tint)}>
+        <Icon className="size-[18px]" strokeWidth={1.9} />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className={cn("flex items-center justify-between gap-x-4 gap-y-3", !inline && "flex-wrap")}>
-          <div className={cn("flex min-w-0 flex-1 flex-col gap-0.5", !inline && "basis-56")}>
-            <h3 className="text-sm font-semibold">{title}</h3>
-            {text && <div className="text-sm text-muted-foreground">{text}</div>}
+        <div className={cn("flex gap-x-4 gap-y-3", inline ? "items-center justify-between" : "flex-col sm:flex-row sm:items-center sm:justify-between")}>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <h3 className="text-[15px] font-bold">{title}</h3>
+            {text && <div className="text-[13px] leading-normal text-muted-foreground">{text}</div>}
           </div>
-          {control && <div className="flex flex-wrap gap-2">{control}</div>}
+          {control && <div className="flex shrink-0 flex-wrap gap-2">{control}</div>}
         </div>
         {children}
       </div>
     </div>
+  );
+}
+
+/** Small print under a row: a few plain facts as a list. */
+export function Facts({ items }: { items: readonly string[] }) {
+  return (
+    <ul className="flex list-disc flex-col gap-1 pl-5 text-[13px] leading-normal text-muted-foreground">
+      {items.map((f) => (
+        <li key={f}>{f}</li>
+      ))}
+    </ul>
   );
 }
 
@@ -85,7 +96,7 @@ export function Switch({ label, on, onChange, disabled }: { label: string; on: b
   );
 }
 
-/** A small set of choices where one is picked, like Dark / Light / System. */
+/** A small set of choices where one is picked, like Light / Dark / Match my device. */
 export function Segmented<T extends string>({
   value,
   options,
@@ -98,7 +109,7 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex w-fit max-w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
+    <div role="group" aria-label={label} className="flex w-fit max-w-full flex-wrap gap-1 rounded-2xl bg-muted p-1 sm:rounded-full">
       {options.map((o) => (
         <button
           key={o.value}
@@ -106,8 +117,8 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "min-h-11 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground sm:min-h-9",
-            value === o.value && "bg-card text-primary shadow-sm hover:text-primary",
+            "min-h-11 rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap text-muted-foreground hover:text-foreground sm:min-h-9 sm:px-3.5 sm:text-sm",
+            value === o.value && "bg-card text-foreground shadow-sm",
           )}
         >
           {o.label}
@@ -118,4 +129,4 @@ export function Segmented<T extends string>({
 }
 
 /** Button sizing for settings: 44px tall on phones, a little smaller on bigger screens. */
-export const ROW_BUTTON = "h-11 px-4 sm:h-9";
+export const ROW_BUTTON = "h-11 px-4 font-semibold sm:h-9";

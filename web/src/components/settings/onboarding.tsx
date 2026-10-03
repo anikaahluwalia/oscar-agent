@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { CheckIcon, XIcon } from "lucide-react";
-import { OscarAvatar } from "@/components/oscar-avatar";
+import { OscarMood } from "@/components/oscar-mood";
 import { Button } from "@/components/ui/button";
 import { gmailConnectUrl } from "@/lib/api";
 import { bringInDemo } from "@/lib/demo";
@@ -65,7 +65,7 @@ function MeetOscar({ canConnect, onClose }: { canConnect: boolean; onClose: () =
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-foreground/30 p-4 backdrop-blur-sm animate-in fade-in-0"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm dark:bg-black/60 animate-in fade-in-0"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -75,16 +75,17 @@ function MeetOscar({ canConnect, onClose }: { canConnect: boolean; onClose: () =
         aria-labelledby="meet-oscar-title"
         aria-describedby="meet-oscar-text"
         tabIndex={-1}
-        className="relative my-auto flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl border bg-card px-6 pt-8 pb-6 text-center shadow-card outline-none animate-in zoom-in-95 fade-in-0"
+        className="relative my-auto flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl border bg-card px-6 pt-7 pb-6 text-center shadow-card outline-none animate-in zoom-in-95 fade-in-0"
       >
         <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose} className="absolute top-2 right-2 size-11 rounded-full text-muted-foreground">
           <XIcon className="size-5" />
         </Button>
 
-        <OscarAvatar size={112} mood="happy" />
+        {/* He is asking: connect Gmail, or try the examples first? */}
+        <OscarMood pose="asking" size={120} />
 
         <div className="flex flex-col gap-2">
-          <h2 id="meet-oscar-title" className="text-2xl font-bold tracking-tight">
+          <h2 id="meet-oscar-title" className="text-2xl font-extrabold tracking-[-0.03em]">
             Meet Oscar!
           </h2>
           <p id="meet-oscar-text" className="text-sm text-muted-foreground">
@@ -95,7 +96,7 @@ function MeetOscar({ canConnect, onClose }: { canConnect: boolean; onClose: () =
         <ul className="flex flex-col gap-2.5 self-stretch text-left text-sm">
           {POINTS.map((p) => (
             <li key={p} className="flex items-center gap-2.5">
-              <span aria-hidden className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span aria-hidden className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                 <CheckIcon className="size-3.5" strokeWidth={3} />
               </span>
               {p}
@@ -105,7 +106,7 @@ function MeetOscar({ canConnect, onClose }: { canConnect: boolean; onClose: () =
 
         <div className="flex flex-col gap-2 self-stretch">
           {canConnect ? (
-            <Button asChild className="h-11 w-full rounded-xl text-sm">
+            <Button asChild className="h-11 w-full text-sm font-semibold">
               <a href={gmailConnectUrl} onClick={onClose}>
                 Connect Gmail
               </a>
@@ -113,14 +114,14 @@ function MeetOscar({ canConnect, onClose }: { canConnect: boolean; onClose: () =
           ) : (
             <p className="rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
               To use your real inbox, add your Google keys to <code>.env</code> first.{" "}
-              <Link href="/settings" onClick={onClose} className="font-medium text-primary underline-offset-4 hover:underline">
+              <Link href="/settings" onClick={onClose} className="font-semibold text-foreground underline underline-offset-4 hover:no-underline">
                 Settings shows how.
               </Link>
             </p>
           )}
           <Button
-            variant={canConnect ? "ghost" : "default"}
-            className={canConnect ? "h-11 w-full rounded-xl text-sm text-primary hover:text-primary" : "h-11 w-full rounded-xl text-sm"}
+            variant={canConnect ? "outline" : "default"}
+            className="h-11 w-full text-sm font-semibold"
             onClick={() => {
               onClose();
               void bringInDemo();
