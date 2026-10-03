@@ -1,4 +1,4 @@
-// What Home counts. Every number is worked out from Oscar's real decisions.
+// What Oscar counts for the pages. Every number is worked out from Oscar's real decisions.
 
 import type { DecisionWithFeedback } from "@/lib/api";
 import { reallyDone } from "@/lib/insights";

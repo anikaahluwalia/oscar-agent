@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { CircleCheckIcon, HandIcon, ShieldAlertIcon } from "lucide-react";
-import { impactOf, plural } from "@/components/home/counts";
+import { impactOf, plural } from "@/lib/counts";
 import { Panel } from "@/components/kit/panel";
 import { Stat } from "@/components/kit/stat";
 import type { DecisionWithFeedback } from "@/lib/api";

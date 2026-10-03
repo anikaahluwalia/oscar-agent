@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
-import { handledSince, waiting } from "@/components/home/counts";
+import { handledSince, waiting } from "@/lib/counts";
 import { AskRate } from "@/components/home/ask-rate";
 import { Impact } from "@/components/home/impact";
 import { NeedsCard } from "@/components/home/needs-card";

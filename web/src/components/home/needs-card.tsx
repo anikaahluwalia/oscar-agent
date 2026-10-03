@@ -7,7 +7,7 @@ import { EmailLink } from "@/components/email-link";
 import { HoldButton } from "@/components/hold-button";
 import { SenderAvatar } from "@/components/review/sender-avatar";
 import { Button } from "@/components/ui/button";
-import { didLine, senderName, when } from "@/components/home/counts";
+import { didLine, senderName, when } from "@/lib/counts";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
 import { timeOf } from "@/lib/insights";

@@ -1,5 +1,5 @@
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
-import { plural } from "@/components/home/counts";
+import { plural } from "@/lib/counts";
 import type { DecisionWithFeedback } from "@/lib/api";
 
 type Props = {

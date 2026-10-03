@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 import { EmailLink } from "@/components/email-link";
-import { didLine, when } from "@/components/home/counts";
+import { didLine, when } from "@/lib/counts";
 import { Panel } from "@/components/kit/panel";
 import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback } from "@/lib/api";
