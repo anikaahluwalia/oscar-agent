@@ -1406,6 +1406,29 @@ count of what needs you. Clicking him opens a small panel: his call on the email
 Tested by loading the real extension in Chrome against a stand-in Gmail page and a test API.
 It hasn't been tried on real Gmail here: that's yours to do (README).
 
+### Working like the mockup
+
+The extension grew from a peeking Oscar into three parts:
+
+- **Chips in Gmail's list**: his call on each row he's read, from `/extension/threads` (up to 100
+  thread ids at a time, the same `status_label` as the Gmail labels). Each chip is its own closed
+  shadow root next to the subject, and Gmail's copy of his label in that row is hidden.
+- **Cards above Oscar**, one at a time, most important first: stopped, an approval, something he
+  handled (from `recent` in `/extension/status`), then "N emails need you" or "All caught up".
+  Each shows once (remembered in the browser). The first time, everything already there counts
+  as seen, so you aren't flooded. After a handled card, "Was that right?" asks once.
+- **A panel down the right** with Summary, Actions, Why? and Thread for the open email.
+  "Was that right?" saves a review through `POST /reviews`, the same as the Review page, so it
+  teaches him the same way; the other buttons go through `POST /feedback` as before.
+- **His poses follow the card**: sleeping when all is quiet, thinking when something needs you,
+  proud after he handled something, asking for an approval, guarding when he stopped one,
+  learning when he asks if he got it right.
+- **It follows Gmail's theme**, not the computer's: Gmail has its own light and dark.
+
+Tested by loading the real extension in Chrome against a stand-in Gmail page (with Gmail's row
+and label markup) and a test API: every card, every tab, Approve, Undo and a review. Gmail's real
+markup can change, so if the chips don't show, the panel and cards still work.
+
 ### His call as a label in Gmail
 
 While acting is on, every email Oscar has read gets one coloured label with his call, so Gmail

@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import re
 import secrets
 import threading
@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
-from oscar.act import ActionError, ActionRecord, can_do, do, undo
+from oscar.act import ActionError, ActionRecord, can_do, do, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
@@ -181,39 +181,77 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
 THREAD_ID = re.compile(r"^[0-9a-f]{6,32}$")
 
 
-def _extension_item(history: History, d: Decision) -> dict:
+def _extension_item(history: History, d: Decision, waiting: set[str] | None = None) -> dict:
     done = history.action_for(d.id)
     answered = any(f.kind in ANSWERS for f in history.feedback_for(d.id))
+    if waiting is None:
+        waiting = {w.id for w in needs_you(history)[AutonomyLevel.ASK_FIRST]}
     return {
         "id": d.id, "subject": d.subject, "sender": d.sender, "level": d.autonomy_level.value, "action": d.action.value,
         "message": d.message, "factors": d.factors, "acting": d.acting,
+        "summary": d.summary or d.snippet, "status": status_label(history, d, waiting),
+        "safety_rule": d.safety_rule, "learned_from": d.preference.scope if d.preference else None,
+        "received_at": d.gmail.received_at.isoformat() if d.gmail and d.gmail.received_at else None,
         "thread_id": d.gmail.thread_id if d.gmail else None, "message_id": d.gmail.message_id if d.gmail else None,
         # Approve or decline: only an ask made while he could act, not answered yet.
         "answerable": d.source == "gmail" and d.acting and d.autonomy_level == AutonomyLevel.ASK_FIRST and not answered,
         "undoable": bool(done and not done.undone_at),
+        "done": {"action": done.action.value, "by": done.by, "at": done.done_at.isoformat(),
+                 "undone": done.undone_at is not None} if done else None,
+        "reviewed": history.review_carried_over(d.id) is not None,
     }
+
+
+def _waiting_ids(history: History) -> set[str]:
+    return {d.id for d in needs_you(history)[AutonomyLevel.ASK_FIRST]}
 
 
 @app.get("/extension/status")
 def extension_status(history: History = Depends(get_history), tokens: gmail.TokenStore = Depends(get_tokens),
                      real: History = Depends(get_real_history)) -> dict:
-    """What needs you, for the badge on Oscar in Gmail."""
+    """What needs you, for the badge on Oscar in Gmail, and what he did on his own lately."""
     connected = bool(tokens.load())
     open_ = needs_you(history)
     waiting = open_[AutonomyLevel.ESCALATE] + open_[AutonomyLevel.ASK_FIRST]
+    asks = {d.id for d in open_[AutonomyLevel.ASK_FIRST]}
+    # What he did on his own in the last day, newest first, for the "handled" note in Gmail.
+    since = datetime.now(timezone.utc) - timedelta(days=1)
+    today = datetime.now().astimezone().date()
+    mine = sorted((r for r in history.actions.values() if r.by == "oscar" and not r.undone_at),
+                  key=lambda r: r.done_at, reverse=True)
+    recent = [d for r in mine if r.done_at >= since and (d := history.get_decision(r.decision_id))]
     return {"connected": connected, "read_only": not (connected and acting_on(tokens, real)),
-            "count": len(waiting), "waiting": [_extension_item(history, d) for d in waiting[:8]]}
+            "count": len(waiting), "waiting": [_extension_item(history, d, asks) for d in waiting[:8]],
+            "recent": [_extension_item(history, d, asks) for d in recent[:5]],
+            "handled_today": sum(r.done_at.astimezone().date() == today for r in mine)}
 
 
 @app.get("/extension/thread/{thread_id}")
 def extension_thread(thread_id: str, history: History = Depends(get_history)) -> dict:
-    """Oscar's latest call on a Gmail thread, by its id as Gmail's page shows it."""
+    """Oscar's latest call on a Gmail thread, by its id as Gmail's page shows it, and his call on
+    every email in it he's read, oldest first."""
     if not THREAD_ID.match(thread_id):
         raise HTTPException(404, "That isn't a Gmail thread id.")
-    for d in latest_per_email(history):
-        if d.gmail and d.gmail.thread_id == thread_id:
-            return {"found": True, "item": _extension_item(history, d)}
-    return {"found": False, "item": None}
+    asks = _waiting_ids(history)
+    found = [d for d in latest_per_email(history) if d.gmail and d.gmail.thread_id == thread_id]
+    if not found:
+        return {"found": False, "item": None, "thread": []}
+    return {"found": True, "item": _extension_item(history, found[0], asks),
+            "thread": [_extension_item(history, d, asks) for d in reversed(found)]}
+
+
+@app.get("/extension/threads")
+def extension_threads(ids: str = "", history: History = Depends(get_history)) -> dict:
+    """His call on each of up to 100 threads, for the chips in Gmail's list: {thread id: label}."""
+    wanted = [i for i in ids.split(",") if THREAD_ID.match(i)][:100]
+    if not wanted:
+        return {}
+    asks, out = _waiting_ids(history), {}
+    for d in latest_per_email(history):  # newest first, so each thread gets its latest email's call
+        thread = d.gmail.thread_id if d.gmail else None
+        if thread in wanted and thread not in out:
+            out[thread] = status_label(history, d, asks)
+    return out
 
 
 @app.get("/brief")
