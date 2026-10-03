@@ -228,3 +228,13 @@ def test_a_domain_with_one_sender_is_not_a_pattern():
         record_feedback(history, d.id, FeedbackKind.JUST_HANDLE_IT)
     domains = {r["name"] for r in patterns(history) if r["scope"] == "domain"}
     assert domains == {"one-shop.example"}, "two senders there is a start; one is only that sender"
+
+
+def test_an_approval_alone_is_not_a_pattern():
+    from oscar.feedback import FeedbackKind, record_feedback
+    from oscar.overview import patterns
+
+    history = History()
+    for n, sender in enumerate(["deals@a-shop.example", "deals@b-shop.example", "deals@c-shop.example"]):
+        record_feedback(history, decide_in(history, email("newsletter", id=f"n{n}", sender=sender)).id, FeedbackKind.APPROVE)
+    assert patterns(history) == [], "approving says the action was right, not how much to ask, so there's nothing to learn from yet"

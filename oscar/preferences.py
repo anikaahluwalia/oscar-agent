@@ -456,13 +456,15 @@ class Preferences:
 
     def broad_summary(self, include_learning: bool = False) -> list[dict]:
         """What carries across senders: per domain and per kind of email, and your rules for kinds.
-        include_learning also lists what isn't enough to act on yet (its level is None)."""
+        include_learning also gives the ones with answers that don't add up to anything yet
+        (level None), so the app can say what he's still learning."""
         rows = []
         for scope, record in self.records.items():
             if scope[0] not in ("domain", "kind"):
                 continue
             found = self._judge(record, scope[-1], autonomy_for(scope[-1])[0], broad=True)
-            if not found and not record.always_ask and not include_learning:
+            learning = not found and not record.always_ask
+            if learning and not (include_learning and record.evidence > 0):
                 continue
             rows.append({"scope": scope[0], "name": scope[1], "kind": scope[-2], "action": scope[-1],
                          "senders": len(record.senders), "evidence": record.evidence,
