@@ -198,3 +198,20 @@ def test_email_content_for_showing():
         assert bad not in page.lower(), bad
     assert "https://shop.example" in page and "Big &amp; bold" in page
     assert "Big & bold" in content["text"]
+
+
+class StubReader:
+    """Stands in for the model: reads every email as a receipt."""
+
+    def read(self, email):
+        from oscar.understand import Understanding
+        return Understanding(kind="receipt", summary="An order receipt", confidence=0.9)
+
+
+def test_sync_uses_the_model_only_when_it_is_turned_on(tmp_path):
+    from oscar.inbox import reader_for
+    history = History()
+    assert reader_for(history) is None, "reading real email with a model is off by default"
+    sync(history, GmailClient(connected(tmp_path), FakeGmail(INBOX, sent_to={"friend@example.com"}).http()),
+         reader=StubReader())
+    assert {d.summary for d in history.decisions.values()} == {"An order receipt"}

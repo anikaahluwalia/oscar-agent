@@ -6,6 +6,10 @@ logged before anyone reviews them, so reviews score what Oscar decided on his ow
 
 It also notes what you did with recent emails since (still in the inbox? still
 unread? deleted?), as a second opinion next to your reviews.
+
+Since Stage 11 a model can read each email too (oscar/understand.py), only if
+OSCAR_MODEL_READS is preview or full. Its answers are kept in the account's own
+folder, never in the repo.
 """
 
 import threading
@@ -20,6 +24,7 @@ from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
 from oscar.models import Action, Decision, new_id, now
 from oscar.preferences import Preferences
+from oscar.understand import Reader, reads_real_email
 from oscar.version import policy_version
 
 FOLLOW_UP_DAYS = 7  # how long after a decision Oscar keeps checking what you did with the email
@@ -49,17 +54,26 @@ class SyncResult(BaseModel):
     skipped: int  # emails Oscar couldn't read this time; they're tried again next check
 
 
-def sync(history: History, gmail: GmailClient, limit: int = 25) -> SyncResult:
+def reader_for(history: History) -> Reader | None:
+    """The model reader for this inbox, or None when reading real email with a model is off."""
+    reads = reads_real_email()
+    if reads == "off":
+        return None
+    cache = history.data_dir / "understanding.jsonl" if history.data_dir else None
+    return Reader(httpx.Client(timeout=40), cache, reads=reads)
+
+
+def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None) -> SyncResult:
     """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first."""
     if not _syncing.acquire(blocking=False):
         raise AlreadySyncing("I'm already checking your inbox.")
     try:
-        return _sync(history, gmail, limit)
+        return _sync(history, gmail, limit, reader if reader is not None else reader_for(history))
     finally:
         _syncing.release()
 
 
-def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
+def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None) -> SyncResult:
     seen = {d.email_id for d in history.decisions.values()}
     # Walk back through the inbox, so emails that arrived since the last check
     # aren't missed when there are more of them than one page.
@@ -78,14 +92,16 @@ def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
         except (GmailError, httpx.HTTPError):
             skipped += 1
             continue
-        decision = decide(email, Preferences.from_feedback(teaching(history)), read_only=True, bulk_action=bulk_action)
+        understanding = reader.read(email) if reader else None
+        decision = decide(email, Preferences.from_feedback(teaching(history)), read_only=True, bulk_action=bulk_action,
+                          understanding=understanding)
         history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version}))
         new += 1
     follow_up(history, gmail)
     return SyncResult(new=new, skipped=skipped)
 
 
-def recheck(history: History, gmail: GmailClient, limit: int = 50) -> SyncResult:
+def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reader | None = None) -> SyncResult:
     """Decide again on the most recent emails with the current Oscar. The old decisions are kept;
     the new ones point back at them (recheck_of) and become what the app shows."""
     if not _syncing.acquire(blocking=False):
@@ -98,6 +114,7 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50) -> SyncResult
         recent = sorted(latest.values(), key=lambda d: d.created_at, reverse=True)[:limit]
         version = policy_version()
         bulk_action = Action(history.settings["bulk_action"]) if history.settings.get("bulk_action") else None
+        reader = reader if reader is not None else reader_for(history)
         new = skipped = 0
         for old in reversed(recent):
             if old.policy_version == version:
@@ -109,7 +126,8 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50) -> SyncResult
                 continue
             # Re-reading never uses your answer to this same email: that's what it's graded against.
             prefs = Preferences.from_feedback(teaching(history, skip_email=old.email_id))
-            decision = decide(email, prefs, read_only=True, bulk_action=bulk_action)
+            decision = decide(email, prefs, read_only=True, bulk_action=bulk_action,
+                              understanding=reader.read(email) if reader else None)
             history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
                                                              "recheck_of": old.id}))
             new += 1
