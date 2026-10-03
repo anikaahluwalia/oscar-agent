@@ -17,11 +17,24 @@ function tintOf(sender: string) {
   return TINTS[hash % TINTS.length];
 }
 
-/** "Maya Chen <maya@x.com>" → "Maya Chen"; a bare address → the part before the @, readable. */
+// Addresses that say what the email is, not who sent it: deals@, orders@, no-reply@...
+const GENERIC = /^(deals?|offers?|orders?|info|news|newsletters?|hello|hi|hey|no-?reply|do-?not-?reply|notifications?|notify|support|team|contact|updates?|mail|marketing|shop|store|billing|accounts?|alerts?|digest|promo(tions)?|sales|help|service)$/i;
+
+const readable = (s: string) => s.replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+/**
+ * "Maya Chen <maya@x.com>" → "Maya Chen"; a bare address → the part before the @, readable. When that
+ * part only says what the email is (deals@denimco.example), the name of the domain instead: "Denimco".
+ */
 export function displayName(sender: string) {
   const name = senderName(sender);
   if (!name.includes("@")) return name;
-  return name.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const [local, domain = ""] = name.split("@");
+  if (!GENERIC.test(local)) return readable(local);
+  const labels = domain.toLowerCase().split(".").filter(Boolean);
+  // shop.co.uk → shop, mail.denimco.com → denimco
+  const site = labels.length >= 3 && labels.at(-2)!.length <= 3 ? labels.at(-3) : labels.at(-2);
+  return site ? readable(site) : readable(local);
 }
 
 /** The address alone, for the line under a name. */
