@@ -2,17 +2,12 @@
 
 import { Page } from "@/components/page";
 import { GmailSettings, useGmailResult } from "@/components/settings/gmail-settings";
-import {
-  AppearanceRow,
-  ChatRow,
-  DataSettings,
-  NameRow,
-  NotificationSettings,
-} from "@/components/settings/more-settings";
+import { AppearanceRow, ChatRow, DataSettings, NameRow } from "@/components/settings/more-settings";
+import { AdvancedSettings, GmailCompanionSettings } from "@/components/settings/oscar-settings";
 import { SettingsGroup } from "@/components/settings/rows";
 import { useOscar } from "@/lib/use-oscar";
 
-/** Settings under short headings: Gmail, you, how it looks, the chat, notifications, and your data. */
+/** Settings under short headings: Gmail, Oscar in Gmail and his notifications, you, how it looks, the chat, advanced, and your data. */
 export function SettingsPage() {
   const { data } = useOscar();
   const gmail = data?.gmail;
@@ -27,6 +22,8 @@ export function SettingsPage() {
 
       <GmailSettings gmail={gmail} />
 
+      <GmailCompanionSettings />
+
       <SettingsGroup title="You">
         <NameRow />
       </SettingsGroup>
@@ -39,7 +36,7 @@ export function SettingsPage() {
         <ChatRow />
       </SettingsGroup>
 
-      <NotificationSettings />
+      <AdvancedSettings gmail={gmail} />
 
       {/* The demo inbox controls only make sense until Gmail is connected. */}
       <DataSettings demo={!!gmail && !gmail.connected} />

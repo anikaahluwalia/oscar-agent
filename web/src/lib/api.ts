@@ -403,6 +403,22 @@ export interface Progress {
 }
 export const getProgress = () => call<Progress>("/progress");
 
+/** How Oscar shows up in Gmail, read by the extension too (oscar/app_settings.py). */
+export interface AppSettings {
+  companion: { show: boolean; position: "right" | "left"; animate: boolean };
+  notify: { approvals: boolean; safety: boolean; handled: boolean };
+}
+export const getAppSettings = () => call<AppSettings>("/app-settings");
+export const saveAppSettings = (changes: { companion?: Partial<AppSettings["companion"]>; notify?: Partial<AppSettings["notify"]> }) =>
+  call<AppSettings>("/app-settings", { method: "POST", body: JSON.stringify(changes) });
+
+/** Clearing what Oscar learned on this inbox, and bringing it back. Nothing is deleted. */
+export const getLearning = () => call<{ cleared_at: string | null }>("/learning");
+export const clearLearning = () => call<{ cleared_at: string; reply: string }>("/learning/clear", { method: "POST", body: "{}" });
+export const restoreLearning = () => call<{ cleared_at: null; reply: string }>("/learning/restore", { method: "POST", body: "{}" });
+/** A link, not a fetch: the browser saves the file. */
+export const exportUrl = `${API}/export`;
+
 /** Every kind of email you can say one is (oscar/classification.py EMAIL_TYPES). */
 export const getEmailTypes = () => call<{ type: string; risky: boolean }[]>("/email-types");
 export const sendClassification = (decisionId: string, emailType: string) =>

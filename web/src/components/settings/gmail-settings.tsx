@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HandIcon, MailIcon, RotateCwIcon } from "lucide-react";
+import { HandIcon, MailIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Facts, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
 import { getGmailStatus, gmailActUrl, gmailConnectUrl, setActing, type GmailStatus } from "@/lib/api";
-import { checkGmail, disconnectGmailAccount, recheckRecent } from "@/lib/demo";
+import { checkGmail, disconnectGmailAccount } from "@/lib/demo";
 import { dayLabel, formatTime } from "@/lib/time";
 import { notifyChanged, oscarSays } from "@/lib/use-oscar";
 
@@ -62,23 +62,6 @@ export function GmailSettings({ gmail }: { gmail: GmailStatus | undefined }) {
     <SettingsGroup title="Gmail">
       {gmail?.connected ? <AccountCard gmail={gmail} /> : <ConnectRow gmail={gmail} />}
       {gmail?.connected && <ActingRow gmail={gmail} />}
-      {gmail?.connected && (
-        <SettingsRow
-          icon={RotateCwIcon}
-          tone="muted"
-          title="Re-read recent emails"
-          text="Your 50 most recent emails, read again by the latest Oscar."
-          control={
-            <Button variant="outline" className={ROW_BUTTON} onClick={recheckRecent}>
-              Re-read
-            </Button>
-          }
-        >
-          <p className="text-[13px] leading-normal text-muted-foreground">
-            His old decisions and your reviews are kept; re-reads aren&apos;t counted in the real-inbox results.
-          </p>
-        </SettingsRow>
-      )}
     </SettingsGroup>
   );
 }

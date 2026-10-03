@@ -3,18 +3,14 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import {
-  BellIcon,
   FolderLockIcon,
   InboxIcon,
   MessageCircleIcon,
-  MessageSquareIcon,
-  NewspaperIcon,
   PaletteIcon,
-  SmartphoneIcon,
   UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Facts, Segmented, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
+import { Facts, Segmented, SettingsGroup, SettingsRow, ROW_BUTTON } from "@/components/settings/rows";
 import { getChatStatus } from "@/lib/api";
 import { bringInDemo, startOver } from "@/lib/demo";
 import { useLocalSetting } from "@/lib/local-setting";
@@ -83,37 +79,6 @@ export function ChatRow() {
   );
 }
 
-const NOTIFICATIONS = [
-  { id: "in-app", icon: BellIcon, label: "In-app", text: "Heads-ups while you have Oscar open." },
-  { id: "push", icon: SmartphoneIcon, label: "Push", text: "When something needs you." },
-  { id: "sms", icon: MessageSquareIcon, label: "SMS for urgent only", text: "Only when Oscar stops something." },
-  { id: "digest", icon: NewspaperIcon, label: "Daily digest", text: "One email a day with everything Oscar did." },
-] as const;
-
-function NotificationRow({ id, icon, label, text }: (typeof NOTIFICATIONS)[number]) {
-  const [on, setOn] = useLocalSetting<"on" | "off">(`notify.${id}`, id === "in-app" ? "on" : "off");
-  return (
-    <SettingsRow
-      icon={icon}
-      tone="muted"
-      inline
-      title={label}
-      text={text}
-      control={<Switch label={label} on={on === "on"} onChange={(next) => setOn(next ? "on" : "off")} />}
-    />
-  );
-}
-
-export function NotificationSettings() {
-  return (
-    <SettingsGroup title="Notifications" note="Saved on this device · coming soon">
-      {NOTIFICATIONS.map((n) => (
-        <NotificationRow key={n.id} {...n} />
-      ))}
-    </SettingsGroup>
-  );
-}
-
 export function AppearanceRow() {
   const { theme, setTheme } = useTheme();
   // The theme is only known in the browser, so nothing is selected until then.
@@ -147,7 +112,7 @@ const KEPT = [
   "Oscar's decisions, your answers and reviews, and what he's learned from them.",
   "Your Gmail sign-in, if you connect it.",
   "The demo inbox and your real inbox are kept apart, so what he learns on the examples never changes how he treats your real email.",
-  "Your name, notifications and appearance stay in this browser.",
+  "Your name and appearance stay in this browser. How Oscar shows up in Gmail is kept with his data, so the extension can read it.",
 ];
 
 /** Where Oscar keeps things, and (on the demo inbox) bringing in emails or starting over. */
