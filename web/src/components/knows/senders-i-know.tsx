@@ -16,6 +16,8 @@ import { matches } from "./patterns";
 
 type Send = (decisionId: string, kind: FeedbackKind) => Promise<unknown>;
 
+const SHOWN = 8; // senders listed before "Show all"; a search always shows every match
+
 /** Which inbox this is, and what that means for what he learns. Kept from the old Memory page. */
 function inboxNote(data: OscarData) {
   if (!data.gmail.connected) return "This is the example inbox. What I learn here stays here, apart from your real inbox.";
@@ -120,6 +122,8 @@ export function SendersIKnow({ data, onFeedback, now, query }: { data: OscarData
   const items = memoryItems(data)
     .filter((i) => matches(query, i.learned.sender, displayName(i.learned.sender), ACTIONS[i.learned.action]))
     .sort((a, b) => Number(a.asks) - Number(b.asks));
+  const [all, setAll] = useState(false);
+  const shown = all || query ? items : items.slice(0, SHOWN);
 
   return (
     <section aria-labelledby="knows-senders" className="flex flex-col">
@@ -133,7 +137,7 @@ export function SendersIKnow({ data, onFeedback, now, query }: { data: OscarData
 
       {items.length ? (
         <ul className="flex flex-col">
-          {items.map((item) => {
+          {shown.map((item) => {
             const { sender, action } = item.learned;
             const first = firstAnswer(data.all, sender, action, forgot);
             return (
@@ -147,6 +151,18 @@ export function SendersIKnow({ data, onFeedback, now, query }: { data: OscarData
               />
             );
           })}
+          {items.length > SHOWN && !query && (
+            <li className="border-t pt-1">
+              <button
+                type="button"
+                aria-expanded={all}
+                onClick={() => setAll(!all)}
+                className="-ml-3 flex min-h-11 items-center rounded-full px-3 text-[13px] font-semibold hover:bg-surface-hover"
+              >
+                {all ? "Show fewer" : `Show all ${items.length} senders`}
+              </button>
+            </li>
+          )}
         </ul>
       ) : (
         <div className="mt-2 flex flex-col gap-1 rounded-2xl border border-dashed px-5 py-6">
