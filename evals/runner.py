@@ -74,7 +74,37 @@ def failure_kind(run: dict) -> str:
     return "world state didn't match (the action didn't happen)"
 
 
-def report(env: dict, metrics: dict, pair_rows: dict, runs: list[dict], learning: dict) -> str:
+def learning_section(title: str, learning: dict, what: str) -> list[str]:
+    s = learning["summary"]
+    lines = [
+        f"## {title}", "",
+        f"Fresh memory, then {s['training_emails']} training emails over {len(learning['curve']) - 1} rounds "
+        f"({s['feedback_events']} pieces of feedback from a simulated user, through the app's own feedback: Approve, "
+        f"and \"for emails like this\"). Training is {what} runs after each round on a copy of memory.", "",
+        "| | Before feedback | After feedback |", "|---|---|---|",
+        f"| ASK rate (safe emails) | {pct(s['ask_rate_before_learning'])} | {pct(s['ask_rate_after_learning'])} |",
+        f"| Tell me rate (safe emails) | {pct(s['notify_rate_before'])} | {pct(s['notify_rate_after'])} |",
+        f"| Quietly rate (safe emails) | {pct(s['silent_rate_before'])} | {pct(s['silent_rate_after'])} |",
+        f"| Interruption rate | {pct(s['interruption_rate_before'])} | {pct(s['interruption_rate_after'])} |",
+        f"| Autonomous completion | {pct(s['autonomous_completion_before'])} | {pct(s['autonomous_completion_after'])} |",
+        f"| Action accuracy | {pct(s['action_accuracy_before'])} | {pct(s['action_accuracy_after'])} |",
+        f"| Hard safety violations | {s['hard_floor_violations_before_learning']} | {s['hard_floor_violations_after_learning']} |",
+        f"| Prompt injection success | {pct(s['prompt_injection_success_before'])} | {pct(s['prompt_injection_success_after'])} |",
+        f"| Unsafe side effects | {s['safety_violations_before']} | {s['safety_violations_after']} |", "",
+        f"Traps respected after learning: {s['traps_respected_after_learning']}. Interruptions include the traps, "
+        "which should always come to you.", "",
+        "| Round | Feedback | ASK | Tell me | Quietly | Interruptions | Autonomy | Autonomous completion | Unsafe | Floor violations | Traps |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for p in learning["curve"]:
+        lines.append(f"| {p['round']} | {p['feedback_events']} | {pct(p['ask_rate'])} | {pct(p['notify_rate'])} | "
+                     f"{pct(p['silent_rate'])} | {pct(p['interruption_rate'])} | {pct(p['autonomy_accuracy'])} | "
+                     f"{pct(p['autonomous_completion'])} | {p['unsafe_side_effects']} | {p['hard_floor_violations']} | "
+                     f"{p['traps_respected']} |")
+    return lines + [""]
+
+
+def report(env: dict, metrics: dict, pair_rows: dict, runs: list[dict], learning: dict, promos: dict) -> str:
     full = metrics["FULL"]
     lines = [
         "# Evaluation Summary", "",
@@ -116,30 +146,13 @@ def report(env: dict, metrics: dict, pair_rows: dict, runs: list[dict], learning
               "Learning, safety off: what the user taught with the floor and checks turned off, which shows what "
               "the floor stops. Safety-off setups only ever run in the simulated inbox.", ""]
 
-    s = learning["summary"]
-    lines += [
-        "## Learning", "",
-        f"Fresh memory, then {s['training_emails']} training emails over {len(learning['curve']) - 1} rounds "
-        f"({s['feedback_events']} pieces of feedback from a simulated user, through the app's own feedback). "
-        "The held-out set (new emails from the same senders, new senders at the same domains, new senders of "
-        "the same kinds, and traps) runs after each round on a copy of memory.", "",
-        "| | Before feedback | After feedback |", "|---|---|---|",
-        f"| ASK rate (safe emails) | {pct(s['ask_rate_before_learning'])} | {pct(s['ask_rate_after_learning'])} |",
-        f"| Interruption rate | {pct(s['interruption_rate_before'])} | {pct(s['interruption_rate_after'])} |",
-        f"| Autonomous completion | {pct(s['autonomous_completion_before'])} | {pct(s['autonomous_completion_after'])} |",
-        f"| Action accuracy | {pct(s['action_accuracy_before'])} | {pct(s['action_accuracy_after'])} |",
-        f"| Safety violations | {s['safety_violations_before']} | {s['safety_violations_after']} |", "",
-        f"Interruptions down {pct(s['interruption_reduction_absolute'])} (absolute), {pct(s['interruption_reduction_relative'])} (relative). "
-        f"Hard-floor violations after learning: {s['hard_floor_violations_after_learning']}. "
-        f"Traps respected after learning: {s['traps_respected_after_learning']}.", "",
-        "| Round | Feedback | ASK rate | Interruptions | Autonomy | Autonomous completion | Unsafe | Floor violations | Traps |",
-        "|---|---|---|---|---|---|---|---|---|",
-    ]
-    for p in learning["curve"]:
-        lines.append(f"| {p['round']} | {p['feedback_events']} | {pct(p['ask_rate'])} | {pct(p['interruption_rate'])} | "
-                     f"{pct(p['autonomy_accuracy'])} | {pct(p['autonomous_completion'])} | {p['unsafe_side_effects']} | "
-                     f"{p['hard_floor_violations']} | {p['traps_respected']} |")
-
+    lines += learning_section("Learning: newsletters", learning,
+                              "many emails from a few senders. The held-out set (new emails from the same senders, new "
+                              "senders at the same domains, new senders of the same kinds, and traps)")
+    lines += learning_section("Learning: one-off promotions", promos,
+                              "every training email from a different shop, the way promotions really arrive. The held-out "
+                              "set (new shops, and promotion-looking traps: an injection, money, an account security alert, "
+                              "a password request, a request for private data, a plan upgrade you'd agree to by replying)")
     lines += ["", "## Failures", "", "Every run of the full system that missed on level, action, trust or completion. "
               "Other setups' misses are counted in metrics.json.", ""]
     failed = [r for r in runs if r["config"] == "FULL" and not (r["grading"]["autonomy_correct"] and r["grading"]["action_correct"]
@@ -177,8 +190,8 @@ def report(env: dict, metrics: dict, pair_rows: dict, runs: list[dict], learning
               "to send, so approving an ask is the only authorization path.",
               "- With the rules alone, repeats can't vary, so the 3 runs per scenario only guard against flakiness. "
               "Variance from the model needs `--model fresh`.",
-              "- The learning experiment uses a simulated user who always wants newsletters and promos archived. "
-              "Real people are less consistent.",
+              "- The learning experiments use a simulated user who always wants newsletters and promos archived, and "
+              "always says so under \"for emails like this\". Real people answer less often and less consistently.",
               "- Confidence (for Brier and ECE) is how sure Oscar is of the level he chose, not a probability spread over all four levels.",
               ""]
     return "\n".join(lines)
@@ -204,6 +217,7 @@ def run() -> None:
     configs = [Config.BASELINE, Config.SAFETY_ONLY, Config.FULL, Config.LEARNING_ONLY]
     runs = [run_once(s, c, i, reader) for c in configs for s in scenarios for i in range(1, args.runs + 1)]
     learning = learning_experiment.run(runs=args.runs, reader=reader)
+    promos = learning_experiment.run_promos(runs=args.runs, reader=reader)
 
     metrics, pair_rows = {}, {}
     for c in configs:
@@ -221,13 +235,19 @@ def run() -> None:
             f.write(json.dumps(r) + "\n")
     (OUT / "metrics.json").write_text(json.dumps({"environment": env, "configs": metrics}, indent=1) + "\n")
     (OUT / "pair_results.json").write_text(json.dumps(pair_rows, indent=1) + "\n")
-    (OUT / "learning_curve.json").write_text(json.dumps({"curve": learning["curve"], "summary": learning["summary"]}, indent=1) + "\n")
-    (OUT / "report.md").write_text(report(env, metrics, pair_rows, runs, learning))
+    (OUT / "learning_curve.json").write_text(json.dumps({"curve": learning["curve"], "summary": learning["summary"],
+                                                         "promos": {"curve": promos["curve"], "summary": promos["summary"]}},
+                                                        indent=1) + "\n")
+    (OUT / "report.md").write_text(report(env, metrics, pair_rows, runs, learning, promos))
     full = metrics["FULL"]
     print(f"Full: autonomy {pct(full['autonomy_accuracy'])}, trust {pct(full['trust_pass_rate'])}, "
           f"paired {pct(full['paired_success_rate'])}, hard-floor violations {full['hard_floor_violations']}")
     print(f"Learning: interruptions {pct(learning['summary']['interruption_rate_before'])} -> "
           f"{pct(learning['summary']['interruption_rate_after'])}, violations after {learning['summary']['hard_floor_violations_after_learning']}")
+    p = promos["summary"]
+    print(f"One-off promotions: ask {pct(p['ask_rate_before_learning'])} -> {pct(p['ask_rate_after_learning'])}, "
+          f"quietly {pct(p['silent_rate_before'])} -> {pct(p['silent_rate_after'])}, violations after "
+          f"{p['hard_floor_violations_after_learning']}, injection success {pct(p['prompt_injection_success_after'])}")
     print(f"Wrote {OUT.relative_to(HERE.parent)}/ ({len(runs)} runs). {Counter(r['config'] for r in runs)}")
 
 

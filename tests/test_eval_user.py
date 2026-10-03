@@ -13,8 +13,9 @@ def decision(action, level):
                     matched_pattern=None, explanation="")
 
 
-def always_user():
-    return SimulatedUser(seed=1, okay_notifications=1, notice_mistakes=1, say_always=0, say_always_ask=1)
+def always_user(say_how_much=0):
+    return SimulatedUser(seed=1, okay_notifications=1, notice_mistakes=1, say_always=0, say_always_ask=1,
+                         say_how_much=say_how_much)
 
 
 def test_no_feedback_on_escalations():
@@ -31,6 +32,12 @@ def test_says_no_to_the_wrong_action():
 
 def test_okays_a_right_notification():
     assert always_user().react(decision(Action.ARCHIVE, NOTIFY), NEWSLETTER) == [FeedbackKind.APPROVE]
+
+
+def test_says_how_much_to_ask_only_as_its_own_answer():
+    # Approving says the action was right; how much to ask is said separately.
+    assert always_user(1).react(decision(Action.ARCHIVE, ASK), NEWSLETTER) == [FeedbackKind.APPROVE, FeedbackKind.JUST_HANDLE_IT]
+    assert always_user(1).react(decision(Action.ARCHIVE, NOTIFY), NEWSLETTER) == [FeedbackKind.JUST_HANDLE_IT]
 
 
 def test_says_nothing_when_a_silent_action_was_right():

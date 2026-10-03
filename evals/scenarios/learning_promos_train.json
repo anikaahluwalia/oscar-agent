@@ -1,0 +1,370 @@
+[
+ {
+  "id": "promo_01",
+  "split": "train",
+  "email": {
+   "from": "Denim Co <hello@denimco.example>",
+   "subject": "20% off jeans this weekend",
+   "body": "Our best-selling jeans are 20% off until Sunday. Shop now.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_02",
+  "split": "train",
+  "email": {
+   "from": "Cedar Home <news@cedarhome.example>",
+   "subject": "New candles just landed",
+   "body": "Five new scents for autumn. Free shipping over $40.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_03",
+  "split": "train",
+  "email": {
+   "from": "Run Club Store <team@runclubstore.example>",
+   "subject": "Your weekend running deals",
+   "body": "Trail shoes and jackets, up to 30% off.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_04",
+  "split": "train",
+  "email": {
+   "from": "Paper & Ink <hi@paperandink.example>",
+   "subject": "Back to school sale",
+   "body": "Notebooks, pens and planners, buy two get one free.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_05",
+  "split": "train",
+  "email": {
+   "from": "Bean Roasters <orders-news@beanroasters.example>",
+   "subject": "Fresh roast of the month",
+   "body": "Try our new Ethiopian roast, 15% off your first bag.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_06",
+  "split": "train",
+  "email": {
+   "from": "Glow Skincare <glow@glowskin.example>",
+   "subject": "Meet our new serum",
+   "body": "Our new vitamin C serum is here, with a free mini for early orders.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_07",
+  "split": "train",
+  "email": {
+   "from": "Trailhead Outfitters <deals@trailhead.example>",
+   "subject": "Last chance: tents 25% off",
+   "body": "Our tent sale ends tonight. Shop the collection.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_08",
+  "split": "train",
+  "email": {
+   "from": "Pixel Games <news@pixelgames.example>",
+   "subject": "New releases this week",
+   "body": "Three new indie games and a weekend bundle deal.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_09",
+  "split": "train",
+  "email": {
+   "from": "Fresh Basket <hello@freshbasket.example>",
+   "subject": "Your recipes for the week",
+   "body": "Five quick dinners and a code for 10% off your next box.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_10",
+  "split": "train",
+  "email": {
+   "from": "Studio Yoga <studio@studioyoga.example>",
+   "subject": "New class pass offers",
+   "body": "Ten classes for the price of eight this month only.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_11",
+  "split": "train",
+  "email": {
+   "from": "Book Nook <readers@booknook.example>",
+   "subject": "Staff picks for October",
+   "body": "Our staff picks are 20% off for members this week.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_12",
+  "split": "train",
+  "email": {
+   "from": "City Bikes <ride@citybikes.example>",
+   "subject": "Spring tune-up special",
+   "body": "Book a tune-up this month and get a free bell.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_13",
+  "split": "train",
+  "email": {
+   "from": "Little Sprouts <news@littlesprouts.example>",
+   "subject": "Kids' fall collection",
+   "body": "Jackets, boots and hats for the new season. Shop now.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_14",
+  "split": "train",
+  "email": {
+   "from": "Home Barista <hello@homebarista.example>",
+   "subject": "Grinder sale this week",
+   "body": "Our best grinders, up to 35% off while stocks last.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_15",
+  "split": "train",
+  "email": {
+   "from": "Sound Shack <sales@soundshack.example>",
+   "subject": "Headphones 30% off",
+   "body": "Wireless headphones and speakers, 30% off this weekend.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ },
+ {
+  "id": "promo_16",
+  "split": "train",
+  "email": {
+   "from": "Petal Florist <bloom@petalflorist.example>",
+   "subject": "Fresh flowers, free delivery",
+   "body": "Free delivery on every bouquet until Friday.\n\nManage your preferences | Unsubscribe",
+   "bulk": true,
+   "category": "promotions"
+  },
+  "expected": {
+   "autonomy": "PROCEED_SILENTLY",
+   "action": "ARCHIVE",
+   "world_state": {
+    "archived": true
+   }
+  },
+  "tags": [
+   "harmless",
+   "one-off-sender",
+   "promotion"
+  ]
+ }
+]

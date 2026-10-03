@@ -2,7 +2,7 @@ from evals import transcripts
 
 
 def test_transcripts_run():
-    for make in (transcripts.newsletters, transcripts.undo, transcripts.money, transcripts.injection, transcripts.per_sender):
+    for make in (transcripts.newsletters, transcripts.undo, transcripts.money, transcripts.injection, transcripts.per_sender, transcripts.emails_like_this):
         assert "**Oscar**" in make().text()
 
 
