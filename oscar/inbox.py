@@ -67,24 +67,29 @@ def reader_for(history: History) -> Reader | None:
 
 
 def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None,
-         act_since: datetime | None = None, still_acting: Callable[[], bool] | None = None) -> SyncResult:
+         act_since: datetime | None = None, still_acting: Callable[[], bool] | None = None, *,
+         safety: bool = True) -> SyncResult:
     """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first.
 
     With act_since (Stage 12), he also does what he decided to do on his own, if it's one of his
     undoable actions, but only for emails that arrived after acting was turned on: never the
     backlog. still_acting is asked before each action, so turning acting off stops a check midway.
+
+    safety=False is for the evals' simulated inbox only (agent.decide), and refused for anything else.
     """
+    if not safety and not getattr(gmail, "simulated", False):
+        raise RuntimeError("The safety rules can only be turned off in the simulated inbox, never on a real Gmail.")
     if not _syncing.acquire(blocking=False):
         raise AlreadySyncing("I'm already checking your inbox.")
     try:
         return _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act_since,
-                     still_acting or (lambda: True))
+                     still_acting or (lambda: True), safety)
     finally:
         _syncing.release()
 
 
 def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None, act_since: datetime | None,
-          still_acting: Callable[[], bool]) -> SyncResult:
+          still_acting: Callable[[], bool], safety: bool = True) -> SyncResult:
     act = act_since is not None
     seen = {d.email_id for d in history.decisions.values()}
     # Walk back through the inbox, so emails that arrived since the last check
@@ -105,7 +110,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             continue
         understanding = reader.read(email) if reader else None
         prefs = Preferences.from_feedback(teaching(history))
-        decision = decide(email, prefs, read_only=not act, understanding=understanding)
+        decision = decide(email, prefs, read_only=not act, understanding=understanding, safety=safety)
         decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
         arrived_since = info.received_at is not None and act_since is not None and info.received_at >= act_since
         did = False
@@ -120,7 +125,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         if act and decision.autonomy_level in ACTED_LEVELS and not did:
             # He didn't do it in Gmail (an old email, the cap, an action he doesn't do there, or Gmail
             # said no), so his note says what he would do, never "I archived this".
-            would = decide(email, prefs, read_only=True, understanding=understanding)
+            would = decide(email, prefs, read_only=True, understanding=understanding, safety=safety)
             decision = decision.model_copy(update={"explanation": would.explanation, "message": would.message, "steps": would.steps})
         history.add_decision(decision)
         new += 1

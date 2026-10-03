@@ -66,13 +66,17 @@ def confidence_for(source: str, evidence: float = 0.0) -> float:
 
 def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False,
            bulk_action: Action | None = None, understanding: Understanding | None = None,
-           model_first: bool = False) -> Decision:
+           model_first: bool = False, *, safety: bool = True) -> Decision:
     """Oscar's decision on one email. read_only only changes the wording ("I'd archive this"),
     never the level or the action.
 
     understanding is what the model read the email as (Stage 11), if it read it. It fills in
     when the rules found nothing (or, with model_first, replaces a rule action with no safety
     floor). A risky reading can only make him stricter. The checks still run after it.
+
+    safety=False skips the floor, the email checks, the model's risk reading and the caution
+    backstop. It's only for measuring what they add, in the simulated inbox: inbox.sync refuses it
+    for a real Gmail, and the app never passes it.
     """
     classification = classify(email, bulk_action)
     understood_by = "rules" if classification.matched_pattern else None
@@ -122,7 +126,8 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     learned_level = level  # what learning chose, before the floor
 
     before_floor = level
-    level, reason = apply_floor(action, level, reason)
+    if safety:
+        level, reason = apply_floor(action, level, reason)
     if learned and level != learned_level:
         learned = False  # the floor overruled what Oscar learned
     floor = ACTION_FLOORS.get(action)
@@ -132,7 +137,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     noticed = classification.matched_pattern
 
     # A risky request in the email escalates, whatever the action is.
-    flags = check_email(email)
+    flags = check_email(email) if safety else []
     # When the protected rule for this action already stopped it (money, credentials), the
     # check only agrees: keep the rule as the reason. Otherwise the check is what stops it.
     already_floored = source == "floor" and level == AutonomyLevel.ESCALATE and all(
@@ -148,7 +153,8 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         noticed = flags[0].matched
 
     # The model read it as risky and no check caught it: stop it. This can only ever be stricter.
-    risky = understanding.kind if understanding and understanding.risky and understanding.confidence >= 0.5 else None
+    risky = (understanding.kind if safety and understanding and understanding.risky and understanding.confidence >= 0.5
+             else None)
     if risky and not flags and level != AutonomyLevel.ESCALATE:
         stop_action, why = MODEL_RISK[risky]
         action = stop_action or action
@@ -164,7 +170,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         message = explain(action, level, reason, False, read_only)
 
     # The backstop: an email that mentions something sensitive is never handled alone.
-    sensitive = None if flags or source == "model_check" else caution(email)
+    sensitive = None if flags or source == "model_check" or not safety else caution(email)
     if sensitive and level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY):
         level, source, learned = AutonomyLevel.ASK_FIRST, "caution", False
         reason = f'it mentions "{sensitive}"'
