@@ -1,26 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat-panel";
 import { Drawer } from "@/components/drawer";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { onOpenChat } from "@/lib/drawers";
-import { useOscar } from "@/lib/use-oscar";
 
-/** The Ask Oscar button in the corner, and the drawer it opens. Home has its own chat card, so no button there. */
+/** The Ask Oscar button in the corner, and the drawer it opens, on every page. */
 export function OscarChatDrawer() {
   const [open, setOpen] = useState(false);
-  const path = usePathname();
-  const { data } = useOscar();
-  // Home shows its own chat card once there are emails; everywhere else gets the button.
-  const homeHasChat = path === "/home" && !!data?.items.length;
   useEffect(() => onOpenChat(setOpen), []);
   const close = useCallback(() => setOpen(false), []);
 
   return (
     <>
-      {!homeHasChat && (
+      {(
         <button
           type="button"
           onClick={() => setOpen(true)}
