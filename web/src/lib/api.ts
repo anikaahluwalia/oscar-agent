@@ -289,7 +289,7 @@ export interface EvalRun {
   created_at: string;
   suite: "heldout" | "safety" | "regression";
   dataset: { name: string; cases: number; sha256: string };
-  versions: { commit: string; classifier: string; policy: { name: string } };
+  versions: { commit: string; classifier: string; policy: { name: string }; understanding?: { model: string; prompt: string; mode: string } | null };
   learning: { set: string; emails: number; seed: number; feedback: number } | null;
   metrics: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   breakdowns: Record<string, Record<string, { cases: number; passed: number; autonomy_accuracy: number | null; action_correctness: number | null; unnecessary_ask_rate: number | null; critical_violations: number }>>;

@@ -86,7 +86,11 @@ export function ResultsPage() {
       if (!list.length) return setRuns({});
       // The newest set of runs: everything made from the same commit and policy as the newest one.
       const newest = list[0];
-      const same = list.filter((r) => r.versions.commit === newest.versions.commit && r.versions.policy.name === newest.versions.policy.name);
+      // Same commit, policy and model setup: never a rules-only run mixed with a run where the model read the emails.
+      const setup = (r: EvalRun) => JSON.stringify(r.versions.understanding ?? null);
+      const same = list.filter(
+        (r) => r.versions.commit === newest.versions.commit && r.versions.policy.name === newest.versions.policy.name && setup(r) === setup(newest),
+      );
       const byName: Record<string, EvalRun> = {};
       // Lead with the newest held-out set (v2 was written blind after v1's failures were looked at).
       const heldoutName = same.filter((r) => r.suite === "heldout").map((r) => r.dataset.name).sort().at(-1);
@@ -141,6 +145,13 @@ export function ResultsPage() {
         <>
           <p className="-mt-4 text-sm text-muted-foreground">
             Oscar <code>{held.versions.commit}</code> · classifier <code>{held.versions.classifier}</code> · policy <code>{held.versions.policy.name}</code> ·{" "}
+            {held.versions.understanding ? (
+              <>
+                read by <code>{held.versions.understanding.model}</code> ·{" "}
+              </>
+            ) : (
+              "rules only · "
+            )}
             {held.dataset.cases} held-out cases (<code>{held.dataset.name}</code>) · learned from {held.learning?.emails} generated emails ({held.learning?.feedback} pieces of feedback),
             never from the held-out ones
           </p>
