@@ -63,7 +63,7 @@ export function ReviewPage() {
   const stats = <ReviewStats data={data} items={items} />;
 
   return (
-    <Page className="max-w-[744px] gap-6 sm:pt-9">
+    <Page className={items.length ? "max-w-[1400px] gap-6 sm:pt-9" : "max-w-[744px] gap-6 sm:pt-9"}>
       {items.length ? (
         <ReviewWorkspace
           items={items}

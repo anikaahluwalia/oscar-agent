@@ -11,6 +11,7 @@ import { wouldOnly } from "@/lib/labels";
 import {
   getAutonomy,
   getBrief,
+  getCategories,
   getDecisions,
   getGmailStatus,
   getLearned,
@@ -18,6 +19,7 @@ import {
   sendFeedback,
   type AutonomyRow,
   type Brief,
+  type Category,
   type Decision,
   type DecisionWithFeedback,
   type FeedbackKind,
@@ -43,12 +45,13 @@ export type OscarData = {
   learned: LearnedRow[];
   gmail: GmailStatus;
   reviews: ReviewSummary;
+  categories: Category[]; // your own categories for senders
 };
 
 const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND", "SEEN"]);
 /** You've dealt with it: answered Oscar, or (on the real inbox, which is read-only) reviewed his decision. */
 export const isAnswered = (i: DecisionWithFeedback) =>
-  (wouldOnly(i.decision) && !!i.review) || i.feedback.some((f) => ANSWERS.has(f.kind));
+  (wouldOnly(i.decision) && !!i.review) || !!i.safety_review || i.feedback.some((f) => ANSWERS.has(f.kind));
 /** Still waiting on you: an ask you haven't answered, or something Oscar stopped that you haven't reviewed. */
 export const isOpen = (i: DecisionWithFeedback) =>
   (i.decision.autonomy_level === "ASK_FIRST" || i.decision.autonomy_level === "ESCALATE") && !wouldOnly(i.decision) && !isAnswered(i);
@@ -94,15 +97,16 @@ function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
 }
 
 async function fetchAll(): Promise<OscarData> {
-  const [items, brief, autonomy, learned, gmail, reviews] = await Promise.all([
+  const [items, brief, autonomy, learned, gmail, reviews, categories] = await Promise.all([
     getDecisions(),
     getBrief(),
     getAutonomy(),
     getLearned(),
     getGmailStatus(),
     getReviewSummary(),
+    getCategories(),
   ]);
-  return { items: latestPerEmail(items), all: items, brief, autonomy, learned, gmail, reviews };
+  return { items: latestPerEmail(items), all: items, brief, autonomy, learned, gmail, reviews, categories };
 }
 
 export function oscarSays(text: string) {

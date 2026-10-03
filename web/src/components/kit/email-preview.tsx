@@ -14,35 +14,43 @@ const CATEGORY: Record<string, string> = {
   primary: "Primary",
 };
 
-/** The top of an email, as Gmail shows it: subject, then who it's from and when. */
-export function EmailHeader({ decision, className }: { decision: Decision; className?: string }) {
+/**
+ * The top of an email: who it's from and when, with anything you can change about it on the right
+ * (`aside`: what kind of email it is, your category), then the subject.
+ */
+export function EmailHeader({ decision, aside, className }: { decision: Decision; aside?: React.ReactNode; className?: string }) {
   const address = addressOf(decision.sender);
   const category = decision.gmail?.category ? CATEGORY[decision.gmail.category] : null;
+  const link = decision.source === "gmail" && decision.gmail ? gmailLink(decision) : null;
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
-      <h2 className="text-xl font-bold tracking-[-0.015em] text-pretty">{decision.subject || "(no subject)"}</h2>
-      <div className="flex items-center gap-3">
-        <SenderAvatar sender={decision.sender} size={40} />
+    <div className={cn("flex flex-col gap-4", className)}>
+      <div className="flex flex-wrap items-start gap-x-3 gap-y-3">
+        <SenderAvatar sender={decision.sender} size={44} />
         <div className="min-w-0 flex-1 text-sm">
-          <div className="truncate">
-            <b>{displayName(decision.sender)}</b> {address && <span className="text-muted-foreground">&lt;{address}&gt;</span>}
-          </div>
+          <div className="truncate text-[15px] font-semibold">{displayName(decision.sender)}</div>
+          {address && <div className="truncate text-muted-foreground">{address}</div>}
           <div className="text-muted-foreground">
             to me · {when(decision.gmail?.received_at ?? decision.created_at)}
             {category && ` · ${category}`}
           </div>
         </div>
-        {decision.source === "gmail" && decision.gmail && (
-          <a
-            href={gmailLink(decision) ?? undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 shrink-0 items-center gap-1 text-[13px] font-semibold hover:underline"
-          >
-            Open in Gmail <ExternalLinkIcon className="size-3.5" aria-hidden />
-          </a>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {aside}
+          {link && (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open in Gmail"
+              title="Open in Gmail"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border bg-card text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+            >
+              <ExternalLinkIcon className="size-4" aria-hidden />
+            </a>
+          )}
+        </div>
       </div>
+      <h2 className="text-[22px] leading-snug font-bold tracking-[-0.015em] text-pretty">{decision.subject || "(no subject)"}</h2>
     </div>
   );
 }
@@ -60,11 +68,11 @@ export function EmailContent({ decision, height }: { decision: Decision; height?
   );
 }
 
-/** Header and email together, in a white card. */
-export function EmailPreview({ decision, className }: { decision: Decision; className?: string }) {
+/** Header and email together, in a card. */
+export function EmailPreview({ decision, aside, className }: { decision: Decision; aside?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-col gap-4 rounded-[22px] border bg-card p-5 sm:p-6", className)} aria-label="The email, as Gmail shows it">
-      <EmailHeader decision={decision} />
+    <div className={cn("flex flex-col gap-5 rounded-[22px] border bg-card p-5 sm:p-6", className)} aria-label="The email, as Gmail shows it">
+      <EmailHeader decision={decision} aside={aside} />
       <EmailContent decision={decision} />
     </div>
   );

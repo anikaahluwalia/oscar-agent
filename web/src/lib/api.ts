@@ -75,6 +75,7 @@ export interface Decision {
   safety_rule?: string | null; // the safety rule or check that set the level, if one did
   preference?: { scope: "sender" | "domain" | "kind"; evidence: number; confidence: number } | null; // what he learned from you that he used
   reminder?: Reminder | null; // an event or due date the email mentions
+  type_from_you?: boolean; // the kind of email came from what you said this sender's emails are
 }
 
 /** Something coming up that an email mentions (oscar/reminders.py). */
@@ -237,6 +238,8 @@ export interface DecisionWithFeedback {
   feedback: FeedbackEvent[];
   review: Review | null;
   done: ActionDone | null; // Stage 12: what Oscar did in Gmail for it
+  classification?: ClassificationFeedback | null; // your latest word on what kind of email it is
+  safety_review?: SafetyReview | null; // your answer, when a safety rule stopped it
   // Real inbox: what you said he should have done, and how this decision does against it.
   answer: {
     level: Level;
@@ -245,6 +248,60 @@ export interface DecisionWithFeedback {
     from_earlier: boolean; // your answer was given on an earlier read of this email
     earlier_error: GradeError | null; // how that earlier read did against it
   } | null;
+}
+
+/** You said an email is a different kind than Oscar took it for (oscar/classification.py). */
+export interface ClassificationFeedback {
+  id: string;
+  created_at: string;
+  decision_id: string;
+  email_id: string;
+  sender: string;
+  original_type: string;
+  corrected_type: string;
+}
+
+/** Whether Oscar read the risk right on an email a safety rule stopped (oscar/safety_review.py). */
+export interface SafetyReview {
+  id: string;
+  reviewed_at: string;
+  decision_id: string;
+  verdict: "RISK_CORRECT" | "MISCLASSIFIED";
+  flags: string[];
+  safety_rule: string | null;
+  corrected_type: string | null;
+  note: string | null;
+}
+
+/** One of your own categories for senders. Oscar's decisions never look at these. */
+export interface Category {
+  id: string;
+  name: string;
+  created_at: string;
+  senders: string[]; // addresses, lowercased
+}
+
+/** How much a pattern rests on, in words: a rule you set, or how strong your answers are. */
+export type PatternStatus = "rule" | "strong" | "moderate" | "learning";
+
+/** Your rule for a kind of email, or what your answers about many senders add up to (GET /patterns). */
+export interface PatternRow {
+  scope: "kind" | "domain";
+  name: string; // the kind of email (a family, like bulk_mail) or the domain
+  kind: string;
+  action: Action;
+  senders: number;
+  evidence: number;
+  confidence: number;
+  acting_share: number;
+  desired: Level;
+  rule: Level | "ask" | null;
+  level: Level | null; // null while still learning
+  reason: string;
+  status: PatternStatus;
+  updated_at: string | null;
+  decision_id: string | null; // the email the rule was set on
+  example_id: string | null; // the newest email like it, to set a rule on
 }
 
 export interface LearnedRow {
@@ -314,6 +371,25 @@ export interface PermissionRow {
   learned: { level: Level; reason: string; senders: number; rule: boolean; decision_id: string | null; updated_at: string | null } | null;
 }
 export const getPermissions = () => call<PermissionRow[]>("/permissions");
+export const getPatterns = () => call<PatternRow[]>("/patterns");
+
+/** Every kind of email you can say one is (oscar/classification.py EMAIL_TYPES). */
+export const getEmailTypes = () => call<{ type: string; risky: boolean }[]>("/email-types");
+export const sendClassification = (decisionId: string, emailType: string) =>
+  call<ClassificationFeedback>("/classifications", { method: "POST", body: JSON.stringify({ decision_id: decisionId, email_type: emailType }) });
+export const sendSafetyReview = (decisionId: string, verdict: SafetyReview["verdict"], correctedType?: string | null, note?: string | null) =>
+  call<SafetyReview>("/safety-reviews", {
+    method: "POST",
+    body: JSON.stringify({ decision_id: decisionId, verdict, corrected_type: correctedType ?? null, note: note ?? null }),
+  });
+
+export const getCategories = () => call<Category[]>("/categories");
+export const createCategory = (name: string) => call<Category>("/categories", { method: "POST", body: JSON.stringify({ name }) });
+export const renameCategory = (id: string, name: string) =>
+  call<Category>(`/categories/${encodeURIComponent(id)}/rename`, { method: "POST", body: JSON.stringify({ name }) });
+export const deleteCategory = (id: string) => call<{ ok: boolean }>(`/categories/${encodeURIComponent(id)}/delete`, { method: "POST", body: "{}" });
+export const assignCategory = (sender: string, categoryId: string | null) =>
+  call<{ ok: boolean }>("/categories/assign", { method: "POST", body: JSON.stringify({ sender, category_id: categoryId }) });
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
 export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "POST" });
 
@@ -376,8 +452,9 @@ export const sendChat = (message: string, history: ChatTurn[], decisionId?: stri
   });
 export const getChatStatus = () => call<{ model: string | null }>("/chat/status");
 
-export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string, scope: RuleScope = "sender") =>
+/** desiredLevel: for a rule about every email like this one, how much he does on his own (quietly or with a heads up). */
+export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string, scope: RuleScope = "sender", desiredLevel?: Level) =>
   call<{ event: FeedbackEvent; reply: string }>("/feedback", {
     method: "POST",
-    body: JSON.stringify({ decision_id: decisionId, kind, edited_text: editedText ?? null, scope }),
+    body: JSON.stringify({ decision_id: decisionId, kind, edited_text: editedText ?? null, scope, desired_level: desiredLevel ?? null }),
   });

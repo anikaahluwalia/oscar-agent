@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
+import { CategoryPill, categoryOf } from "@/components/classify/category-pill";
+import { TypePill } from "@/components/classify/type-pill";
 import { FilterPills } from "@/components/inbox/filter-pills";
 import { InboxLink } from "@/components/inbox/inbox-link";
 import { InboxRow } from "@/components/inbox/inbox-row";
@@ -58,6 +60,7 @@ export function InboxPage() {
   const [chosen, setFilter] = useState<Filter | null>(null);
   const filter: Filter = chosen ?? (show === "done" ? "DONE" : "ALL");
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState(""); // one of your categories, or "" for every email
   const [limit, setLimit] = useState(PAGE);
 
   // On a phone the email replaces the list, so start it at the top.
@@ -76,8 +79,10 @@ export function InboxPage() {
   const readOnly = isReadOnly(data);
   const waitingIds = new Set(waiting(data).map((i) => i.decision.id));
   const q = query.trim().toLowerCase();
+  const inCategory = data.categories.find((c) => c.id === category);
   const searched = data.items
     .filter((i) => !q || `${i.decision.sender} ${i.decision.subject}`.toLowerCase().includes(q))
+    .filter((i) => !inCategory || categoryOf([inCategory], i.decision.sender))
     .sort((a, b) => timeOf(b).localeCompare(timeOf(a)));
   const tests: Record<Filter, (i: DecisionWithFeedback) => boolean> = {
     ALL: () => true,
@@ -167,6 +172,29 @@ export function InboxPage() {
                   className="h-11 w-full rounded-full border bg-card pr-4 pl-10 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
                 />
               </div>
+              {data.categories.length > 0 && (
+                <>
+                  <label htmlFor="inbox-category" className="sr-only">
+                    Show one of your categories
+                  </label>
+                  <select
+                    id="inbox-category"
+                    value={inCategory ? category : ""}
+                    onChange={(e) => {
+                      setCategory(e.target.value);
+                      setLimit(PAGE);
+                    }}
+                    className="h-11 max-w-40 shrink-0 rounded-full border bg-card px-3.5 text-sm font-medium outline-none hover:bg-surface-hover focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <option value="">All categories</option>
+                    {data.categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
             </div>
 
             {list.length ? (
@@ -196,12 +224,19 @@ export function InboxPage() {
               </div>
             ) : (
               <div className="flex flex-col items-start gap-2 rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
-                <p>{q ? `Nothing from a sender or subject matching "${query.trim()}".` : nothing[filter]}</p>
+                <p>
+                  {q
+                    ? `Nothing from a sender or subject matching "${query.trim()}".`
+                    : inCategory && filter === "ALL"
+                      ? `No emails from senders in ${inCategory.name} yet.`
+                      : nothing[filter]}
+                </p>
                 <Button
                   variant="outline"
                   className="min-h-11 sm:min-h-9"
                   onClick={() => {
                     setQuery("");
+                    setCategory("");
                     pick("ALL");
                   }}
                 >
@@ -233,7 +268,15 @@ export function InboxPage() {
                   </p>
                 )}
                 <OscarNote item={selected} canExplain={selected !== earlier} onFeedback={(kind, text) => feedback(selected.decision.id, kind, text)} />
-                <EmailPreview decision={selected.decision} />
+                <EmailPreview
+                  decision={selected.decision}
+                  aside={
+                    <>
+                      <TypePill item={selected} />
+                      <CategoryPill sender={selected.decision.sender} />
+                    </>
+                  }
+                />
                 <TechnicalDetails item={selected} />
               </article>
             ) : hash ? (

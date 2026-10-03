@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DecisionFacts } from "@/components/inbox/decision-facts";
 import { becauseOf, didIt, noteLine, outcomeOf, when } from "@/components/inbox/outcome";
 import { HoldButton } from "@/components/hold-button";
 import { LIKE_THIS, LikeThis, offersLikeThis } from "@/components/kit/like-this";
@@ -131,21 +132,23 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
   ];
 
   return (
-    <section aria-label="Oscar's note" className="flex flex-col gap-3 rounded-[18px] border bg-card px-4 py-3.5 sm:px-[18px]">
-      <div className="flex flex-wrap items-center gap-3">
-        {pose ? <OscarMood pose={pose} size={52} /> : <OscarAvatar size={36} className="mx-2" />}
-        <p className="min-w-[13.75rem] flex-1 text-[15px] leading-snug">
-          <b className="font-bold">{noteLine(item)}</b> <span className="text-muted-foreground">{becauseOf(d)}</span>
-        </p>
-        <div className="flex flex-wrap items-center gap-1.5">
+    <section aria-label="Oscar's note" className="flex flex-col gap-4 rounded-[22px] border bg-card p-5 sm:p-6">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+        {pose ? <OscarMood pose={pose} size={84} className="-my-1" /> : <OscarAvatar size={44} className="mx-2" />}
+        <div className="flex min-w-[13.75rem] flex-1 flex-col gap-1 pt-1">
+          <h2 className="text-[19px] leading-snug font-bold tracking-[-0.01em]">{noteLine(item)}</h2>
+          <p className="text-[15px] leading-snug text-muted-foreground">{becauseOf(d)}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {buttons}
           {canExplain && (
-            <Button variant="ghost" className={`${TAP} px-3 text-muted-foreground`} onClick={() => openWhy(d.id)}>
+            <Button variant="outline" className={TAP} onClick={() => openWhy(d.id)}>
               Why?
             </Button>
           )}
         </div>
       </div>
+      <DecisionFacts decision={d} className="border-t pt-4" />
       {(notes.length > 0 || history.length > 0) && (
         <div className="flex flex-col gap-1 border-t pt-3 text-[13px] text-muted-foreground">
           {notes.map((n) => (

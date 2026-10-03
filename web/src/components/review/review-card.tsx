@@ -6,12 +6,12 @@ import { EmailContent } from "@/components/kit/email-preview";
 import { addressOf, displayName, SenderAvatar } from "@/components/kit/sender";
 import { StatusWords } from "@/components/kit/status";
 import { OscarAvatar } from "@/components/oscar-avatar";
-import { becauseOf, callLine, fromBefore, kindOf, smallPrint } from "@/components/review/call";
+import { becauseOf, callLine, fromBefore, smallPrint } from "@/components/review/call";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { when } from "@/lib/counts";
 import { openWhy } from "@/lib/drawers";
 import { safetyChecks, timeOf } from "@/lib/insights";
-import { STATUS } from "@/lib/labels";
+import { STATUS, typeName, typeOf } from "@/lib/labels";
 import { gmailLink } from "@/lib/text";
 import { cn } from "@/lib/utils";
 
@@ -20,14 +20,25 @@ function Tag({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * One email as Oscar saw it: who it's from, the email itself in a box you can scroll, and his
- * call on it in a line, with the reason under it.
+ * One email as Oscar saw it: who it's from, the email itself in a box you can scroll, and (unless
+ * `call` is off, when his call is shown beside it) his call on it in a line, with the reason under it.
  */
-export function ReviewCard({ item, items, children }: { item: DecisionWithFeedback; items: DecisionWithFeedback[]; children?: React.ReactNode }) {
+export function ReviewCard({
+  item,
+  items,
+  call = true,
+  children,
+}: {
+  item: DecisionWithFeedback;
+  items: DecisionWithFeedback[];
+  call?: boolean;
+  children?: React.ReactNode;
+}) {
   const d = item.decision;
   const level = d.autonomy_level;
   const address = addressOf(d.sender);
-  const kind = kindOf(item);
+  const type = typeOf(item);
+  const kind = type === "unknown" || type === "bulk" ? null : typeName(type);
   const before = fromBefore(items, item);
   const because = becauseOf(item);
   const note = smallPrint(item);
@@ -75,12 +86,12 @@ export function ReviewCard({ item, items, children }: { item: DecisionWithFeedba
         <h2 className="text-lg leading-snug font-bold tracking-[-0.01em] text-pretty break-words">{d.subject || "(no subject)"}</h2>
       </header>
 
-      <div className="max-h-[240px] overflow-y-auto border-b bg-muted/40 p-3 sm:max-h-[470px] sm:p-5">
+      <div className={cn("max-h-[240px] overflow-y-auto bg-muted/40 p-3 sm:p-5", call ? "border-b sm:max-h-[470px]" : "sm:max-h-[calc(100dvh-17rem)] sm:min-h-[420px]")}>
         <EmailContent decision={d} />
         {d.source !== "gmail" && <p className="px-1 pt-3 text-xs text-muted-foreground">An example email. Oscar keeps only the start of each one.</p>}
       </div>
 
-      <div className="flex flex-col gap-3 bg-surface-hover/40 px-4 py-4 sm:px-[22px]">
+      {call && <div className="flex flex-col gap-3 bg-surface-hover/40 px-4 py-4 sm:px-[22px]">
         <div className="flex items-start gap-3">
           <OscarAvatar size={34} mood={level === "ESCALATE" ? "alert" : level === "ASK_FIRST" ? "curious" : "calm"} className="shrink-0" />
           <div className="flex min-w-0 flex-col gap-1">
@@ -118,7 +129,7 @@ export function ReviewCard({ item, items, children }: { item: DecisionWithFeedba
           </div>
         </div>
         {children}
-      </div>
+      </div>}
     </article>
   );
 }

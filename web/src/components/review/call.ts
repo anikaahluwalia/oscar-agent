@@ -3,7 +3,7 @@
 
 import type { Action, DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
-import { DOABLE, KIND_NAMES, REPLIES, wouldOnly } from "@/lib/labels";
+import { DOABLE, REPLIES, wouldOnly } from "@/lib/labels";
 
 // Mirrors ACTION_PHRASES and ACTION_DONE in oscar/voice.py.
 const PHRASE: Record<Action, string> = {
@@ -97,13 +97,6 @@ export function smallPrint(item: DecisionWithFeedback): string | null {
   if (real && !d.acting) return "I was only reading your inbox then, so nothing changed in Gmail.";
   if (real && !DOABLE.has(d.action) && d.autonomy_level !== "ESCALATE") return "This isn't something I do in Gmail, so nothing changed there.";
   return null;
-}
-
-/** The kind of email he took it for, when he knows. */
-export function kindOf(item: DecisionWithFeedback): string | null {
-  const kind = item.decision.email_type;
-  if (!kind || kind === "unknown" || kind === "bulk") return null;
-  return KIND_NAMES[kind] ?? kind.replace(/_/g, " ");
 }
 
 /** How many emails Oscar has from this sender from before this one. */

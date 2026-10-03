@@ -171,8 +171,12 @@ export const PROTECTED_RULES: ProtectedRule[] = [
 export const isOldWay = (review: Review | null) =>
   !!review && !review.complete && review.label !== "CORRECT" && review.label !== "SKIP";
 
-/** Real-inbox decisions not graded yet: not reviewed, or only half-answered. */
-export const toGrade = (i: DecisionWithFeedback) => i.decision.source === "gmail" && (!i.review || isOldWay(i.review));
+/** Real-inbox decisions not graded yet: not reviewed, or only half-answered. A stop you answered in Safety review counts as looked at. */
+export const toGrade = (i: DecisionWithFeedback) => i.decision.source === "gmail" && !i.safety_review && (!i.review || isOldWay(i.review));
+
+/** Stopped by a safety rule: the floor, a check on the email, or the model reading it as risky. Mirrors oscar/safety_review.py. */
+export const isSafetyStop = (d: Decision) =>
+  d.autonomy_level === "ESCALATE" && (d.safety_flags.length > 0 || ["safety_check", "model_check", "floor"].includes(d.level_source));
 
 /** While Oscar only reads your inbox, checking his calls is what's waiting on you. Once he acts, his asks are. */
 export const needsReview = (i: DecisionWithFeedback) => toGrade(i) && !i.decision.acting;
@@ -203,3 +207,53 @@ export const KIND_NAMES: Record<string, string> = {
   commitment: "Would commit you to something",
   instructions_for_ai: "Instructions aimed at an AI",
 };
+
+/**
+ * Short names for each kind of email, for the pill on an email and the Why panel. The kinds are
+ * Oscar's own (classifier.TYPES and understand.KINDS), so this only names them.
+ */
+export const TYPE_NAMES: Record<string, string> = {
+  marketing: "Promotion",
+  newsletter: "Newsletter",
+  job_alert: "Job alert",
+  social_notification: "Social notification",
+  receipt: "Receipt or order",
+  account_update: "Account update",
+  question: "Question",
+  personal: "Personal",
+  cold_outreach: "Cold outreach",
+  meeting_invite: "Meeting invite",
+  urgent_issue: "Urgent issue",
+  security_alert: "Security alert",
+  money_request: "Money request",
+  credential_request: "Password or code request",
+  scam: "Scam",
+  commitment: "Commitment",
+  instructions_for_ai: "Instructions for an AI",
+  promotion: "Mail to unsubscribe from",
+  deletion_request: "Asks to delete",
+  forward_request: "Asks to forward",
+  confirmation_request: "Asks to confirm",
+  fyi: "FYI",
+  // Only ever set by a safety check, or when Oscar couldn't tell.
+  prompt_injection: "Instructions for an AI",
+  sensitive_request: "Asks for private info",
+  bulk: "Bulk mail",
+  unknown: "Not sure",
+  other: "Something else",
+};
+
+export const typeName = (type: string | null | undefined) => TYPE_NAMES[type ?? "unknown"] ?? (type ?? "unknown").replace(/_/g, " ");
+
+/** What kind of email this is now: your latest correction, or what Oscar read it as. */
+export const typeOf = (i: DecisionWithFeedback) => i.classification?.corrected_type ?? i.decision.email_type ?? "unknown";
+
+/** What each family of email is called, for patterns across senders (oscar/preferences.py FAMILIES). */
+export const FAMILY_NAMES: Record<string, string> = {
+  bulk_mail: "Promotions and newsletters",
+  receipt: "Receipts and orders",
+  fyi: "FYIs and account updates",
+  notification: "Social notifications",
+};
+
+export const familyName = (family: string) => FAMILY_NAMES[family] ?? typeName(family);
