@@ -1565,3 +1565,36 @@ title. Sender exceptions shows the first 8 and a Show all, at every size.
 - The extension's new settings (showing him, the corner, animation and the card switches) have
   been tried on real Gmail, but they have no automated test. The reload fix was tested on a
   stand-in page, where the old version threw the same error.
+
+## Stage 16 — Learning from your last six months
+
+A new Oscar knows nothing, so he asks about every harmless email. Now, the first time an account
+connects, he looks back over about six months of it to see how you've handled each kind of email,
+and asks you about the few clearest habits (`oscar/cold_start.py`).
+
+- **Only the first time.** It starts on its own when an account connects and Oscar hasn't read any
+  of its email yet. Once you've answered or skipped, it never runs again for that account. An
+  account he already reads can start it by hand from Today.
+- **Read-only, enforced.** The scan always uses a read-only Gmail client (`GmailClient(read_only=True)`),
+  which refuses every write before Gmail is asked. It reads with a Gmail search
+  (`newer_than:6m`), page by page, then each email's labels, headers and preview. No model: the
+  rules say what kind of email each one is. At most 5,000 emails.
+- **What it counts.** For each kind of email: how many left the inbox (archived), stayed and were
+  read, or stayed unread. Emails a safety rule would stop, and ones the rules couldn't read, are
+  left out. A habit needs 6 emails from 3 senders with 80% doing the same thing, and is about a
+  kind of email, never one sender, so a shop's password-change notice can't pick up how you treat
+  its promotions. Only kinds he'd archive, mark as read or label count: he'd reply to a question
+  from a person, so a habit about those would never be used.
+- **Evidence, not permission.** Nothing changes until you answer. Just handle them, Handle + tell me
+  and Keep asking become the same "for emails like this" rule the Review page and chat make
+  (`ALWAYS_DO_THIS` quietly or with a heads up, `ALWAYS_ASK_ME`). Not a useful pattern saves nothing.
+  Every safety check still runs after it.
+- **Picks up where it stopped.** Progress is saved in the account's folder (`cold_start.json`) after
+  every page and every 25 emails, so a restart carries on, and accounts never mix.
+
+### Not done
+
+- Habits about one sender. A sender rule in the learning applies to all of that sender's email with
+  the same action, which is what this shouldn't do, so only kinds of email are offered.
+- Replies. Gmail's labels don't say reliably whether you replied, so it isn't counted.
+- Kinds the rules can't name (a recruiter's email, say) can't become a habit without the model.
