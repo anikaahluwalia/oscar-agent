@@ -238,8 +238,11 @@ def patterns(history: History) -> list[dict]:
             continue
         level = apply_floor(row["action"], row["level"], "")[0] if row["level"] else None
         key = (row["kind"], row["action"])
+        # A rule set from your last six months (oscar/cold_start.py) wasn't set on an email, so it's
+        # changed on the newest email like it instead.
+        rule_on = rules.get(key) if row["scope"] == "kind" and row["rule"] else None
         rows.append({**row, "level": level, "status": evidence_label(row, prefs),
-                     "decision_id": rules.get(key) if row["scope"] == "kind" and row["rule"] else None,
+                     "decision_id": rule_on if rule_on in history.decisions else (examples.get(key) if rule_on else None),
                      "example_id": examples.get(key)})
     order = {"rule": 0, "strong": 1, "moderate": 2, "learning": 3}
     return sorted(rows, key=lambda r: (order[r["status"]], -r["evidence"]))

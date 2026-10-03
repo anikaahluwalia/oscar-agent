@@ -27,6 +27,7 @@ from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, labe
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar import app_settings
+from oscar import cold_start
 from oscar import categories as user_categories
 from oscar.categories import CategoryError
 from oscar.classification import EMAIL_TYPES, RISKY_TYPES, ClassificationError, ClassificationFeedback, record_classification, type_hints
@@ -240,6 +241,56 @@ def update_app_settings(changes: dict, path: Path = Depends(get_app_settings_pat
     try:
         return app_settings.update(path, changes)
     except app_settings.AppSettingsError as e:
+        raise HTTPException(400, str(e))
+
+
+# --- Learning from your last six months, the first time (oscar/cold_start.py) ------------------
+
+@app.get("/cold-start")
+def cold_start_status(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
+                      real: History = Depends(get_real_history)) -> dict:
+    """How the look back over your last six months is going, and the habits to answer."""
+    if not tokens.load():
+        return {"state": "unavailable"}
+    if cold_start.status(real)["state"] == "running" and not cold_start.is_running(real):
+        cold_start.start(real, tokens, http)  # the API stopped partway: carry on where it left off
+    return {**cold_start.status(real), "new_account": not real.decisions}
+
+
+@app.post("/cold-start/start")
+def cold_start_begin(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
+                     real: History = Depends(get_real_history)) -> dict:
+    """Start the look back (or carry on after a stop or a Gmail error). Never runs again once done."""
+    if not tokens.load():
+        raise HTTPException(409, "Connect Gmail first.")
+    cold_start.start(real, tokens, http)
+    return cold_start.status(real)
+
+
+@app.post("/cold-start/skip")
+def cold_start_skip(real: History = Depends(get_real_history)) -> dict:
+    return cold_start.skip(real)
+
+
+class ColdStartAnswer(BaseModel):
+    pattern_id: str
+    choice: Literal["handle", "tell", "ask", "reject"]
+
+
+@app.post("/cold-start/answer")
+def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real_history)) -> dict:
+    """Your answer to one habit he found. Saved as a "for emails like this" rule, so safety still wins."""
+    try:
+        return cold_start.answer(real, request.pattern_id, request.choice)
+    except cold_start.ColdStartError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/cold-start/done")
+def cold_start_done(real: History = Depends(get_real_history)) -> dict:
+    try:
+        return cold_start.finish(real)
+    except cold_start.ColdStartError as e:
         raise HTTPException(400, str(e))
 
 
@@ -664,7 +715,10 @@ def google_callback(
     tokens.save(saved)
     account_file().parent.mkdir(parents=True, exist_ok=True)
     account_file().write_text(saved["address"])
-    stop_acting(get_real_history())  # the account just connected: a new connection starts with acting off
+    real = get_real_history()
+    stop_acting(real)  # the account just connected: a new connection starts with acting off
+    if cold_start.is_new(real):
+        cold_start.start(real, tokens, http)  # a brand-new account: look back over its last six months
     return _back_to_settings("connected")
 
 

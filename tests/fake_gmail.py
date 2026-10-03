@@ -74,9 +74,16 @@ class FakeGmail:
             return httpx.Response(200, json={"id": m["id"], "labelIds": m["labelIds"]})
         if path == "/messages":
             q = request.url.params.get("q")
-            if q:
+            if q and "to:" in q:
                 to = q.split("to:")[1]
                 return httpx.Response(200, json={"messages": [{"id": "s"}] if to in self.sent_to else []})
+            if q:  # a search, like the six-month look back: every message, a page at a time
+                ids = list(self.messages)
+                start = int(request.url.params.get("pageToken") or 0)
+                size = int(request.url.params.get("maxResults") or 100)
+                page = [{"id": i, "threadId": self.messages[i]["threadId"]} for i in ids[start:start + size]]
+                more = start + size < len(ids)
+                return httpx.Response(200, json={"messages": page, **({"nextPageToken": str(start + size)} if more else {})})
             return httpx.Response(200, json={"messages": [{"id": i, "threadId": m["threadId"]} for i, m in self.messages.items()]})
         if path.startswith("/messages/"):
             m = self.messages.get(path.split("/")[2])
