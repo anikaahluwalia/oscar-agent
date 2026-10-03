@@ -198,3 +198,53 @@ def test_his_note_only_says_he_did_it_if_he_did(api):
     done, not_done = decision_for(real, "r1"), decision_for(real, "o1")
     assert real.action_for(done.id) and not real.action_for(not_done.id)
     assert "I'd" in not_done.message and "I'd" not in done.message
+
+
+# --- Yes on "Approve actions" on Today ---------------------------------------------------------
+
+def test_yes_to_always_also_does_what_was_already_waiting(api):
+    second = new("n2", "digest@letters.example", "Next week", "More top stories. View in browser. Manage your preferences.")
+    other = new("n3", "news@other.example", "Digest", "Weekly digest. View in browser.")
+    client, real, fake = api([NEWSLETTER, second, other])
+    client.post("/gmail/sync")
+    first = decision_for(real, "n1")
+    assert first.autonomy_level == "ASK_FIRST" and decision_for(real, "n2").autonomy_level == "ASK_FIRST"
+    reply = client.post("/feedback", json={"decision_id": first.id, "kind": "ALWAYS_DO_THIS"}).json()["reply"]
+    assert "archived the 2 that were waiting" in reply
+    assert "INBOX" not in fake.messages["n1"]["labelIds"] and "INBOX" not in fake.messages["n2"]["labelIds"]
+    assert "INBOX" in fake.messages["n3"]["labelIds"], "another sender is left alone"
+    assert all(real.action_for(decision_for(real, m).id).by == "you" for m in ("n1", "n2"))
+    # Each one can still be undone on its own.
+    assert client.post("/feedback", json={"decision_id": decision_for(real, "n2").id, "kind": "UNDO"}).status_code == 200
+    assert "INBOX" in fake.messages["n2"]["labelIds"]
+
+
+def test_yes_to_always_does_nothing_while_acting_is_off(api):
+    client, real, fake = api([NEWSLETTER])
+    client.post("/gmail/sync")
+    client.post("/gmail/acting", json={"on": False})
+    reply = client.post("/feedback", json={"decision_id": decision_for(real, "n1").id, "kind": "ALWAYS_DO_THIS"}).json()["reply"]
+    assert "waiting" not in reply and {"INBOX", "UNREAD"} <= set(fake.messages["n1"]["labelIds"])
+    assert real.action_for(decision_for(real, "n1").id) is None
+
+
+def test_yes_to_always_never_does_a_risky_action_in_bulk(api):
+    promo = [new(f"u{i}", "hello@fitnessapp.example", "We miss you!", "Come back! Click here to unsubscribe from these emails.")
+             for i in range(2)]
+    client, real, fake = api(promo)
+    client.post("/gmail/sync")
+    ask = decision_for(real, "u0")
+    assert ask.action == "UNSUBSCRIBE" and ask.autonomy_level == "ASK_FIRST"
+    client.post("/feedback", json={"decision_id": ask.id, "kind": "ALWAYS_DO_THIS"})
+    assert all(real.action_for(decision_for(real, f"u{i}").id) is None for i in range(2))
+    assert not [f for f in real.feedback if f.kind == "APPROVE"], "each still waits for you"
+
+
+def test_a_rule_typed_in_the_basic_chat_also_does_what_was_waiting(api, monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    second = new("n2", "digest@letters.example", "Next week", "More top stories. View in browser. Manage your preferences.")
+    client, real, fake = api([NEWSLETTER, second])
+    client.post("/gmail/sync")
+    reply = client.post("/chat", json={"message": "always archive emails from digest@letters.example"}).json()["reply"]
+    assert "archived the 2 that were waiting" in reply
+    assert "INBOX" not in fake.messages["n1"]["labelIds"] and "INBOX" not in fake.messages["n2"]["labelIds"]

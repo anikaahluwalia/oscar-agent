@@ -29,7 +29,7 @@ from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, permissions
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
-from oscar.preferences import Preferences
+from oscar.preferences import HABIT_ACTIONS, Preferences
 from oscar.review import teaching
 from oscar.voice import describe_learning
 
@@ -279,9 +279,21 @@ class ChatRequest(BaseModel):
 
 
 @app.post("/chat", response_model=ModelReply)
-def chat(request: ChatRequest, history: History = Depends(get_history), http: httpx.Client = Depends(get_http)) -> ModelReply:
+def chat(request: ChatRequest, history: History = Depends(get_history), http: httpx.Client = Depends(get_http),
+         tokens: gmail.TokenStore = Depends(get_tokens)) -> ModelReply:
     """Talk to Oscar. With a model key he uses read-only tools on his own records; without one, the basic chat."""
-    return talk(history, request.message, request.history, http, request.decision_id)
+    before = len(history.feedback)
+    reply = talk(history, request.message, request.history, http, request.decision_id)
+    # The basic chat saves a rule you type straight away. Like a yes anywhere else, an "always do
+    # this" also does what's already waiting from that sender. (The model only proposes; your yes
+    # on its card goes through /feedback.)
+    rules = [e for e in history.feedback[before:] if e.kind == FeedbackKind.ALWAYS_DO_THIS and not e.blocked_by_floor]
+    for event in rules:
+        decision = history.get_decision(event.decision_id)
+        done = _approve_waiting(history, decision, tokens, http) if decision else None
+        if done:
+            reply = reply.model_copy(update={"reply": done})
+    return reply
 
 
 @app.get("/chat/status")
@@ -334,22 +346,9 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
     if decision is None:
         raise HTTPException(404, f"I can't find decision {request.decision_id}.")
     try:
-        # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back. Gmail
-        # goes first, and the feedback is only saved if it worked: it never says "done" (or teaches
-        # Oscar) when nothing happened.
-        done = history.action_for(decision.id) if decision.source == "gmail" else None
-        undoable = bool(done and not done.undone_at)
-        check_allowed(decision, request.kind, request.edited_text, undoable)
-        if decision.source == "gmail" and decision.acting:
-            if request.kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
-                if not can_do(decision):
-                    raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
-                if not acting_on(tokens, history):
-                    raise HTTPException(409, "Turn on \"Let Oscar act in Gmail\" in Settings first.")
-                do(history, gmail.GmailClient(tokens, http), decision, by="you")
-            elif request.kind == FeedbackKind.UNDO:
-                undo(history, gmail.GmailClient(tokens, http), decision.id)
-        event, reply = record_feedback(history, request.decision_id, request.kind, request.edited_text, undoable)
+        event, reply = _answer(history, decision, request.kind, request.edited_text, tokens, http)
+        if request.kind == FeedbackKind.ALWAYS_DO_THIS and not event.blocked_by_floor:
+            reply = _approve_waiting(history, decision, tokens, http) or reply
     except (FeedbackError, ActionError) as e:
         raise HTTPException(400, str(e))
     except gmail.GmailError as e:
@@ -357,6 +356,53 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
     except httpx.HTTPError:
         raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
     return FeedbackResponse(event=event, reply=reply)
+
+
+def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_text: str | None,
+            tokens: gmail.TokenStore, http: httpx.Client) -> tuple[FeedbackEvent, str]:
+    # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back. Gmail
+    # goes first, and the feedback is only saved if it worked: it never says "done" (or teaches
+    # Oscar) when nothing happened.
+    done = history.action_for(decision.id) if decision.source == "gmail" else None
+    undoable = bool(done and not done.undone_at)
+    check_allowed(decision, kind, edited_text, undoable)
+    if decision.source == "gmail" and decision.acting:
+        if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
+            if not can_do(decision):
+                raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
+            if not acting_on(tokens, history):
+                raise HTTPException(409, "Turn on \"Let Oscar act in Gmail\" in Settings first.")
+            do(history, gmail.GmailClient(tokens, http), decision, by="you")
+        elif kind == FeedbackKind.UNDO:
+            undo(history, gmail.GmailClient(tokens, http), decision.id)
+    return record_feedback(history, decision.id, kind, edited_text, undoable)
+
+
+DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled"}
+
+
+def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenStore, http: httpx.Client) -> str | None:
+    """A yes to "always do this" also does the asks already waiting from that sender for that
+    action, as if you'd approved each one, so you don't have to go and approve them too. Only
+    for the easy-to-undo actions (archive, mark read, label): anything else still comes to you
+    one at a time. Each is done (and undoable) exactly as an Approve would be."""
+    if decision.action not in HABIT_ACTIONS:
+        return None
+    waiting = [d for d in needs_you(history)[AutonomyLevel.ASK_FIRST]
+               if d.sender == decision.sender and d.action == decision.action]
+    done = 0
+    for d in waiting:
+        try:
+            _answer(history, d, FeedbackKind.APPROVE, None, tokens, http)
+            done += 1
+        except HTTPException:
+            break  # acting is off: none of them can be done
+        except (FeedbackError, ActionError, gmail.GmailError, httpx.HTTPError):
+            continue  # that one stays on your list
+    if not done:
+        return None
+    were = "one that was" if done == 1 else f"{done} that were"
+    return f"Got it! I {DONE_WORDS[decision.action]} the {were} waiting, and I'll take care of these from now on."
 
 
 def acting_on(tokens: gmail.TokenStore, real: History) -> bool:

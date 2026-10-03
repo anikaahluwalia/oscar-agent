@@ -11,7 +11,8 @@ const ASKS: Partial<Record<Action, (who: string) => React.ReactNode>> = {
 /**
  * Where Oscar is close but not allowed to act alone yet: an easy-to-undo action you've said yes
  * to for a sender at least twice, never no, with no level learned yet. Yes is a rule from you
- * ("always do this": he does it and tells you, and the safety rules still win); No is "always ask".
+ * ("always do this": he does it and tells you, and the safety rules still win), and he does the
+ * ones from that sender already waiting too, so you don't approve them again; No is "always ask".
  */
 export function candidates(learned: LearnedRow[], items: DecisionWithFeedback[]) {
   return learned
@@ -52,7 +53,8 @@ export function ApproveActions({ learned, items, onAnswer }: {
         </div>
       ))}
       <p className="text-[13px] text-muted-foreground">
-        Yes means I&apos;ll do it and tell you. Anything risky still comes to you. Change it any time in What Oscar knows.
+        Yes means I&apos;ll do the ones waiting now, and from now on I&apos;ll do it and tell you. Anything risky still comes
+        to you. Change it any time in What Oscar knows.
       </p>
     </section>
   );
