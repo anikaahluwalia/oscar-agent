@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from oscar.models import Decision
 
 if TYPE_CHECKING:
+    from oscar.act import ActionRecord
     from oscar.feedback import FeedbackEvent
     from oscar.inbox import FollowUp
     from oscar.review import Review
@@ -39,6 +40,7 @@ class History:
         self.reviews: list[Review] = []
         self.follow_ups: list[FollowUp] = []
         self.settings: dict = {}  # this inbox's preferences, e.g. {"bulk_action": "MARK_READ"}
+        self.actions: dict[str, ActionRecord] = {}  # Stage 12: what Oscar did in Gmail, by decision id
         self.data_dir = data_dir
         if data_dir is not None:
             data_dir.mkdir(parents=True, exist_ok=True)
@@ -99,6 +101,14 @@ class History:
             decision = earlier
         return None
 
+    def save_action(self, record: ActionRecord) -> None:
+        """Record an action, or its undo. The file keeps every change; the latest one stands."""
+        self.actions[record.decision_id] = record
+        self._append("actions.jsonl", record.model_dump_json())
+
+    def action_for(self, decision_id: str) -> ActionRecord | None:
+        return self.actions.get(decision_id)
+
     def add_follow_up(self, follow_up: FollowUp) -> None:
         self.follow_ups.append(follow_up)
         self._append("follow_ups.jsonl", follow_up.model_dump_json())
@@ -116,8 +126,9 @@ class History:
         self.feedback.clear()
         self.reviews.clear()
         self.follow_ups.clear()
+        self.actions.clear()
         if self.data_dir is not None:
-            for name in ("decisions.jsonl", "feedback.jsonl", "reviews.jsonl", "follow_ups.jsonl"):
+            for name in ("decisions.jsonl", "feedback.jsonl", "reviews.jsonl", "follow_ups.jsonl", "actions.jsonl"):
                 (self.data_dir / name).unlink(missing_ok=True)
 
     def _append(self, filename: str, line: str) -> None:
@@ -127,6 +138,7 @@ class History:
             f.write(line + "\n")
 
     def _load(self) -> None:
+        from oscar.act import ActionRecord
         from oscar.feedback import FeedbackEvent
         from oscar.inbox import FollowUp
         from oscar.review import Review
@@ -140,6 +152,9 @@ class History:
             self.reviews.append(Review.model_validate_json(line))
         for line in self._read_lines("follow_ups.jsonl"):
             self.follow_ups.append(FollowUp.model_validate_json(line))
+        for line in self._read_lines("actions.jsonl"):
+            record = ActionRecord.model_validate_json(line)
+            self.actions[record.decision_id] = record
         settings = self.data_dir / "settings.json"
         if settings.exists():
             import json
