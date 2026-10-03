@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Oscar for Gmail</title>
+<style>
+  body { margin: 0; padding: 32px; font-family: system-ui, sans-serif; color: #16171a; background: #f6f6f7; }
+  main { max-width: 460px; display: flex; flex-direction: column; gap: 16px; }
+  label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; }
+  input { height: 40px; padding: 0 12px; border: 1px solid #dadade; border-radius: 10px; font: inherit; font-weight: 400; }
+  button { align-self: flex-start; height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: #16171a; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  p { margin: 0; color: #5c5f68; font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <h1 style="margin: 0; font-size: 24px">Oscar for Gmail</h1>
+  <p>Where Oscar runs on this computer. The extension only talks to Oscar's API on localhost.</p>
+  <label>Oscar's API <input id="api" type="url" placeholder="http://localhost:8000"></label>
+  <label>Oscar's app <input id="app" type="url" placeholder="http://localhost:3000"></label>
+  <button id="save" type="button">Save</button>
+  <p id="said" role="status"></p>
+</main>
+<script src="options.js"></script>
+</body>
+</html>
