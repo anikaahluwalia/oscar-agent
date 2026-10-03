@@ -36,7 +36,7 @@ export function ChatCorner() {
     <Link
       href="/chat"
       aria-label="Chat with Oscar"
-      className="group fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col items-end gap-1 md:right-6 md:bottom-6"
+      className="group fixed right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col items-end gap-1 md:right-3 md:bottom-6"
     >
       <span
         className={cn(
