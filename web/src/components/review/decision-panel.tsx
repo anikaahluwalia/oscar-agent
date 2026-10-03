@@ -77,6 +77,9 @@ export function DecisionPanel({ item }: { item: DecisionWithFeedback }) {
         <div className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
           <StatusPill level={decision.autonomy_level} className="px-3 py-1 text-sm" />
           <span className="font-medium">{ACTIONS[decision.action]}</span>
+          {item.done && (
+            <span className="ml-auto text-xs text-muted-foreground">{item.done.undone_at ? "Undone in Gmail" : "Done in Gmail"}</span>
+          )}
         </div>
         {what && (
           <p className="text-sm">

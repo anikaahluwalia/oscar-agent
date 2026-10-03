@@ -31,6 +31,9 @@ export const notifyChanged = () => window.dispatchEvent(new Event(CHANGED));
 
 export const API_DOWN = "I can't reach my API. Start it from the repo root with: .venv/bin/uvicorn oscar.api:app --reload";
 
+/** Gmail is connected and Oscar only reads it (before Stage 12, or with acting turned off). */
+export const isReadOnly = (data: OscarData) => data.gmail.connected && data.gmail.read_only;
+
 export type OscarData = {
   items: DecisionWithFeedback[]; // Oscar's latest decision on each email
   all: DecisionWithFeedback[]; // every decision, for counting your answers

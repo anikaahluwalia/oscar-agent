@@ -1,6 +1,6 @@
 // Plain-language labels for what the API returns.
 
-import type { Action, Decision, DecisionWithFeedback, FeedbackKind, Level, Review, ReviewLabel } from "@/lib/api";
+import type { Action, ActionDone, Decision, DecisionWithFeedback, FeedbackKind, Level, Review, ReviewLabel } from "@/lib/api";
 
 /** What each autonomy level is called in the app. */
 export const STATUS: Record<Level, { label: string; would: string; pill: string; dot: string }> = {
@@ -41,11 +41,21 @@ const DONE: Record<Action, string> = {
   MOVE_MONEY: "Moved money",
 };
 
-/** One line for what Oscar did with an email: "Archived", "Wants to unsubscribe", "Stopped: move money". */
-export function whatOscarDid(decision: Decision): string {
+/** A decision on the real inbox made while Oscar only read it: what he would have done. */
+export const wouldOnly = (decision: Decision) => decision.source === "gmail" && !decision.acting;
+
+/**
+ * One line for what Oscar did with an email: "Archived", "Wants to unsubscribe", "Stopped: move money".
+ * On the real inbox it only says he did something if Gmail says he did (done).
+ */
+export function whatOscarDid(decision: Decision, done?: ActionDone | null): string {
   const { action, autonomy_level: level } = decision;
-  // On the real inbox Oscar only reads, so it's what he would have done.
-  if (decision.source === "gmail") {
+  if (decision.source === "gmail" && decision.acting && (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY")) {
+    if (!done) return `Would ${ACTIONS[action].toLowerCase()}`; // decided, but not something he does in Gmail
+    return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[action];
+  }
+  // Made while Oscar only read the inbox: what he would have done.
+  if (wouldOnly(decision)) {
     if (level === "ASK_FIRST") return `Would ask to ${ACTIONS[action].toLowerCase()}`;
     if (level === "ESCALATE") return `Would stop: ${ACTIONS[action].toLowerCase()}`;
     return `Would ${ACTIONS[action].toLowerCase()}`;
@@ -144,8 +154,11 @@ export const PROTECTED_RULES: ProtectedRule[] = [
 export const isOldWay = (review: Review | null) =>
   !!review && !review.complete && review.label !== "CORRECT" && review.label !== "SKIP";
 
-/** Real-inbox emails still waiting on you in the Review page: not reviewed, or only half-answered. */
-export const needsReview = (i: DecisionWithFeedback) => i.decision.source === "gmail" && (!i.review || isOldWay(i.review));
+/** Real-inbox decisions not graded yet: not reviewed, or only half-answered. */
+export const toGrade = (i: DecisionWithFeedback) => i.decision.source === "gmail" && (!i.review || isOldWay(i.review));
+
+/** While Oscar only reads your inbox, checking his calls is what's waiting on you. Once he acts, his asks are. */
+export const needsReview = (i: DecisionWithFeedback) => toGrade(i) && !i.decision.acting;
 
 /** What each kind of email (classifier.TYPES) is called in Settings. */
 export const KIND_NAMES: Record<string, string> = {

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ClipboardCheckIcon, GaugeIcon, HouseIcon, MailIcon, SettingsIcon, UserIcon } from "lucide-react";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { needsReview } from "@/lib/labels";
-import { isOpen, useOscar } from "@/lib/use-oscar";
+import { isOpen, isReadOnly, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; short?: string; icon: typeof HouseIcon };
@@ -24,7 +24,7 @@ const SETTINGS: NavItem = { href: "/settings", label: "Settings", icon: Settings
 export function useReviewBadge() {
   const { data } = useOscar();
   if (!data) return 0;
-  return data.gmail.connected ? data.items.filter(needsReview).length : data.items.filter(isOpen).length;
+  return isReadOnly(data) ? data.items.filter(needsReview).length : data.items.filter(isOpen).length;
 }
 
 function NavLink({ href, label, icon: Icon, badge }: NavItem & { badge?: number }) {
@@ -55,7 +55,7 @@ function Account() {
       </span>
       <span className="flex min-w-0 flex-col leading-tight">
         <span className="truncate font-medium">{data?.gmail.connected ? data.gmail.address : "Demo inbox"}</span>
-        <span className="text-xs text-muted-foreground">{data?.gmail.connected ? "Gmail · read-only for now" : "Gmail not connected"}</span>
+        <span className="text-xs text-muted-foreground">{!data?.gmail.connected ? "Gmail not connected" : data.gmail.acting ? "Gmail · Oscar can act" : "Gmail · read-only"}</span>
       </span>
     </div>
   );

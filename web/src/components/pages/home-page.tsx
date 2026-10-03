@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { bringInDemo, checkGmail } from "@/lib/demo";
 import { isOldWay, needsReview } from "@/lib/labels";
-import { isOpen, useOscar, type OscarData } from "@/lib/use-oscar";
+import { isOpen, isReadOnly, useOscar, type OscarData } from "@/lib/use-oscar";
 
 const TOP = 5; // what needs you, before "see all"
 
@@ -27,7 +27,7 @@ function More({ href, children }: { href: string; children: React.ReactNode }) {
 /** What's waiting on you, most urgent first: what he stopped, then what he asked about.
  * On the real inbox (read-only), his calls to check, then old reviews to finish. */
 function waiting(data: OscarData): DecisionWithFeedback[] {
-  if (data.gmail.connected) {
+  if (isReadOnly(data)) {
     const calls = data.items.filter(needsReview);
     return [...calls.filter((i) => !isOldWay(i.review)), ...calls.filter((i) => isOldWay(i.review))];
   }
@@ -45,14 +45,14 @@ export function HomePage() {
     );
   }
 
-  const readOnly = data.gmail.connected;
+  const readOnly = isReadOnly(data);
   const needs = waiting(data);
 
   return (
     <Page>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <OscarStatusHeader items={data.items} brief={data.brief} realInbox={readOnly} />
-        {readOnly && (
+        {data.gmail.connected && (
           <Button variant="outline" className="rounded-full" onClick={checkGmail}>
             Check now
           </Button>
@@ -60,7 +60,7 @@ export function HomePage() {
       </div>
 
       {data.items.length === 0 ? (
-        readOnly ? (
+        data.gmail.connected ? (
           <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
             <Button onClick={checkGmail}>Check now</Button>
           </EmptyState>

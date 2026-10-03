@@ -53,6 +53,7 @@ export interface Decision {
   learned: boolean;
   level_source: "policy" | "guess" | "learned" | "floor" | "safety_check" | "caution" | "model_check";
   understood_by: "rules" | "model" | null; // Stage 11: who worked out what the email is (null: a guess)
+  acting?: boolean; // Stage 12: made while Oscar could act in Gmail; before that, only what he would do
   summary: string; // the model's one line on what the email is, when it read it
   steps: string[];
   /** "gmail" is a real inbox. Oscar only reads it for now, so the decision is what he would do. */
@@ -161,7 +162,20 @@ export interface GmailStatus {
   connected_at: number | null;
   last_sync: number | null;
   auto_check_minutes: number; // 0 means Oscar only checks when you ask
+  can_act: boolean; // Stage 12: the connection allows changing labels
+  acting: boolean; // Oscar acts in Gmail
   read_only: boolean;
+}
+
+/** Something Oscar did in Gmail (Stage 12): the labels it added and removed, and whether it was undone. */
+export interface ActionDone {
+  id: string;
+  action: Action;
+  by: "oscar" | "you";
+  added: string[];
+  removed: string[];
+  done_at: string;
+  undone_at: string | null;
 }
 
 /** A rule Oscar suggests in the chat. Nothing changes until you say yes. */
@@ -197,6 +211,7 @@ export interface DecisionWithFeedback {
   decision: Decision;
   feedback: FeedbackEvent[];
   review: Review | null;
+  done: ActionDone | null; // Stage 12: what Oscar did in Gmail for it
   // Real inbox: what you said he should have done, and how this decision does against it.
   answer: {
     level: Level;
@@ -277,6 +292,9 @@ export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "P
 export const getGmailStatus = () => call<GmailStatus>("/gmail");
 /** A link, not a fetch: it takes you to Google and back. */
 export const gmailConnectUrl = `${API}/auth/google/start`;
+/** Connect again, this time with permission to change labels (Stage 12). */
+export const gmailActUrl = `${API}/auth/google/start?act=true`;
+export const setActing = (on: boolean) => call<{ acting: boolean }>("/gmail/acting", { method: "POST", body: JSON.stringify({ on }) });
 export const syncGmail = () => call<{ new: number; skipped: number }>("/gmail/sync", { method: "POST" });
 export const recheckGmail = () => call<{ new: number; skipped: number }>("/gmail/recheck", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });

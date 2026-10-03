@@ -7,7 +7,7 @@ import { SenderAvatar } from "@/components/review/sender-avatar";
 import { StatusPill } from "@/components/status-pill";
 import { Button } from "@/components/ui/button";
 import { sendReview, type DecisionWithFeedback } from "@/lib/api";
-import { ACTIONS, isOldWay, needsReview } from "@/lib/labels";
+import { ACTIONS, isOldWay, toGrade } from "@/lib/labels";
 import { previewOf } from "@/lib/text";
 import { dayLabel, formatTime } from "@/lib/time";
 import { setHash, useHash } from "@/lib/use-hash";
@@ -51,7 +51,7 @@ function Row({ item, selected, onSelect }: { item: DecisionWithFeedback; selecte
       >
         <span className="relative">
           <SenderAvatar sender={d.sender} size={36} />
-          {needsReview(item) && <span className="absolute -top-0.5 -left-0.5 size-2.5 rounded-full border-2 border-background bg-foreground" aria-label="To review" />}
+          {toGrade(item) && <span className="absolute -top-0.5 -left-0.5 size-2.5 rounded-full border-2 border-background bg-foreground" aria-label="To review" />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
@@ -77,7 +77,7 @@ function Row({ item, selected, onSelect }: { item: DecisionWithFeedback; selecte
  */
 export function ReviewWorkspace({ items }: { items: DecisionWithFeedback[] }) {
   const hash = useHash();
-  const waiting = items.filter(needsReview).length;
+  const waiting = items.filter(toGrade).length;
   const [filter, setFilter] = useState<Filter>(waiting ? "first" : "all");
 
   const firstSeen = useMemo(() => {
@@ -92,7 +92,7 @@ export function ReviewWorkspace({ items }: { items: DecisionWithFeedback[] }) {
   }, [items]);
 
   const filters: { key: Filter; label: string; match: (i: DecisionWithFeedback) => boolean }[] = [
-    { key: "first", label: "Check these first", match: (i) => needsReview(i) && !isOldWay(i.review) },
+    { key: "first", label: "Check these first", match: (i) => toGrade(i) && !isOldWay(i.review) },
     { key: "all", label: "All", match: () => true },
     { key: "unsure", label: "Unsure", match: (i) => i.decision.level_source === "guess" || (i.decision.confidence ?? 0) < 0.7 },
     { key: "new", label: "New senders", match: (i) => firstSeen.has(i.decision.id) },

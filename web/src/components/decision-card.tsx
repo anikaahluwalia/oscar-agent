@@ -12,7 +12,7 @@ import { ReviewPanel } from "@/components/review-panel";
 import { StatusPill } from "@/components/status-pill";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
-import { ACTIONS, FEEDBACK, FLAGS, HOLD_TO_CONFIRM, REPLIES, whatOscarDid } from "@/lib/labels";
+import { ACTIONS, FEEDBACK, FLAGS, HOLD_TO_CONFIRM, REPLIES, whatOscarDid, wouldOnly } from "@/lib/labels";
 import { formatTime } from "@/lib/time";
 import { isAnswered } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
@@ -67,7 +67,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
 
   // The real inbox is read-only for now: what Oscar would do, in one line, and your review.
   // His reasons are behind Why?, so the card stays short. Away from lists, his note shows too.
-  if (decision.source === "gmail") {
+  if (wouldOnly(decision)) {
     return (
       <div className="flex flex-col gap-4 rounded-2xl border bg-card shadow-card p-5">
         {from}
@@ -198,12 +198,15 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
   }
 
   // Handled and FYI: Oscar already did it, so keep it quiet. You can check it or undo it.
-  const undone = feedback.some((f) => f.kind === "UNDO");
+  // On the real inbox there's only something to undo if Gmail says he did it.
+  const real = decision.source === "gmail";
+  const undone = real ? !!item.done?.undone_at : feedback.some((f) => f.kind === "UNDO");
+  const canUndo = real ? !!item.done && !item.done.undone_at : !undone;
   return (
     <div className={cn("flex flex-col gap-3 rounded-2xl border bg-card shadow-card p-5", level === "PROCEED_SILENTLY" && "bg-card/60")}>
       {from}
       <p className="font-medium">
-        {undone ? "Undone. It's back the way it was." : `Oscar: ${whatOscarDid(decision).toLowerCase()}.`}
+        {undone ? "Undone. It's back the way it was." : `Oscar: ${whatOscarDid(decision, item.done).toLowerCase()}.`}
       </p>
       <p className="text-sm text-muted-foreground">{decision.message}</p>
       {youSaid}
@@ -213,7 +216,7 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
             Looks good
           </Button>
         )}
-        {!undone && (
+        {canUndo && (
           <Button size="sm" variant="outline" disabled={busy} onClick={() => give("UNDO")}>
             Undo
           </Button>

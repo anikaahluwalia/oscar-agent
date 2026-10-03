@@ -6,7 +6,7 @@ import { Drawer } from "@/components/drawer";
 import { StatusPill } from "@/components/status-pill";
 import type { AutonomyRow, Decision, LearnedRow } from "@/lib/api";
 import { onOpenWhy } from "@/lib/drawers";
-import { ACTIONS, FLAGS, LEVEL_SOURCES, riskOf, STATUS } from "@/lib/labels";
+import { ACTIONS, FLAGS, LEVEL_SOURCES, riskOf, STATUS, wouldOnly } from "@/lib/labels";
 import { answersFor, useOscar } from "@/lib/use-oscar";
 import { answerLine } from "@/components/preference-card";
 
@@ -47,7 +47,7 @@ export function WhyDrawer() {
   const checks = decision?.steps.slice(1, -1) ?? [];
 
   return (
-    <Drawer open={!!decision} onClose={close} title={decision?.source === "gmail" ? "Why Oscar would do this" : "Why Oscar did this"}>
+    <Drawer open={!!decision} onClose={close} title={decision && wouldOnly(decision) ? "Why Oscar would do this" : "Why Oscar did this"}>
       {decision && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-1">

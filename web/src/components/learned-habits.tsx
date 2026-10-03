@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PreferenceCard, PreferenceControls } from "@/components/preference-card";
 import type { FeedbackKind } from "@/lib/api";
 import { ACTIONS } from "@/lib/labels";
-import { answersFor, useOscar } from "@/lib/use-oscar";
+import { answersFor, isReadOnly, useOscar } from "@/lib/use-oscar";
 
 /** The senders and habits Oscar has picked up, with ways to change each. Was What Oscar Knows. */
 export function LearnedHabits() {
@@ -14,7 +14,7 @@ export function LearnedHabits() {
 
   const tell = (decisionId: string, kind: FeedbackKind) => void feedback(decisionId, kind);
   // On the real inbox Oscar only reads for now, so there's nothing to teach him there yet.
-  const readOnly = data.gmail.connected;
+  const readOnly = isReadOnly(data);
   const limitsFor = (sender: string, action: string) => data.autonomy.find((r) => r.sender === sender && r.action === action);
   const learnedKeys = new Set(data.learned.map((r) => `${r.sender}|${r.action}`));
   const others = data.autonomy.filter((r) => r.floor !== "ESCALATE" && !learnedKeys.has(`${r.sender}|${r.action}`));

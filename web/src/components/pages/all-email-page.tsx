@@ -12,7 +12,7 @@ import { statusLabel } from "@/lib/labels";
 import { dayLabel } from "@/lib/time";
 import { checkGmail } from "@/lib/demo";
 import { setHash, useHash } from "@/lib/use-hash";
-import { useOscar } from "@/lib/use-oscar";
+import { isReadOnly, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 const FILTERS: (Level | "ALL")[] = ["ALL", "ASK_FIRST", "ESCALATE", "PROCEED_AND_NOTIFY", "PROCEED_SILENTLY"];
@@ -47,7 +47,7 @@ export function AllEmailPage() {
     <Page className="max-w-7xl">
       <PageHeader
         title="All email"
-        text={data.gmail.connected ? "Your Gmail, and what Oscar would do with each email. He only reads it." : "Every email, and what Oscar did with it."}
+        text={isReadOnly(data) ? "Your Gmail, and what Oscar would do with each email. He only reads it." : "Every email, and what Oscar did with it."}
       />
       {data.items.length === 0 ? (
         data.gmail.connected ? (
@@ -83,7 +83,7 @@ export function AllEmailPage() {
                     filter === f && "border-transparent bg-foreground text-background hover:text-background",
                   )}
                 >
-                  {f === "ALL" ? "All" : statusLabel(f, data.gmail.connected)}
+                  {f === "ALL" ? "All" : statusLabel(f, isReadOnly(data))}
                 </button>
               ))}
             </div>

@@ -6,7 +6,7 @@ import { AlwaysComesToYou, KindsOfEmail } from "@/components/kinds-of-email";
 import { LearnedHabits } from "@/components/learned-habits";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { getChatStatus, getGmailStatus, getInboxSettings, gmailConnectUrl, setInboxSettings, type BulkAction } from "@/lib/api";
+import { getChatStatus, getGmailStatus, getInboxSettings, gmailActUrl, gmailConnectUrl, setActing, setInboxSettings, type BulkAction } from "@/lib/api";
 import { bringInDemo, checkGmail, disconnectGmailAccount, recheckRecent, startOver } from "@/lib/demo";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { useLocalSetting } from "@/lib/local-setting";
@@ -74,7 +74,7 @@ function Switch({ label, text, on, onChange }: { label: string; text: string; on
 /** After Google sends you back, say how connecting went, then tidy the URL. */
 // The API sends back a short code; only these fixed words are ever shown, so a crafted link can't put words in Oscar's mouth.
 const GMAIL_RESULTS: Record<string, string> = {
-  connected: "Gmail is connected! I'll only read it, so nothing in Gmail will change.",
+  connected: "Gmail is connected! Nothing in Gmail changes unless you let me act.",
   not_configured: "Gmail isn't set up yet. Add your Google keys to .env first.",
   expired: "That sign-in took too long. Try connecting again.",
   cancelled: "Google sign-in was cancelled.",
@@ -147,8 +147,11 @@ function GmailAccount() {
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
-        Oscar can read your inbox but can&apos;t change anything in it. Disconnecting keeps his decisions and your reviews.
+        {gmail.acting
+          ? "Oscar reads your inbox and does the undoable things below. Disconnecting keeps his decisions and your reviews."
+          : "Oscar can read your inbox but can't change anything in it. Disconnecting keeps his decisions and your reviews."}
       </p>
+      <ActingSetting />
       <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
         <p className="max-w-md text-sm text-muted-foreground">
           Re-read your 50 most recent emails with the latest Oscar. His old decisions and your reviews are kept; re-reads
@@ -158,6 +161,60 @@ function GmailAccount() {
           Re-read recent emails
         </Button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Stage 12: letting Oscar act in Gmail. Off until you turn it on, and only after Gmail was connected
+ * with permission to change labels. He only marks read, archives and labels, and only new emails.
+ */
+function ActingSetting() {
+  const { data } = useOscar();
+  const gmail = data?.gmail;
+  if (!gmail?.connected) return null;
+  const facts = (
+    <ul className="flex list-disc flex-col gap-0.5 pl-5 text-sm text-muted-foreground">
+      <li>He marks emails as read, archives them, and puts his own labels on them.</li>
+      <li>On his own only when he&apos;s sure; otherwise he asks, and does it when you approve.</li>
+      <li>Never sends, deletes, unsubscribes or touches money. Anything risky still comes to you.</li>
+      <li>Every action can be undone. Only emails he reads from now on, at most 25 per check.</li>
+    </ul>
+  );
+  if (!gmail.can_act) {
+    return (
+      <div className="flex flex-col gap-3 border-t pt-4">
+        <p className="text-sm font-medium">Let Oscar act in Gmail</p>
+        {facts}
+        <div>
+          <Button asChild size="sm">
+            <a href={gmailActUrl}>Give Oscar permission to act</a>
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Google will ask you to allow Oscar to change your email&apos;s labels. You can turn acting off at any time.
+        </p>
+      </div>
+    );
+  }
+  async function toggle(on: boolean) {
+    try {
+      await setActing(on);
+      notifyChanged();
+      oscarSays(on ? "Okay! I'll take care of the easy ones from now on, and you can undo anything." : "Okay, I'll only read your inbox again.");
+    } catch (e) {
+      oscarSays(e instanceof Error ? e.message : "I can't reach my API right now.");
+    }
+  }
+  return (
+    <div className="flex flex-col gap-3 border-t pt-4">
+      <Switch
+        label="Let Oscar act in Gmail"
+        text={gmail.acting ? "On. He does the easy ones and asks about the rest." : "Off. He only reads your inbox."}
+        on={gmail.acting}
+        onChange={toggle}
+      />
+      {facts}
     </div>
   );
 }

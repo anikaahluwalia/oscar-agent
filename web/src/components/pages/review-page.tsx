@@ -9,7 +9,7 @@ import { ReviewWorkspace } from "@/components/review/review-workspace";
 import { Button } from "@/components/ui/button";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { checkGmail } from "@/lib/demo";
-import { needsReview } from "@/lib/labels";
+import { toGrade } from "@/lib/labels";
 import { isOpen, isUnchecked, useOscar, type OscarData } from "@/lib/use-oscar";
 
 type Feedback = ReturnType<typeof useOscar>["feedback"];
@@ -82,7 +82,7 @@ export function ReviewPage() {
   }
 
   const real = data.items.filter((i) => i.decision.source === "gmail");
-  const waiting = real.filter(needsReview).length;
+  const waiting = real.filter(toGrade).length;
   return (
     <Page className="max-w-7xl gap-6">
       <header className="flex flex-wrap items-center gap-5">
