@@ -6,6 +6,7 @@ than the policy. The floor and the email checks come after it, so they always ge
 the last word.
 """
 
+from oscar.classification import RISKY_TYPES
 from oscar.classifier import classify, is_bulk
 from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
@@ -66,13 +67,17 @@ def confidence_for(source: str, evidence: float = 0.0) -> float:
 
 def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False,
            bulk_action: Action | None = None, understanding: Understanding | None = None,
-           model_first: bool = False, *, safety: bool = True) -> Decision:
+           model_first: bool = False, *, safety: bool = True, type_hint: str | None = None) -> Decision:
     """Oscar's decision on one email. read_only only changes the wording ("I'd archive this"),
     never the level or the action.
 
     understanding is what the model read the email as (Stage 11), if it read it. It fills in
     when the rules found nothing (or, with model_first, replaces a rule action with no safety
     floor). A risky reading can only make him stricter. The checks still run after it.
+
+    type_hint is what you said this sender's emails are (classification.type_hints). It changes
+    only what kind of email he takes it for, so which "emails like this" rule applies; never the
+    action, and never for a risky kind. The safety checks still run on the email afterwards.
 
     safety=False skips the floor, the email checks, the model's risk reading and the caution
     backstop. It's only for measuring what they add, in the simulated inbox: inbox.sync refuses it
@@ -88,6 +93,12 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         understood_by = "model"
     action = classification.action
     guess = classification.matched_pattern is None
+    # You told him what this sender's emails are. Only over a routine reading he recognised: a
+    # guess still asks, and a risky reading (or a risky correction) is never replaced.
+    from_you = bool(type_hint and not guess and type_hint != classification.email_type
+                    and type_hint not in RISKY_TYPES and classification.email_type not in RISKY_TYPES)
+    if from_you:
+        classification = classification.model_copy(update={"email_type": type_hint})
     # What you've taught Oscar for this sender's routine email (or for emails like it) carries over,
     # even when the rules picked a different low-risk action. Only for email he recognised: a habit
     # for a sender's newsletters says nothing about a notice from them he couldn't read. Safety runs after this.
@@ -192,6 +203,9 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
             if suggestion and learned and source == "learned" else None)
     factors = _factors(email, guess, email_type, preferences, used, suggestion.reason if used else None,
                        safety_rule, safety_floor)
+    type_from_you = from_you and email_type == type_hint  # a safety check can still replace it
+    if type_from_you:
+        factors.insert(1, "You told me what this sender's emails are")
 
     return Decision(
         email_id=email.id,
@@ -217,6 +231,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         safety_rule=safety_rule,
         caution=sensitive,
         preference=used,
+        type_from_you=type_from_you,
     )
 
 

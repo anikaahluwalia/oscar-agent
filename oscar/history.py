@@ -14,9 +14,12 @@ from oscar.models import Decision
 
 if TYPE_CHECKING:
     from oscar.act import ActionRecord, Tag
+    from oscar.categories import Category
+    from oscar.classification import ClassificationFeedback
     from oscar.feedback import FeedbackEvent
     from oscar.inbox import FollowUp
     from oscar.review import Review
+    from oscar.safety_review import SafetyReview
 
 
 def default_data_dir() -> Path:
@@ -42,6 +45,13 @@ class History:
         self.settings: dict = {}  # this inbox's settings, e.g. {"acting": true}
         self.actions: dict[str, ActionRecord] = {}  # Stage 12: what Oscar did in Gmail, by decision id
         self.tags: dict[str, Tag] = {}  # the status label Oscar last put on each email, by email id
+        # Stage 13: what kind of email you said each one is, your answers about emails a safety rule
+        # stopped, and your own categories for senders (by address). None of these are feedback he
+        # learns his autonomy from.
+        self.classifications: list[ClassificationFeedback] = []
+        self.safety_reviews: list[SafetyReview] = []
+        self.categories: list[Category] = []
+        self.sender_categories: dict[str, str] = {}
         self.data_dir = data_dir
         if data_dir is not None:
             data_dir.mkdir(parents=True, exist_ok=True)
@@ -102,6 +112,32 @@ class History:
             decision = earlier
         return None
 
+    def add_classification(self, feedback: ClassificationFeedback) -> None:
+        self.classifications.append(feedback)
+        self._append("classifications.jsonl", feedback.model_dump_json())
+
+    def classification_for(self, email_id: str) -> ClassificationFeedback | None:
+        """Your latest word on what kind of email this is, on any read of it."""
+        return next((c for c in reversed(self.classifications) if c.email_id == email_id), None)
+
+    def add_safety_review(self, review: SafetyReview) -> None:
+        self.safety_reviews.append(review)
+        self._append("safety_reviews.jsonl", review.model_dump_json())
+
+    def safety_review_for(self, decision_id: str) -> SafetyReview | None:
+        """Your latest answer about a stopped email. Answering again replaces the earlier one."""
+        return next((r for r in reversed(self.safety_reviews) if r.decision_id == decision_id), None)
+
+    def save_categories(self) -> None:
+        """Categories are small and change in place, so the whole set is written each time."""
+        if self.data_dir is not None:
+            import json
+
+            (self.data_dir / "categories.json").write_text(json.dumps({
+                "categories": [c.model_dump(mode="json") for c in self.categories],
+                "senders": self.sender_categories,
+            }))
+
     def save_action(self, record: ActionRecord) -> None:
         """Record an action, or its undo. The file keeps every change; the latest one stands."""
         self.actions[record.decision_id] = record
@@ -140,9 +176,13 @@ class History:
         self.follow_ups.clear()
         self.actions.clear()
         self.tags.clear()
+        self.classifications.clear()
+        self.safety_reviews.clear()
+        self.categories.clear()
+        self.sender_categories.clear()
         if self.data_dir is not None:
             for name in ("decisions.jsonl", "feedback.jsonl", "reviews.jsonl", "follow_ups.jsonl", "actions.jsonl",
-                         "tags.jsonl"):
+                         "tags.jsonl", "classifications.jsonl", "safety_reviews.jsonl", "categories.json"):
                 (self.data_dir / name).unlink(missing_ok=True)
 
     def _append(self, filename: str, line: str) -> None:
@@ -153,9 +193,12 @@ class History:
 
     def _load(self) -> None:
         from oscar.act import ActionRecord, Tag
+        from oscar.categories import Category
+        from oscar.classification import ClassificationFeedback
         from oscar.feedback import FeedbackEvent
         from oscar.inbox import FollowUp
         from oscar.review import Review
+        from oscar.safety_review import SafetyReview
 
         for line in self._read_lines("decisions.jsonl"):
             decision = Decision.model_validate_json(line)
@@ -172,11 +215,20 @@ class History:
         for line in self._read_lines("tags.jsonl"):
             tag = Tag.model_validate_json(line)
             self.tags[tag.email_id] = tag
+        for line in self._read_lines("classifications.jsonl"):
+            self.classifications.append(ClassificationFeedback.model_validate_json(line))
+        for line in self._read_lines("safety_reviews.jsonl"):
+            self.safety_reviews.append(SafetyReview.model_validate_json(line))
+        import json
+
         settings = self.data_dir / "settings.json"
         if settings.exists():
-            import json
-
             self.settings = json.loads(settings.read_text())
+        categories = self.data_dir / "categories.json"
+        if categories.exists():
+            saved = json.loads(categories.read_text())
+            self.categories = [Category.model_validate(c) for c in saved.get("categories", [])]
+            self.sender_categories = dict(saved.get("senders", {}))
 
     def _read_lines(self, filename: str) -> list[str]:
         path = self.data_dir / filename

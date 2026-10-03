@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, TAGS_PER_CHECK, ActionError, can_do, do, gone, status_label, tag
 from oscar.agent import decide
+from oscar.classification import type_hints
 from oscar.review import teaching
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
@@ -132,7 +133,8 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             continue
         understanding = reader.read(email) if reader else None
         prefs = Preferences.from_feedback(teaching(history))
-        decision = decide(email, prefs, read_only=not act, understanding=understanding, safety=safety)
+        hint = type_hints(history).get(email.sender)
+        decision = decide(email, prefs, read_only=not act, understanding=understanding, safety=safety, type_hint=hint)
         decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
         arrived_since = info.received_at is not None and act_since is not None and info.received_at >= act_since
         did = False
@@ -147,7 +149,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         if act and decision.autonomy_level in ACTED_LEVELS and not did:
             # He didn't do it in Gmail (an old email, the cap, an action he doesn't do there, or Gmail
             # said no), so his note says what he would do, never "I archived this".
-            would = decide(email, prefs, read_only=True, understanding=understanding, safety=safety)
+            would = decide(email, prefs, read_only=True, understanding=understanding, safety=safety, type_hint=hint)
             decision = decision.model_copy(update={"explanation": would.explanation, "message": would.message, "steps": would.steps})
         # Something coming up, for Today. Never from an email he stopped or flagged.
         if reminders and decision.autonomy_level != AutonomyLevel.ESCALATE and not decision.safety_flags:
@@ -212,7 +214,8 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reade
             # Re-reading never uses your answer to this same email: that's what it's graded against.
             prefs = Preferences.from_feedback(teaching(history, skip_email=old.email_id))
             decision = decide(email, prefs, read_only=not old.acting,
-                              understanding=reader.read(email) if reader else None)
+                              understanding=reader.read(email) if reader else None,
+                              type_hint=type_hints(history, skip_email=old.email_id).get(email.sender))
             history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
                                                              "acting": old.acting,
                                                              "recheck_of": old.id}))

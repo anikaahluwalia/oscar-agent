@@ -454,19 +454,22 @@ class Preferences:
             })
         return rows
 
-    def broad_summary(self) -> list[dict]:
-        """What carries across senders: per domain and per kind of email, and your rules for kinds."""
+    def broad_summary(self, include_learning: bool = False) -> list[dict]:
+        """What carries across senders: per domain and per kind of email, and your rules for kinds.
+        include_learning also lists what isn't enough to act on yet (its level is None)."""
         rows = []
         for scope, record in self.records.items():
             if scope[0] not in ("domain", "kind"):
                 continue
             found = self._judge(record, scope[-1], autonomy_for(scope[-1])[0], broad=True)
-            if not found and not record.always_ask:
+            if not found and not record.always_ask and not include_learning:
                 continue
             rows.append({"scope": scope[0], "name": scope[1], "kind": scope[-2], "action": scope[-1],
                          "senders": len(record.senders), "evidence": record.evidence,
                          "confidence": round(record.confidence, 3), "desired": record.desired,
                          "rule": "ask" if record.always_ask else record.told,
-                         "level": found.level if found else A, "reason": found.reason if found else "",
+                         "acting_share": round(record.acting_share, 3),
+                         "level": found.level if found else A if record.always_ask else None,
+                         "reason": found.reason if found else "",
                          "updated_at": record.updated_at})
         return rows

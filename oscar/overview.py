@@ -39,6 +39,7 @@ def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
     and things Oscar did and told you about that you haven't checked."""
     # On the real inbox, reviewing a decision is how you deal with it.
     answered = {e.decision_id for e in history.feedback if e.kind in ANSWERS} | {r.decision_id for r in history.reviews}
+    answered |= {r.decision_id for r in history.safety_reviews}  # you looked at what a safety rule stopped
     levels = (AutonomyLevel.ESCALATE, AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY)
     current = latest_per_email(history)
     # A re-read that decided the same as before keeps the review you gave the first read.
@@ -165,13 +166,7 @@ def permissions(history: History) -> list[dict]:
     events = teaching(history)
     prefs = Preferences.from_feedback(events)
     learned = {(r["kind"], r["action"]): r for r in prefs.broad_summary() if r["scope"] == "kind"}
-    # The email each standing "emails like this" rule was set on, so it can be removed (Forget).
-    rules: dict[tuple, str] = {}
-    for e in events:
-        if e.scope == "kind" and e.kind in (FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME):
-            rules[(family(e.email_type), e.action)] = e.decision_id
-        elif e.scope == "kind" and e.kind == FeedbackKind.FORGET:
-            rules.pop((family(e.email_type), e.action), None)
+    rules = _rule_decisions(events)  # so a rule can be removed (Forget)
     rows = []
     for action, email_type in TYPES.items():
         level, reason = autonomy_for(action)
@@ -192,3 +187,54 @@ def permissions(history: History) -> list[dict]:
                         "updated_at": found["updated_at"]} if found else None,
         })
     return rows
+
+
+def _rule_decisions(events: list) -> dict[tuple, str]:
+    """The email each standing "emails like this" rule was set on, so it can be changed or forgotten."""
+    rules: dict[tuple, str] = {}
+    for e in events:
+        if e.scope == "kind" and e.kind in (FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME):
+            rules[(family(e.email_type), e.action)] = e.decision_id
+        elif e.scope == "kind" and e.kind == FeedbackKind.FORGET:
+            rules.pop((family(e.email_type), e.action), None)
+    return rules
+
+
+def evidence_label(row: dict, prefs: Preferences) -> str:
+    """How much a pattern rests on, in words rather than a number: "rule" when you set it,
+    "strong" once well past what it took to start (twice the answers and twice the senders,
+    with most of them agreeing), "moderate" once it's enough to act on, "learning" before that."""
+    if row["rule"]:
+        return "rule"
+    if row["level"] is None:
+        return "learning"
+    p = prefs.policy
+    need = p.domain_senders if row["scope"] == "domain" else p.kind_senders
+    strong = (row["evidence"] >= 2 * p.broad_min_evidence and row["senders"] >= 2 * need
+              and max(row["confidence"], row["acting_share"]) >= p.quiet_confidence)
+    return "strong" if strong else "moderate"
+
+
+def patterns(history: History) -> list[dict]:
+    """What Oscar knows across senders, for What Oscar knows: your rules for a kind of email, and what
+    your answers about many senders add up to (or don't yet). Each row says what it rests on, and
+    names an email it can be changed on: the one the rule was set on, or the latest one like it."""
+    events = teaching(history)
+    prefs = Preferences.from_feedback(events)
+    rules = _rule_decisions(events)
+    # The newest email of each kind and action a rule could be set on (oscar/feedback.check_kind_rule).
+    examples: dict[tuple, str] = {}
+    for d in latest_per_email(history):
+        key = (family(d.email_type), d.action)
+        if (key[0] and d.action in HABIT_ACTIONS and d.autonomy_level != AutonomyLevel.ESCALATE
+                and not d.safety_flags and key not in examples):
+            examples[key] = d.id
+    rows = []
+    for row in prefs.broad_summary(include_learning=True):
+        level = apply_floor(row["action"], row["level"], "")[0] if row["level"] else None
+        key = (row["kind"], row["action"])
+        rows.append({**row, "level": level, "status": evidence_label(row, prefs),
+                     "decision_id": rules.get(key) if row["scope"] == "kind" and row["rule"] else None,
+                     "example_id": examples.get(key)})
+    order = {"rule": 0, "strong": 1, "moderate": 2, "learning": 3}
+    return sorted(rows, key=lambda r: (order[r["status"]], -r["evidence"]))

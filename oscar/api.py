@@ -25,14 +25,18 @@ from oscar.config import API_URL, WEB_URL, setting
 from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
+from oscar import categories as user_categories
+from oscar.categories import CategoryError
+from oscar.classification import EMAIL_TYPES, RISKY_TYPES, ClassificationError, ClassificationFeedback, record_classification, type_hints
 from oscar.feedback import ASKS_FOR_MORE, FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
-from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, permissions, waiting_for_rule
+from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, patterns, permissions, waiting_for_rule
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
 from oscar.preferences import Preferences
 from oscar.review import teaching
+from oscar.safety_review import SafetyReview, SafetyReviewError, Verdict, record_safety_review
 from oscar.voice import describe_learning
 
 def auto_check_minutes() -> float:
@@ -166,6 +170,9 @@ class DecisionWithFeedback(BaseModel):
     review: Review | None = None  # real inbox only: your latest review
     answer: dict | None = None  # real inbox only: what you said he should have done, and how this decision does
     done: ActionRecord | None = None  # Stage 12: what Oscar did in Gmail for it, and whether it was undone
+    # Stage 13: your latest word on what kind of email it is, and your answer if a safety rule stopped it.
+    classification: ClassificationFeedback | None = None
+    safety_review: SafetyReview | None = None
 
 
 @app.get("/decisions", response_model=list[DecisionWithFeedback])
@@ -175,7 +182,8 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     return [
         DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id),
                              answer=graded(history, d) if d.source == "gmail" else None,
-                             done=history.action_for(d.id))
+                             done=history.action_for(d.id), classification=history.classification_for(d.email_id),
+                             safety_review=history.safety_review_for(d.id))
         for d in decisions
     ]
 
@@ -272,6 +280,12 @@ def get_autonomy(history: History = Depends(get_history)) -> list[dict]:
     return autonomy(history)
 
 
+@app.get("/patterns")
+def get_patterns(history: History = Depends(get_history)) -> list[dict]:
+    """Your rules for kinds of email, and what your answers about many senders add up to."""
+    return patterns(history)
+
+
 @app.get("/permissions")
 def get_permissions(history: History = Depends(get_history)) -> list[dict]:
     """What Oscar may do on his own with each kind of email, and what learning can't change."""
@@ -326,7 +340,7 @@ def reset(history: History = Depends(get_demo_history)) -> dict:
 
 @app.post("/decide", response_model=Decision)
 def decide_endpoint(email: Email, history: History = Depends(get_demo_history)) -> Decision:
-    decision = decide(email, Preferences.from_feedback(teaching(history)))
+    decision = decide(email, Preferences.from_feedback(teaching(history)), type_hint=type_hints(history).get(email.sender))
     history.add_decision(decision)
     return decision
 
@@ -749,3 +763,92 @@ def eval_run(run_id: str) -> dict:
             result["email"] = case.email.model_dump()
             result["rationale"] = case.rationale
     return run
+
+
+# --- What kind of email it is, and your own categories (Stage 13) ------------------------------
+
+@app.get("/email-types")
+def email_types() -> list[dict]:
+    """Every kind of email you can say one is, and whether it's a risky kind (oscar/classification.py)."""
+    return [{"type": t, "risky": t in RISKY_TYPES} for t in EMAIL_TYPES]
+
+
+class ClassificationRequest(BaseModel):
+    decision_id: str
+    email_type: str
+
+
+@app.post("/classifications", response_model=ClassificationFeedback)
+def classification_endpoint(request: ClassificationRequest, history: History = Depends(get_history)) -> ClassificationFeedback:
+    """You say what kind of email this is. It teaches Oscar how to read this sender's emails, and
+    nothing about how much to involve you or what's safe."""
+    try:
+        return record_classification(history, request.decision_id, request.email_type)
+    except ClassificationError as e:
+        raise HTTPException(400, str(e))
+
+
+class SafetyReviewRequest(BaseModel):
+    decision_id: str
+    verdict: Verdict
+    corrected_type: str | None = None
+    note: str | None = None
+
+
+@app.post("/safety-reviews", response_model=SafetyReview)
+def safety_review_endpoint(request: SafetyReviewRequest, history: History = Depends(get_history)) -> SafetyReview:
+    """Whether Oscar read the risk right on an email a safety rule stopped. It never relaxes a safety rule."""
+    try:
+        review, _ = record_safety_review(history, request.decision_id, request.verdict, request.corrected_type, request.note)
+    except (SafetyReviewError, ClassificationError) as e:
+        raise HTTPException(400, str(e))
+    return review
+
+
+class CategoryName(BaseModel):
+    name: str
+
+
+class CategoryAssignment(BaseModel):
+    sender: str
+    category_id: str | None = None  # None takes the sender out of their category
+
+
+@app.get("/categories")
+def list_categories(history: History = Depends(get_history)) -> list[dict]:
+    """Your own categories, with the senders in each. Oscar's decisions never use them."""
+    return user_categories.listing(history)
+
+
+@app.post("/categories")
+def create_category(request: CategoryName, history: History = Depends(get_history)) -> dict:
+    try:
+        return user_categories.create(history, request.name).model_dump(mode="json")
+    except CategoryError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/categories/assign")
+def assign_category(request: CategoryAssignment, history: History = Depends(get_history)) -> dict:
+    try:
+        user_categories.assign(history, request.sender, request.category_id)
+    except CategoryError as e:
+        raise HTTPException(400, str(e))
+    return {"ok": True}
+
+
+@app.post("/categories/{category_id}/rename")
+def rename_category(category_id: str, request: CategoryName, history: History = Depends(get_history)) -> dict:
+    try:
+        return user_categories.rename(history, category_id, request.name).model_dump(mode="json")
+    except CategoryError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/categories/{category_id}/delete")
+def delete_category(category_id: str, history: History = Depends(get_history)) -> dict:
+    try:
+        user_categories.delete(history, category_id)
+    except CategoryError as e:
+        raise HTTPException(400, str(e))
+    return {"ok": True}
