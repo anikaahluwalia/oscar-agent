@@ -33,6 +33,7 @@ from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, patterns, permissions, waiting_for_rule
+from oscar.progress import progress
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
 from oscar.preferences import Preferences
 from oscar.review import teaching
@@ -284,6 +285,12 @@ def get_autonomy(history: History = Depends(get_history)) -> list[dict]:
 def get_patterns(history: History = Depends(get_history)) -> list[dict]:
     """Your rules for kinds of email, and what your answers about many senders add up to."""
     return patterns(history)
+
+
+@app.get("/progress")
+def get_progress(history: History = Depends(get_history)) -> dict:
+    """How well Oscar's calls matched what you wanted, from your own answers (oscar/progress.py)."""
+    return progress(history)
 
 
 @app.get("/permissions")
