@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { Loading, Page } from "@/components/page";
 import { AlsoWaiting } from "@/components/today/also-waiting";
+import { ApproveActions } from "@/components/today/approve-actions";
+import { ComingUp } from "@/components/today/coming-up";
+import { DidSummary } from "@/components/today/did-summary";
 import { ChatCorner } from "@/components/today/chat-corner";
 import { TodayHeader } from "@/components/today/today-header";
 import { TookCare } from "@/components/today/took-care";
@@ -48,7 +51,9 @@ function summary(waitingOn: number, handled: number, heldBack: number, readOnly:
   }
   const rest = [handled && `${handled.toLocaleString()} taken care of today`, heldBack && `${heldBack.toLocaleString()} held back`].filter(Boolean);
   if (!rest.length) return `${wait}.`;
-  return waitingOn ? `${wait}, ${rest.join(" and ")}.` : `${wait}. ${rest.join(" and ").replace(/^./, (c) => c.toUpperCase())}.`;
+  if (waitingOn) return `${wait}, ${rest.join(" and ")}.`;
+  // Nothing waiting: say it as Oscar would.
+  return `${wait}. ${handled ? `I took care of ${plural(handled, "email", "emails")} today` : "I haven't had anything to do yet today"}${heldBack ? ` and held back ${heldBack.toLocaleString()}` : ""}.`;
 }
 
 export function TodayPage() {
@@ -109,6 +114,18 @@ export function TodayPage() {
   const heldBack = readOnly ? 0 : needs.filter((i) => i.decision.autonomy_level === "ESCALATE").length;
   const text = summary(needs.length, handled, heldBack, readOnly);
 
+  if (!needs.length) {
+    // Nothing needs you: a short briefing instead of an empty page.
+    return (
+      <Frame>
+        <TodayHeader pose={pose} title={hello} text={text} />
+        <ComingUp items={data.items} now={now} />
+        <DidSummary chips={chips} readOnly={readOnly} />
+        <ApproveActions learned={data.learned} items={data.items} onAnswer={(id, kind) => void feedback(id, kind)} />
+      </Frame>
+    );
+  }
+
   return (
     <Frame>
       <TodayHeader pose={pose} title={hello} text={text} />
@@ -129,6 +146,8 @@ export function TodayPage() {
       <AlsoWaiting items={needs.filter((i) => i !== current)} total={needs.length} readOnly={readOnly} />
 
       <TookCare chips={chips} readOnly={readOnly} />
+
+      <ComingUp items={data.items} now={now} />
     </Frame>
   );
 }
