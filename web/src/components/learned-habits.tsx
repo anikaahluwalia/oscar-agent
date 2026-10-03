@@ -1,72 +1,90 @@
 "use client";
 
 import { useState } from "react";
-import { PreferenceCard, PreferenceControls } from "@/components/preference-card";
+import { EmptyState } from "@/components/empty-state";
+import { MemoryTabs } from "@/components/memory/memory-tabs";
+import { memoryItems, notInGmail, onlyWould } from "@/components/memory/facts";
+import { OtherSenders } from "@/components/memory/other-senders";
+import { PreferenceCard } from "@/components/preference-card";
 import type { FeedbackKind } from "@/lib/api";
-import { ACTIONS } from "@/lib/labels";
-import { answersFor, isReadOnly, useOscar } from "@/lib/use-oscar";
+import { useOscar, type OscarData } from "@/lib/use-oscar";
 
-/** The senders and habits Oscar has picked up, with ways to change each. Was What Oscar Knows. */
-export function LearnedHabits() {
-  const { data, feedback } = useOscar();
-  const [showAll, setShowAll] = useState(false);
-  if (!data) return null;
+type TabKey = "learned" | "asks";
+const panelId = (key: TabKey) => `memory-${key}`;
 
-  const tell = (decisionId: string, kind: FeedbackKind) => void feedback(decisionId, kind);
-  // While Oscar only reads the real inbox, he learns from your reviews instead.
-  const readOnly = isReadOnly(data);
-  const limitsFor = (sender: string, action: string) => data.autonomy.find((r) => r.sender === sender && r.action === action);
-  const learnedKeys = new Set(data.learned.map((r) => `${r.sender}|${r.action}`));
-  const others = data.autonomy.filter((r) => r.floor !== "ESCALATE" && !learnedKeys.has(`${r.sender}|${r.action}`));
+/** What Oscar has learned from you, in two tabs: habits he's picked up, and things he always asks about. */
+export function LearnedHabits({ data }: { data: OscarData }) {
+  const { feedback } = useOscar();
+  const [tab, setTab] = useState<TabKey>("learned");
+  const tell = (decisionId: string, kind: FeedbackKind) => feedback(decisionId, kind);
+
+  const items = memoryItems(data);
+  const learned = items.filter((i) => !i.asks);
+  const asks = items.filter((i) => i.asks);
+  const shown = tab === "learned" ? learned : asks;
+  const anySure = shown.some((i) => !i.learned.always_ask && i.learned.yes + i.learned.no > 0);
 
   return (
-    <div className="flex flex-col gap-3">
-      {readOnly && (
-        <p className="text-sm text-muted-foreground">
-          On your real inbox I learn from your reviews. Each answer teaches me about that sender.
-        </p>
-      )}
-      {data.learned.length ? (
-        <ul className="flex flex-col gap-3">
-          {data.learned.map((row) => (
-            <PreferenceCard
-              key={`${row.sender}-${row.action}`}
-              learned={row}
-              limits={limitsFor(row.sender, row.action)}
-              answers={answersFor(data.all, row.sender, row.action)}
-              onFeedback={tell}
-              readOnly={readOnly}
-            />
-          ))}
-        </ul>
-      ) : (
-        <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
-          Nothing yet. Every approve, decline and undo teaches me a little about how you work.
-        </p>
-      )}
+    <div className="flex flex-col gap-5">
+      <MemoryTabs
+        tabs={[
+          { key: "learned", label: "Learned", count: learned.length },
+          { key: "asks", label: "Always asks", count: asks.length },
+        ]}
+        value={tab}
+        onChange={setTab}
+        idFor={panelId}
+      />
 
-      {!readOnly && others.length > 0 &&
-        (showAll ? (
-          <ul className="flex flex-col gap-3">
-            {others.map((row) => (
-              <li key={`${row.sender}-${row.action}`} className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-card">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{row.sender}</p>
-                  <p className="text-sm text-muted-foreground">{ACTIONS[row.action]} · no feedback yet</p>
-                </div>
-                <PreferenceControls limits={row} alwaysAsk={false} onFeedback={tell} />
-              </li>
+      <div role="tabpanel" id={panelId(tab)} aria-labelledby={`${panelId(tab)}-tab`} className="flex flex-col gap-4">
+        {tab === "asks" && asks.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Senders you asked me to always check with, or where you&apos;ve mostly turned me down. I&apos;ll keep asking.
+          </p>
+        )}
+
+        {shown.length ? (
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {shown.map((item) => (
+              <PreferenceCard
+                key={`${item.learned.sender}|${item.learned.action}`}
+                item={item}
+                would={onlyWould(data, item.learned.action)}
+                outsideGmail={notInGmail(data, item.learned.action)}
+                onFeedback={tell}
+              />
             ))}
           </ul>
+        ) : items.length === 0 ? (
+          <EmptyState
+            title="Nothing learned yet"
+            mood="curious"
+            text={
+              data.gmail.connected
+                ? "Every okay, decline, undo and review teaches me a little about how you like things done. What I pick up shows here."
+                : "Every okay, decline and undo teaches me a little about how you like things done. What I pick up shows here."
+            }
+          />
+        ) : tab === "learned" ? (
+          <EmptyState
+            title="Nothing here right now"
+            text="Everything I've learned so far is about things you want me to ask about. Those are under Always asks."
+          />
         ) : (
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="self-start text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            Set a rule for one of {others.length} other {others.length === 1 ? "sender" : "senders"}
-          </button>
-        ))}
+          <EmptyState
+            title="Nothing I always ask about"
+            text="When you tell me to always ask, or mostly turn me down on something, it shows here."
+          />
+        )}
+
+        {anySure && (
+          <p className="text-xs text-muted-foreground">
+            &ldquo;How sure&rdquo; is my own guess that you&apos;re fine with it. I start at 50% and every answer moves it.
+          </p>
+        )}
+      </div>
+
+      {tab === "learned" && <OtherSenders data={data} onFeedback={tell} />}
     </div>
   );
 }

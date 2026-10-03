@@ -1,14 +1,31 @@
 "use client";
 
 import { LearnedHabits } from "@/components/learned-habits";
-import { Page, PageHeader } from "@/components/page";
+import { Loading, Page, PageHeader } from "@/components/page";
+import { isReadOnly, useOscar } from "@/lib/use-oscar";
 
-/** What Oscar has learned from you. (Placeholder until the page is built.) */
+/** Oscar's memory: what he has learned about you from your answers, and ways to change or forget it. */
 export function MemoryPage() {
+  const { data, error } = useOscar();
+  const note = !data
+    ? null
+    : data.gmail.connected
+      ? isReadOnly(data)
+        ? "On your real inbox I learn from your reviews too. Each answer teaches me about that sender. I'm only reading your email for now, so this is what I would do."
+        : "On your real inbox I learn from your reviews too. Each answer teaches me about that sender."
+      : "This is the example inbox. What I learn here stays here, apart from your real inbox.";
   return (
-    <Page className="max-w-4xl">
-      <PageHeader title="Oscar's memory" />
-      <LearnedHabits />
+    <Page>
+      <PageHeader
+        title="Oscar's memory"
+        text={
+          <>
+            What Oscar has learned about you from your feedback.
+            {note && <span className="mt-1 block text-sm">{note}</span>}
+          </>
+        }
+      />
+      {!data ? <Loading error={error} /> : <LearnedHabits data={data} />}
     </Page>
   );
 }
