@@ -13,6 +13,13 @@ def no_real_data(monkeypatch, tmp_path_factory):
 
 
 @pytest.fixture(autouse=True)
+def no_waiting(monkeypatch):
+    """The six-month look back pauses between Gmail reads (oscar/cold_start.py); tests don't wait."""
+    from oscar import cold_start
+    monkeypatch.setattr(cold_start, "_sleep", lambda seconds: None)
+
+
+@pytest.fixture(autouse=True)
 def no_real_keys(monkeypatch):
     """Tests never use the keys in .env: no real Gemini or Google calls from a test run."""
     for name in ("GEMINI_API_KEY", "OSCAR_CHAT_API_KEY", "OSCAR_CHAT_BASE_URL", "OSCAR_CHAT_MODEL",

@@ -50,9 +50,24 @@ BODY_LIMIT = 5000  # characters of the body Oscar reads; only the first 160 are 
 
 
 class GmailError(RuntimeError):
-    def __init__(self, message: str, status: int | None = None) -> None:
+    def __init__(self, message: str, status: int | None = None, reason: str | None = None) -> None:
         super().__init__(message)
         self.status = status  # Gmail's HTTP status, when the error came from Gmail
+        self.reason = reason  # Gmail's own word for it, like "rateLimitExceeded", when it gave one
+
+
+# Gmail's reasons for "slow down": its quota for this app, or for your account, was used up for now.
+RATE_LIMITED = frozenset({"rateLimitExceeded", "userRateLimitExceeded", "RESOURCE_EXHAUSTED"})
+
+
+def _reason(response: httpx.Response) -> str | None:
+    """Gmail's reason for an error, from its JSON body, if there is one."""
+    try:
+        error = response.json().get("error", {})
+    except ValueError:
+        return None
+    errors = error.get("errors") or [{}]
+    return errors[0].get("reason") or error.get("status")
 
 
 def client_id() -> str:
@@ -191,7 +206,9 @@ class GmailClient:
             headers={"Authorization": f"Bearer {self._access_token()}"},
         )
         if response.status_code != 200:
-            raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code)
+            reason = _reason(response)
+            said = f"{response.status_code}, {reason}" if reason else str(response.status_code)
+            raise GmailError(f"Gmail said no ({said}).", response.status_code, reason)
         return response.json()
 
     def address(self) -> str:

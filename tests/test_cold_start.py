@@ -198,6 +198,85 @@ def test_emails_oscar_archived_himself_arent_your_habit(tmp_path):
     assert status(history)["candidates"] == [] and status(history)["skipped_emails"] == 12
 
 
+def flaky(messages, refuse):
+    """A fake Gmail where reading an email can be refused: refuse(message_id, attempt) gives a
+    (status, reason) to refuse with, or None to let it through."""
+    fake = FakeGmail(messages)
+    plain, attempts = fake.handler, {}
+
+    def handler(request):
+        if "format=metadata" in str(request.url):
+            message_id = request.url.path.split("/")[-1]
+            attempts[message_id] = attempts.get(message_id, 0) + 1
+            refused = refuse(message_id, attempts[message_id])
+            if refused:
+                status, reason = refused
+                return httpx.Response(status, json={"error": {"code": status, "errors": [{"reason": reason}]}})
+        return plain(request)
+    fake.handler = handler
+    return fake
+
+
+def test_when_gmail_says_slow_down_it_waits_and_carries_on(tmp_path):
+    fake = flaky(promos(12), lambda mid, n: (403, "userRateLimitExceeded") if mid == "p5" and n <= 2 else None)
+    history = History()
+    run(history, GmailClient(connected(tmp_path), fake.http()))
+    assert status(history)["state"] == "ready" and status(history)["processed"] == 12
+    assert status(history)["skipped_emails"] == 0, "nothing was lost, it just waited"
+
+
+def test_if_gmail_keeps_saying_slow_down_it_stops_and_says_why(tmp_path):
+    fake = flaky(promos(12), lambda mid, n: (429, "rateLimitExceeded") if mid == "p5" else None)
+    history = History()
+    run(history, GmailClient(connected(tmp_path), fake.http()))
+    now = status(history)
+    assert now["state"] == "failed" and "slow down" in now["error"] and now["processed"] == 5
+    run(history, GmailClient(connected(tmp_path), FakeGmail(promos(12)).http()))  # later, Gmail lets him again
+    assert status(history)["state"] == "ready" and status(history)["processed"] == 12
+
+
+def test_an_email_gmail_wont_let_him_read_is_skipped(tmp_path):
+    fake = flaky(promos(12), lambda mid, n: (403, "forbidden") if mid == "p3" else None)
+    history = History()
+    run(history, GmailClient(connected(tmp_path), fake.http()))
+    assert status(history)["state"] == "ready" and status(history)["skipped_emails"] == 1
+
+
+def test_many_refusals_in_a_row_stop_it(tmp_path):
+    fake = flaky(promos(20), lambda mid, n: (403, "forbidden"))
+    history = History()
+    run(history, GmailClient(connected(tmp_path), fake.http()))
+    assert status(history)["state"] == "failed" and "stopped letting me read" in status(history)["error"]
+
+
+def test_list_mail_counts_even_when_the_preview_says_little(tmp_path):
+    # Gmail's preview rarely has "unsubscribe" in it; the Promotions tab says it's list mail.
+    shops = [message(f"s{i}", f"hello@brand{i}.example", "Spring is here", "Our biggest collection yet.",
+                     labels=("CATEGORY_PROMOTIONS",)) for i in range(8)]
+    history, _ = scan(tmp_path, shops)
+    assert [c["id"] for c in status(history)["candidates"]] == ["bulk_mail:archived"]
+
+
+def test_the_updates_tab_alone_isnt_counted_as_list_mail(tmp_path):
+    notices = [message(f"u{i}", f"info@service{i}.example", "Your account", "A change to your plan.",
+                       labels=("CATEGORY_UPDATES",)) for i in range(8)]
+    history, _ = scan(tmp_path, notices)
+    assert status(history)["candidates"] == []
+
+
+def test_counts_from_an_older_way_of_counting_start_again(tmp_path):
+    history = History()
+    store = Store(history)
+    old = store.load()
+    old.update(state="failed", phase="understanding", ids=[f"p{i}" for i in range(12)], discovered=12, listed=True,
+               processed=7, stats={"bulk_mail": {"emails": 1}}, counting=1)
+    store.save(old)
+    scan(tmp_path, promos(12), history=history)
+    now = status(history)
+    assert now["state"] == "ready" and now["processed"] == 12
+    assert now["candidates"][0]["emails"] == 12, "every email counted once, the new way"
+
+
 def test_progress_is_saved_in_the_accounts_folder(tmp_path):
     history = History(tmp_path / "account")
     scan(tmp_path, promos(12), history=history)

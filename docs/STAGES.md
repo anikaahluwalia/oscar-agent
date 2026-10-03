@@ -1589,6 +1589,14 @@ and asks you about the few clearest habits (`oscar/cold_start.py`).
   and Keep asking become the same "for emails like this" rule the Review page and chat make
   (`ALWAYS_DO_THIS` quietly or with a heads up, `ALWAYS_ASK_ME`). Not a useful pattern saves nothing.
   Every safety check still runs after it.
+- **Gentle with Gmail.** On a real inbox the first try was refused partway (403): reading
+  thousands of emails one after another hits Gmail's limit per account. It now reads about 20 a
+  second, and when Gmail says to slow down it waits (1, 2, 4, 8, 16 seconds) and carries on. An email
+  Gmail won't let it read is skipped; only many refusals in a row stop it, and the message says why.
+- **List mail counts.** The same run counted almost nothing: without the body, the keyword rules
+  can't say much more than "sent to a list", which is a guess when deciding on a new email. As
+  evidence of what you did, Gmail's list headers and its Promotions, Social and Forums tabs are
+  reliable, so those count (not Updates, which also holds account alerts).
 - **Picks up where it stopped.** Progress is saved in the account's folder (`cold_start.json`) after
   every page and every 25 emails, so a restart carries on, and accounts never mix.
 

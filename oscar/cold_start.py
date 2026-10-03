@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,14 +38,22 @@ import httpx
 
 from oscar.agent import decide
 from oscar.feedback import FeedbackEvent, FeedbackKind
-from oscar.gmail import GmailClient, GmailError, TokenStore, parse_message
+from oscar.gmail import RATE_LIMITED, GmailClient, GmailError, TokenStore, parse_message
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel
 from oscar.preferences import HABIT_ACTIONS, family
 
 QUERY = "newer_than:6m -in:chats -in:sent -in:drafts"  # about six months of mail you received
+# Which version of the counting the saved counts were made with. When the counting changes, a scan
+# that isn't finished starts its counts again (keeping the list of emails it found), so old and new
+# counts never mix.
+COUNTING = 2
 MAX_MESSAGES = 5000  # the most he looks at, so a huge inbox doesn't take all day
 SAVE_EVERY = 25  # emails between saves, so a stop loses little
+PACE = 0.05  # seconds between reads: about 20 a second, well under Gmail's limit per account
+BACKOFF = (1, 2, 4, 8, 16)  # seconds to wait each time Gmail says to slow down, before giving up
+MAX_REFUSED_IN_A_ROW = 10  # emails Gmail won't let him read, in a row, before he stops and says so
+_sleep = time.sleep  # tests swap this so they don't wait
 
 # How clear a habit has to be before he shows it.
 MIN_EMAILS = 6
@@ -72,7 +81,7 @@ class ColdStartError(ValueError):
 
 
 def _blank() -> dict:
-    return {"state": "not_started", "phase": None, "discovered": 0, "processed": 0, "skipped_emails": 0,
+    return {"state": "not_started", "phase": None, "counting": COUNTING, "discovered": 0, "processed": 0, "skipped_emails": 0,
             "ids": [], "next_page": None, "listed": False, "stats": {}, "candidates": [], "answers": {},
             "error": None, "started_at": None, "finished_at": None}
 
@@ -148,6 +157,8 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
     data = store.load()
     if data["state"] in ("ready", "complete", "skipped"):
         return status(history)
+    if data.get("counting") != COUNTING:
+        data.update(processed=0, skipped_emails=0, stats={}, counting=COUNTING)
     data.update(state="running", error=None, started_at=data["started_at"] or _now())
     store.save(data)
     # Emails Oscar changed in Gmail himself (on his own, or when you approved him) say what he
@@ -162,8 +173,13 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
         store.save(data)
         data.update(candidates=candidates(data["stats"]), phase="ready", state="ready")
         store.save(data)
-    except (GmailError, httpx.HTTPError) as e:
-        data.update(state="failed", error=f"Gmail stopped me partway ({e}). Try again and I'll carry on.")
+    except GmailError as e:
+        why = ("Gmail asked me to slow down" if _rate_limited(e)
+               else "Gmail stopped letting me read your email" if e.status in (401, 403) else "Gmail stopped me")
+        data.update(state="failed", error=f"{why} partway ({e}). Try again in a few minutes and I'll carry on.")
+        store.save(data)
+    except httpx.HTTPError as e:
+        data.update(state="failed", error=f"I lost the connection to Gmail partway ({type(e).__name__}). Try again and I'll carry on.")
         store.save(data)
     except Exception as e:  # noqa: BLE001  anything else: say so, rather than leave it "running" for ever
         data.update(state="failed", error=f"Something went wrong partway ({type(e).__name__}). Try again and I'll carry on.")
@@ -184,24 +200,48 @@ def _list(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[
         store.save(data)
 
 
+def _rate_limited(e: GmailError) -> bool:
+    return e.status == 429 or (e.status == 403 and e.reason in RATE_LIMITED)
+
+
+def _read(reader: GmailClient, message_id: str) -> dict:
+    """One email's metadata. When Gmail says to slow down, wait and try again (1, 2, 4, 8, 16
+    seconds) before giving up."""
+    for wait in (*BACKOFF, None):
+        try:
+            return reader.metadata(message_id)
+        except GmailError as e:
+            if not _rate_limited(e) or wait is None:
+                raise
+            _sleep(wait)
+    raise AssertionError("unreachable")
+
+
 def _understand(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[], bool],
                 his: set[str] = frozenset()) -> None:
     """Phase 2: what kind of email each one is, and what you did with it. Saved every few emails.
-    his: emails Oscar changed himself, which aren't read at all."""
+    his: emails Oscar changed himself, which aren't read at all. An email Gmail won't let him read
+    (deleted since it was listed, or refused) is skipped; only many refusals in a row stop the scan."""
     if not data["listed"]:
         return
     data.update(phase="understanding")
+    refused = 0
     while data["processed"] < len(data["ids"]) and not should_stop():
         message_id = data["ids"][data["processed"]]
         try:
             if message_id in his:
                 data["skipped_emails"] += 1
             else:
-                _count(data["stats"], reader.metadata(message_id))
+                _count(data["stats"], _read(reader, message_id))
+                refused = 0
+                _sleep(PACE)
         except GmailError as e:
-            if e.status not in (404, 400):
+            if _rate_limited(e) or e.status not in (400, 403, 404):
                 raise
-            data["skipped_emails"] += 1  # deleted since it was listed
+            refused = refused + 1 if e.status == 403 else 0
+            if refused >= MAX_REFUSED_IN_A_ROW:
+                raise
+            data["skipped_emails"] += 1
         data["processed"] += 1
         if data["processed"] % SAVE_EVERY == 0 or data["processed"] == len(data["ids"]):
             store.save(data)
@@ -213,8 +253,13 @@ def _count(stats: dict, raw: dict) -> None:
     email, info = parse_message(raw)
     decision = decide(email)  # the rules alone, no model and no learning: what kind of email is this?
     kind = family(decision.email_type)
+    # Without the body the keyword rules often can't say more than "this was sent to a list". That's a
+    # guess when he decides on a new email, so he asks; as evidence of what you did with list mail it's
+    # reliable, so it counts here. Only on Gmail's list headers or its Promotions, Social and Forums
+    # tabs, not Updates, which also holds account alerts.
+    list_mail = decision.email_type == "bulk" and (email.bulk or email.category in ("promotions", "social", "forums"))
     if (not kind or decision.autonomy_level == AutonomyLevel.ESCALATE or decision.safety_flags
-            or decision.level_source in ("guess", "caution")):
+            or decision.level_source == "caution" or (decision.level_source == "guess" and not list_mail)):
         return
     labels = set(info.labels)
     kept, read = "INBOX" in labels, "UNREAD" not in labels
