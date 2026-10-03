@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Loading, Page } from "@/components/page";
 import { AlsoWaiting } from "@/components/today/also-waiting";
 import { ChatCorner } from "@/components/today/chat-corner";
-import { TellOscar } from "@/components/today/tell-oscar";
 import { TodayHeader } from "@/components/today/today-header";
 import { TookCare } from "@/components/today/took-care";
 import { WaitingCard } from "@/components/today/waiting-card";
@@ -90,7 +89,6 @@ export function TodayPage() {
             </Button>
           </TodayHeader>
         )}
-        <TellOscar />
       </Frame>
     );
   }
@@ -131,8 +129,6 @@ export function TodayPage() {
       <AlsoWaiting items={needs.filter((i) => i !== current)} total={needs.length} readOnly={readOnly} />
 
       <TookCare chips={chips} readOnly={readOnly} />
-
-      <TellOscar />
     </Frame>
   );
 }
