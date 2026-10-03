@@ -51,7 +51,9 @@ export interface Decision {
   noticed: string | null;
   safety_flags: string[];
   learned: boolean;
-  level_source: "policy" | "guess" | "learned" | "floor" | "safety_check" | "caution";
+  level_source: "policy" | "guess" | "learned" | "floor" | "safety_check" | "caution" | "model_check";
+  understood_by: "rules" | "model" | null; // Stage 11: who worked out what the email is (null: a guess)
+  summary: string; // the model's one line on what the email is, when it read it
   steps: string[];
   /** "gmail" is a real inbox. Oscar only reads it for now, so the decision is what he would do. */
   source: "demo" | "gmail";

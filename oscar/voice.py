@@ -107,6 +107,7 @@ SOURCE_NOTES: dict[str, str] = {
     "guess": "Nothing I recognise, so I won't act on a guess",
     "safety_check": "Checked my safety rules: this one always comes to you",
     "caution": "It mentions something sensitive, so I won't do this on my own",
+    "model_check": "Read it closely: this one always comes to you",
 }
 
 DECIDED: dict[AutonomyLevel, str] = {

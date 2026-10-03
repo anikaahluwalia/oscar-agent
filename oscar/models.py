@@ -93,9 +93,13 @@ class Decision(BaseModel):
     learned: bool = False  # True when the level came from feedback
     # Which step decided the level: the policy table, a guess (nothing matched),
     # what Oscar learned, the safety floor for the action, or a safety check on the email.
-    level_source: Literal["policy", "guess", "learned", "floor", "safety_check", "caution"] = "policy"
+    level_source: Literal["policy", "guess", "learned", "floor", "safety_check", "caution", "model_check"] = "policy"
     steps: list[str] = Field(default_factory=list)  # Oscar's working notes, in order
     email_type: str = "unknown"  # what kind of email Oscar thinks it is
+    # Stage 11: who worked out what the email is (the keyword rules, the model, or nobody: a guess),
+    # and the model's one-line summary of it.
+    understood_by: Literal["rules", "model"] | None = None
+    summary: str = ""
     confidence: float = 0.5  # how sure Oscar is that the level is right (see agent.confidence_for)
     # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he
     # didn't do anything; the decision is what he would have done.

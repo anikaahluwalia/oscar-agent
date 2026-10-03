@@ -6,11 +6,12 @@ than the policy. The floor and the email checks come after it, so they always ge
 the last word.
 """
 
-from oscar.classifier import classify
-from oscar.models import Action, AutonomyLevel, Decision, Email, SafetyCategory
+from oscar.classifier import classify, is_bulk
+from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
+from oscar.understand import Understanding
 from oscar.voice import explain, with_evidence, working_notes
 
 # The kind of email a safety check means, when one fires.
@@ -26,7 +27,33 @@ FLAG_TYPES: dict[SafetyCategory, str] = {
 # How sure Oscar is that the level is right, by what decided it. These are starting
 # values, not measured ones: the eval harness checks them (calibration) on held-out
 # data, and any adjustment is fitted on the learning set only.
-CONFIDENCE = {"safety_check": 0.97, "floor": 0.95, "policy": 0.75, "guess": 0.5, "caution": 0.6}
+CONFIDENCE = {"safety_check": 0.97, "floor": 0.95, "policy": 0.75, "guess": 0.5, "caution": 0.6, "model_check": 0.85}
+
+# Stage 11. Below this the model's reading is ignored and Oscar treats the email as a guess.
+MODEL_MIN_CONFIDENCE = 0.6
+# Rule actions the model's reading may replace: the ones with no safety floor. Anything floored
+# (money, codes, sending, forwarding, deleting, invites) stays as the rules decided.
+REPLACEABLE = frozenset({Action.MARK_READ, Action.ARCHIVE, Action.APPLY_LABEL, Action.DRAFT_REPLY})
+# What a risky reading stops, and why, in Oscar's words.
+MODEL_RISK: dict[str, tuple[Action | None, str]] = {
+    "security_alert": (None, "It's about your account security, so you should look at it yourself"),
+    "money_request": (Action.MOVE_MONEY, "It's asking for money, and I don't touch money"),
+    "credential_request": (Action.SEND_CREDENTIALS, "It's asking for a password or code, and I don't share those"),
+    "scam": (None, "It looks like a scam"),
+    "instructions_for_ai": (None, "Someone left instructions for an AI in this email, so I'm not doing anything with it"),
+}
+
+
+def read_by_model(email: Email, found: Understanding, bulk_action: Action | None) -> Classification:
+    """The action for what the model says the email is. Mail sent to a list never gets a reply
+    drafted, whatever the model thinks, and your promotions setting applies to list mail."""
+    action, rule_action = found.action, None
+    if found.kind in ("question", "personal") and is_bulk(email):
+        action = Action.ARCHIVE  # nobody is waiting for a reply to a list
+    if action == Action.ARCHIVE and bulk_action and bulk_action != Action.ARCHIVE:
+        action, rule_action = bulk_action, Action.ARCHIVE
+    return Classification(action=action, matched_pattern=f"reads like {found.kind.replace('_', ' ')}",
+                          email_type=found.kind, rule_action=rule_action)
 
 
 def confidence_for(source: str, evidence: float = 0.0) -> float:
@@ -37,10 +64,23 @@ def confidence_for(source: str, evidence: float = 0.0) -> float:
 
 
 def decide(email: Email, preferences: Preferences | None = None, read_only: bool = False,
-           bulk_action: Action | None = None) -> Decision:
+           bulk_action: Action | None = None, understanding: Understanding | None = None,
+           model_first: bool = False) -> Decision:
     """Oscar's decision on one email. read_only only changes the wording ("I'd archive this"),
-    never the level or the action."""
+    never the level or the action.
+
+    understanding is what the model read the email as (Stage 11), if it read it. It fills in
+    when the rules found nothing (or, with model_first, replaces a rule action with no safety
+    floor). A risky reading can only make him stricter. The checks still run after it.
+    """
     classification = classify(email, bulk_action)
+    understood_by = "rules" if classification.matched_pattern else None
+    usable = understanding if understanding and understanding.confidence >= MODEL_MIN_CONFIDENCE else None
+    if usable and not usable.risky and (
+            classification.matched_pattern is None
+            or (model_first and (classification.rule_action or classification.action) in REPLACEABLE)):
+        classification = read_by_model(email, usable, bulk_action)
+        understood_by = "model"
     action = classification.action
     guess = classification.matched_pattern is None
     # What you've taught Oscar for this sender's routine email carries over, even when the rules
@@ -113,15 +153,25 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         message = f"I stopped this one. {flags[0].reason}."
         noticed = flags[0].matched
 
+    # The model read it as risky and no check caught it: stop it. This can only ever be stricter.
+    risky = understanding.kind if understanding and understanding.risky and understanding.confidence >= 0.5 else None
+    if risky and not flags and level != AutonomyLevel.ESCALATE:
+        stop_action, why = MODEL_RISK[risky]
+        action = stop_action or action
+        level, source = AutonomyLevel.ESCALATE, "model_check"
+        message = f"I stopped this one. {why}."
+        noticed = f"reads like {risky.replace('_', ' ')}"
+
     # The backstop: an email that mentions something sensitive is never handled alone.
-    sensitive = None if flags else caution(email)
+    sensitive = None if flags or source == "model_check" else caution(email)
     if sensitive and level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY):
         level, source, learned = AutonomyLevel.ASK_FIRST, "caution", False
         reason = f'it mentions "{sensitive}"'
         message = explain(action, level, reason, False, read_only)
         noticed = sensitive
 
-    email_type = FLAG_TYPES[flags[0].category] if flags else classification.email_type
+    email_type = (FLAG_TYPES[flags[0].category] if flags else risky if source == "model_check"
+                  else classification.email_type)
     evidence = preferences.get(action, email.sender).evidence if preferences and source == "learned" else 0.0
 
     return Decision(
@@ -141,4 +191,6 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         steps=working_notes(email.sender, noticed, [f.category for f in flags], source, reason, level, read_only),
         email_type=email_type,
         confidence=confidence_for(source, evidence),
+        understood_by=understood_by,
+        summary=understanding.summary if understanding else "",
     )
