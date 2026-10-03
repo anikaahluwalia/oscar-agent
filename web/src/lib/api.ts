@@ -418,6 +418,39 @@ export const getAppSettings = () => call<AppSettings>("/app-settings");
 export const saveAppSettings = (changes: { companion?: Partial<AppSettings["companion"]>; notify?: Partial<AppSettings["notify"]> }) =>
   call<AppSettings>("/app-settings", { method: "POST", body: JSON.stringify(changes) });
 
+/** One habit Oscar found in your last six months (oscar/cold_start.py candidates). */
+export interface Habit {
+  id: string;
+  kind: string; // a family of email, like bulk_mail
+  habit: "archived" | "read" | "kept";
+  action: Action;
+  emails: number; // how many emails like this he looked at
+  count: number; // how many of them you handled this way
+  senders: number;
+  read: number;
+  share: number;
+  options: HabitChoice[];
+}
+export type HabitChoice = "handle" | "tell" | "ask" | "reject";
+
+/** How the look back over your last six months is going (GET /cold-start). */
+export interface ColdStart {
+  state: "unavailable" | "not_started" | "running" | "ready" | "complete" | "skipped" | "failed";
+  phase: "fetching" | "understanding" | "finding" | "ready" | null;
+  discovered: number;
+  processed: number;
+  candidates: Habit[];
+  answers: Record<string, HabitChoice>;
+  error: string | null;
+  new_account?: boolean;
+}
+export const getColdStart = () => call<ColdStart>("/cold-start");
+export const startColdStart = () => call<ColdStart>("/cold-start/start", { method: "POST", body: "{}" });
+export const skipColdStart = () => call<ColdStart>("/cold-start/skip", { method: "POST", body: "{}" });
+export const finishColdStart = () => call<ColdStart>("/cold-start/done", { method: "POST", body: "{}" });
+export const answerHabit = (patternId: string, choice: HabitChoice) =>
+  call<ColdStart>("/cold-start/answer", { method: "POST", body: JSON.stringify({ pattern_id: patternId, choice }) });
+
 /** Clearing what Oscar learned on this inbox, and bringing it back. Nothing is deleted. */
 export const getLearning = () => call<{ cleared_at: string | null }>("/learning");
 export const clearLearning = () => call<{ cleared_at: string; reply: string }>("/learning/clear", { method: "POST", body: "{}" });

@@ -7,6 +7,7 @@ import { ActivityCard } from "@/components/today/activity-card";
 import { ApproveActions } from "@/components/today/approve-actions";
 import { CaughtUp } from "@/components/today/caught-up";
 import { ChatCorner } from "@/components/today/chat-corner";
+import { ColdStart } from "@/components/today/cold-start";
 import { ComingUp } from "@/components/today/coming-up";
 import { GmailPill } from "@/components/today/gmail-pill";
 import { LearnedCard } from "@/components/today/learned-card";
@@ -93,6 +94,7 @@ export function TodayPage() {
             </Button>
           </TodayHeader>
         )}
+        {data.gmail.connected && <ColdStart />}
       </Frame>
     );
   }
@@ -109,6 +111,8 @@ export function TodayPage() {
       <TodayHeader pose={pose} title={hello} text={summary(needs.length, handled, readOnly)}>
         <GmailPill gmail={data.gmail} now={now} />
       </TodayHeader>
+
+      {data.gmail.connected && <ColdStart />}
 
       {needs.length ? <NeedsYou items={needs} canAct={!readOnly} onFeedback={feedback} /> : <CaughtUp readOnly={readOnly} />}
 
