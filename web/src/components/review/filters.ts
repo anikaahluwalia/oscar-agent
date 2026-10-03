@@ -3,7 +3,7 @@
 
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";
 import { reallyDone, timeOf } from "@/lib/insights";
-import { ACTIONS, DOABLE, isOldWay, needsReview, toGrade, whatOscarDid, wouldOnly } from "@/lib/labels";
+import { ACTIONS, DOABLE, isOldWay, isSafetyStop, needsReview, toGrade, whatOscarDid, wouldOnly } from "@/lib/labels";
 import { isOpen } from "@/lib/use-oscar";
 
 export type FilterKey = "needs" | "check" | "all" | "done" | "stopped" | "finish";
@@ -65,7 +65,7 @@ export function filtersFor({ real, readOnly }: { real: boolean; readOnly: boolea
     {
       key: "stopped",
       label: "Stopped",
-      match: (i) => i.decision.autonomy_level === "ESCALATE",
+      match: (i) => isSafetyStop(i.decision),
       empty: "Nothing stopped. If an email looks risky, I'll stop and bring it here.",
     },
     {

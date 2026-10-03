@@ -3,6 +3,7 @@ import { displayName, SenderAvatar } from "@/components/kit/sender";
 import { StatusWords } from "@/components/kit/status";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { didLine, when } from "@/lib/counts";
+import { shownLevel } from "@/lib/labels";
 
 /** An email Oscar mentions, inside his bubble. It opens the email in Inbox. */
 export function EmailCard({ item }: { item: DecisionWithFeedback }) {
@@ -19,11 +20,11 @@ export function EmailCard({ item }: { item: DecisionWithFeedback }) {
           <span className="text-muted-foreground"> · {when(decision.created_at)}</span>
         </span>
         <span className="truncate text-sm">{decision.subject || "(no subject)"}</span>
-        <StatusWords level={decision.autonomy_level} className="mt-1 text-xs sm:hidden">
+        <StatusWords level={shownLevel(decision)} className="mt-1 text-xs sm:hidden">
           {didLine(item)}
         </StatusWords>
       </span>
-      <StatusWords level={decision.autonomy_level} className="hidden shrink-0 text-xs sm:inline-flex">
+      <StatusWords level={shownLevel(decision)} className="hidden shrink-0 text-xs sm:inline-flex">
         {didLine(item)}
       </StatusWords>
     </InboxLink>

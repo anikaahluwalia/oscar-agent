@@ -6,6 +6,7 @@ import type { DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
 import { formatTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { shownLevel } from "@/lib/labels";
 
 /**
  * One email in the list: who, when, the subject, and what Oscar did with it. `selected` is the open email;
@@ -34,7 +35,7 @@ export function InboxRow({ item, selected, waiting }: { item: DecisionWithFeedba
             <span className="shrink-0 text-muted-foreground tabular-nums">{formatTime(timeOf(item))}</span>
           </span>
           <span className="truncate text-sm">{d.subject || "(no subject)"}</span>
-          <StatusWords level={d.autonomy_level} className="text-xs">
+          <StatusWords level={shownLevel(d)} className="text-xs">
             {didLine(d, done, feedback)}
           </StatusWords>
         </span>

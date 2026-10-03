@@ -9,7 +9,7 @@ import { StatusPill } from "@/components/status-pill";
 import type { Action, AutonomyRow, Decision, DecisionWithFeedback, Level } from "@/lib/api";
 import { onOpenWhy } from "@/lib/drawers";
 import { safetyChecks } from "@/lib/insights";
-import { ACTIONS, LEVEL_SOURCES, STATUS, typeName, typeOf, wouldOnly } from "@/lib/labels";
+import { ACTIONS, LEVEL_SOURCES, shownLevel, STATUS, typeName, typeOf, wouldOnly } from "@/lib/labels";
 import { answersFor, useOscar, type Answers } from "@/lib/use-oscar";
 
 /** "Approved 3 · declined 1": how you've actually answered, counted from your feedback. */
@@ -91,7 +91,7 @@ export function WhyDrawer() {
           <div className="flex flex-col gap-1">
             <p className="text-sm text-muted-foreground">{decision.sender}</p>
             <p className="font-medium">{decision.subject}</p>
-            <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} className="mt-1 self-start" />
+            <StatusPill level={shownLevel(decision)} readOnly={decision.source === "gmail"} className="mt-1 self-start" />
           </div>
 
           <dl className="divide-y rounded-xl border px-4">

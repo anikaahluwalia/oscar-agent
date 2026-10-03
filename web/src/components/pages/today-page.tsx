@@ -20,6 +20,7 @@ import { bringInDemo } from "@/lib/demo";
 import { greeting } from "@/lib/insights";
 import { useLocalSetting } from "@/lib/local-setting";
 import { isReadOnly, useOscar, type OscarData } from "@/lib/use-oscar";
+import { isSafetyStop } from "@/lib/labels";
 
 /** The time now, updated every minute, so "today" stays right past midnight. */
 function useNow() {
@@ -103,7 +104,7 @@ export function TodayPage() {
   const needs = waiting(data);
   const today = startOfToday(now);
   const handled = handledSince(data, today);
-  const stopped = !readOnly && needs.some((i) => i.decision.autonomy_level === "ESCALATE");
+  const stopped = !readOnly && needs.some((i) => isSafetyStop(i.decision));
   const pose = needs.length ? (stopped ? "guarding" : "asking") : handled ? "done" : "reporting";
 
   return (

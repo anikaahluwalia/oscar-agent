@@ -180,6 +180,16 @@ export const toGrade = (i: DecisionWithFeedback) => i.decision.source === "gmail
 export const isSafetyStop = (d: Decision) =>
   d.autonomy_level === "ESCALATE" && (d.safety_flags.length > 0 || ["safety_check", "model_check", "floor"].includes(d.level_source));
 
+/**
+ * The level to show for a decision. "Stopped" is only for what a safety rule stopped (Safety review);
+ * anything else he brought to you without doing anything (an urgent email, a sender you said to only
+ * tell you about) shows as "Needs you". Mirrors act.status_label in oscar/act.py.
+ */
+export const shownLevel = (d: Decision): Level => (d.autonomy_level === "ESCALATE" && !isSafetyStop(d) ? "ASK_FIRST" : d.autonomy_level);
+
+/** He couldn't tell what the email is, so he's asking what you'd like rather than offering a guess. */
+export const confused = (d: Decision) => d.level_source === "guess" && d.autonomy_level === "ASK_FIRST";
+
 /** While Oscar only reads your inbox, checking his calls is what's waiting on you. Once he acts, his asks are. */
 export const needsReview = (i: DecisionWithFeedback) => toGrade(i) && !i.decision.acting;
 

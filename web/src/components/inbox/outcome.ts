@@ -2,7 +2,7 @@
 // what Gmail says Oscar did (done) and your answers. It never says he did something he didn't.
 
 import type { Action, ActionDone, Decision, DecisionWithFeedback, FeedbackEvent } from "@/lib/api";
-import { ACTIONS, DOABLE, LEVEL_SOURCES, wouldOnly, whatOscarDid } from "@/lib/labels";
+import { ACTIONS, confused, DOABLE, isSafetyStop, LEVEL_SOURCES, whatOscarDid, wouldOnly } from "@/lib/labels";
 import { dayLabel, formatTime } from "@/lib/time";
 
 /** "Today, 9:32 AM". */
@@ -92,7 +92,11 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
       if (!d.acting) return { tone: "nothing", text: "Nothing changed in Gmail. I was only reading your inbox when this came in." };
       return { tone: "nothing", text: `Nothing changed in Gmail. I don't ${action} in Gmail, so this is only what I would do.` };
     }
-    if (level === "ESCALATE") return { tone: "stopped", text: "I stopped here. Nothing was done in Gmail." };
+    if (level === "ESCALATE") {
+      return isSafetyStop(d)
+        ? { tone: "stopped", text: "I stopped here. Nothing was done in Gmail." }
+        : { tone: "waiting", text: "It's yours to deal with. Nothing was done in Gmail." };
+    }
     if (level === "ASK_FIRST") {
       if (answered(feedback, "REJECT")) return { tone: "nothing", text: "You declined, so nothing changed in Gmail." };
       if (answered(feedback, "APPROVE")) return { tone: "nothing", text: "You approved it, but Gmail doesn't show it as done, so nothing changed." };
@@ -166,18 +170,19 @@ export function noteLine(item: DecisionWithFeedback): string {
   const phrase = phraseOf(item);
 
   if (wouldOnly(d)) {
-    if (level === "ESCALATE") return "I'd hold this one back.";
+    if (level === "ESCALATE") return isSafetyStop(d) ? "I'd hold this one back." : "I'd bring this one to you.";
+    if (confused(d)) return "I wasn't sure what to do with this one, so I'd ask you.";
     if (level === "ASK_FIRST") return `I'd ask you before I ${phrase}.`;
     return level === "PROCEED_AND_NOTIFY" ? `I'd ${phrase} and tell you.` : `I'd ${phrase}.`;
   }
-  if (level === "ESCALATE") return "I held this one back.";
+  if (level === "ESCALATE") return isSafetyStop(d) ? "I held this one back." : "This one's for you, so I left it alone.";
   if (level === "ASK_FIRST") {
     if (d.source === "gmail" && done) return done.undone_at ? `You said yes and I ${past(item)}, then it was undone.` : `You said yes, so I ${past(item)}.`;
     if (answered(feedback, "REJECT")) return "You said no, so I left it alone.";
     if (answered(feedback, "APPROVE", "EDIT_THEN_SEND")) {
       return d.source === "gmail" ? "You said yes, but Gmail doesn't show it done." : "You said yes.";
     }
-    return `Want me to ${phrase}?`;
+    return confused(d) ? "I'm not sure what to do with this one. Can you tell me what you'd like?" : `Want me to ${phrase}?`;
   }
   if (didIt(d, done, feedback)) return level === "PROCEED_AND_NOTIFY" ? `I ${past(item)}, and I'm letting you know.` : `I ${past(item)}.`;
   if (isUndone(d, done, feedback)) return d.source === "gmail" ? `I ${past(item)}, and it's been undone.` : `I ${past(item)}, then you undid it.`;

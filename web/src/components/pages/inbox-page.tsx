@@ -18,7 +18,7 @@ import type { DecisionWithFeedback } from "@/lib/api";
 import { waiting } from "@/lib/counts";
 import { bringInDemo, checkGmail } from "@/lib/demo";
 import { timeOf } from "@/lib/insights";
-import { wouldOnly } from "@/lib/labels";
+import { isSafetyStop, wouldOnly } from "@/lib/labels";
 import { dayLabel } from "@/lib/time";
 import { setHash, useHash } from "@/lib/use-hash";
 import { isReadOnly, useOscar } from "@/lib/use-oscar";
@@ -88,7 +88,7 @@ export function InboxPage() {
     ALL: () => true,
     DONE: tookCare,
     WAITING: (i) => waitingIds.has(i.decision.id),
-    HELD: (i) => i.decision.autonomy_level === "ESCALATE",
+    HELD: (i) => isSafetyStop(i.decision), // only what a safety rule stopped
   };
   const list = searched.filter(tests[filter]);
   const pills: { key: Filter; label: string; count: number }[] = [

@@ -12,7 +12,7 @@ import { ReviewPanel } from "@/components/review-panel";
 import { Button } from "@/components/ui/button";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
-import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, REPLIES, REVIEW_LABELS, toGrade, wouldOnly } from "@/lib/labels";
+import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, isSafetyStop, REPLIES, REVIEW_LABELS, toGrade, wouldOnly } from "@/lib/labels";
 import { isAnswered, isOpen } from "@/lib/use-oscar";
 
 type Props = {
@@ -31,7 +31,7 @@ const TAP = "min-h-11 rounded-full px-4 text-sm font-semibold sm:min-h-10";
  */
 function poseOf(item: DecisionWithFeedback): OscarPose | null {
   const { decision: d, done, feedback } = item;
-  if (d.autonomy_level === "ESCALATE") return "guarding";
+  if (d.autonomy_level === "ESCALATE") return isSafetyStop(d) ? "guarding" : "asking";
   if (isOpen(item)) return "asking";
   if (wouldOnly(d)) return toGrade(item) ? "thinking" : null;
   if (didIt(d, done, feedback) || (d.source === "gmail" && done && !done.undone_at)) return "done";

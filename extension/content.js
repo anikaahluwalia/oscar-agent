@@ -290,9 +290,10 @@
     const s = state.status;
     if (!s?.connected) return null;
     const notify = { approvals: true, safety: true, handled: false, ...(s.settings?.notify ?? {}) };
-    const stopped = notify.safety && s.waiting.find((i) => i.level === "ESCALATE" && !seen(i.id));
+    // "Stopped" is only what a safety rule stopped; anything else waiting on you is "Needs you".
+    const stopped = notify.safety && s.waiting.find((i) => i.status === "Stopped" && !seen(i.id));
     if (stopped) return { kind: "stopped", item: stopped };
-    const asking = notify.approvals && s.waiting.find((i) => i.level === "ASK_FIRST" && !seen(i.id));
+    const asking = notify.approvals && s.waiting.find((i) => i.status !== "Stopped" && !seen(i.id));
     if (asking) return { kind: "approval", item: asking };
     // What he did on his own: shown when you turned that on, and always for what he does and tells
     // you about ("Tell me"), like a reply he drafted.
@@ -364,7 +365,7 @@
           el("button", { class: "btn", type: "button", onclick: () => showEmail(item) }, "Open")));
     }
     if (c.kind === "approval") {
-      return note("", el("p", { class: "note-title", text: "I need your approval" }),
+      return note("", el("p", { class: "note-title", text: item.answerable ? "I need your approval" : "This one needs you" }),
         el("p", { class: "note-text" }, el("b", { text: item.subject || "(no subject)" }), ` from ${address(item.sender)}. ${item.message}`),
         el("div", { class: "row" },
           el("button", { class: "btn main", type: "button", onclick: () => showEmail(item) }, "Review"),
@@ -432,7 +433,8 @@
   const shown = () => state.pinned ?? (state.thread?.thread ?? []).find((i) => i.id === state.focus) ?? state.thread?.item ?? null;
 
   function recommends(item) {
-    if (item.level === "ESCALATE") return "Leave it with me. Don't reply, click its links or send anything.";
+    if (item.status === "Stopped") return "Leave it with me. Don't reply, click its links or send anything.";
+    if (item.level === "ESCALATE") return "This one's for you. I haven't done anything with it.";
     if (item.undoable) return `${didWords(item, item.done.action)}. You can undo it if that wasn't right.`;
     const doing = DOING[item.action] ?? "Look at it";
     return item.level === "ASK_FIRST" ? `${doing}, once you say yes.` : `${doing}.`;
@@ -495,7 +497,8 @@
     return [
       el("div", { class: "box" }, el("h3", { text: "What I did" }),
         el("p", { class: "text ink", text: done ? `${didWords(item, done.action)} by ${by} at ${time(done.at)}${done.undone ? ", then undone" : ""}.`
-          : item.level === "ESCALATE" ? "Nothing. I never act on an email I've stopped."
+          : item.status === "Stopped" ? "Nothing. I never act on an email I've stopped."
+            : item.level === "ESCALATE" ? "Nothing. I left it for you."
             : item.acting ? "Nothing in Gmail yet." : "Nothing. I was only reading your Gmail when this came in." }),
         item.undoable ? el("div", { class: "row" }, el("button", { class: "btn", type: "button", disabled: state.busy,
           onclick: () => answer(item, "UNDO") }, "Undo")) : null),

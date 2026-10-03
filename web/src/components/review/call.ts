@@ -4,7 +4,7 @@
 import type { Action, DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
 import { labelName } from "@/components/inbox/outcome";
-import { DOABLE, wouldOnly } from "@/lib/labels";
+import { confused, DOABLE, isSafetyStop, wouldOnly } from "@/lib/labels";
 
 // Mirrors ACTION_PHRASES and ACTION_DONE in oscar/voice.py.
 const PHRASE: Record<Action, string> = {
@@ -46,6 +46,9 @@ export function callLine(item: DecisionWithFeedback): string {
   const phrase = label ? `add the ${label}` : PHRASE[d.action];
   const past = label ? `added the ${label}` : DONE[d.action];
 
+  if (d.autonomy_level === "ESCALATE" && !isSafetyStop(d)) {
+    return would ? "I'd bring this to you, without doing anything." : "I brought this to you. Nothing was done.";
+  }
   if (d.autonomy_level === "ESCALATE") {
     if (would) return "I'd stop this and bring it to you, without doing anything.";
     return said(item, "SEEN") ? "I stopped this and brought it to you, and you've seen it." : "I stopped this and brought it to you. Nothing was done.";
@@ -56,7 +59,7 @@ export function callLine(item: DecisionWithFeedback): string {
     if (real && done) return done.undone_at ? `You said yes and I ${past}, then it was undone.` : `You said yes, so I ${past}.`;
     if (said(item, "APPROVE")) return real ? "You said yes." : `You said yes, so I ${past}.`;
     if (said(item, "REJECT")) return "You said no, so I left it alone.";
-    return `I'm asking before I ${phrase}.`;
+    return confused(d) ? "I wasn't sure what to do with this one, so I'm asking you." : `I'm asking before I ${phrase}.`;
   }
 
   const how = d.autonomy_level === "PROCEED_SILENTLY" ? "without asking" : "and let you know";

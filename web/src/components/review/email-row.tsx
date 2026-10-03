@@ -3,7 +3,7 @@ import { StatusWords } from "@/components/kit/status";
 import { outcomeOf } from "@/components/review/filters";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
-import { STATUS } from "@/lib/labels";
+import { shownLevel, STATUS } from "@/lib/labels";
 import { previewOf } from "@/lib/text";
 import { dayLabel, formatTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function EmailRow({
           <span className={cn("truncate text-sm", selected ? "font-medium text-primary" : "text-foreground")}>{d.subject || "(no subject)"}</span>
           <span className="truncate text-xs text-muted-foreground">{previewOf(d)}</span>
           <span className="mt-1 flex min-w-0 items-center gap-2">
-            <StatusWords level={d.autonomy_level} className="shrink-0 text-xs">{STATUS[d.autonomy_level].label}</StatusWords>
+            <StatusWords level={shownLevel(d)} className="shrink-0 text-xs">{STATUS[shownLevel(d)].label}</StatusWords>
             <span className="truncate text-xs text-muted-foreground">{outcomeOf(item)}</span>
           </span>
         </span>
