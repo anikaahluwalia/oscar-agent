@@ -1186,7 +1186,39 @@ he couldn't read, then what he wasn't sure of, then new senders. J and K move, Y
 he got it right. Senders get a letter, not a logo, so no sender's address goes to a
 logo service.
 
+## Stage 12 — Acting in Gmail, only in ways that can be undone
+
+Oscar stops being read-only, carefully.
+
+- **Three actions, all undoable.** Mark as read (take off `UNREAD`), archive (take off
+  `INBOX`), and put one of his own labels on an email (`Oscar/Receipts`, say).
+  Nothing else: no sending, forwarding, unsubscribing, deleting or money. The Gmail
+  client can't do those either. Its one write, `modify_labels`, only touches
+  `UNREAD`, `INBOX` and labels Oscar made himself, and refuses anything else before
+  Gmail is asked.
+- **Off until you turn it on.** Connecting Gmail still only asks for read access.
+  Settings has a separate "Give Oscar permission to act", which asks Google for
+  `gmail.modify`, and then a switch. Turning it off stops new actions; undo still
+  works.
+- **When he acts.** On a check, he does what he decided to do on his own (Quietly and
+  Tell me), for new emails only, at most 25 per check, so a bug can't touch the whole
+  inbox. Asks wait for your Approve. Anything stopped is never done. Re-reads of old
+  emails never act.
+- **Undo is exact.** Each action records the labels it actually added and removed,
+  given what the email had at the time, and undo reverses just those. An email that
+  was already read stays read after undoing "mark as read".
+- **Honest wording.** A card only says he did something if Gmail says he did. A reply
+  he'd draft says "Would draft a reply": he can't write Gmail drafts yet.
+- **Learning.** Your Approve, Decline and Undo on real emails now teach him, alongside
+  your reviews.
+
+Tested against a fake Gmail (`tests/test_act.py`, `tests/test_acting.py`): nothing is
+written until acting is on, it needs the permission, only allowed labels change,
+undo restores exactly, approving does it and declining doesn't, re-reads never act,
+and the cap holds.
+
 ### Next
 
-Stage 12 moves Oscar off read-only: reversible actions in Gmail (labels first, then
-mark as read and archive), each one undoable. It needs Gmail's modify permission.
+- A blind held-out v3, since v2 has now been seen.
+- Oscar's labels in Gmail for what needs you ("Oscar/Needs you"), and drafts in
+  Gmail, which need another permission.
