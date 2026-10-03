@@ -8,6 +8,7 @@ report can be traced back to the cases behind it.
 
 import hashlib
 import json
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,7 +20,7 @@ from oscar.agent import decide
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import Action, AutonomyLevel, Email
 from oscar.preferences import DEFAULT_POLICY, Policy, Preferences
-from oscar.understand import PROMPT_VERSION, Reader, model_name
+from oscar.understand import PROMPT_VERSION, Reader, cache_key, model_name
 from oscar.version import CLASSIFIER_VERSION, policy_version
 
 HERE = Path(__file__).resolve().parent
@@ -77,8 +78,16 @@ class ModelSetup:
 def read_all(cases: list[EvalCase], model: ModelSetup, workers: int = 6) -> None:
     """Read every case with the model up front, a few at a time, so scoring uses the saved answers."""
     from concurrent.futures import ThreadPoolExecutor
+    # Each email it hasn't read before takes a call, so the first run after the prompt changes takes
+    # minutes. Say how far it's got, so it doesn't look stuck.
+    emails = [case_email(c) for c in cases]
+    new = [e for e in emails if cache_key(e, model.reader.reads) not in model.reader.cache]
+    if new:
+        print(f"Reading {len(new)} emails with the model…", file=sys.stderr, flush=True)
     with ThreadPoolExecutor(workers) as pool:
-        list(pool.map(lambda c: model.reader.read(case_email(c)), cases))
+        for done, _ in enumerate(pool.map(model.reader.read, new), 1):
+            if done % 25 == 0 or done == len(new):
+                print(f"  {done} of {len(new)}", file=sys.stderr, flush=True)
 
 
 def run_case(case: EvalCase, learned: list[FeedbackEvent], policy: Policy, model: ModelSetup | None = None) -> CaseResult:
