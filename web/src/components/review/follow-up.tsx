@@ -114,7 +114,7 @@ export function FollowUp({ item, onSaved, onBack }: { item: DecisionWithFeedback
           : null;
   const whyMissing = !missing && !finalWhy ? "Say whether I understood the email." : null;
   const typeMissing = finalWhy === "misread" && !type.trim() ? "Say what kind of email it is." : null;
-  const sameHint = same && finalWhy !== "misread" && !note.trim() ? "That's what I picked. Change something, or go back and press Right." : null;
+  const sameHint = same && finalWhy !== "misread" && !note.trim() ? "That's what I picked. Change something, or go back and press Yes." : null;
   const problem = missing ?? whyMissing ?? typeMissing ?? sameHint;
 
   async function save() {
