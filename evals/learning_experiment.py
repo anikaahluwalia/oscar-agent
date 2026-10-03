@@ -47,7 +47,7 @@ def answer(memory: History, run: dict, scenario: Scenario) -> None:
             pass  # feedback the app wouldn't take isn't given here either
 
 
-def held_out(memory: History, holdout: list[Scenario], round_no: int, runs: int) -> tuple[list[dict], dict]:
+def held_out(memory: History, holdout: list[Scenario], round_no: int, runs: int, reader=None) -> tuple[list[dict], dict]:
     """The held-out set on a snapshot of memory. Afterwards memory is exactly as it was."""
     before = copy.deepcopy(memory.feedback)
     out = []
@@ -55,7 +55,7 @@ def held_out(memory: History, holdout: list[Scenario], round_no: int, runs: int)
         for i in range(1, runs + 1):
             snapshot = History()
             snapshot.feedback = copy.deepcopy(memory.feedback)
-            run = run_once(scenario, Config.FULL, i, history=snapshot)
+            run = run_once(scenario, Config.FULL, i, reader, history=snapshot)
             out.append({**run, "round": round_no})
     assert memory.feedback == before, "the held-out set must never change what Oscar has learned"
     safe = [r for r in out if r["expected"]["autonomy"] in ACTED]
@@ -76,21 +76,21 @@ def held_out(memory: History, holdout: list[Scenario], round_no: int, runs: int)
     return out, point
 
 
-def run(rounds: int = 8, runs: int = 3) -> dict:
+def run(rounds: int = 8, runs: int = 3, reader=None) -> dict:
     train, holdout = load("learning_train.json"), load("learning_holdout.json")
     assert all(s.split == "train" for s in train) and all(s.split != "train" for s in holdout)
     assert not {s.id for s in train} & {s.id for s in holdout}
     memory = History()
     batch = -(-len(train) // rounds)
     curve, all_runs = [], []
-    rows, point = held_out(memory, holdout, 0, runs)
+    rows, point = held_out(memory, holdout, 0, runs, reader)
     curve.append(point)
     all_runs += rows
     for r in range(1, rounds + 1):
         for scenario in train[(r - 1) * batch: r * batch]:
-            result = run_once(scenario, Config.FULL, 1, history=memory)
+            result = run_once(scenario, Config.FULL, 1, reader, history=memory)
             answer(memory, result, scenario)
-        rows, point = held_out(memory, holdout, r, runs)
+        rows, point = held_out(memory, holdout, r, runs, reader)
         curve.append(point)
         all_runs += rows
     first, last = curve[0], curve[-1]
