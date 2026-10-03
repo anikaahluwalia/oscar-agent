@@ -75,8 +75,8 @@ function CategoryCard({ category, all, senders, names }: { category: Category; a
           </form>
         ) : (
           <>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <p className="text-[15px] font-bold">{category.name}</p>
+            <div className="flex min-w-0 flex-1 basis-[calc(100%-3.25rem)] flex-col sm:basis-auto">
+              <p className="text-[15px] font-bold break-words">{category.name}</p>
               <p className="text-[13px] text-muted-foreground">
                 {senders.length === 1 ? "1 sender" : `${senders.length} senders`}
               </p>

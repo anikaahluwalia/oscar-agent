@@ -24,7 +24,7 @@ export function KnowsPage() {
   return (
     <Page className="max-w-[1120px] gap-10">
       <MoodHeader pose="reporting" title="What I know about you" text="I picked these up from your answers. Change or forget any of them.">
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full xl:w-72">
           <label htmlFor="knows-search" className="sr-only">
             Search rules, patterns, senders and categories
           </label>

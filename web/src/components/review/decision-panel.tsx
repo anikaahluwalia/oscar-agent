@@ -77,7 +77,8 @@ function Answer({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex min-h-[76px] flex-1 basis-0 items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors disabled:opacity-60",
+        // Side by side when there's room for both, one above the other on a phone.
+        "flex min-h-[76px] min-w-[11rem] flex-1 basis-0 items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors disabled:opacity-60",
         good
           ? "border-status-handled/30 bg-status-handled/5 hover:bg-status-handled/10"
           : "border-status-blocked/30 bg-status-blocked/5 hover:bg-status-blocked/10",

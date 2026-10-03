@@ -143,7 +143,7 @@ export function ProblemCards({ progress }: { progress: Progress }) {
 function Chart({ points }: { points: Progress["trend"]["points"] }) {
   const W = 640;
   const H = 180;
-  const pad = { l: 48, r: 14, t: 14, b: 30 };
+  const pad = { l: 64, r: 14, t: 16, b: 34 };
   const x = (i: number) => pad.l + (points.length === 1 ? (W - pad.l - pad.r) / 2 : (i * (W - pad.l - pad.r)) / (points.length - 1));
   const y = (v: number) => pad.t + (1 - v) * (H - pad.t - pad.b);
   const line = (key: "ask_rate" | "handled_rate") => points.map((p, i) => `${x(i)},${y(p[key])}`).join(" ");
@@ -153,7 +153,7 @@ function Chart({ points }: { points: Progress["trend"]["points"] }) {
       {[0, 0.5, 1].map((v) => (
         <g key={v}>
           <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} className="stroke-border" strokeDasharray={v ? "3 4" : undefined} />
-          <text x={pad.l - 8} y={y(v) + 4} textAnchor="end" className="fill-muted-foreground text-[13px]">
+          <text x={0} y={y(v) + 5} textAnchor="start" className="fill-muted-foreground text-[13px] max-sm:text-[22px]">
             {v * 100}%
           </text>
         </g>
@@ -165,7 +165,7 @@ function Chart({ points }: { points: Progress["trend"]["points"] }) {
           <circle cx={x(i)} cy={y(p.handled_rate)} r={3.5} className="fill-status-handled" />
           <circle cx={x(i)} cy={y(p.ask_rate)} r={3.5} className="fill-status-needs" />
           {i % every === 0 && (
-            <text x={x(i)} y={H - 6} textAnchor="middle" className="fill-muted-foreground text-[13px]">
+            <text x={x(i)} y={H - 6} textAnchor="middle" className="fill-muted-foreground text-[13px] max-sm:text-[22px]">
               {day(p.start)}
             </text>
           )}
@@ -251,7 +251,7 @@ export function LearnedMost({ progress }: { progress: Progress }) {
         <ul className="flex flex-col divide-y">
           {rows.map((r) => (
             <li key={`${r.kind}|${r.action}`} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 py-3">
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 flex-1 basis-full flex-col sm:basis-auto">
                 <span className="text-[15px] font-semibold">{familyName(r.kind)}</span>
                 <span className="text-[13px] text-muted-foreground">
                   {ACTIONS[r.action]} · {r.emails} emails since {day(r.since)}

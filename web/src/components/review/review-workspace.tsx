@@ -125,8 +125,8 @@ function Header({ pose, mode, reaction, children }: { pose: OscarPose; mode: Mod
 /** Regular review or Safety review, with how many are left in each. */
 function Tabs({ mode, counts, onChange }: { mode: Mode; counts: Record<Mode, number>; onChange: (m: Mode) => void }) {
   const tabs: { key: Mode; label: string; icon?: typeof ShieldIcon }[] = [
-    { key: "regular", label: "Regular review" },
-    { key: "safety", label: "Safety review", icon: ShieldIcon },
+    { key: "regular", label: "Regular" },
+    { key: "safety", label: "Safety", icon: ShieldIcon },
   ];
   return (
     <div role="tablist" aria-label="Kind of review" className="flex rounded-full border bg-muted/50 p-1">
@@ -138,12 +138,16 @@ function Tabs({ mode, counts, onChange }: { mode: Mode; counts: Record<Mode, num
           aria-selected={mode === t.key}
           onClick={() => onChange(t.key)}
           className={cn(
-            "flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground",
+            "flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground",
             mode === t.key && "bg-primary text-primary-foreground shadow-card hover:text-primary-foreground",
           )}
         >
           {t.icon && <t.icon className="size-4" aria-hidden />}
-          {t.label}
+          {/* "Regular review" and "Safety review", shortened on a phone so each fits on one line. */}
+          <span>
+            {t.label}
+            <span className="max-sm:hidden"> review</span>
+          </span>
           {counts[t.key] > 0 && <span className="tabular-nums opacity-70">{counts[t.key].toLocaleString()}</span>}
         </button>
       ))}

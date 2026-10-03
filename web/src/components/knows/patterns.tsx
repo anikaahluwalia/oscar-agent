@@ -201,16 +201,15 @@ export function PatternsLearned({ rows, failed, query }: { rows: PatternRow[] | 
                 <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
                   <SparklesIcon className="size-[18px] text-muted-foreground" strokeWidth={1.9} />
                 </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <p className="text-[15px] font-semibold">
-                    {name} <span className="font-normal text-muted-foreground">· {ACTIONS[p.action]}</span>
-                  </p>
+                {/* On a phone the name takes the line, and the rest wraps under it. */}
+                <div className="flex min-w-0 flex-1 basis-[calc(100%-3.5rem)] flex-col gap-0.5 sm:basis-auto">
+                  <p className="text-[15px] font-semibold">{name}</p>
                   <p className="text-[13px] text-muted-foreground">
-                    {plural(reviews, "review", "reviews")} · {plural(p.senders, "sender", "senders")}
+                    {ACTIONS[p.action]} · {plural(reviews, "review", "reviews")} · {plural(p.senders, "sender", "senders")}
                   </p>
                 </div>
                 <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", status.tone)}>{status.label}</span>
-                <span className="w-36 shrink-0 text-right">
+                <span className="shrink-0 sm:w-36 sm:text-right">
                   {level ? (
                     <StatusWords level={level}>{INVOLVE_WORDS[level]}</StatusWords>
                   ) : (
