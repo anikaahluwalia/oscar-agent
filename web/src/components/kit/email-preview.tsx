@@ -51,8 +51,8 @@ export function EmailHeader({ decision, className }: { decision: Decision; class
  * The email itself. A real email is fetched from Gmail when it's shown and looks the way Gmail
  * shows it, images included (through Oscar). The demo inbox only keeps the start of each email.
  */
-export function EmailContent({ decision }: { decision: Decision }) {
-  if (decision.source === "gmail") return <EmailBody decisionId={decision.id} />;
+export function EmailContent({ decision, height }: { decision: Decision; height?: number }) {
+  if (decision.source === "gmail") return <EmailBody decisionId={decision.id} height={height} />;
   return (
     <div className="rounded-2xl bg-muted/50 p-5 text-[15px] leading-relaxed whitespace-pre-wrap">
       {previewOf(decision) || <span className="text-muted-foreground italic">This email has no text.</span>}

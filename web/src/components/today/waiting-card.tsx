@@ -111,7 +111,7 @@ export function WaitingCard({ item, items, index, total, readOnly, onMove, onFee
           <div className="mx-6 overflow-hidden rounded-2xl border" aria-label="The email, as Gmail shows it">
             <h2 className="border-b px-5 py-3.5 text-[22px] leading-tight font-bold tracking-[-0.015em] text-pretty">{subject}</h2>
             <div className="p-3">
-              <EmailContent decision={decision} />
+              <EmailContent decision={decision} height={360} />
             </div>
           </div>
         ) : (

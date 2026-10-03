@@ -88,7 +88,7 @@ ${styles}
  * it actually is. It looks the way Gmail shows it. Images load through Oscar, so the
  * sender never sees your IP address or browser, and you can turn them off.
  */
-export function EmailBody({ decisionId }: { decisionId: string }) {
+export function EmailBody({ decisionId, height = 560 }: { decisionId: string; height?: number }) {
   const [content, setContent] = useState<Content | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [images, setImages] = useState(true);
@@ -123,7 +123,8 @@ export function EmailBody({ decisionId }: { decisionId: string }) {
         sandbox="allow-popups allow-popups-to-escape-sandbox"
         srcDoc={page(content.html, images)}
         referrerPolicy="no-referrer"
-        className="h-[560px] w-full rounded-2xl border bg-white"
+        className="w-full rounded-2xl border bg-white"
+        style={{ height }}
       />
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <ImageIcon className="size-3.5" />
