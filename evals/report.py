@@ -70,7 +70,9 @@ def render(runs: dict[str, RunResult]) -> str:
     v = after.versions
     out = [
         "# Oscar eval report", "",
-        f"Oscar `{v['commit']}` · classifier `{v['classifier']}` · policy `{v['policy']['name']}`",
+        f"Oscar `{v['commit']}` · classifier `{v['classifier']}` · policy `{v['policy']['name']}`"
+        + (f" · model `{v['understanding']['model']}` ({v['understanding']['mode']}, prompt `{v['understanding']['prompt']}`)"
+           if v.get("understanding") else " · rules only, no model"),
         f"Held-out: `{after.dataset['name']}` ({after.dataset['cases']} cases, sha `{after.dataset['sha256']}`) · "
         f"learning: {after.learning['set']} ({after.learning['emails']} emails, seed {after.learning['seed']}, "
         f"{after.learning['feedback']} feedback events)",

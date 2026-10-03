@@ -24,13 +24,22 @@ HELDOUT = "heldout_v2"
 
 
 def measure(policy_name: str = "default-p1", emails: int = 400, seed: int = 1, save: bool = True,
-            heldout_name: str = HELDOUT) -> dict:
+            heldout_name: str = HELDOUT, model: str = "none") -> dict:
+    """model: "none" (the rules alone), "fill" (the model reads what the rules miss) or
+    "first" (the model's reading comes first, except for rule actions with a safety floor)."""
     policy = POLICIES[policy_name]
+    setup = None
+    if model != "none":
+        import httpx
+        from oscar.understand import Reader, api_key
+        if not api_key():
+            raise SystemExit("Measuring with the model needs GEMINI_API_KEY in .env.")
+        setup = harness.ModelSetup(Reader(httpx.Client(timeout=40), harness.MODEL_CACHE, reads="full"), first=model == "first")
     heldout_path, safety_path = harness.CASES / f"{heldout_name}.jsonl", harness.CASES / "safety_v1.jsonl"
     heldout, safety = harness.load(heldout_path), harness.load(safety_path)
     regression = harness.regression_suite()
 
-    events, stream = learn(emails, seed, policy)
+    events, stream = learn(emails, seed, policy, setup)
     problems = leaks(heldout + safety + regression + harness.load(harness.CASES / "heldout_v1.jsonl"), stream)
     if problems:
         raise SystemExit("Leakage between the learning set and the eval sets:\n  " + "\n  ".join(problems[:20]))
@@ -40,24 +49,25 @@ def measure(policy_name: str = "default-p1", emails: int = 400, seed: int = 1, s
     h_info, s_info = harness.dataset_info(heldout_path, heldout), harness.dataset_info(safety_path, safety)
     reg_info = {"name": "regression_cases", "cases": len(regression), "sha256": "-"}
     runs = {
-        "heldout_before": harness.run_suite("heldout", heldout, h_info, None, None, policy),
-        "heldout_after": harness.run_suite("heldout", heldout, h_info, events, info, policy),
-        "safety_before": harness.run_suite("safety", safety, s_info, None, None, policy),
-        "safety_after": harness.run_suite("safety", safety, s_info, events, info, policy),
+        "heldout_before": harness.run_suite("heldout", heldout, h_info, None, None, policy, setup),
+        "heldout_after": harness.run_suite("heldout", heldout, h_info, events, info, policy, setup),
+        "safety_before": harness.run_suite("safety", safety, s_info, None, None, policy, setup),
+        "safety_after": harness.run_suite("safety", safety, s_info, events, info, policy, setup),
         # Regression cases come from the real user's inbox, so they're run without the synthetic
         # user's habits: those belong to a different (simulated) person.
-        "regression": harness.run_suite("regression", regression, reg_info, None, None, policy),
+        "regression": harness.run_suite("regression", regression, reg_info, None, None, policy, setup),
     }
     if heldout_name != "heldout_v1":
         v1_path = harness.CASES / "heldout_v1.jsonl"
         v1 = harness.load(v1_path)
         v1_info = harness.dataset_info(v1_path, v1)
-        runs["heldout_v1_before"] = harness.run_suite("heldout", v1, v1_info, None, None, policy)
-        runs["heldout_v1_after"] = harness.run_suite("heldout", v1, v1_info, events, info, policy)
+        runs["heldout_v1_before"] = harness.run_suite("heldout", v1, v1_info, None, None, policy, setup)
+        runs["heldout_v1_after"] = harness.run_suite("heldout", v1, v1_info, events, info, policy, setup)
     if save:
         for run in runs.values():
             harness.save(run)
-        (harness.HERE / "results" / "REPORT.md").write_text(report.render(runs))
+        name = "REPORT.md" if model == "none" else f"REPORT-model-{model}.md"
+        (harness.HERE / "results" / name).write_text(report.render(runs))
     return runs
 
 
@@ -67,8 +77,10 @@ def main() -> None:
     parser.add_argument("--emails", type=int, default=400)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--heldout", default=HELDOUT, help="which held-out set to lead with")
+    parser.add_argument("--model", default="none", choices=["none", "fill", "first"],
+                        help="read the emails with the model too (Stage 11): fill in for the rules, or come first")
     args = parser.parse_args()
-    runs = measure(args.policy, args.emails, args.seed, heldout_name=args.heldout)
+    runs = measure(args.policy, args.emails, args.seed, heldout_name=args.heldout, model=args.model)
     print(report.render(runs))
     problems = report.gate(runs)
     sys.exit(1 if problems else 0)

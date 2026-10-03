@@ -17,13 +17,21 @@ from oscar.history import History
 from oscar.preferences import DEFAULT_POLICY, Policy, Preferences
 
 
-def learn(n: int = 400, seed: int = 1, policy: Policy = DEFAULT_POLICY) -> tuple[list[FeedbackEvent], list[EvalEmail]]:
-    """Run the learning inbox and return the feedback the simulated user gave, and the emails."""
+def learn(n: int = 400, seed: int = 1, policy: Policy = DEFAULT_POLICY, model=None) -> tuple[list[FeedbackEvent], list[EvalEmail]]:
+    """Run the learning inbox and return the feedback the simulated user gave, and the emails.
+    With a model (evals.harness.ModelSetup), Oscar reads the learning emails with it too, so
+    the user teaches the same Oscar that's scored."""
     history = History()
     user = SimulatedUser(seed=seed)
     stream = generate(n, seed)
+    if model:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(6) as pool:
+            list(pool.map(lambda item: model.reader.read(item.email), stream))
     for item in stream:
-        decision = decide(item.email, Preferences.from_feedback(history.feedback, policy))
+        understanding = model.reader.read(item.email) if model else None
+        decision = decide(item.email, Preferences.from_feedback(history.feedback, policy),
+                          understanding=understanding, model_first=bool(model and model.first))
         history.add_decision(decision)
         for kind in user.react(decision, item.truth):
             try:

@@ -62,6 +62,8 @@ def test_preview_only_sends_the_start(monkeypatch):
 
 def test_answers_are_remembered_and_failures_are_not(monkeypatch, tmp_path):
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    waits: list = []
+    monkeypatch.setattr("oscar.understand.time.sleep", waits.append)
     calls: list = []
     reader = Reader(fake(NEWSLETTER, calls=calls), cache_path=tmp_path / "cache.jsonl")
     reader.read(EMAIL)
@@ -69,6 +71,7 @@ def test_answers_are_remembered_and_failures_are_not(monkeypatch, tmp_path):
     assert len(calls) == 1, "the second reader used the saved answer"
     failing = Reader(fake(status=429), cache_path=tmp_path / "other.jsonl")
     assert failing.read(EMAIL) is None and not (tmp_path / "other.jsonl").exists()
+    assert waits == [1, 2, 4, 8], "a rate limit is tried again, waiting longer each time"
 
 
 def test_every_kind_maps_to_an_action():

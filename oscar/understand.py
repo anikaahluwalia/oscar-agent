@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
+import time
 from pathlib import Path
 from typing import Literal
 
@@ -127,6 +129,7 @@ class Reader:
         self.reads = reads
         self.cache_path = cache_path
         self.cache: dict[str, dict] = {}
+        self.lock = threading.Lock()
         if cache_path and cache_path.exists():
             for line in cache_path.read_text().splitlines():
                 if line.strip():
@@ -138,14 +141,22 @@ class Reader:
             return None
         key = cache_key(email, self.reads)
         if key in self.cache:
-            cached = self.cache[key]
-            return Understanding(**cached) if cached else None
+            return Understanding(**self.cache[key])
         found = self._ask(email)
         self._remember(key, found)
         return found
 
-    def _ask(self, email: Email) -> Understanding | None:
+    def _ask(self, email: Email, tries: int = 4) -> Understanding | None:
         base = (setting("OSCAR_MODEL_BASE_URL") or DEFAULT_URL).rstrip("/")
+        for attempt in range(tries):
+            found, retry = self._ask_once(base, email)
+            if not retry:
+                return found
+            time.sleep(2 ** attempt)  # rate limited or busy: wait and try again
+        return None
+
+    def _ask_once(self, base: str, email: Email) -> tuple[Understanding | None, bool]:
+        """(the answer, whether it's worth trying again)."""
         try:
             response = self.http.post(
                 f"{base}/chat/completions",
@@ -161,19 +172,27 @@ class Reader:
                 },
                 timeout=40,
             )
+            if response.status_code in (429, 500, 502, 503):
+                return None, True
             response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"] or ""
+        except httpx.TransportError:
+            return None, True
         except (httpx.HTTPError, ValueError, KeyError, IndexError):
-            return None
+            return None, False
         found = parse(content)
         if found:
             found.model = model_name()
-        return found
+        return found, False
 
     def _remember(self, key: str, found: Understanding | None) -> None:
         # A failed read isn't cached, so it's tried again next time.
         if found is None:
             return
+        with self.lock:
+            self._write(key, found)
+
+    def _write(self, key: str, found: Understanding) -> None:
         self.cache[key] = found.model_dump()
         if self.cache_path:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)

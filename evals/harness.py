@@ -19,12 +19,14 @@ from oscar.agent import decide
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import AutonomyLevel, Email
 from oscar.preferences import DEFAULT_POLICY, Policy, Preferences
+from oscar.understand import PROMPT_VERSION, Reader, model_name
 from oscar.version import CLASSIFIER_VERSION, policy_version
 
 HERE = Path(__file__).resolve().parent
 CASES = HERE / "cases"
 RUNS = HERE / "results" / "runs"
-SAFETY_SOURCES = {"safety_check", "floor"}
+MODEL_CACHE = HERE / "cache" / "understanding.jsonl"  # synthetic emails only, so it's committed
+SAFETY_SOURCES = {"safety_check", "floor", "model_check"}
 
 
 def load(path: Path) -> list[EvalCase]:
@@ -57,12 +59,34 @@ def _setup_events(case: EvalCase) -> list[FeedbackEvent]:
     ]
 
 
-def run_case(case: EvalCase, learned: list[FeedbackEvent], policy: Policy) -> CaseResult:
+def case_email(case: EvalCase) -> Email:
+    return Email(id=case.id, sender=case.email.sender, to=case.email.to, subject=case.email.subject,
+                 body="\n\n".join([*case.thread, case.email.body]), category=case.email.category, bulk=case.email.bulk)
+
+
+class ModelSetup:
+    """How the model is used in a run: who reads the emails, and whether its reading comes first."""
+
+    def __init__(self, reader: Reader, first: bool = False) -> None:
+        self.reader, self.first = reader, first
+
+    def describe(self) -> dict:
+        return {"model": model_name(), "prompt": PROMPT_VERSION, "mode": "first" if self.first else "fill"}
+
+
+def read_all(cases: list[EvalCase], model: ModelSetup, workers: int = 6) -> None:
+    """Read every case with the model up front, a few at a time, so scoring uses the saved answers."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(workers) as pool:
+        list(pool.map(lambda c: model.reader.read(case_email(c)), cases))
+
+
+def run_case(case: EvalCase, learned: list[FeedbackEvent], policy: Policy, model: ModelSetup | None = None) -> CaseResult:
     preferences = Preferences.from_feedback(learned + _setup_events(case), policy)
-    email = Email(id=case.id, sender=case.email.sender, to=case.email.to, subject=case.email.subject,
-                  body="\n\n".join([*case.thread, case.email.body]), category=case.email.category, bulk=case.email.bulk)
+    email = case_email(case)
+    understanding = model.reader.read(email) if model else None
     start = time.perf_counter()
-    decision = decide(email, preferences)
+    decision = decide(email, preferences, understanding=understanding, model_first=bool(model and model.first))
     runtime = (time.perf_counter() - start) * 1000
     detected = decision.autonomy_level == E and decision.level_source in SAFETY_SOURCES
     passed, error, cost = judge(case, decision.autonomy_level, decision.action, detected)
@@ -78,17 +102,20 @@ def run_case(case: EvalCase, learned: list[FeedbackEvent], policy: Policy) -> Ca
 
 
 def run_suite(suite: str, cases: list[EvalCase], dataset: dict, learned: list[FeedbackEvent] | None,
-              learning_info: dict | None, policy: Policy = DEFAULT_POLICY) -> RunResult:
-    results = [run_case(c, learned or [], policy) for c in cases]
+              learning_info: dict | None, policy: Policy = DEFAULT_POLICY, model: ModelSetup | None = None) -> RunResult:
+    if model:
+        read_all(cases, model)
+    results = [run_case(c, learned or [], policy, model) for c in cases]
     table, _ = calibration(results)
     condition = "after" if learned else ("none" if suite == "regression" else "before")
     commit = policy_version()
     return RunResult(
-        run_id=f"{dataset.get('name', suite)}-{condition}-{policy.name}-{commit}",
+        run_id=f"{dataset.get('name', suite)}-{condition}-{policy.name}{'-model-' + model.describe()['mode'] if model else ''}-{commit}",
         created_at=datetime.now(timezone.utc),
         suite=suite,
         dataset=dataset,
-        versions={"commit": commit, "classifier": CLASSIFIER_VERSION, "policy": policy.describe()},
+        versions={"commit": commit, "classifier": CLASSIFIER_VERSION, "policy": policy.describe(),
+                  "understanding": model.describe() if model else None},
         learning=learning_info,
         metrics=metrics(results),
         breakdowns=breakdowns(results),
