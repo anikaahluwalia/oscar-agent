@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timezone
+import re
 import secrets
 import threading
 import time
@@ -26,7 +27,7 @@ from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, check_all
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
-from oscar.overview import autonomy, brief, permissions
+from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, permissions
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
 from oscar.preferences import Preferences
 from oscar.review import teaching
@@ -171,6 +172,48 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
                              done=history.action_for(d.id))
         for d in decisions
     ]
+
+
+# --- The Gmail extension ----------------------------------------------------------------
+# Read-only views for the extension inside Gmail. Its buttons use POST /feedback, like the app,
+# so every rule there (and the safety floor) still applies.
+
+THREAD_ID = re.compile(r"^[0-9a-f]{6,32}$")
+
+
+def _extension_item(history: History, d: Decision) -> dict:
+    done = history.action_for(d.id)
+    answered = any(f.kind in ANSWERS for f in history.feedback_for(d.id))
+    return {
+        "id": d.id, "subject": d.subject, "sender": d.sender, "level": d.autonomy_level.value, "action": d.action.value,
+        "message": d.message, "factors": d.factors, "acting": d.acting,
+        "thread_id": d.gmail.thread_id if d.gmail else None, "message_id": d.gmail.message_id if d.gmail else None,
+        # Approve or decline: only an ask made while he could act, not answered yet.
+        "answerable": d.source == "gmail" and d.acting and d.autonomy_level == AutonomyLevel.ASK_FIRST and not answered,
+        "undoable": bool(done and not done.undone_at),
+    }
+
+
+@app.get("/extension/status")
+def extension_status(history: History = Depends(get_history), tokens: gmail.TokenStore = Depends(get_tokens),
+                     real: History = Depends(get_real_history)) -> dict:
+    """What needs you, for the badge on Oscar in Gmail."""
+    connected = bool(tokens.load())
+    open_ = needs_you(history)
+    waiting = open_[AutonomyLevel.ESCALATE] + open_[AutonomyLevel.ASK_FIRST]
+    return {"connected": connected, "read_only": not (connected and acting_on(tokens, real)),
+            "count": len(waiting), "waiting": [_extension_item(history, d) for d in waiting[:8]]}
+
+
+@app.get("/extension/thread/{thread_id}")
+def extension_thread(thread_id: str, history: History = Depends(get_history)) -> dict:
+    """Oscar's latest call on a Gmail thread, by its id as Gmail's page shows it."""
+    if not THREAD_ID.match(thread_id):
+        raise HTTPException(404, "That isn't a Gmail thread id.")
+    for d in latest_per_email(history):
+        if d.gmail and d.gmail.thread_id == thread_id:
+            return {"found": True, "item": _extension_item(history, d)}
+    return {"found": False, "item": None}
 
 
 @app.get("/brief")
