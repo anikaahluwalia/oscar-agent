@@ -376,5 +376,12 @@ def lessons(history: History, skip_email: str | None = None) -> list[FeedbackEve
 
 
 def teaching(history: History, skip_email: str | None = None) -> list[FeedbackEvent]:
-    """Everything Oscar learns from in this history: your feedback, and what your reviews teach."""
-    return sorted([*history.feedback, *lessons(history, skip_email)], key=lambda e: e.created_at)
+    """Everything Oscar learns from in this history: your feedback, and what your reviews teach.
+    After "clear what I've learned" (the learning_since setting), only what came after it. Nothing
+    is deleted, so it can be brought back."""
+    events = sorted([*history.feedback, *lessons(history, skip_email)], key=lambda e: e.created_at)
+    since = history.settings.get("learning_since")
+    if since:
+        cutoff = datetime.fromisoformat(since)
+        events = [e for e in events if e.created_at > cutoff]
+    return events

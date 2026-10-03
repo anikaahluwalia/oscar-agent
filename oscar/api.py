@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, timedelta, timezone
 import re
@@ -25,6 +26,7 @@ from oscar.config import API_URL, WEB_URL, setting
 from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
+from oscar import app_settings
 from oscar import categories as user_categories
 from oscar.categories import CategoryError
 from oscar.classification import EMAIL_TYPES, RISKY_TYPES, ClassificationError, ClassificationFeedback, record_classification, type_hints
@@ -135,6 +137,10 @@ def get_tokens() -> gmail.TokenStore:
     return gmail.TokenStore(GMAIL_DIR / "token.json")
 
 
+def get_app_settings_path() -> Path:
+    return default_data_dir() / "app_settings.json"
+
+
 def get_http() -> httpx.Client:
     return httpx.Client(timeout=20)
 
@@ -189,6 +195,57 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     ]
 
 
+@app.get("/export")
+def export(history: History = Depends(get_history)) -> Response:
+    """Every decision Oscar made on this inbox, with your answers to them, as a JSON file to keep."""
+    body = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "inbox": "gmail" if any(d.source == "gmail" for d in history.decisions.values()) else "demo",
+        "decisions": [d.model_dump(mode="json") for d in list_decisions(history)],
+    }
+    name = f"oscar-decisions-{datetime.now().date().isoformat()}.json"
+    return Response(json.dumps(body, indent=2), media_type="application/json",
+                    headers={"content-disposition": f'attachment; filename="{name}"'})
+
+
+# --- Settings for how Oscar shows up (oscar/app_settings.py) ---------------------------------
+
+@app.get("/app-settings", response_model=app_settings.AppSettings)
+def get_app_settings(path: Path = Depends(get_app_settings_path)) -> app_settings.AppSettings:
+    return app_settings.load(path)
+
+
+@app.post("/app-settings", response_model=app_settings.AppSettings)
+def update_app_settings(changes: dict, path: Path = Depends(get_app_settings_path)) -> app_settings.AppSettings:
+    try:
+        return app_settings.update(path, changes)
+    except app_settings.AppSettingsError as e:
+        raise HTTPException(400, str(e))
+
+
+# --- Clearing what Oscar learned, without deleting anything ---------------------------------
+
+@app.get("/learning")
+def learning(history: History = Depends(get_history)) -> dict:
+    """When you last cleared what he learned on this inbox, if you did."""
+    return {"cleared_at": history.settings.get("learning_since")}
+
+
+@app.post("/learning/clear")
+def clear_learning(history: History = Depends(get_history)) -> dict:
+    """Start learning afresh on this inbox: your answers so far stop counting. Your decisions, answers,
+    categories and the safety rules stay as they are, so it can be brought back."""
+    history.set_setting("learning_since", datetime.now(timezone.utc).isoformat())
+    return {"cleared_at": history.settings["learning_since"],
+            "reply": "Done! I'll start learning how you like things from here. Anything risky still comes to you."}
+
+
+@app.post("/learning/restore")
+def restore_learning(history: History = Depends(get_history)) -> dict:
+    history.set_setting("learning_since", None)
+    return {"cleared_at": None, "reply": "Welcome back! I remember everything you taught me again."}
+
+
 # --- The Gmail extension ----------------------------------------------------------------
 # Read-only views for the extension inside Gmail. Its buttons use POST /feedback, like the app,
 # so every rule there (and the safety floor) still applies.
@@ -223,7 +280,8 @@ def _waiting_ids(history: History) -> set[str]:
 
 @app.get("/extension/status")
 def extension_status(history: History = Depends(get_history), tokens: gmail.TokenStore = Depends(get_tokens),
-                     real: History = Depends(get_real_history)) -> dict:
+                     real: History = Depends(get_real_history),
+                     settings_path: Path = Depends(get_app_settings_path)) -> dict:
     """What needs you, for the badge on Oscar in Gmail, and what he did on his own lately."""
     connected = bool(tokens.load())
     open_ = needs_you(history)
@@ -238,7 +296,8 @@ def extension_status(history: History = Depends(get_history), tokens: gmail.Toke
     return {"connected": connected, "read_only": not (connected and acting_on(tokens, real)),
             "count": len(waiting), "waiting": [_extension_item(history, d, asks) for d in waiting[:8]],
             "recent": [_extension_item(history, d, asks) for d in recent[:5]],
-            "handled_today": sum(r.done_at.astimezone().date() == today for r in mine)}
+            "handled_today": sum(r.done_at.astimezone().date() == today for r in mine),
+            "settings": app_settings.load(settings_path).model_dump()}
 
 
 @app.get("/extension/thread/{thread_id}")
