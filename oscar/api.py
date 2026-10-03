@@ -408,7 +408,7 @@ def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenSt
     covers = ((lambda d: family(d.email_type) == kind) if scope == "kind"
               else (lambda d: d.sender == decision.sender))
     waiting = [d for d in needs_you(history)[AutonomyLevel.ASK_FIRST]
-               if d.action == decision.action and covers(d) and d.level_source not in NOT_BY_RULE][:MAX_PER_CHECK]
+               if d.action == decision.action and covers(d) and d.level_source not in NOT_BY_RULE and not d.caution][:MAX_PER_CHECK]
     done = 0
     for d in waiting:
         try:

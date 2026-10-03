@@ -128,6 +128,9 @@ class Decision(BaseModel):
     factors: list[str] = Field(default_factory=list)
     safety_floor: AutonomyLevel | None = None
     safety_rule: str | None = None
+    # The sensitive thing the email mentions, when the caution backstop matched it, even if the
+    # level was already asking. A rule never clears these from your list for you.
+    caution: str | None = None
     preference: PreferenceUsed | None = None
     reminder: Reminder | None = None  # an event or due date the email mentions (oscar/reminders.py)
     # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he

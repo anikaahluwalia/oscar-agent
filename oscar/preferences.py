@@ -186,8 +186,10 @@ class Record:
         verdict = action_verdict(event)
         self.approved += verdict == "CORRECT"
         self.declined += verdict == "INCORRECT"
-        if event.kind in (FeedbackKind.REJECT, FeedbackKind.UNDO):
-            self.told = None  # a newer no outranks an older "always do this"
+        if event.kind in (FeedbackKind.REJECT, FeedbackKind.UNDO) and self.scope[0] == "sender":
+            # A newer no outranks an older "always do this" for that sender. A rule you set for
+            # every email like this stays; the no limits that one sender instead (Preferences._capped).
+            self.told = None
         level = EVIDENCE_FOR.get(normalize(event))
         if level:
             self.counts[level] += WEIGHT.get(event.kind, 1.0)

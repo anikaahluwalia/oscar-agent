@@ -215,6 +215,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         factors=factors,
         safety_floor=safety_floor,
         safety_rule=safety_rule,
+        caution=sensitive,
         preference=used,
     )
 
