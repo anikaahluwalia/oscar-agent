@@ -17,12 +17,13 @@ folder, never in the repo.
 import threading
 import time
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 from datetime import datetime, timedelta
 
 import httpx
 from pydantic import BaseModel, Field
 
-from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, TAGS_PER_CHECK, ActionError, can_do, do, gmail_label, gone, tag
+from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, TAGS_PER_CHECK, ActionError, can_do, can_draft, do, draft, gmail_label, gone, tag
 from oscar.agent import decide
 from oscar.classification import type_hints
 from oscar.review import teaching
@@ -34,6 +35,11 @@ from oscar.preferences import Preferences
 from oscar.reminders import ReminderReader
 from oscar.understand import Reader, reads_real_email
 from oscar.version import policy_version
+
+from oscar.drafting import fit_to_answer
+
+if TYPE_CHECKING:
+    from oscar.drafting import Drafter
 
 FOLLOW_UP_DAYS = 7  # how long after a decision Oscar keeps checking what you did with the email
 MAX_PAGES = 4  # how far back to look for emails that arrived since the last check
@@ -84,7 +90,8 @@ def reminders_for(history: History) -> ReminderReader | None:
 
 def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None,
          act_since: datetime | None = None, still_acting: Callable[[], bool] | None = None, *,
-         safety: bool = True, reminders: ReminderReader | None = None, label: bool = False) -> SyncResult:
+         safety: bool = True, reminders: ReminderReader | None = None, label: bool = False,
+         drafter: "Drafter | None" = None) -> SyncResult:
     """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first.
 
     With act_since (Stage 12), he also does what he decided to do on his own, if it's one of his
@@ -95,6 +102,10 @@ def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader |
     coloured label in Gmail (label_inbox). The evals leave it off: they grade the world by what changed.
 
     safety=False is for the evals' simulated inbox only (agent.decide), and refused for anything else.
+
+    With a drafter (the app's own check, when there's a model key), a new email he'd reply to on his
+    own gets a reply written and saved as a draft in Gmail (act.draft), never sent. Without one, as in
+    the evals, replies stay what he would do.
     """
     if not safety and not getattr(gmail, "simulated", False):
         raise RuntimeError("The safety rules can only be turned off in the simulated inbox, never on a real Gmail.")
@@ -106,7 +117,7 @@ def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader |
             reminders = reminders_for(history)
         still = still_acting or (lambda: True)
         result = _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act_since,
-                       still, safety, reminders)
+                       still, safety, reminders, drafter)
         if label:
             result.labelled = label_inbox(history, gmail, still)
         return result
@@ -115,7 +126,8 @@ def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader |
 
 
 def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None, act_since: datetime | None,
-          still_acting: Callable[[], bool], safety: bool = True, reminders: ReminderReader | None = None) -> SyncResult:
+          still_acting: Callable[[], bool], safety: bool = True, reminders: ReminderReader | None = None,
+          drafter: "Drafter | None" = None) -> SyncResult:
     act = act_since is not None
     seen = {d.email_id for d in history.decisions.values()}
     # Walk back through the inbox, so emails that arrived since the last check
@@ -149,6 +161,16 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
                 did = True
             except (ActionError, GmailError, httpx.HTTPError):
                 pass  # the decision stays logged; the app shows it wasn't done
+        elif (act and arrived_since and decision.autonomy_level in ACTED_LEVELS and drafter and can_draft(decision)
+              and done < MAX_PER_CHECK and still_acting()):
+            text = drafter.write(email) if fit_to_answer(email) else None
+            if text:  # no reply fit to save (or the model didn't answer): it stays yours to answer
+                try:
+                    draft(history, gmail, decision, text, by="oscar")
+                    done += 1
+                    did = True
+                except (ActionError, GmailError, httpx.HTTPError):
+                    pass
         if act and decision.autonomy_level in ACTED_LEVELS and not did:
             # He didn't do it in Gmail (an old email, the cap, an action he doesn't do there, or Gmail
             # said no), so his note says what he would do, never "I archived this".

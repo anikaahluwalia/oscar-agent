@@ -1,8 +1,9 @@
 """Stage 12: Oscar acts on a real inbox, only in ways that can be undone.
 
-He may mark an email as read, archive it, or put one of his own labels on it.
-Nothing else: no sending, forwarding, unsubscribing, deleting or anything to do
-with money. The Gmail client can't do those either (oscar/gmail.py).
+He may mark an email as read, archive it, put one of his own labels on it, or save a
+reply he wrote as a draft in its thread (draft, below). Nothing else: no sending,
+forwarding, unsubscribing, deleting or anything to do with money. The Gmail client
+can't do those either (oscar/gmail.py).
 
 Each action records exactly which labels it added and which it removed, given
 what the email had at the time, so undo puts it back the way it was.
@@ -66,6 +67,8 @@ class ActionRecord(BaseModel):
     added: list[str] = Field(default_factory=list)  # label ids actually added
     removed: list[str] = Field(default_factory=list)  # label ids actually removed
     label: str | None = None  # for "Label it": which of his labels he used, by role (oscar/labels.py)
+    draft_id: str | None = None  # for a reply: the Gmail draft he saved, so undo can take it away
+    draft_text: str | None = None  # and what it says, so the app can show it
     done_at: datetime = Field(default_factory=now)
     undone_at: datetime | None = None
 
@@ -97,6 +100,29 @@ def can_do(decision: Decision) -> bool:
     and never one a safety rule stopped."""
     return (decision.source == "gmail" and decision.gmail is not None and decision.action in CHANGES
             and decision.autonomy_level != AutonomyLevel.ESCALATE)
+
+
+def can_draft(decision: Decision) -> bool:
+    """A reply Oscar may write as a draft: a real email he decided needs a reply, that no safety rule
+    stopped and that mentions nothing sensitive (caution). Never sent: it waits in your Drafts."""
+    return (decision.source == "gmail" and decision.gmail is not None and decision.action == Action.DRAFT_REPLY
+            and decision.autonomy_level != AutonomyLevel.ESCALATE and not decision.safety_flags and not decision.caution)
+
+
+def draft(history: History, gmail: GmailClient, decision: Decision, text: str, by: Literal["oscar", "you"]) -> ActionRecord:
+    """Save a reply as a draft in the email's thread, and record it so it can be undone."""
+    if not can_draft(decision):
+        raise ActionError("That's not something Oscar drafts a reply to.")
+    with _lock:
+        done = history.action_for(decision.id)
+        if done and not done.undone_at:
+            raise ActionError("Oscar already did this one.")
+        draft_id = gmail.create_draft(decision.gmail.message_id, decision.gmail.thread_id, decision.sender,
+                                      decision.subject, text)
+        record = ActionRecord(decision_id=decision.id, message_id=decision.gmail.message_id, action=Action.DRAFT_REPLY,
+                              by=by, draft_id=draft_id, draft_text=text)
+        history.save_action(record)
+        return record
 
 
 def label_role(decision: Decision) -> str:
@@ -138,7 +164,10 @@ def undo(history: History, gmail: GmailClient, decision_id: str) -> ActionRecord
         record = history.action_for(decision_id)
         if record is None or record.undone_at:
             raise ActionError("There's nothing to undo here.")
-        gmail.modify_labels(record.message_id, add=record.removed, remove=record.added)
+        if record.draft_id:
+            gmail.delete_draft(record.draft_id)  # a reply he drafted: take the draft away
+        else:
+            gmail.modify_labels(record.message_id, add=record.removed, remove=record.added)
         record = record.model_copy(update={"undone_at": now()})
         history.save_action(record)
         return record

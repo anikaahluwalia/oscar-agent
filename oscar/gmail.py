@@ -3,10 +3,12 @@
 Connecting asks Google for read-only access (gmail.readonly). Oscar only asks for
 gmail.modify when you choose to let him act. Even then, the only writes in this
 client are modify_labels, which only adds or removes UNREAD, INBOX and Oscar's own
-labels, label_id, which makes one of his labels (oscar/labels.py), and rename_label, which
-renames one of his labels when you change its name in Settings. So: marking read, archiving
-and labelling, all undoable. There is no code here that can send, trash or delete anything;
-tests/test_gmail.py checks that.
+labels, label_id, which makes one of his labels (oscar/labels.py), rename_label, which
+renames one of his labels when you change its name in Settings, and create_draft and
+delete_draft, which save a reply he wrote as a draft in the email's thread and take it away
+again on undo. So: marking read, archiving, labelling and drafting, all undoable. There is no
+code here that can send an email or a draft, or trash or delete a message; tests/test_gmail.py
+checks that.
 
 Google's OAuth: the user is sent to Google to say yes, Google sends them back to
 /auth/google/callback with a code, and the code is swapped for tokens. The
@@ -17,6 +19,7 @@ from __future__ import annotations
 
 import base64
 import html
+from email.message import EmailMessage
 import json
 import os
 import re
@@ -312,6 +315,31 @@ class GmailClient:
             raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code)
         self._oscar_labels = None  # look them up again next time
         return "renamed"
+
+    def create_draft(self, message_id: str, thread_id: str, to: str, subject: str, body: str) -> str:
+        """Save a reply as a draft in the email's own thread, and return the draft's id. Only ever a
+        draft: Gmail keeps it in Drafts until you send it yourself, and nothing here can send it."""
+        self._refuse_if_read_only()
+        original = self._get(f"/messages/{message_id}", format="metadata",
+                             metadataHeaders=["Message-ID", "References", "Reply-To"])
+        headers = {h["name"].lower(): h["value"] for h in original.get("payload", {}).get("headers", [])}
+        reply = EmailMessage()
+        reply["To"] = headers.get("reply-to") or to
+        reply["Subject"] = subject if subject.lower().startswith("re:") else f"Re: {subject}"
+        if headers.get("message-id"):  # so Gmail and the other person's mail app keep it in the conversation
+            reply["In-Reply-To"] = headers["message-id"]
+            reply["References"] = f"{headers.get('references', '')} {headers['message-id']}".strip()
+        reply.set_content(body)
+        raw = base64.urlsafe_b64encode(reply.as_bytes()).decode()
+        return self._post("/drafts", {"message": {"raw": raw, "threadId": thread_id}})["id"]
+
+    def delete_draft(self, draft_id: str) -> None:
+        """Take away a draft Oscar made, for undo. Only drafts: there's no way here to delete an email.
+        A draft that's already gone (you sent or deleted it) is fine."""
+        self._refuse_if_read_only()
+        response = self.http.delete(f"{GMAIL_URL}/drafts/{draft_id}", headers={"Authorization": f"Bearer {self._access_token()}"})
+        if response.status_code not in (200, 204, 404):
+            raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code, _reason(response))
 
     def modify_labels(self, message_id: str, add: list[str], remove: list[str]) -> None:
         """Add and remove labels on one email. Only UNREAD, INBOX and Oscar's own labels: anything

@@ -23,7 +23,10 @@ from pydantic import BaseModel
 from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
-from oscar.act import CHANGES, MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, label_role, status_label, undo
+from oscar.act import (CHANGES, MAX_PER_CHECK, ActionError, ActionRecord, can_do, can_draft, do, draft, label_role,
+                       status_label, undo)
+from oscar.drafting import drafter_for, fit_to_answer
+from oscar.understand import api_key as model_api_key
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar import app_settings
@@ -398,7 +401,7 @@ def _extension_item(history: History, d: Decision, waiting: set[str] | None = No
         "answerable": d.source == "gmail" and d.acting and d.autonomy_level == AutonomyLevel.ASK_FIRST and not answered,
         "undoable": bool(done and not done.undone_at),
         "done": {"action": done.action.value, "by": done.by, "at": done.done_at.isoformat(),
-                 "undone": done.undone_at is not None} if done else None,
+                 "undone": done.undone_at is not None, "draft": done.draft_text} if done else None,
         "reviewed": history.review_carried_over(d.id) is not None,
     }
 
@@ -578,6 +581,19 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
     return FeedbackResponse(event=event, reply=reply)
 
 
+def _draft_reply(history: History, decision: Decision, tokens: gmail.TokenStore, http: httpx.Client) -> None:
+    """You said yes to a reply he asked about: write it and save it as a draft in Gmail (never sent)."""
+    drafter = drafter_for(http)
+    if drafter is None:
+        raise FeedbackError("I need a model key (GEMINI_API_KEY in .env) to write drafts, so this one's yours to reply to.")
+    client = gmail_client(tokens, http)
+    email, _ = gmail.parse_message(client.message(decision.gmail.message_id))
+    text = drafter.write(email) if fit_to_answer(email) else None
+    if not text:
+        raise FeedbackError("I couldn't write a reply I'd trust for this one, so it's yours to answer.")
+    draft(history, client, decision, text, by="you")
+
+
 def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_text: str | None,
             tokens: gmail.TokenStore, http: httpx.Client, *, scope: Literal["sender", "kind"] = "sender",
             desired_level: AutonomyLevel | None = None) -> tuple[FeedbackEvent, str]:
@@ -589,17 +605,21 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
     check_allowed(decision, kind, edited_text, undoable)
     if decision.source == "gmail" and decision.acting:
         if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
-            if not can_do(decision):
+            if not (can_do(decision) or can_draft(decision)):
                 raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
             if not acting_on(tokens, history):
                 raise HTTPException(409, "Turn on \"Let Oscar act in Gmail\" in Settings first.")
-            do(history, gmail_client(tokens, http), decision, by="you")
+            if can_draft(decision):
+                _draft_reply(history, decision, tokens, http)
+            else:
+                do(history, gmail_client(tokens, http), decision, by="you")
         elif kind == FeedbackKind.UNDO:
             undo(history, gmail_client(tokens, http), decision.id)
     return record_feedback(history, decision.id, kind, edited_text, undoable, scope=scope, desired_level=desired_level)
 
 
-DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled"}
+DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled",
+              Action.DRAFT_REPLY: "drafted a reply to"}
 
 # Answers that teach Oscar how to handle emails like one: after any of these, his calls on recent
 # emails catch up (inbox.rethink).
@@ -675,6 +695,7 @@ def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens), real: History =
         "last_sync": saved.get("last_sync"),
         "auto_check_minutes": auto_check_minutes(),
         "rethinking": inbox.rethinking(),  # redoing his calls after something you taught him
+        "can_draft": bool(model_api_key()),  # a model key, so he can write reply drafts
         "can_act": gmail.can_act(saved),  # the connection allows changing labels
         "acting": acting,  # Oscar acts in Gmail (Stage 12)
         "read_only": not acting,
@@ -792,7 +813,7 @@ def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, lim
     """One check for new email, by you or by the timer, and note when it happened."""
     result = sync(real, gmail_client(tokens, http), limit=min(max(limit, 1), 100),
                   act_since=acting_since(tokens, real), still_acting=lambda: acting_on(tokens, real),
-                  label=acting_on(tokens, real))
+                  label=acting_on(tokens, real), drafter=drafter_for(http))
     if acting_on(tokens, real):
         # Asks you already said yes to in Review, before a yes there counted as approving.
         approved = 0
@@ -931,7 +952,7 @@ def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore,
     says_do_it = review.label == ReviewLabel.CORRECT or (
         review.should_be_level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY)
         and review.should_be_action == decision.action)
-    if not (says_do_it and decision.acting and can_do(decision)):
+    if not (says_do_it and decision.acting and (can_do(decision) or can_draft(decision))):
         return False
     try:
         _answer(real, decision, FeedbackKind.APPROVE, None, tokens, http)

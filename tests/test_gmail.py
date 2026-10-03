@@ -36,10 +36,20 @@ def test_never_changes_anything_in_gmail(tmp_path):
     assert {r.method for r in fake.gmail_requests()} == {"GET"}
 
 
-def test_client_has_no_way_to_send_trash_or_delete():
-    # Stage 12: the only write is changing labels. Nothing can send, trash, delete or draft.
-    writes = {"send", "trash", "delete", "insert", "batch", "draft", "import", "spam"}
-    assert not {name for name in dir(GmailClient) if any(w in name.lower() for w in writes)}
+def test_client_has_no_way_to_send_trash_or_delete_an_email():
+    # Its only writes are labels (Stage 12) and reply drafts (Stage 17): it can save a draft and take
+    # back a draft it made, but nothing can send an email or a draft, trash or delete a message.
+    import inspect
+
+    from oscar import gmail
+    risky = {"send", "trash", "insert", "batch", "import", "spam"}
+    assert not {name for name in dir(GmailClient) if any(w in name.lower() for w in risky)}
+    assert {name for name in dir(GmailClient) if "delete" in name.lower()} == {"delete_draft"}
+    assert {name for name in dir(GmailClient) if "draft" in name.lower()} == {"create_draft", "delete_draft"}
+    source = inspect.getsource(gmail)
+    assert "/send" not in source and "/trash" not in source, "Gmail's send and trash endpoints are never named"
+    assert source.count("self.http.delete(") == 1 and "self.http.delete(" in inspect.getsource(GmailClient.delete_draft)
+    assert 'f"{GMAIL_URL}/drafts/{draft_id}"' in inspect.getsource(GmailClient.delete_draft), "only ever a draft"
 
 
 def test_connecting_is_read_only_and_acting_is_asked_for_separately():

@@ -42,6 +42,7 @@ class FakeGmail:
         self.requests: list[httpx.Request] = []
         self.labels = [{"id": "Label_9", "name": "Work"}]  # the user's own label, which Oscar must never touch
         self.older: set[str] = set()  # ids of messages from more than six months ago, for searches
+        self.drafts: dict[str, dict] = {}  # drafts Oscar saved, by id: {"raw": ..., "threadId": ...}
         self.profile = {"name": "Sam Lee", "picture": "https://lh3.googleusercontent.com/a/sam"}  # Google's userinfo
 
     def handler(self, request: httpx.Request) -> httpx.Response:
@@ -63,6 +64,12 @@ class FakeGmail:
             made = {"id": f"Label_{len(self.labels) + 100}", "name": json_body(request)["name"]}
             self.labels.append(made)
             return httpx.Response(200, json=made)
+        if path == "/drafts" and request.method == "POST":  # Oscar saving a reply as a draft
+            draft_id = f"r-{len(self.drafts) + 1}"
+            self.drafts[draft_id] = json_body(request)["message"]
+            return httpx.Response(200, json={"id": draft_id, "message": {"id": f"dm-{draft_id}"}})
+        if path.startswith("/drafts/") and request.method == "DELETE":  # undo: his draft taken away
+            return httpx.Response(204) if self.drafts.pop(path.split("/")[2], None) else httpx.Response(404, json={})
         if path.startswith("/labels/") and request.method == "PATCH":  # renaming one of his labels
             label = next(l for l in self.labels if l["id"] == path.split("/")[2])
             label["name"] = json_body(request)["name"]
