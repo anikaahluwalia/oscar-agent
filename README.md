@@ -76,27 +76,26 @@ npm run dev
 ```
 
 Open http://localhost:3000. Until Gmail is connected, the inbox is the example
-emails: click **Bring in the demo emails** on Home (it's also in **Settings**).
+emails: click **Bring in the demo emails** on Today (it's also in **Settings**).
 
-In the app, Oscar's four levels are called **Handled** (did it quietly), **FYI**
-(did it and told you), **Needs You** (asks first) and **Blocked** (stopped it).
+In the app, Oscar's four levels are called **Quietly** (did it), **Tell me** (did it
+and told you), **Ask me** (asks first) and **Stopped** (stopped it).
 
-- **Home**: what Oscar is up to, a count of each status, his recent activity, a
-  few things he's learned, and a box to talk to him.
-- **Inbox**: every email with what Oscar did. Open one to approve, edit, decline
-  or undo, and tap **Why?** for the facts behind the decision.
-- **Needs You**: everything waiting on you, in one list.
-- **Activity**: a log of everything Oscar did, suggested or stopped.
-- **What Oscar Knows**: what he's learned per sender (you can change it), and the
-  protected rules learning can't touch.
-- **Evals**: the eval results from `evals/RESULTS.md`.
-- **Settings**: appearance and the demo inbox. Notifications and the autonomy
-  preference are only saved in your browser for now; the backend doesn't use them.
+- **Today**: what's waiting on you, one email at a time, and what Oscar took care of today.
+- **Chat**: ask Oscar about your email, or teach him a rule. He shows you the rule
+  before he follows it.
+- **Inbox**: every email and what Oscar did with it. Open one to approve, decline or
+  undo, and tap **Why?** for the facts behind the decision.
+- **Review**: check Oscar's calls on your real inbox, one email at a time.
+- **What Oscar knows**: what he's learned about each sender, which you can change or
+  forget, and where each kind of email starts.
+- **Promises**: the things he never does alone, and what he held back lately.
+- **How he's doing**: the eval results, and how your reviews grade him.
+- **Settings**: Gmail, appearance (light, dark or match your device) and the demo inbox.
 
-**Ask Oscar** (the box on Home, or the button in the corner) answers "what needs me?", "what did you
-handle?", "what do you know about me?", and rules like "always archive emails from
-digest@morningbrew-weekly.example". Approve the newsletter a few times and bring
-the emails in again to watch Oscar learn.
+Try "what needs me?", "what did you handle?" or a rule like "always archive emails
+from digest@morningbrew-weekly.example" in **Chat**. Approve the newsletter a few
+times and bring the emails in again to watch Oscar learn.
 
 ## Connect a real Gmail inbox (read-only)
 
@@ -117,8 +116,12 @@ in the app, and mistakes become regression tests (see DESIGN.md, Stage 9).
    every 5 minutes on his own while the API runs (change it with
    `OSCAR_AUTO_CHECK_MINUTES` in `.env`), or press **Check now**.
 
+Connecting also asks for your name and photo, so they show in the corner of the app.
+If you connected before that, connect again to see them.
+
 While Gmail is connected, the demo inbox is off and the app shows your real inbox.
-**Review** lists Oscar's decisions to score, and **Evals** shows the results. From
+**Review** goes through Oscar's decisions to score, and **How he's doing** shows the
+results. From
 the command line, `python -m oscar reviews` lists every decision you disagreed with.
 
 Google keeps the connection for 7 days while the app is in testing mode, so you may
@@ -158,7 +161,7 @@ the list with the reason for each one:
 set (215 cases) before and after learning, the safety suite (57 cases) and the
 regression cases, saves every run with every case's result in
 `evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The
-Evals page in the app shows those saved runs. The method is in DESIGN.md (Stage 10).
+How he's doing page in the app shows those saved runs. The method is in DESIGN.md (Stage 10).
 
 The older `python -m evals` (writes `evals/RESULTS.md`) is the Stage 6–7 method, kept
 for the record.
