@@ -9,7 +9,7 @@ the app: Approve, Not this one, Undo. While he only reads your Gmail, it's "Chec
 1. Start Oscar's API (and the web app) as in the main README.
 2. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**,
    and pick this `extension` folder.
-3. Open Gmail. Oscar is in the bottom-right corner.
+3. Open Gmail. Oscar is in the bottom-right corner. Drag him anywhere along the bottom, or Tab to him and use the arrow keys; he remembers where you put him.
 
 If Oscar runs somewhere other than `localhost:8000` (API) and `localhost:3000` (app), set it in
 the extension's options (right-click the icon → Options).

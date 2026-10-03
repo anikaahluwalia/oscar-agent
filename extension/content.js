@@ -1,4 +1,4 @@
-// Oscar inside Gmail: he peeks out of the bottom-right corner with a count of what needs you,
+// Oscar inside Gmail: he peeks out of the bottom of the page (right by default, wherever you drag him) with a count of what needs you,
 // and opens a small panel with his call on the email you have open. Everything is drawn in a
 // closed shadow root so Gmail's styles can't reach it, and every piece of email text goes in as
 // text (never HTML), since subjects and senders come from strangers.
@@ -24,17 +24,18 @@
       .wrap { --ink:#f2f2f3; --muted:#a3a6ae; --card:#1a1b1f; --line:#2a2b30; --soft:#222328; --btn:#f2f2f3; --btn-ink:#16171a;
               --handled:#6fd3a1; --fyi:#7cc8db; --needs:#f2b65c; --blocked:#f28b80; }
     }
-    .peek { position: fixed; right: 28px; bottom: 0; z-index: 2147483000; width: 84px; height: 84px; padding: 0; border: 0;
+    .peek { position: fixed; bottom: 0; z-index: 2147483000; touch-action: none; width: 84px; height: 84px; padding: 0; border: 0;
             background: transparent; cursor: pointer; transform: translateY(30%); transition: transform .25s ease; }
     .peek:hover, .peek:focus-visible, .peek.up { transform: translateY(6%); }
     .peek:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 16px; }
-    .peek img { width: 84px; height: 84px; display: block; filter: drop-shadow(0 6px 14px rgba(22,23,26,.18)); }
+    .peek img { width: 84px; height: 84px; display: block; pointer-events: none; -webkit-user-drag: none; user-select: none; filter: drop-shadow(0 6px 14px rgba(22,23,26,.18)); }
     /* Always charcoal with a white ring: it sits on Gmail's page, whatever theme the panel uses. */
     .badge { position: absolute; top: 2px; left: 0; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
              background: #16171a; color: #ffffff; box-shadow: 0 0 0 2px #ffffff; font-size: 12px; font-weight: 800;
              line-height: 22px; text-align: center; }
+    .peek.dragging { cursor: grabbing; transition: none; transform: translateY(6%); }
     @media (prefers-reduced-motion: reduce) { .peek { transition: none; } }
-    .panel { position: fixed; right: 20px; bottom: 96px; z-index: 2147483000; width: 344px; max-width: calc(100vw - 40px);
+    .panel { position: fixed; bottom: 96px; z-index: 2147483000; width: 344px; max-width: calc(100vw - 40px);
              max-height: min(70vh, 620px); overflow: auto; padding: 16px; border-radius: 22px; background: var(--card);
              border: 1px solid var(--line); box-shadow: 0 18px 48px rgba(22,23,26,.18); display: flex; flex-direction: column; gap: 14px; }
     .panel[hidden] { display: none; }
@@ -104,7 +105,67 @@
   root.append(el("style", { text: CSS }), wrap);
   document.body.append(host);
 
-  const state = { status: null, thread: null, threadId: null, open: false, error: null, said: null, busy: false };
+  const state = { status: null, thread: null, threadId: null, open: false, error: null, said: null, busy: false,
+    spot: 1 }; // where Oscar sits along the bottom: 0 is the far left, 1 the far right
+
+  // Where you've moved him, kept in this browser only. Saved as a share of the width, so it
+  // still makes sense after the window is resized.
+  const SIZE = 84, EDGE = 24;
+  const leftFor = (spot) => EDGE + spot * Math.max(0, window.innerWidth - SIZE - 2 * EDGE);
+  const spotFor = (left) => Math.min(1, Math.max(0, (left - EDGE) / Math.max(1, window.innerWidth - SIZE - 2 * EDGE)));
+  try {
+    chrome.storage.local.get({ spot: 1 }, (saved) => {
+      state.spot = typeof saved?.spot === "number" ? saved.spot : 1;
+      render();
+    });
+  } catch {
+    /* storage unavailable: he stays on the right */
+  }
+  const keep = () => {
+    try { chrome.storage.local.set({ spot: state.spot }); } catch { /* fine: it's only a convenience */ }
+  };
+
+  // Drag him along the bottom. A short press is still a click; the click that ends a drag isn't.
+  let justDragged = false;
+  function draggable(peek) {
+    // Follow the drag on the whole window: the pointer leaves Oscar as soon as he moves.
+    peek.addEventListener("pointerdown", (down) => {
+      if (down.button !== 0) return;
+      down.preventDefault(); // or the browser starts dragging his picture instead
+      const start = { x: down.clientX, left: leftFor(state.spot), moved: false };
+      const move = (e) => {
+        const dx = e.clientX - start.x;
+        if (!start.moved && Math.abs(dx) < 5) return;
+        start.moved = true;
+        peek.classList.add("dragging");
+        state.spot = spotFor(start.left + dx);
+        peek.style.left = `${leftFor(state.spot)}px`;
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", up);
+        if (!start.moved) return;
+        peek.classList.remove("dragging");
+        justDragged = true;
+        setTimeout(() => (justDragged = false), 0);
+        keep();
+        const panel = wrap.querySelector(".panel");
+        if (panel) panel.style.cssText = state.spot < 0.5 ? "left: 20px" : "right: 20px";
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", up);
+    });
+    peek.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      state.spot = Math.min(1, Math.max(0, state.spot + (e.key === "ArrowLeft" ? -0.1 : 0.1)));
+      keep();
+      render();
+      wrap.querySelector(".peek")?.focus();
+    });
+  }
 
   function words(level) {
     const l = LEVELS[level] ?? LEVELS.ASK_FIRST;
@@ -164,9 +225,13 @@
     const face = !status || !count ? "sleeping" : stopped ? "guarding" : "asking";
     const label = !status ? "Oscar" : count ? `Oscar: ${count} ${count === 1 ? "thing" : "things"} for you` : "Oscar: nothing needs you";
 
-    const peek = el("button", { class: `peek${state.open ? " up" : ""}`, type: "button", "aria-label": label, "aria-expanded": String(state.open),
-      onclick: () => { state.open = !state.open; state.said = null; render(); if (state.open) refresh(); } },
-      el("img", { src: mood(face), alt: "" }), count ? el("span", { class: "badge", text: count > 99 ? "99+" : String(count) }) : null);
+    const peek = el("button", { class: `peek${state.open ? " up" : ""}`, type: "button", "aria-expanded": String(state.open),
+      "aria-label": `${label}. Drag, or use the arrow keys, to move him.`, style: `left: ${leftFor(state.spot)}px`,
+      onclick: () => {
+        if (justDragged) return;
+        state.open = !state.open; state.said = null; render(); if (state.open) refresh();
+      } },
+      el("img", { src: mood(face), alt: "", draggable: "false" }), count ? el("span", { class: "badge", text: count > 99 ? "99+" : String(count) }) : null);
 
     const app = status?.app ?? "http://localhost:3000";
     const panel = el("section", { class: "panel", role: "dialog", "aria-label": "Oscar" },
@@ -184,6 +249,9 @@
         el("span", { class: "sub", text: "Nothing here changes without you." })));
     if (!state.open) panel.setAttribute("hidden", "");
 
+    // The panel opens on whichever side he's on.
+    panel.style.cssText = state.spot < 0.5 ? "left: 20px" : "right: 20px";
+    draggable(peek);
     wrap.replaceChildren(peek, panel);
   }
 
@@ -204,6 +272,7 @@
   // The open email changes without a page load: watch the address, and check the page now and then.
   let lastThread = null;
   window.addEventListener("hashchange", () => setTimeout(refresh, 600));
+  window.addEventListener("resize", () => render());
   setInterval(() => {
     const now = openThread();
     if (now !== lastThread) {
