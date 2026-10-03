@@ -5,7 +5,7 @@ from oscar.feedback import FeedbackKind
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.policy import autonomy_for
-from oscar.preferences import CEILINGS, Preferences, family
+from oscar.preferences import CEILINGS, HABIT_ACTIONS, Preferences, family
 from oscar.review import half_answered, teaching
 from oscar.safety import ACTION_FLOORS, apply_floor
 
@@ -47,6 +47,23 @@ def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
     if history.settings.get("acting"):
         current = [d for d in current if d.source != "gmail" or d.acting]
     return {level: [d for d in current if d.autonomy_level == level and d.id not in answered] for level in levels}
+
+
+# Asks a rule never clears for you: a safety check, the caution backstop or a floor put them on
+# your list, or he couldn't tell what the email was. Those you answer one at a time.
+NOT_BY_RULE = {"safety_check", "model_check", "caution", "floor", "guess"}
+
+
+def waiting_for_rule(history: History, decision: Decision, scope: str = "sender") -> list[Decision]:
+    """The asks still waiting on you that a yes to a rule on this decision would do for you: same
+    action, from this sender (or, for a rule about emails like this, every email of its kind). Only
+    the easy-to-undo actions, and never an ask a safety rule, caution or a guess made."""
+    if decision.action not in HABIT_ACTIONS:
+        return []
+    kind = family(decision.email_type)
+    covers = (lambda d: family(d.email_type) == kind) if scope == "kind" else (lambda d: d.sender == decision.sender)
+    return [d for d in needs_you(history)[AutonomyLevel.ASK_FIRST]
+            if d.action == decision.action and covers(d) and d.level_source not in NOT_BY_RULE and not d.caution]
 
 
 def ask_rate(decisions: list[Decision]) -> float:

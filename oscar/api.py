@@ -29,9 +29,9 @@ from oscar.feedback import ASKS_FOR_MORE, FeedbackError, FeedbackEvent, Feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
-from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, permissions
+from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, permissions, waiting_for_rule
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
-from oscar.preferences import HABIT_ACTIONS, Preferences, family
+from oscar.preferences import Preferences
 from oscar.review import teaching
 from oscar.voice import describe_learning
 
@@ -389,11 +389,6 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
 DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled"}
 
 
-# Asks a rule never clears for you: a safety check, the caution backstop or a floor put them on
-# your list, or he couldn't tell what the email was. Those you answer one at a time.
-NOT_BY_RULE = {"safety_check", "model_check", "caution", "floor", "guess"}
-
-
 def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenStore, http: httpx.Client,
                      scope: str = "sender") -> str | None:
     """A yes to a rule ("always do this", "just handle them", "handle and tell me") also does the
@@ -402,13 +397,7 @@ def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenSt
     of that kind. Only for the easy-to-undo actions (archive, mark read, label), never for an ask
     a safety rule or caution made, and at most a check's worth at a time. Each is done (and
     undoable) exactly as an Approve would be."""
-    if decision.action not in HABIT_ACTIONS:
-        return None
-    kind = family(decision.email_type)
-    covers = ((lambda d: family(d.email_type) == kind) if scope == "kind"
-              else (lambda d: d.sender == decision.sender))
-    waiting = [d for d in needs_you(history)[AutonomyLevel.ASK_FIRST]
-               if d.action == decision.action and covers(d) and d.level_source not in NOT_BY_RULE and not d.caution][:MAX_PER_CHECK]
+    waiting = waiting_for_rule(history, decision, scope)[:MAX_PER_CHECK]
     done = 0
     for d in waiting:
         try:

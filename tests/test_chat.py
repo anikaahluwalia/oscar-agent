@@ -129,3 +129,10 @@ def test_never_archive_means_ask():
     history = inbox()
     answer(history, "never archive emails from digest@morningbrew-weekly.example")
     assert history.feedback[-1].kind == FeedbackKind.ALWAYS_ASK_ME
+
+
+def test_archive_my_promotions_is_a_rule_for_emails_like_this():
+    history = inbox()
+    reply = answer(history, "please archive promotions").reply
+    assert "emails like this" in reply
+    assert [(e.kind, e.scope) for e in history.feedback] == [(FeedbackKind.ALWAYS_DO_THIS, "kind")]

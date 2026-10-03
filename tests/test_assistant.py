@@ -148,3 +148,20 @@ def test_once_acting_is_on_the_chat_isnt_read_only(tmp_path):
     assert not any(needs_you(history).values())
     from oscar.chat import answer
     assert "1 of my earlier calls" in answer(history, "what needs me?").reply
+
+
+def test_archive_my_promotions_becomes_a_rule_for_emails_like_this():
+    # "please archive promotions": no sender needed, and nothing changes until you say yes.
+    history = inbox()
+    model = FakeModel(call("propose_rule", kind="always_do_this", scope="emails_like_this",
+                           kind_of_email="promotions_and_newsletters"), say("Want me to? Tap yes below."))
+    reply = talk(history, "please archive promotions", [], model.http())
+    assert reply.proposal is not None and reply.proposal.scope == "kind"
+    assert reply.proposal.text.startswith("Just archive promotions and newsletters from now on?")
+    assert history.feedback == []
+    assert "emails_like_this" in model.sent[0]["messages"][0]["content"], "the model is told it can do this"
+
+
+def test_a_rule_for_emails_like_this_needs_a_kind_or_a_sender():
+    result, proposal = run_tool(inbox(), "propose_rule", {"kind": "always_do_this", "scope": "emails_like_this"})
+    assert proposal is None and "kind of email" in result["error"]

@@ -36,7 +36,8 @@ KIND_WORDS: list[tuple[str, str | None]] = [
     (r"\b(receipts?|order confirmations?|shipping updates?)\b", "receipt"),
     (r"\bemails? like (this|these|that)\b", None),
 ]
-RULE = re.compile(r"\b(always|never|stop asking|ask me)\b|\b(don'?t|do not) ask\b|\bjust (archive|handle|mark|label)")
+RULE = re.compile(r"\b(always|never|stop asking|ask me)\b|\b(don'?t|do not) ask\b|\bjust (archive|handle|mark|label)"
+                  r"|\b(archive|label|mark) (all |my |the |these )*(promotions?|promotional|promos?|newsletters?|marketing|receipts?)\b")
 
 # Words in a rule, and the action they mean.
 ACTION_WORDS: list[tuple[str, Action]] = [

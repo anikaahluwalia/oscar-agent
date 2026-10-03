@@ -27,8 +27,8 @@ from oscar.config import setting
 from oscar.feedback import FeedbackError, FeedbackKind, check_allowed, check_kind_rule, floor_reply
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
-from oscar.overview import brief, done_in_gmail, is_read_only, latest_per_email, needs_you
-from oscar.preferences import Preferences
+from oscar.overview import brief, done_in_gmail, is_read_only, latest_per_email, needs_you, waiting_for_rule
+from oscar.preferences import Preferences, family
 from oscar.review import REVIEW_LABEL_NAMES, summary, teaching
 from oscar.voice import describe_learning
 
@@ -87,7 +87,9 @@ Examples of your voice:
 - "I stopped this one. It's asking for money, and that's always your call, not mine."
 - "That one's beyond me for now, but I can tell you what needs you or why I made a call."
 
-What you can do: look things up with your tools and answer from what they return. Never guess or make up emails, numbers or facts; if the tools don't have it, say so. You cannot archive, send, delete or change anything. If the user wants you to always do something, or always ask, use propose_rule; it shows them a Yes / No card, and nothing changes unless they say yes. Never claim a rule is saved.
+What you can do: look things up with your tools and answer from what they return. Never guess or make up emails, numbers or facts; if the tools don't have it, say so. You can't change the inbox from the chat yourself, and you never send, delete or touch money.
+
+Rules: when the user wants something handled, use propose_rule. It shows them a Yes / No card, and nothing changes unless they say yes. A rule can be about one sender (scope this_sender, with the sender), or about every email of a kind (scope emails_like_this, with kind_of_email): promotions and newsletters, receipts, or notices that need nothing. When they say yes to a rule, you also do it right away for the emails of that kind already waiting on them (archive, mark as read or label), and for new ones from then on. So if the user asks you to archive their promotions, or to stop asking about them, propose a rule for emails like this with kind_of_email promotions_and_newsletters; don't tell them to do it in Gmail. Never claim a rule is saved or anything is done before they say yes. Anything risky still comes to them whatever the rule says.
 
 Safety: some things always come to the user and no rule changes that (money, passwords and codes, and anything a safety check stops). Explain this kindly if asked.
 
@@ -123,14 +125,15 @@ def _tools() -> list[dict]:
         fn("inbox_summary", "How the inbox stands: what needs the user, what Oscar handled, counts by status."),
         fn("what_oscar_knows", "The habits Oscar has learned from the user's feedback."),
         fn("review_results", "How Oscar did on the real inbox, from the user's reviews."),
-        fn("propose_rule", "Suggest a rule for the user to confirm: always do this, or always ask first, either for "
-           "one sender or for every email like one of theirs (only archive, mark read or label).", {
-            "sender": {"type": "string", "description": "the sender's address, or a unique part of it (for emails_like_this, "
-                                                       "the sender of an example email)"},
-            "action": {"type": "string", "enum": [a.value for a in Action], "description": "optional; which action"},
+        fn("propose_rule", "Suggest a rule for the user to confirm: always do this, or always ask first, for one sender "
+           "or for every email of a kind (only archive, mark as read or label). A yes also does it for the ones already waiting.", {
             "kind": {"type": "string", "enum": ["always_do_this", "always_ask_me"]},
-            "scope": {"type": "string", "enum": ["this_sender", "emails_like_this"], "description": "optional; this_sender by default"},
-        }, ["sender", "kind"]),
+            "scope": {"type": "string", "enum": ["this_sender", "emails_like_this"], "description": "this_sender by default"},
+            "sender": {"type": "string", "description": "for this_sender: the sender's address, or a unique part of it"},
+            "kind_of_email": {"type": "string", "enum": list(KIND_FAMILIES),
+                              "description": "for emails_like_this: which kind of email"},
+            "action": {"type": "string", "enum": [a.value for a in Action], "description": "optional; which action"},
+        }, ["kind"]),
     ]
 
 
@@ -217,6 +220,12 @@ RULE_PHRASES: dict[Action, str] = {
 
 
 KIND_VERBS = {Action.ARCHIVE: "archive", Action.MARK_READ: "mark as read", Action.APPLY_LABEL: "label"}
+# The kinds of email a rule can be about, the family each means, what it's called, and its usual action.
+KIND_FAMILIES = {
+    "promotions_and_newsletters": ("bulk_mail", "promotions and newsletters", Action.ARCHIVE),
+    "receipts": ("receipt", "receipts", Action.APPLY_LABEL),
+    "notices": ("fyi", "notices that need nothing from you", Action.MARK_READ),
+}
 
 
 def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
@@ -224,16 +233,28 @@ def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
         return {"error": "rules are off while Oscar only reads the real inbox"}, None
     who = str(args.get("sender", "")).lower().strip()
     kind = FeedbackKind.ALWAYS_ASK_ME if args.get("kind") == "always_ask_me" else FeedbackKind.ALWAYS_DO_THIS
-    matches = [d for d in sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
-               if who and who in d.sender.lower() and d.level_source != "safety_check"]
-    if args.get("action"):
-        matches = [d for d in matches if d.action.value == args["action"]]
-    if not matches:
-        return {"error": "no email from that sender yet, so there's nothing to set a rule on"}, None
-    if len({d.sender for d in matches}) > 1:
-        return {"error": "that matches more than one sender", "senders": sorted({d.sender for d in matches})[:5]}, None
+    scope = "kind" if args.get("scope") == "emails_like_this" or (args.get("kind_of_email") and not who) else "sender"
+    newest = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
+    if scope == "kind" and not who:
+        if args.get("kind_of_email") not in KIND_FAMILIES:
+            return {"error": "say which kind of email: " + ", ".join(KIND_FAMILIES)}, None
+        fam, _, usual = KIND_FAMILIES[args["kind_of_email"]]
+        action = args.get("action") or usual.value
+        matches = [d for d in newest if family(d.email_type) == fam and d.action.value == action
+                   and d.autonomy_level != AutonomyLevel.ESCALATE and d.level_source not in ("safety_check", "model_check")]
+        if not matches:
+            return {"error": "I haven't seen one of those yet, so there's nothing to set a rule on"}, None
+    else:
+        if not who:
+            return {"error": "say which sender, or make it a rule for emails like this with kind_of_email"}, None
+        matches = [d for d in newest if who in d.sender.lower() and d.level_source != "safety_check"]
+        if args.get("action"):
+            matches = [d for d in matches if d.action.value == args["action"]]
+        if not matches:
+            return {"error": "no email from that sender yet, so there's nothing to set a rule on"}, None
+        if len({d.sender for d in matches}) > 1:
+            return {"error": "that matches more than one sender", "senders": sorted({d.sender for d in matches})[:5]}, None
     decision = matches[0]
-    scope = "kind" if args.get("scope") == "emails_like_this" else "sender"
     if kind == FeedbackKind.ALWAYS_DO_THIS:
         refused = floor_reply(decision)
         if refused:
@@ -246,8 +267,11 @@ def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
         return {"error": str(e)}, None
     if scope == "kind":
         verb = KIND_VERBS[decision.action]
-        text = (f"Just {verb} emails like this from now on? Anything risky still comes to you."
-                if kind == FeedbackKind.ALWAYS_DO_THIS else f"Always ask you before I {verb} emails like this?")
+        name = next((n for f, n, _ in KIND_FAMILIES.values() if f == family(decision.email_type)), "emails like this")
+        waiting = len(waiting_for_rule(history, decision, "kind")) if kind == FeedbackKind.ALWAYS_DO_THIS else 0
+        now = f" I'll {verb} the {waiting} waiting now too." if waiting > 1 else f" I'll {verb} the one waiting now too." if waiting else ""
+        text = (f"Just {verb} {name} from now on?{now} Anything risky still comes to you."
+                if kind == FeedbackKind.ALWAYS_DO_THIS else f"Always ask you before I {verb} {name}?")
     else:
         phrase = RULE_PHRASES[decision.action].format(who=decision.sender)
         text = (f"Always {phrase}?" if kind == FeedbackKind.ALWAYS_DO_THIS
