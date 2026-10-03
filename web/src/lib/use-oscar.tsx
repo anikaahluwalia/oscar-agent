@@ -157,6 +157,7 @@ const listeners = new Set<() => void>();
 let loading = false;
 let again = false; // something changed while we were loading, so load once more after
 let retry: ReturnType<typeof setTimeout> | null = null;
+let followUp: ReturnType<typeof setTimeout> | null = null; // while he redoes his calls after you teach him
 
 /**
  * Gets everything the app shows from the API in one go. If something changes while a load is still running (say you
@@ -179,6 +180,13 @@ function load(changed = true) {
       if (again) {
         again = false;
         load();
+      } else if (store.data?.gmail.rethinking && listeners.size && !followUp) {
+        // He's redoing his calls on recent emails after something you taught him (oscar/inbox.py
+        // rethink): look again shortly, so the new calls show up without a refresh.
+        followUp = setTimeout(() => {
+          followUp = null;
+          load(false);
+        }, 2500);
       } else if (store.error && listeners.size && !retry) {
         // The API is down. Keep trying, so the app comes back by itself once it's started.
         retry = setTimeout(() => {

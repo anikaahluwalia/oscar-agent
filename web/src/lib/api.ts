@@ -179,6 +179,7 @@ export interface ReviewSummary extends ReviewTally {
 }
 
 export interface GmailStatus {
+  rethinking?: boolean; // redoing his calls on recent emails after something you taught him
   configured: boolean;
   connected: boolean;
   address: string | null;

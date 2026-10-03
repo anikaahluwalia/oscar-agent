@@ -18,6 +18,7 @@ import { isOldWay, isSafetyStop, toGrade, wouldOnly } from "@/lib/labels";
 import { setHash, useHash } from "@/lib/use-hash";
 import { isOpen, notifyChanged, oscarSays, type useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
+import { isRule } from "@/components/inbox/decision-facts";
 
 type Feedback = ReturnType<typeof useOscar>["feedback"];
 
@@ -37,9 +38,18 @@ function queueOf(items: DecisionWithFeedback[], real: boolean, firstSeen: Set<st
   items = items.filter((i) => !isSafetyStop(i.decision));
   const open = items.filter(isOpen).sort(stopsFirst);
   if (!real) return open;
-  const grade = items.filter((i) => toGrade(i) && !isOpen(i)).sort((a, b) => priority(a, firstSeen) - priority(b, firstSeen) || newest(a, b));
+  const grade = items
+    .filter((i) => toGrade(i) && !isOpen(i) && !byYourRule(i))
+    .sort((a, b) => priority(a, firstSeen) - priority(b, firstSeen) || newest(a, b));
   return [...open, ...grade];
 }
+
+/**
+ * His call came from a rule you set ("just handle promotions", a six-month habit you said yes to):
+ * you've already said what you want for emails like it, so it isn't one of the calls to check. After
+ * you set a rule his calls on recent emails are redone (oscar/inbox.py rethink), so these drop out.
+ */
+const byYourRule = (i: DecisionWithFeedback) => i.decision.level_source === "learned" && isRule(i.decision);
 
 /** What a safety rule stopped that you haven't answered in Safety review, newest first. */
 const safetyQueueOf = (items: DecisionWithFeedback[]) =>
@@ -75,11 +85,16 @@ function moodFor(item: DecisionWithFeedback): { pose: OscarPose; title: string }
   return { pose: "done", title: "Here's what I did with this one." };
 }
 
-function Progress({ done, total, onSeeAll }: { done: number; total: number; onSeeAll: () => void }) {
+function Progress({ done, total, ruled = 0, onSeeAll }: { done: number; total: number; ruled?: number; onSeeAll: () => void }) {
   const pct = total ? Math.round((done / total) * 100) : 0;
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-end gap-3 text-[13px] text-muted-foreground sm:text-sm">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[13px] text-muted-foreground sm:text-sm">
+        {ruled > 0 && (
+          <span className="mr-auto">
+            {ruled.toLocaleString()} {ruled === 1 ? "email" : "emails"} left out: your rules already decide {ruled === 1 ? "it" : "them"}
+          </span>
+        )}
         <span className="tabular-nums">
           {done.toLocaleString()} of {total.toLocaleString()}
         </span>
@@ -345,7 +360,8 @@ export function ReviewWorkspace({
     if (hash) setHash("");
   };
   const counts = { regular: queues.regular.length, safety: queues.safety.length };
-  const progress = <Progress done={total - left} total={total} onSeeAll={() => setHash("all")} />;
+  const ruled = mode === "regular" && real ? items.filter((i) => toGrade(i) && !isOpen(i) && !isSafetyStop(i.decision) && byYourRule(i)).length : 0;
+  const progress = <Progress done={total - left} total={total} ruled={ruled} onSeeAll={() => setHash("all")} />;
   const tabs = <Tabs mode={mode} counts={counts} onChange={switchTo} />;
   const mood = flash ?? (current ? moodFor(current) : { pose: "sleeping" as OscarPose, title: "" });
 
