@@ -67,6 +67,16 @@ export interface Decision {
   safety_floor?: Level | null; // the least involvement the safety rules allow here
   safety_rule?: string | null; // the safety rule or check that set the level, if one did
   preference?: { scope: "sender" | "domain" | "kind"; evidence: number; confidence: number } | null; // what he learned from you that he used
+  reminder?: Reminder | null; // an event or due date the email mentions
+}
+
+/** Something coming up that an email mentions (oscar/reminders.py). */
+export interface Reminder {
+  title: string;
+  date: string; // YYYY-MM-DD
+  time: string | null; // HH:MM
+  kind: "event" | "due";
+  detail: string;
 }
 
 export interface GmailInfo {
