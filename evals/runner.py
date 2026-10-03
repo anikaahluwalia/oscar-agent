@@ -7,9 +7,9 @@
 --model fill: the model reads each email too, with saved readings (evals/cache), so only emails
   it hasn't seen cost a call. Without GEMINI_API_KEY it uses the saved readings alone, and stops
   if an email has none.
---model fresh: the model reads every email again, ignoring the saved readings. Each email is still
-  read only once per process (the reader keeps its answers in memory), so repeats reuse that
-  reading and don't show how much the model's answers vary.
+--model fresh: the model reads every email again on every run, ignoring the saved readings and
+  keeping nothing, so repeats show how much the model's answers vary. Needs GEMINI_API_KEY, and
+  costs one call per read.
 
 Writes evals/results/latest/: runs.jsonl (every run), metrics.json, pair_results.json,
 learning_curve.json and report.md. Every number in the report comes from those files.
@@ -40,7 +40,9 @@ def reader_for(model: str):
 
     from oscar.understand import Reader, api_key
     if api_key():
-        return Reader(httpx.Client(timeout=40), MODEL_CACHE if model == "fill" else None, reads="full")
+        if model == "fresh":
+            return Reader(httpx.Client(timeout=40), None, reads="full", remember=False)
+        return Reader(httpx.Client(timeout=40), MODEL_CACHE, reads="full")
     if model == "fresh":
         raise SystemExit("Reading every email again needs GEMINI_API_KEY in .env.")
     print("No GEMINI_API_KEY, so only the saved readings in evals/cache are used.")

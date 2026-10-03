@@ -38,6 +38,18 @@ def test_a_good_answer_becomes_a_kind_with_oscars_own_action(monkeypatch):
     assert found.kind == "newsletter" and found.action == Action.ARCHIVE and not found.risky
 
 
+def test_a_reading_is_remembered_but_fresh_reads_ask_every_time(monkeypatch):
+    # --model fresh (evals.runner) needs every run to ask again, so repeats can show the model's spread.
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    calls: list = []
+    remembering = Reader(fake(NEWSLETTER, calls=calls))
+    remembering.read(EMAIL), remembering.read(EMAIL)
+    assert len(calls) == 1
+    fresh = Reader(fake(NEWSLETTER, calls=calls), remember=False)
+    fresh.read(EMAIL), fresh.read(EMAIL)
+    assert len(calls) == 3 and not fresh.cache
+
+
 def test_answers_outside_the_format_are_thrown_away():
     assert parse("Sure! It's a newsletter.") is None
     assert parse(json.dumps({"kind": "archive_everything", "summary": "x", "confidence": 1})) is None

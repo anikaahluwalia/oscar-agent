@@ -158,13 +158,18 @@ class Reader:
     """Reads emails with the model, remembering answers in a file so nothing is read twice.
 
     saved_only is for the evals without a key: every reading comes from the file, and an email
-    without one stops the run, so it never quietly falls back to the rules."""
+    without one stops the run, so it never quietly falls back to the rules.
+
+    remember=False is for `evals.runner --model fresh`: nothing is kept, not even in memory, so
+    every read asks the model again and repeated runs show how much its answers vary. That costs
+    one call per read."""
 
     def __init__(self, http: httpx.Client, cache_path: Path | None = None, reads: Reads = "preview",
-                 saved_only: bool = False) -> None:
+                 saved_only: bool = False, remember: bool = True) -> None:
         self.http = http
         self.reads = reads
         self.saved_only = saved_only
+        self.remember = remember
         self.cache_path = cache_path
         self.cache: dict[str, dict] = {}
         self.lock = threading.Lock()
@@ -178,13 +183,14 @@ class Reader:
         if self.reads == "off" or not (api_key() or self.saved_only):
             return None
         key = cache_key(email, self.reads)
-        if key in self.cache:
+        if self.remember and key in self.cache:
             return Understanding(**self.cache[key])
         if self.saved_only:
             raise NoSavedReading(f"{email.subject!r} has no saved reading in {self.cache_path}. "
                                  "Add GEMINI_API_KEY to .env to read it.")
         found = self._ask(email)
-        self._remember(key, found)
+        if self.remember:
+            self._remember(key, found)
         return found
 
     def _ask(self, email: Email, tries: int = 4) -> Understanding | None:
