@@ -273,9 +273,27 @@ class Preferences:
             return f"you've okayed this for {n} senders at {record.scope[1]}"
         return f"you've okayed this for emails like it from {n} senders"
 
+    def _trusted(self, sender: str, action: Action) -> bool | None:
+        """Whether you've taught Oscar this action for this sender on its own: True (earned), False
+        (you turned it down), None (not enough to say)."""
+        record = self.records.get(("sender", sender, action))
+        if record is None:
+            return None
+        if record.always_ask or (record.negative > 0 and record.acting_share <= 0.5):
+            return False
+        if record.evidence >= self.policy.min_evidence and record.acting_share >= self.policy.min_confidence:
+            return True
+        return None
+
     def _broad_ok(self, record: Record) -> bool:
+        """A domain or a kind of email only counts once enough senders have each earned it on their
+        own, and they outnumber the senders where you turned it down. One okay each from many
+        senders isn't enough: a habit for some senders never makes a new one quiet, or even busy."""
         need = self.policy.domain_senders if record.scope[0] == "domain" else self.policy.kind_senders
-        return len(record.senders) >= need
+        action = record.scope[-1]
+        verdicts = [self._trusted(s, action) for s in record.senders]
+        trusted, refused = verdicts.count(True), verdicts.count(False)
+        return trusted >= need and trusted > refused
 
     def suggest(self, action: Action, level: AutonomyLevel, sender: str, email_type: str | None = None,
                 broad: bool = True) -> Suggestion | None:

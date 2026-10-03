@@ -146,3 +146,9 @@ def test_forget_starts_fresh_for_that_sender_and_action():
 def test_records_say_where_they_came_from():
     [row] = Preferences.from_feedback(approvals(4)).summary()
     assert row["provenance"] == "USER_FEEDBACK" and row["evidence"] == 4 and row["updated_at"] is not None
+
+
+def test_one_okay_each_from_many_senders_isnt_enough_to_carry_over():
+    events = [e for s in ("a@one.example", "b@two.example", "d@four.example", "e@five.example", "f@six.example")
+              for e in approvals(1, sender=s)]
+    assert level(Preferences.from_feedback(events), sender="c@three.example") is None
