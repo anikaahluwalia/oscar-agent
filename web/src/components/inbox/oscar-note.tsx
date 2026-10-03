@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { becauseOf, didIt, noteLine, outcomeOf, when } from "@/components/inbox/outcome";
 import { HoldButton } from "@/components/hold-button";
+import { LIKE_THIS, LikeThis, offersLikeThis } from "@/components/kit/like-this";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { OscarMood, type OscarPose } from "@/components/oscar-mood";
 import { ReviewPanel } from "@/components/review-panel";
@@ -56,6 +57,10 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
   const hold = !reply ? HOLD_TO_CONFIRM[d.action] : undefined;
   const pose = poseOf(item);
   const outcome = outcomeOf(item);
+  // After you say the action was right, how much should he ask next time? Asked once.
+  const saidRight = feedback.some((f) => f.kind === "APPROVE") || review?.label === "CORRECT";
+  const saidHowMuch = feedback.some((f) => LIKE_THIS.some((c) => c.kind === f.kind) || f.kind === "ALWAYS_DO_THIS" || f.kind === "ALWAYS_ASK_ME");
+  const askHowMuch = saidRight && !saidHowMuch && offersLikeThis(d);
 
   async function give(kind: FeedbackKind) {
     setBusy(true);
@@ -149,6 +154,11 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
           {history.map((h) => (
             <p key={h}>{h}</p>
           ))}
+        </div>
+      )}
+      {askHowMuch && (
+        <div className="border-t pt-3">
+          <LikeThis busy={busy} onChoose={(kind) => void give(kind)} />
         </div>
       )}
       {would && <ReviewPanel item={item} />}

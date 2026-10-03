@@ -5,7 +5,7 @@ from oscar.feedback import FeedbackKind
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.policy import autonomy_for
-from oscar.preferences import CEILINGS, Preferences
+from oscar.preferences import CEILINGS, Preferences, family
 from oscar.review import half_answered, teaching
 from oscar.safety import ACTION_FLOORS, apply_floor
 
@@ -145,10 +145,22 @@ def permissions(history: History) -> list[dict]:
     """What Oscar may do on his own with each kind of email, straight from the rules: the policy level,
     the floor learning can't go below, and the ceiling it can't go above. For the Settings page, so it
     never drifts from the code."""
+    events = teaching(history)
+    prefs = Preferences.from_feedback(events)
+    learned = {(r["kind"], r["action"]): r for r in prefs.broad_summary() if r["scope"] == "kind"}
+    # The email each standing "emails like this" rule was set on, so it can be removed (Forget).
+    rules: dict[tuple, str] = {}
+    for e in events:
+        if e.scope == "kind" and e.kind in (FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME):
+            rules[(family(e.email_type), e.action)] = e.decision_id
+        elif e.scope == "kind" and e.kind == FeedbackKind.FORGET:
+            rules.pop((family(e.email_type), e.action), None)
     rows = []
     for action, email_type in TYPES.items():
         level, reason = autonomy_for(action)
         floor = ACTION_FLOORS.get(action)
+        key = (family(email_type), action)
+        found = learned.get(key)
         rows.append({
             "action": action,
             "email_type": email_type,
@@ -156,5 +168,9 @@ def permissions(history: History) -> list[dict]:
             "reason": reason,
             "floor": floor[0] if floor else None,
             "ceiling": CEILINGS.get(action),
+            # What your answers (or your rule) say for a new sender of this kind. The safety rules
+            # still run after it on every email.
+            "learned": {"level": apply_floor(action, found["level"], "")[0], "reason": found["reason"],
+                        "senders": found["senders"], "rule": key in rules, "decision_id": rules.get(key)} if found else None,
         })
     return rows

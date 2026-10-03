@@ -109,6 +109,9 @@ export const FEEDBACK: Record<FeedbackKind, string> = {
   ALWAYS_ASK_ME: "Always ask me",
   SEEN: "Reviewed",
   FORGET: "Forgot",
+  JUST_HANDLE_IT: "Just handle them",
+  HANDLE_AND_TELL_ME: "Handle + tell me",
+  KEEP_ASKING: "Keep asking",
 };
 
 /** Review labels for the real-inbox review (Stage 9), with what each one means. Mirrors oscar/review.py. */

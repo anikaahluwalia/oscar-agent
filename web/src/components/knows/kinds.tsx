@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 import { StatusWords } from "@/components/kit/status";
 import { notInGmail } from "@/components/memory/facts";
-import type { Level, PermissionRow } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { sendFeedback, type Level, type PermissionRow } from "@/lib/api";
 import { KIND_NAMES } from "@/lib/labels";
-import { isReadOnly, type OscarData } from "@/lib/use-oscar";
+import { isReadOnly, notifyChanged, oscarSays, type OscarData } from "@/lib/use-oscar";
 import { forgotAt, kindAnswers, sentence, startWords } from "./facts";
 
 const ORDER: Level[] = ["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY", "ASK_FIRST", "ESCALATE"];
@@ -28,6 +30,20 @@ function limitLine(r: PermissionRow) {
 /** Where Oscar starts with each kind of email from a sender he doesn't know yet, and what your answers add up to. */
 export function KindsOfEmail({ data, rules, failed }: { data: OscarData; rules: PermissionRow[] | null; failed: boolean }) {
   const forgot = forgotAt(data.all);
+  const [busy, setBusy] = useState(false);
+
+  async function removeRule(decisionId: string) {
+    setBusy(true);
+    try {
+      const { reply } = await sendFeedback(decisionId, "FORGET", undefined, "kind");
+      oscarSays(reply);
+      notifyChanged();
+    } catch (e) {
+      oscarSays(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
   const open = (rules ?? []).filter((r) => r.floor !== "ESCALATE").sort((a, b) => ORDER.indexOf(a.level) - ORDER.indexOf(b.level));
   const stopped = (rules ?? []).filter((r) => r.floor === "ESCALATE");
 
@@ -37,8 +53,9 @@ export function KindsOfEmail({ data, rules, failed }: { data: OscarData; rules: 
         Kinds of email
       </h2>
       <p className="mb-2 text-[13px] text-muted-foreground">
-        For senders I don&apos;t know yet. Each kind starts where my rules put it. I learn from your answers one sender at a time, so
-        what you teach me shows up under Senders I know, and a new sender still starts here.
+        For senders I don&apos;t know yet. Each kind starts where my rules put it. When your answers about at least 3 senders
+        agree, or you tell me how to handle emails like this, a new sender starts there instead. What you said about one sender
+        always comes first, and anything risky still comes to you.
         {isReadOnly(data) && " I'm only reading your email for now, so this is what I would do."}
       </p>
 
@@ -51,19 +68,29 @@ export function KindsOfEmail({ data, rules, failed }: { data: OscarData; rules: 
           {open.map((r) => {
             const { answers, senders } = kindAnswers(data.all, r.email_type, forgot);
             const limit = limitLine(r);
+            const learned = r.learned;
+            const level = learned?.level ?? r.level;
             return (
               <li key={r.action} className="flex flex-col gap-1.5 border-t py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <p className="text-[15px]">{nameOf(r)}</p>
                   {answers > 0 && <p className="text-[13px] text-muted-foreground">{answersLine(answers, senders)}</p>}
                   <p className="text-[13px] text-muted-foreground">
-                    {limit ?? sentence(r.reason)}
+                    {learned ? sentence(learned.reason) : limit ?? sentence(r.reason)}
                     {notInGmail(data, r.action) && ". I don't do this in Gmail, so it stays yours to do"}
                   </p>
                 </div>
-                <StatusWords level={r.level} className="shrink-0">
-                  {startWords(r.level, r.action)}
-                </StatusWords>
+                <div className="flex shrink-0 items-center gap-2">
+                  {learned?.rule && learned.decision_id && (
+                    <Button variant="outline" className="h-9 rounded-full px-3 text-[13px]" disabled={busy}
+                      onClick={() => void removeRule(learned.decision_id!)}>
+                      Remove rule
+                    </Button>
+                  )}
+                  <StatusWords level={level} className="shrink-0">
+                    {startWords(level, r.action)}
+                  </StatusWords>
+                </div>
               </li>
             );
           })}

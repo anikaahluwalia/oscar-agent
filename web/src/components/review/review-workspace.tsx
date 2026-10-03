@@ -6,11 +6,12 @@ import { lastAnswerFor, sameAsLast } from "@/components/review/answer";
 import { controlsFor, DecisionControls } from "@/components/review/decision-controls";
 import { filtersFor, listFor, newSenders, priority, type FilterKey } from "@/components/review/filters";
 import { FollowUp } from "@/components/review/follow-up";
+import { LikeThis, offersLikeThis } from "@/components/kit/like-this";
 import { GradeButtons, KeysHint, YouSaid } from "@/components/review/grade";
 import { ReviewCard } from "@/components/review/review-card";
 import { ReviewList } from "@/components/review/review-list";
 import { Button } from "@/components/ui/button";
-import { sendReview, type DecisionWithFeedback, type ReviewInput } from "@/lib/api";
+import { sendFeedback, sendReview, type DecisionWithFeedback, type FeedbackKind, type ReviewInput } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
 import { isOldWay, toGrade, wouldOnly } from "@/lib/labels";
 import { setHash, useHash } from "@/lib/use-hash";
@@ -190,14 +191,14 @@ export function ReviewWorkspace({
   }, [current, nav, inQueue, queue]);
 
   const save = useCallback(
-    async (input: ReviewInput, reaction?: { pose: OscarPose; title: string }) => {
+    async (input: ReviewInput, reaction?: { pose: OscarPose; title: string }, stay = false) => {
       if (busy) return;
       setBusy(true);
       try {
         await sendReview(input);
         notifyChanged();
         if (reaction) setFlash(reaction);
-        next();
+        if (!stay) next();
       } catch (e) {
         oscarSays(e instanceof Error ? e.message : "Something went wrong.");
       } finally {
@@ -211,9 +212,32 @@ export function ReviewWorkspace({
   const fresh = gradeable && !current.review;
   const old = gradeable && isOldWay(current.review);
   const asking = gradeable && (fresh || step === "change");
-  const right = useCallback(
-    () => current && save({ decision_id: current.decision.id, label: "CORRECT" }, { pose: "proud", title: "Thanks! Glad I got that one right." }),
-    [current, save],
+  // "Right" says the action was right. How much he should ask next time is a separate answer,
+  // asked straight after for the easy-to-undo actions: it never counts as "keep asking" by itself.
+  const [likeThis, setLikeThis] = useState<string | null>(null);
+  const right = useCallback(async () => {
+    if (!current) return;
+    const ask = offersLikeThis(current.decision);
+    await save({ decision_id: current.decision.id, label: "CORRECT" }, { pose: "proud", title: "Thanks! Glad I got that one right." }, ask);
+    if (ask) setLikeThis(current.decision.id);
+  }, [current, save]);
+  const teach = useCallback(
+    async (kind: FeedbackKind) => {
+      if (!current) return;
+      setBusy(true);
+      try {
+        const { reply } = await sendFeedback(current.decision.id, kind);
+        oscarSays(reply);
+        notifyChanged();
+      } catch (e) {
+        oscarSays(e instanceof Error ? e.message : "Something went wrong.");
+      } finally {
+        setBusy(false);
+        setLikeThis(null);
+        next();
+      }
+    },
+    [current, next],
   );
 
   // Keys: J / K to move, Y right and N not quite on the real inbox. Not while typing, and not in the follow-up.
@@ -285,7 +309,9 @@ export function ReviewWorkspace({
       </ReviewCard>
 
       {gradeable ? (
-        asking ? (
+        likeThis === current.decision.id ? (
+          <LikeThis big busy={busy} onChoose={(kind) => void teach(kind)} onSkip={() => { setLikeThis(null); next(); }} />
+        ) : asking ? (
           <GradeButtons
             busy={busy}
             last={last}
@@ -295,7 +321,8 @@ export function ReviewWorkspace({
             onBack={step === "change" ? () => setMode(null) : undefined}
             onSameAsLast={() => last && save(sameAsLast(current.decision.id, last), { pose: "learning", title: "Thanks! That helps me learn." })}
             note={controls.ask && current.decision.source === "gmail" && canAct
-              ? "Right also approves it, so I'll do it in Gmail now. You can undo it after." : undefined}
+              ? "Right also approves it, so I'll do it in Gmail now. You can undo it after."
+              : offersLikeThis(current.decision) ? "Right says the action was right. Next I'll ask how much to check with you." : undefined}
           />
         ) : (
           <div className="flex flex-col gap-3">

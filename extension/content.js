@@ -23,6 +23,7 @@
     PERMANENTLY_DELETE: "Delete it for good", SEND_CREDENTIALS: "Send login details", MOVE_MONEY: "Send money",
   };
   const DID = { ARCHIVE: "Archived", MARK_READ: "Marked as read", APPLY_LABEL: "Labelled" };
+  const LIKE_THIS_ACTIONS = new Set(["ARCHIVE", "MARK_READ", "APPLY_LABEL"]);
   const INSTEAD = [
     ["ASK_FIRST", "Should have asked"], ["PROCEED_AND_NOTIFY", "Should have told me"],
     ["PROCEED_SILENTLY", "Fine to do quietly"], ["ESCALATE", "Should have stopped it"],
@@ -466,11 +467,13 @@
         item.answerable ? el("div", { class: "row" },
           el("button", { class: "btn main", type: "button", disabled: state.busy, onclick: () => answer(item, "APPROVE") }, "Approve"),
           el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "REJECT") }, "Not this one")) : null),
-      item.level !== "ESCALATE" ? el("div", { class: "box" },
-        el("h3", { text: `Next time, from ${address(item.sender)}` }),
+      // How much to ask next time is its own answer: approving only says the action was right.
+      LIKE_THIS_ACTIONS.has(item.action) && item.level !== "ESCALATE" ? el("div", { class: "box" },
+        el("h3", { text: "For emails like this" }),
         el("div", { class: "row" },
-          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "ALWAYS_DO_THIS") }, "Always do this"),
-          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "ALWAYS_ASK_ME") }, "Always ask me"))) : null,
+          el("button", { class: "btn main", type: "button", disabled: state.busy, onclick: () => answer(item, "JUST_HANDLE_IT") }, "Just handle them"),
+          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "HANDLE_AND_TELL_ME") }, "Handle + tell me"),
+          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "KEEP_ASKING") }, "Keep asking"))) : null,
       el("div", { class: "box" }, el("h3", { text: "Was that right?" }),
         item.reviewed ? el("p", { class: "text", text: "You've told me about this one. Thank you." }) : rightOrNot(item)),
     ];

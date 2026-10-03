@@ -121,7 +121,7 @@ export function SendersIKnow({ data, onFeedback, now }: { data: OscarData; onFee
         Senders I know
       </h2>
       <p className="mb-2 text-[13px] text-muted-foreground">
-        Each okay brings me closer to doing it on my own. A no or an undo steps me back. {inboxNote(data)}
+        An okay tells me the action was right. How much I check with you is what you pick under For emails like this. A no or an undo steps me back. {inboxNote(data)}
       </p>
 
       {items.length ? (

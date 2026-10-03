@@ -77,7 +77,7 @@ export async function answerProposal(index: number, yes: boolean) {
     return;
   }
   try {
-    const { reply } = await sendFeedback(message.proposal.decision_id, message.proposal.kind);
+    const { reply } = await sendFeedback(message.proposal.decision_id, message.proposal.kind, undefined, message.proposal.scope ?? "sender");
     mark("yes", { from: "oscar", text: reply });
     notifyChanged();
   } catch (e) {

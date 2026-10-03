@@ -23,7 +23,14 @@ export type FeedbackKind =
   | "ALWAYS_DO_THIS"
   | "ALWAYS_ASK_ME"
   | "SEEN"
-  | "FORGET";
+  | "FORGET"
+  // How much he should do on his own with emails like this one. Approving never says that.
+  | "JUST_HANDLE_IT"
+  | "HANDLE_AND_TELL_ME"
+  | "KEEP_ASKING";
+
+/** A rule about one sender, or about every email like this one (archive, mark read and label only). */
+export type RuleScope = "sender" | "kind";
 
 /** How you score one of Oscar's decisions on a real inbox (oscar/review.py). It grades him, and teaches him (lessons()). */
 export type ReviewLabel =
@@ -200,6 +207,7 @@ export interface Proposal {
   decision_id: string;
   kind: FeedbackKind;
   text: string;
+  scope?: RuleScope;
 }
 
 export interface ChatReply {
@@ -300,6 +308,8 @@ export interface PermissionRow {
   reason: string;
   floor: Level | null;
   ceiling: Level | null;
+  /** What your answers, or your "emails like this" rule, say for a new sender of this kind. */
+  learned: { level: Level; reason: string; senders: number; rule: boolean; decision_id: string | null } | null;
 }
 export const getPermissions = () => call<PermissionRow[]>("/permissions");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
@@ -364,8 +374,8 @@ export const sendChat = (message: string, history: ChatTurn[], decisionId?: stri
   });
 export const getChatStatus = () => call<{ model: string | null }>("/chat/status");
 
-export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string) =>
+export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string, scope: RuleScope = "sender") =>
   call<{ event: FeedbackEvent; reply: string }>("/feedback", {
     method: "POST",
-    body: JSON.stringify({ decision_id: decisionId, kind, edited_text: editedText ?? null }),
+    body: JSON.stringify({ decision_id: decisionId, kind, edited_text: editedText ?? null, scope }),
   });
