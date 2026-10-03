@@ -30,7 +30,8 @@ side effects.
 |---|---|
 | ![Inbox](assets/inbox.png) | ![What Oscar Knows](assets/memory.png) |
 
-See [DESIGN.md](DESIGN.md) for decisions and known weaknesses.
+See [DESIGN.md](DESIGN.md) for the key decisions and example transcripts, and
+[docs/STAGES.md](docs/STAGES.md) for the full stage-by-stage log.
 
 ## Setup
 
@@ -107,7 +108,7 @@ See `extension/README.md`.
 
 Oscar can read a real Gmail inbox and note what he *would* do with each email.
 He only gets read-only access: nothing in Gmail changes. You review his decisions
-in the app, and mistakes become regression tests (see DESIGN.md, Stage 9).
+in the app, and mistakes become regression tests (see docs/STAGES.md, Stage 9).
 
 1. Make a Gmail account for testing, or use your own.
 2. In [Google Cloud Console](https://console.cloud.google.com), create a project and
@@ -168,7 +169,7 @@ the list with the reason for each one:
 set (215 cases) before and after learning, the safety suite (57 cases) and the
 regression cases, saves every run with every case's result in
 `evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The
-Oscar's Progress page in the app shows those saved runs. The method is in DESIGN.md (Stage 10).
+Oscar's Progress page in the app shows those saved runs. The method is in docs/STAGES.md (Stage 10).
 
 The older `python -m evals` (writes `evals/RESULTS.md`) is the Stage 6–7 method, kept
 for the record.
