@@ -299,6 +299,9 @@ export const syncGmail = () => call<{ new: number; skipped: number; done: number
 export const recheckGmail = () => call<{ new: number; skipped: number }>("/gmail/recheck", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
+/** An email's image, fetched by Oscar (GET /email-image) so the sender never sees your address or browser. */
+export const imageThroughOscar = (url: string) => `${API}/email-image?url=${encodeURIComponent(url)}`;
+export const API_ORIGIN = new URL(API).origin;
 export const getEmailContent = (decisionId: string) =>
   call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
 /** A saved eval run (evals/results/runs). Every test number on the Evals page comes from one of these. */
