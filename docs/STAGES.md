@@ -1578,7 +1578,8 @@ and asks you about the few clearest habits (`oscar/cold_start.py`).
 - **Read-only, enforced.** The scan always uses a read-only Gmail client (`GmailClient(read_only=True)`),
   which refuses every write before Gmail is asked. It reads with a Gmail search
   (`newer_than:6m`), page by page, then each email's labels, headers and preview. No model: the
-  rules say what kind of email each one is. At most 5,000 emails.
+  rules say what kind of email each one is. At most the newest 2,000 emails; if six months has fewer
+  than 500, it goes further back until it has 500 (or runs out).
 - **What it counts.** For each kind of email: how many left the inbox (archived), stayed and were
   read, or stayed unread. Emails a safety rule would stop, ones the rules couldn't read, and ones
   Oscar changed in Gmail himself (so his own archiving isn't shown back to you as yours) are left out. A habit needs 6 emails from 3 senders with 80% doing the same thing, and is about a

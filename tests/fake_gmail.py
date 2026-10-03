@@ -41,6 +41,7 @@ class FakeGmail:
         self.sent_to = set(sent_to)
         self.requests: list[httpx.Request] = []
         self.labels = [{"id": "Label_9", "name": "Work"}]  # the user's own label, which Oscar must never touch
+        self.older: set[str] = set()  # ids of messages from more than six months ago, for searches
         self.profile = {"name": "Sam Lee", "picture": "https://lh3.googleusercontent.com/a/sam"}  # Google's userinfo
 
     def handler(self, request: httpx.Request) -> httpx.Response:
@@ -77,8 +78,8 @@ class FakeGmail:
             if q and "to:" in q:
                 to = q.split("to:")[1]
                 return httpx.Response(200, json={"messages": [{"id": "s"}] if to in self.sent_to else []})
-            if q:  # a search, like the six-month look back: every message, a page at a time
-                ids = list(self.messages)
+            if q:  # a search, like the six-month look back, a page at a time
+                ids = [i for i in self.messages if (i in self.older) == ("older_than" in q)]
                 start = int(request.url.params.get("pageToken") or 0)
                 size = int(request.url.params.get("maxResults") or 100)
                 page = [{"id": i, "threadId": self.messages[i]["threadId"]} for i in ids[start:start + size]]
