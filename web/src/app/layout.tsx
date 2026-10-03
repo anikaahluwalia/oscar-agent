@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
-import { OscarChatDrawer } from "@/components/oscar-chat-drawer";
 import { Onboarding } from "@/components/settings/onboarding";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -29,7 +28,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="flex min-w-0 flex-1 flex-col">{children}</div>
             </div>
             <WhyDrawer />
-            <OscarChatDrawer />
             <Onboarding />
           </TooltipProvider>
           <Toaster position="bottom-center" mobileOffset={{ bottom: "5rem" }} />
