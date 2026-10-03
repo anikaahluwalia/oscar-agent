@@ -150,9 +150,12 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
         return status(history)
     data.update(state="running", error=None, started_at=data["started_at"] or _now())
     store.save(data)
+    # Emails Oscar changed in Gmail himself (on his own, or when you approved him) say what he
+    # did, not what you did, so they're left out. Only matters for an account he already acts on.
+    his = {record.message_id for record in history.actions.values()}
     try:
         _list(reader, store, data, should_stop)
-        _understand(reader, store, data, should_stop)
+        _understand(reader, store, data, should_stop, his)
         if should_stop():
             return status(history)
         data.update(phase="finding")
@@ -181,15 +184,20 @@ def _list(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[
         store.save(data)
 
 
-def _understand(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[], bool]) -> None:
-    """Phase 2: what kind of email each one is, and what you did with it. Saved every few emails."""
+def _understand(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[], bool],
+                his: set[str] = frozenset()) -> None:
+    """Phase 2: what kind of email each one is, and what you did with it. Saved every few emails.
+    his: emails Oscar changed himself, which aren't read at all."""
     if not data["listed"]:
         return
     data.update(phase="understanding")
     while data["processed"] < len(data["ids"]) and not should_stop():
         message_id = data["ids"][data["processed"]]
         try:
-            _count(data["stats"], reader.metadata(message_id))
+            if message_id in his:
+                data["skipped_emails"] += 1
+            else:
+                _count(data["stats"], reader.metadata(message_id))
         except GmailError as e:
             if e.status not in (404, 400):
                 raise

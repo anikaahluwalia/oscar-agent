@@ -1580,8 +1580,8 @@ and asks you about the few clearest habits (`oscar/cold_start.py`).
   (`newer_than:6m`), page by page, then each email's labels, headers and preview. No model: the
   rules say what kind of email each one is. At most 5,000 emails.
 - **What it counts.** For each kind of email: how many left the inbox (archived), stayed and were
-  read, or stayed unread. Emails a safety rule would stop, and ones the rules couldn't read, are
-  left out. A habit needs 6 emails from 3 senders with 80% doing the same thing, and is about a
+  read, or stayed unread. Emails a safety rule would stop, ones the rules couldn't read, and ones
+  Oscar changed in Gmail himself (so his own archiving isn't shown back to you as yours) are left out. A habit needs 6 emails from 3 senders with 80% doing the same thing, and is about a
   kind of email, never one sender, so a shop's password-change notice can't pick up how you treat
   its promotions. Only kinds he'd archive, mark as read or label count: he'd reply to a question
   from a person, so a habit about those would never be used.

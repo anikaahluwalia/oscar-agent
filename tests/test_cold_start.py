@@ -187,6 +187,17 @@ def test_5_a_gmail_error_can_be_retried(tmp_path):
     assert status(history)["state"] == "ready"
 
 
+def test_emails_oscar_archived_himself_arent_your_habit(tmp_path):
+    # An account he already acts on: he archived these promotions, you didn't.
+    from oscar.act import ActionRecord
+    history = History()
+    for i in range(12):
+        history.save_action(ActionRecord(decision_id=f"d{i}", message_id=f"p{i}", action=Action.ARCHIVE, by="oscar",
+                                         removed=["INBOX"]))
+    scan(tmp_path, promos(12), history=history)
+    assert status(history)["candidates"] == [] and status(history)["skipped_emails"] == 12
+
+
 def test_progress_is_saved_in_the_accounts_folder(tmp_path):
     history = History(tmp_path / "account")
     scan(tmp_path, promos(12), history=history)
