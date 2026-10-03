@@ -93,8 +93,9 @@ only says he did something if Gmail says it happened.
 
 **Meet you where you read email.** There's a web app (Today, Inbox, Review, what he knows,
 his promises and his progress) and a Chrome extension that puts his call in Gmail: chips on each
-email, a corner Oscar with cards (which ones show is set in the app), and a side panel. His call is also a coloured Gmail label (Handled, FYI, Needs you, Stopped),
-so it shows on your phone and in any browser. The extension's page code never talks to the API:
+email, a corner Oscar with cards (which ones show is set in the app), and a side panel. His call
+is also a coloured Gmail label (Stopped, Needs you or FYI; nothing on what he handled quietly),
+so it shows on your phone and in any browser. You can rename any of his labels. The extension's page code never talks to the API:
 a background script does, only for a short list of requests, and only on localhost.
 
 ## Results

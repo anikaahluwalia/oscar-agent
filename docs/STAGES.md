@@ -1529,6 +1529,21 @@ The test results stay underneath, kept apart from your numbers.
 The extension also tidies itself away when Chrome reloads it while Gmail is open, instead of
 throwing "Extension context invalidated" until the page is refreshed.
 
+### His Gmail labels
+
+Only the emails worth a look get a status label now: **Stopped**, **Needs you** and **FYI**.
+"Handled" is gone: what he handled is already archived or read, so the label was clutter (the
+app and the extension's chips still show it). His old Handled labels come off as emails are
+relabelled, and he never makes it again.
+
+Every label can be renamed in Settings, including Receipts and Sorted from "Label it"
+(`oscar/labels.py`). The code works with a fixed job for each label ("needs_you", "receipts"),
+and the name is only looked up when he talks to Gmail. Renaming one renames it in Gmail too, so
+emails he already labelled follow, and undo still works because Gmail keeps the label's id. The
+new name is only saved once Gmail has taken it. Names only come from you: never Gmail's own
+(Inbox, Spam...), never two the same. When he labels something he says which label:
+'I added the "Receipts" label', in the app and in Gmail.
+
 ### A mistake along the way
 
 Another session was building part of this at the same time, in the same folder. I reverted four
