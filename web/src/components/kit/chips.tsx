@@ -23,7 +23,7 @@ export function FilterChips<T extends string>({
           aria-pressed={value === o.key}
           onClick={() => onChange(o.key)}
           className={cn(
-            "flex min-h-9 items-center gap-1.5 rounded-full border bg-card px-3.5 text-sm font-medium hover:bg-surface-hover",
+            "flex min-h-11 items-center gap-1.5 sm:min-h-9 rounded-full border bg-card px-3.5 text-sm font-medium hover:bg-surface-hover",
             value === o.key && "border-transparent bg-primary/10 text-primary hover:bg-primary/15",
           )}
         >

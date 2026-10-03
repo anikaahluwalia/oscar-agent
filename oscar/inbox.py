@@ -105,19 +105,26 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             skipped += 1
             continue
         understanding = reader.read(email) if reader else None
-        decision = decide(email, Preferences.from_feedback(teaching(history)), read_only=not act, bulk_action=bulk_action,
-                          understanding=understanding)
+        prefs = Preferences.from_feedback(teaching(history))
+        decision = decide(email, prefs, read_only=not act, bulk_action=bulk_action, understanding=understanding)
         decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
-        history.add_decision(decision)
-        new += 1
         arrived_since = info.received_at is not None and act_since is not None and info.received_at >= act_since
+        did = False
         if (act and arrived_since and decision.autonomy_level in ACTED_LEVELS and can_do(decision)
                 and done < MAX_PER_CHECK and still_acting()):
             try:
                 do(history, gmail, decision, by="oscar")
                 done += 1
+                did = True
             except (ActionError, GmailError, httpx.HTTPError):
                 pass  # the decision stays logged; the app shows it wasn't done
+        if act and decision.autonomy_level in ACTED_LEVELS and not did:
+            # He didn't do it in Gmail (an old email, the cap, an action he doesn't do there, or Gmail
+            # said no), so his note says what he would do, never "I archived this".
+            would = decide(email, prefs, read_only=True, bulk_action=bulk_action, understanding=understanding)
+            decision = decision.model_copy(update={"explanation": would.explanation, "message": would.message, "steps": would.steps})
+        history.add_decision(decision)
+        new += 1
     follow_up(history, gmail)
     return SyncResult(new=new, skipped=skipped, done=done)
 

@@ -181,3 +181,12 @@ def test_turning_acting_off_stops_a_check_midway(api):
         return len(asked) <= 2  # turned off after two actions
     result = sync(real, GmailClient(store, fake.http()), act_since=acting_since(store, real), still_acting=still)
     assert result.done == 2
+
+
+def test_his_note_only_says_he_did_it_if_he_did(api):
+    old = message("o1", "orders@shop.example", "Your receipt", "Your receipt is attached.")  # arrived before acting
+    client, real, fake = api([old, RECEIPT])
+    client.post("/gmail/sync")
+    done, not_done = decision_for(real, "r1"), decision_for(real, "o1")
+    assert real.action_for(done.id) and not real.action_for(not_done.id)
+    assert "I'd" in not_done.message and "I'd" not in done.message

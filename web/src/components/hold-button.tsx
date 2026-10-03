@@ -33,7 +33,7 @@ export function HoldButton({ onConfirm, disabled, children, size = "sm" }: {
     <Button
       size={size}
       disabled={disabled}
-      className="relative overflow-hidden"
+      className="relative min-h-11 overflow-hidden sm:min-h-0"
       onPointerDown={start}
       onPointerUp={stop}
       onPointerLeave={stop}

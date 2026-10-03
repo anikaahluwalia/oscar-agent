@@ -63,6 +63,10 @@ export function whatOscarDid(decision: Decision, done?: ActionDone | null): stri
     if (!done) return `Would ${ACTIONS[action].toLowerCase()}`; // decided, but not something he does in Gmail
     return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[action];
   }
+  // An ask you approved: once Gmail says it was done, it's done.
+  if (decision.source === "gmail" && decision.acting && level === "ASK_FIRST" && done) {
+    return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[action];
+  }
   // Made while Oscar only read the inbox: what he would have done.
   if (wouldOnly(decision)) {
     if (level === "ASK_FIRST") return `Would ask to ${ACTIONS[action].toLowerCase()}`;

@@ -108,7 +108,7 @@ export function EmailBody({ decisionId }: { decisionId: string }) {
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <ImageIcon className="size-3.5" />
           Images are off, so the sender can&apos;t tell you opened it.
-          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setImages(true)}>
+          <Button size="sm" variant="ghost" className="h-11 px-2 text-xs sm:h-7" onClick={() => setImages(true)}>
             Show images
           </Button>
         </div>
