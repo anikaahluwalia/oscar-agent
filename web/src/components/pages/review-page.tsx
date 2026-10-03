@@ -7,10 +7,11 @@ import { Loading, Page, PageHeader, Section } from "@/components/page";
 import { ReviewStats } from "@/components/review/review-stats";
 import { ReviewWorkspace } from "@/components/review/review-workspace";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { checkGmail } from "@/lib/demo";
 import { toGrade } from "@/lib/labels";
-import { isOpen, isUnchecked, useOscar, type OscarData } from "@/lib/use-oscar";
+import { isOpen, isReadOnly, isUnchecked, useOscar, type OscarData } from "@/lib/use-oscar";
 
 type Feedback = ReturnType<typeof useOscar>["feedback"];
 
@@ -28,7 +29,7 @@ function Cards({ items, feedback }: { items: DecisionWithFeedback[]; feedback: F
 
 /** What Oscar asked you about or stopped, and what he did and told you about. */
 function WaitingOnYou({ data, feedback }: { data: OscarData; feedback: Feedback }) {
-  const readOnly = data.gmail.connected;
+  const readOnly = isReadOnly(data);
   const open = data.items.filter(isOpen);
   const asks = open.filter((i) => i.decision.autonomy_level === "ASK_FIRST");
   const stopped = open.filter((i) => i.decision.autonomy_level === "ESCALATE");
@@ -89,7 +90,11 @@ export function ReviewPage() {
         <OscarAvatar size={72} mood={waiting ? "curious" : "sleepy"} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-            {waiting ? `Help Oscar with ${waiting.toLocaleString()} ${waiting === 1 ? "call" : "calls"}.` : "All checked!"}
+            {!isReadOnly(data) && data.items.some(isOpen)
+              ? `${data.items.filter(isOpen).length.toLocaleString()} waiting on you.`
+              : waiting
+                ? `Help Oscar with ${waiting.toLocaleString()} ${waiting === 1 ? "call" : "calls"}.`
+                : "All checked!"}
           </h1>
           <p className="text-muted-foreground">Each answer grades him and teaches him about that sender.</p>
         </div>
@@ -97,7 +102,21 @@ export function ReviewPage() {
           Check Gmail now
         </Button>
       </header>
-      {real.length ? (
+      {real.length && !isReadOnly(data) ? (
+        <Tabs defaultValue={data.items.some(isOpen) ? "waiting" : "check"} className="gap-6">
+          <TabsList>
+            <TabsTrigger value="waiting">Waiting on you ({data.items.filter(isOpen).length.toLocaleString()})</TabsTrigger>
+            <TabsTrigger value="check">Check his calls</TabsTrigger>
+          </TabsList>
+          <TabsContent value="waiting">
+            <WaitingOnYou data={data} feedback={feedback} />
+          </TabsContent>
+          <TabsContent value="check" className="flex flex-col gap-6">
+            <ReviewStats data={data} />
+            <ReviewWorkspace items={real} />
+          </TabsContent>
+        </Tabs>
+      ) : real.length ? (
         <>
           <ReviewStats data={data} />
           <ReviewWorkspace items={real} />

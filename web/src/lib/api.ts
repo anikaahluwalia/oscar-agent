@@ -295,7 +295,7 @@ export const gmailConnectUrl = `${API}/auth/google/start`;
 /** Connect again, this time with permission to change labels (Stage 12). */
 export const gmailActUrl = `${API}/auth/google/start?act=true`;
 export const setActing = (on: boolean) => call<{ acting: boolean }>("/gmail/acting", { method: "POST", body: JSON.stringify({ on }) });
-export const syncGmail = () => call<{ new: number; skipped: number }>("/gmail/sync", { method: "POST" });
+export const syncGmail = () => call<{ new: number; skipped: number; done: number }>("/gmail/sync", { method: "POST" });
 export const recheckGmail = () => call<{ new: number; skipped: number }>("/gmail/recheck", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */

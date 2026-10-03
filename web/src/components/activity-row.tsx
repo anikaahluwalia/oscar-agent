@@ -2,12 +2,12 @@
 
 import { EmailLink } from "@/components/email-link";
 import { StatusPill } from "@/components/status-pill";
-import type { Decision } from "@/lib/api";
+import type { ActionDone, Decision } from "@/lib/api";
 import { whatOscarDid } from "@/lib/labels";
 import { formatTime } from "@/lib/time";
 
 /** One thing Oscar did. Opens the email in the inbox. */
-export function ActivityRow({ decision }: { decision: Decision }) {
+export function ActivityRow({ decision, done }: { decision: Decision; done?: ActionDone | null }) {
   return (
     <li>
       <EmailLink
@@ -18,7 +18,7 @@ export function ActivityRow({ decision }: { decision: Decision }) {
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium">{decision.sender}</span>
           <span className="block truncate text-sm text-muted-foreground">
-            {whatOscarDid(decision)} · {decision.subject}
+            {whatOscarDid(decision, done)} · {decision.subject}
           </span>
         </span>
         <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} />

@@ -33,11 +33,13 @@ export async function checkGmail() {
   checking = true;
   oscarSays("On it! Checking your inbox...");
   try {
-    const { new: count, skipped } = await syncGmail();
+    const { new: count, skipped, done } = await syncGmail();
     notifyChanged();
-    const read = count
-      ? `I read ${count} new ${count === 1 ? "email" : "emails"}! I didn't touch anything in Gmail.`
-      : "Nothing new in your inbox. All quiet!";
+    const read = !count
+      ? "Nothing new in your inbox. All quiet!"
+      : done
+        ? `I read ${count} new ${count === 1 ? "email" : "emails"} and took care of ${done}! You can undo any of them.`
+        : `I read ${count} new ${count === 1 ? "email" : "emails"}! I didn't change anything in Gmail.`;
     oscarSays(skipped ? `${read} I couldn't open ${skipped}; I'll try again next time.` : read);
   } catch (e) {
     oscarSays(e instanceof Error ? e.message : "I can't reach my API right now.");

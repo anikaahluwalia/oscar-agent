@@ -13,7 +13,7 @@ export function LearnedHabits() {
   if (!data) return null;
 
   const tell = (decisionId: string, kind: FeedbackKind) => void feedback(decisionId, kind);
-  // On the real inbox Oscar only reads for now, so there's nothing to teach him there yet.
+  // While Oscar only reads the real inbox, he learns from your reviews instead.
   const readOnly = isReadOnly(data);
   const limitsFor = (sender: string, action: string) => data.autonomy.find((r) => r.sender === sender && r.action === action);
   const learnedKeys = new Set(data.learned.map((r) => `${r.sender}|${r.action}`));

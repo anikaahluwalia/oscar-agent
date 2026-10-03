@@ -7,6 +7,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { OscarAvatar } from "@/components/oscar-avatar";
+import { wouldOnly } from "@/lib/labels";
 import {
   getAutonomy,
   getBrief,
@@ -46,10 +47,11 @@ export type OscarData = {
 
 const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND", "SEEN"]);
 /** You've dealt with it: answered Oscar, or (on the real inbox, which is read-only) reviewed his decision. */
-export const isAnswered = (i: DecisionWithFeedback) => !!i.review || i.feedback.some((f) => ANSWERS.has(f.kind));
+export const isAnswered = (i: DecisionWithFeedback) =>
+  (wouldOnly(i.decision) && !!i.review) || i.feedback.some((f) => ANSWERS.has(f.kind));
 /** Still waiting on you: an ask you haven't answered, or something Oscar stopped that you haven't reviewed. */
 export const isOpen = (i: DecisionWithFeedback) =>
-  (i.decision.autonomy_level === "ASK_FIRST" || i.decision.autonomy_level === "ESCALATE") && !isAnswered(i);
+  (i.decision.autonomy_level === "ASK_FIRST" || i.decision.autonomy_level === "ESCALATE") && !wouldOnly(i.decision) && !isAnswered(i);
 
 /** Something Oscar did and told you about that you haven't checked yet. Worth a look, but not blocking. */
 export const isUnchecked = (i: DecisionWithFeedback) => i.decision.autonomy_level === "PROCEED_AND_NOTIFY" && !isAnswered(i);

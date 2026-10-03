@@ -61,7 +61,7 @@ export function HomePage() {
 
       {data.items.length === 0 ? (
         data.gmail.connected ? (
-          <EmptyState title="Nothing read yet." text="Oscar only reads your inbox. Nothing in Gmail changes.">
+          <EmptyState title="Nothing read yet." text="Oscar checks your inbox every few minutes, or press Check now.">
             <Button onClick={checkGmail}>Check now</Button>
           </EmptyState>
         ) : (

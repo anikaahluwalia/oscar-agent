@@ -296,7 +296,7 @@ export function SettingsPage() {
     <Page className="max-w-3xl">
       <PageHeader title="Settings" />
 
-      <Group title="Email account" note={gmail?.connected ? "Read-only" : undefined}>
+      <Group title="Email account" note={gmail?.connected ? (gmail.acting ? "Oscar can act" : "Read-only") : undefined}>
         <GmailAccount />
       </Group>
 

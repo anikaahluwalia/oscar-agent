@@ -170,6 +170,11 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
         )}
         {youSaid}
         <div className="flex flex-wrap items-center gap-2">
+          {decision.source === "gmail" && item.done && !item.done.undone_at && (
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => give("UNDO")}>
+              Undo
+            </Button>
+          )}
           {!answered && !editing && (
             <>
               {hold ? (

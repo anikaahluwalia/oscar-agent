@@ -41,8 +41,17 @@ const DONE: Record<Action, string> = {
   MOVE_MONEY: "Moved money",
 };
 
-/** A decision on the real inbox made while Oscar only read it: what he would have done. */
-export const wouldOnly = (decision: Decision) => decision.source === "gmail" && !decision.acting;
+/** The only things Oscar does in Gmail (oscar/act.py). Mirrors CHANGES. */
+export const DOABLE = new Set<Action>(["MARK_READ", "ARCHIVE", "APPLY_LABEL"]);
+
+/**
+ * A decision on the real inbox that's only ever what Oscar would do: made while he only read it,
+ * or an action he doesn't do in Gmail (a reply, an invite, unsubscribing). Stops are the exception:
+ * those you mark as seen.
+ */
+export const wouldOnly = (decision: Decision) =>
+  decision.source === "gmail" &&
+  (!decision.acting || (!DOABLE.has(decision.action) && decision.autonomy_level !== "ESCALATE"));
 
 /**
  * One line for what Oscar did with an email: "Archived", "Wants to unsubscribe", "Stopped: move money".

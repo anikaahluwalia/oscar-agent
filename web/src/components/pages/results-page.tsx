@@ -120,7 +120,7 @@ export function ResultsPage() {
       {data?.gmail.connected && (
         <Section title="On your inbox">
           <p className="-mt-1 text-sm text-muted-foreground">
-            From your reviews of Oscar&apos;s calls on your Gmail, which he only reads. Kept apart from the test results below.
+            From your reviews of Oscar&apos;s calls on your Gmail. Kept apart from the test results below.
           </p>
           {data.reviews.decisions ? (
             <RealInboxResults summary={data.reviews} />
