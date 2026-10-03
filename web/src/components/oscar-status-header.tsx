@@ -1,89 +1,61 @@
 import { OscarAvatar, type Mood } from "@/components/oscar-avatar";
-import type { Brief, DecisionWithFeedback } from "@/lib/api";
-import { needsReview } from "@/lib/labels";
-import { isOpen, isUnchecked } from "@/lib/use-oscar";
+import { plural } from "@/components/home/counts";
+import type { DecisionWithFeedback } from "@/lib/api";
 
-const plural = (n: number, one: string, many: string) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+type Props = {
+  greeting: string; // "Good morning"
+  name: string; // empty if you haven't said
+  handled: number; // handled on his own since `away` (or would have, while read-only)
+  away: boolean; // true: since your last visit. false: first visit here, so the last day
+  needs: DecisionWithFeedback[]; // what's waiting on you
+  readOnly: boolean;
+};
 
-/** A headline in three parts, so one phrase can carry Oscar's gradient. */
-type Headline = { lead: string; accent: string; rest?: string; sentence: string; mood: Mood };
+/** What Oscar says under the greeting: what he handled while you were away, and what needs you. */
+export function statusCopy({ handled, away, needs, readOnly }: Omit<Props, "greeting" | "name">): { lines: string[]; mood: Mood } {
+  const when = away ? "while you were away" : "in the last day";
 
-/**
- * What Oscar says at the top of Home. It answers one question, "do I need to do anything?",
- * so it reads the same with ten emails or ten thousand: a count of what's waiting on you,
- * never a total of everything he read.
- */
-export function statusCopy(items: DecisionWithFeedback[], realInbox = false): Headline {
-  if (!items.length) {
-    return { lead: "Ready when ", accent: "you are!", sentence: "When emails come in, I'll sort them for you.", mood: "calm" };
-  }
-  if (realInbox) {
-    // Read-only: Oscar didn't do anything, so what waits on you is checking his calls.
-    const waiting = items.filter(needsReview).length;
-    if (waiting) {
-      return {
-        lead: "",
-        accent: plural(waiting, "call", "calls"),
-        rest: " for you to check.",
-        sentence: "Read-only for now. Nothing in Gmail changed.",
-        mood: "curious",
-      };
-    }
-    return { lead: "Nothing needs you ", accent: "right now!", sentence: "You've checked all my calls. I'll keep an eye out for new email.", mood: "sleepy" };
+  if (readOnly) {
+    const first = handled
+      ? `I would have handled ${plural(handled, "email", "emails")} on my own ${when}.`
+      : `Nothing I'd handle on my own came in ${when}.`;
+    const second = needs.length ? `${plural(needs.length, "call", "calls")} for you to check.` : "You've checked all my calls!";
+    return {
+      lines: [first, `I'm only reading Gmail for now, so I don't change anything in it. ${second}`],
+      mood: needs.length ? "curious" : "sleepy",
+    };
   }
 
-  const open = items.filter(isOpen);
-  const stopped = open.filter((i) => i.decision.autonomy_level === "ESCALATE");
+  const stopped = needs.filter((i) => i.decision.autonomy_level === "ESCALATE");
+  const first = handled ? `I took care of ${plural(handled, "email", "emails")} ${when}!` : null;
+  let second: string;
+  if (!needs.length) second = "Nothing needs you right now!";
+  else if (!stopped.length) second = `${plural(needs.length, "email needs", "emails need")} your okay.`;
+  else {
+    const them = stopped.length === 1 ? "it" : "them";
+    const which = stopped.length === needs.length ? (needs.length === 1 ? "it" : "all of them") : `${stopped.length.toLocaleString()} of them`;
+    second = `${plural(needs.length, "email needs", "emails need")} you. I stopped ${which} and didn't do anything with ${them}.`;
+  }
   // "Suspicious" only when a safety check fired; money and password requests are stopped by rule.
   const suspicious = stopped.some((i) => i.decision.safety_flags.length);
-  const unchecked = items.filter(isUnchecked).length;
-  if (suspicious) {
-    const more = open.length - 1;
-    return {
-      lead: "I held something ",
-      accent: "suspicious",
-      rest: " for you.",
-      sentence: more ? `I didn't do anything with it. ${plural(more, "other email needs", "other emails need")} you too.` : "I didn't do anything with it. Take a look when you can.",
-      mood: "alert",
-    };
-  }
-  if (open.length) {
-    return {
-      lead: "",
-      accent: plural(open.length, "email", "emails"),
-      rest: open.length === 1 ? " needs you." : " need you.",
-      sentence: stopped.length
-        ? `I stopped ${stopped.length.toLocaleString()} of them and didn't do anything with ${stopped.length === 1 ? "it" : "them"}.`
-        : "They're waiting for your okay.",
-      mood: "curious",
-    };
-  }
   return {
-    lead: "Nothing needs you ",
-    accent: "right now!",
-    sentence: unchecked
-      ? `Have a look at ${unchecked === 1 ? "the one" : `the ${unchecked}`} I gave you a heads up about when you can.`
-      : "All quiet! I'll come get you if anything shows up.",
-    mood: "sleepy",
+    lines: first ? [first, second] : [second],
+    mood: suspicious ? "alert" : needs.length ? "curious" : handled ? "happy" : "sleepy",
   };
 }
 
-export function OscarStatusHeader({ items, brief, realInbox }: { items: DecisionWithFeedback[]; brief: Brief; realInbox: boolean }) {
-  const { lead, accent, rest, sentence, mood } = statusCopy(items, realInbox);
+/** The top of Home: Oscar says hello, then what he did and what's waiting on you. */
+export function OscarStatusHeader({ greeting, name, ...rest }: Props) {
+  const { lines, mood } = statusCopy(rest);
   return (
-    <section className="flex items-center gap-5">
-      <OscarAvatar size={80} mood={mood} />
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
-          {lead}
-          {accent}
-          {rest}
+    <section className="flex min-w-0 items-center gap-4 sm:gap-5">
+      <OscarAvatar size={64} mood={mood} />
+      <div className="flex min-w-0 flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+          {greeting}
+          {name.trim() ? `, ${name.trim()}` : ""}!
         </h1>
-        <p className="text-muted-foreground">{sentence}</p>
-        {/* Learning shows up here once Oscar has picked up a habit. */}
-        {(brief.trend || brief.learned) && (
-          <p className="text-sm text-muted-foreground">{[brief.trend, brief.learned].filter(Boolean).join(" ")}</p>
-        )}
+        <p className="text-muted-foreground">{lines.join(" ")}</p>
       </div>
     </section>
   );

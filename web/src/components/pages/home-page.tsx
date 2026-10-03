@@ -1,42 +1,41 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
-import { ChatPanel } from "@/components/chat-panel";
-import { DecisionCard } from "@/components/decision-card";
+import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
+import { handledSince, waiting } from "@/components/home/counts";
+import { AskRate } from "@/components/home/ask-rate";
+import { Impact } from "@/components/home/impact";
+import { NeedsCard } from "@/components/home/needs-card";
+import { RecentActivity, SeeAll } from "@/components/home/recent-activity";
+import { OscarAvatar } from "@/components/oscar-avatar";
 import { OscarStatusHeader } from "@/components/oscar-status-header";
 import { Loading, Page, Section } from "@/components/page";
-import { SinceYesterday } from "@/components/since-yesterday";
 import { Button } from "@/components/ui/button";
-import type { DecisionWithFeedback } from "@/lib/api";
 import { bringInDemo, checkGmail } from "@/lib/demo";
-import { isOldWay, needsReview } from "@/lib/labels";
-import { isOpen, isReadOnly, useOscar, type OscarData } from "@/lib/use-oscar";
+import { greeting, previousVisit } from "@/lib/insights";
+import { useLocalSetting } from "@/lib/local-setting";
+import { isReadOnly, useOscar } from "@/lib/use-oscar";
 
-const TOP = 5; // what needs you, before "see all"
+const TOP = 3; // cards for what needs you, before "see all"
+const DAY = 86_400_000;
 
-function More({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
-      {children} <ArrowRightIcon className="size-3.5" />
-    </Link>
-  );
-}
-
-/** What's waiting on you, most urgent first: what he stopped, then what he asked about.
- * On the real inbox (read-only), his calls to check, then old reviews to finish. */
-function waiting(data: OscarData): DecisionWithFeedback[] {
-  if (isReadOnly(data)) {
-    const calls = data.items.filter(needsReview);
-    return [...calls.filter((i) => !isOldWay(i.review)), ...calls.filter((i) => isOldWay(i.review))];
-  }
-  const open = data.items.filter(isOpen);
-  return [...open.filter((i) => i.decision.autonomy_level === "ESCALATE"), ...open.filter((i) => i.decision.autonomy_level === "ASK_FIRST")];
+/** The time now, updated every minute, so "last 24 hours" and the greeting stay right. */
+function useNow() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
 }
 
 export function HomePage() {
   const { data, error, feedback } = useOscar();
+  const [name] = useLocalSetting("name", "");
+  // When you last had Oscar open on this device. Null the first time: then it's the last day.
+  const [since] = useState(() => (typeof window === "undefined" ? null : previousVisit()));
+  const now = useNow();
+
   if (!data) {
     return (
       <Page>
@@ -51,9 +50,16 @@ export function HomePage() {
   return (
     <Page>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <OscarStatusHeader items={data.items} brief={data.brief} realInbox={readOnly} />
+        <OscarStatusHeader
+          greeting={greeting(new Date(now))}
+          name={name}
+          handled={handledSince(data, since ?? now - DAY)}
+          away={since !== null}
+          needs={needs}
+          readOnly={readOnly}
+        />
         {data.gmail.connected && (
-          <Button variant="outline" className="rounded-full" onClick={checkGmail}>
+          <Button variant="outline" className="h-11 px-5 sm:h-10" onClick={checkGmail}>
             Check now
           </Button>
         )}
@@ -70,33 +76,35 @@ export function HomePage() {
           </EmptyState>
         )
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="flex min-w-0 flex-col gap-8">
-            {needs.length > 0 && (
-              <Section
-                title={readOnly ? "Calls to check" : "Needs you"}
-                link={needs.length > TOP && <More href="/review">See all {needs.length.toLocaleString()}</More>}
-              >
-                <ul className="flex flex-col gap-3">
-                  {needs.slice(0, TOP).map((item) => (
-                    <li key={item.decision.id}>
-                      <DecisionCard compact item={item} onFeedback={(k, t) => feedback(item.decision.id, k, t)} />
-                    </li>
-                  ))}
-                </ul>
-              </Section>
+        <>
+          <Section
+            title={readOnly ? "Calls to check" : "Needs you"}
+            link={needs.length > TOP && <SeeAll href="/review">See all {needs.length.toLocaleString()}</SeeAll>}
+          >
+            {needs.length ? (
+              <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {needs.slice(0, TOP).map((item, i) => (
+                  <li key={item.decision.id} className="flex">
+                    <NeedsCard item={item} index={i} total={needs.length} onFeedback={(k) => feedback(item.decision.id, k)} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex items-center gap-3 rounded-2xl border bg-card p-5 shadow-card">
+                <OscarAvatar size={36} mood="sleepy" />
+                <p className="text-sm text-muted-foreground">
+                  {readOnly ? "You've checked all my calls! I'll keep reading." : "All clear! I'll come get you if anything shows up."}
+                </p>
+              </div>
             )}
+          </Section>
 
-            <Section title="Since yesterday" link={<More href="/activity">All email</More>}>
-              <SinceYesterday items={data.items} readOnly={readOnly} />
-            </Section>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <RecentActivity items={data.items} className="md:col-span-2 xl:col-span-1" />
+            <AskRate items={data.items} readOnly={readOnly} />
+            <Impact items={data.items} readOnly={readOnly} now={now} />
           </div>
-
-          <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-8">
-            <h2 className="text-lg font-semibold">Ask Oscar</h2>
-            <ChatPanel variant="compact" />
-          </aside>
-        </div>
+        </>
       )}
     </Page>
   );
