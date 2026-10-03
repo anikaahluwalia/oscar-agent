@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
-from oscar.act import ActionError, ActionRecord, can_do, do, status_label, undo
+from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
@@ -555,6 +555,14 @@ def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, lim
     result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100),
                   act_since=acting_since(tokens, real), still_acting=lambda: acting_on(tokens, real),
                   label=acting_on(tokens, real))
+    if acting_on(tokens, real):
+        # Asks you already said yes to in Review, before a yes there counted as approving.
+        approved = 0
+        for decision_id in dict.fromkeys(r.decision_id for r in real.reviews):
+            if approved >= MAX_PER_CHECK:
+                break
+            review = real.review_for(decision_id)
+            approved += bool(review and approve_from_review(real, review, tokens, http))
     saved = tokens.load()
     if saved:
         saved["last_sync"] = time.time()
@@ -644,8 +652,10 @@ class ReviewRequest(BaseModel):
 
 
 @app.post("/reviews", response_model=Review)
-def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_history)) -> Review:
-    """Score one of Oscar's decisions on the real inbox. It also teaches him about that sender."""
+def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_history),
+                    tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> Review:
+    """Score one of Oscar's decisions on the real inbox. It also teaches him about that sender, and
+    a yes to something he's waiting to do is your approval too (approve_from_review)."""
     decision = real.get_decision(request.decision_id)
     try:
         if request.should_be_level is not None and decision is not None:
@@ -659,9 +669,34 @@ def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_his
         else:
             # Half-answers ("Incorrect action" alone) hold back grading, so new ones aren't taken.
             raise ReviewError("Say what Oscar should have done.")
-        return record_review(real, review)
+        saved = record_review(real, review)
     except ReviewError as e:
         raise HTTPException(400, str(e))
+    approve_from_review(real, saved, tokens, http)
+    return saved
+
+
+def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore, http: httpx.Client) -> bool:
+    """When you review an ask he's still waiting on you for, and your answer says to do it (he got
+    it right, or should have just done it, the same action), that's your approval: he does it now,
+    exactly as Approve would, so you don't approve it again in the inbox. Only for what he can do
+    in Gmail, and only while acting is on; otherwise it stays on your list. Returns whether he did it."""
+    decision = real.get_decision(review.decision_id)
+    if decision is None or decision.autonomy_level != AutonomyLevel.ASK_FIRST:
+        return False
+    answered = any(f.kind in ANSWERS for f in real.feedback_for(decision.id))
+    if answered or real.action_for(decision.id):
+        return False  # you already approved, declined or undid it
+    says_do_it = review.label == ReviewLabel.CORRECT or (
+        review.should_be_level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY)
+        and review.should_be_action == decision.action)
+    if not (says_do_it and decision.acting and can_do(decision)):
+        return False
+    try:
+        _answer(real, decision, FeedbackKind.APPROVE, None, tokens, http)
+        return True
+    except (HTTPException, FeedbackError, ActionError, gmail.GmailError, httpx.HTTPError):
+        return False  # the review is saved either way; it just stays on your list
 
 
 @app.get("/reviews/summary")

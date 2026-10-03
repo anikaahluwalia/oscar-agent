@@ -42,8 +42,11 @@ export function GradeButtons({
   onSkip,
   onBack,
   onSameAsLast,
+  note,
 }: {
   busy: boolean;
+  /** What Right also does, when it's more than a grade (approving an ask he's waiting on). */
+  note?: string;
   /** Your last full "No", to give again with one tap, when it fits this email. */
   last: Review | null;
   onRight: () => void;
@@ -63,6 +66,7 @@ export function GradeButtons({
           Not quite <Kbd>N</Kbd>
         </Button>
       </div>
+      {note && <p className="text-sm text-muted-foreground">{note}</p>}
       <div className="flex flex-wrap items-center justify-between gap-x-3 text-sm text-muted-foreground">
         <span className="flex flex-wrap items-center gap-x-4">
           <button type="button" disabled={busy} onClick={onSkip} className="min-h-11 hover:text-foreground">

@@ -248,3 +248,60 @@ def test_a_rule_typed_in_the_basic_chat_also_does_what_was_waiting(api, monkeypa
     reply = client.post("/chat", json={"message": "always archive emails from digest@letters.example"}).json()["reply"]
     assert "archived the 2 that were waiting" in reply
     assert "INBOX" not in fake.messages["n1"]["labelIds"] and "INBOX" not in fake.messages["n2"]["labelIds"]
+
+
+# --- A yes in Review is your approval -----------------------------------------------------------
+
+def test_saying_he_got_an_ask_right_in_review_does_it(api):
+    client, real, fake = api([NEWSLETTER, new("n2", "news@other.example", "Digest", "Weekly digest. View in browser.")])
+    client.post("/gmail/sync")
+    ask = decision_for(real, "n1")
+    assert ask.autonomy_level == "ASK_FIRST" and "INBOX" in fake.messages["n1"]["labelIds"]
+    assert client.post("/reviews", json={"decision_id": ask.id, "label": "CORRECT"}).status_code == 200
+    assert "INBOX" not in fake.messages["n1"]["labelIds"], "archived, as if you'd pressed Approve"
+    assert real.action_for(ask.id).by == "you"
+    item = next(i for i in client.get("/decisions").json() if i["decision"]["id"] == ask.id)
+    assert item["done"] is not None
+    assert "INBOX" in fake.messages["n2"]["labelIds"], "only the one you reviewed"
+    # And it can be undone like any other.
+    assert client.post("/feedback", json={"decision_id": ask.id, "kind": "UNDO"}).status_code == 200
+
+
+def test_saying_he_should_have_just_done_it_does_it(api):
+    client, real, fake = api([NEWSLETTER])
+    client.post("/gmail/sync")
+    ask = decision_for(real, "n1")
+    client.post("/reviews", json={"decision_id": ask.id, "should_be_level": "PROCEED_SILENTLY", "should_be_action": "ARCHIVE"})
+    assert "INBOX" not in fake.messages["n1"]["labelIds"]
+
+
+def test_a_no_in_review_does_nothing(api):
+    client, real, fake = api([NEWSLETTER])
+    client.post("/gmail/sync")
+    ask = decision_for(real, "n1")
+    client.post("/reviews", json={"decision_id": ask.id, "should_be_level": "PROCEED_SILENTLY", "should_be_action": "MARK_READ"})
+    client.post("/reviews", json={"decision_id": ask.id, "should_be_level": "ASK_FIRST", "should_be_action": None,
+                                  "why": "important"})
+    assert "INBOX" in fake.messages["n1"]["labelIds"] and real.action_for(ask.id) is None
+
+
+def test_a_yes_in_review_does_nothing_while_acting_is_off(api):
+    client, real, fake = api([NEWSLETTER])
+    client.post("/gmail/sync")
+    client.post("/gmail/acting", json={"on": False})
+    ask = decision_for(real, "n1")
+    assert client.post("/reviews", json={"decision_id": ask.id, "label": "CORRECT"}).status_code == 200
+    assert "INBOX" in fake.messages["n1"]["labelIds"]
+
+
+def test_an_older_yes_in_review_is_caught_up_on_the_next_check(api):
+    from oscar.review import Review, record_review
+    client, real, fake = api([NEWSLETTER])
+    client.post("/gmail/sync")
+    ask = decision_for(real, "n1")
+    record_review(real, Review(decision_id=ask.id, label="CORRECT"))  # saved the old way, nothing done
+    assert "INBOX" in fake.messages["n1"]["labelIds"]
+    client.post("/gmail/sync")
+    assert "INBOX" not in fake.messages["n1"]["labelIds"]
+    client.post("/gmail/sync")
+    assert len([f for f in real.feedback if f.kind == "APPROVE"]) == 1, "only once"

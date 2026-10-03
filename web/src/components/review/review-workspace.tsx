@@ -294,6 +294,8 @@ export function ReviewWorkspace({
             onSkip={() => save({ decision_id: current.decision.id, label: "SKIP" })}
             onBack={step === "change" ? () => setMode(null) : undefined}
             onSameAsLast={() => last && save(sameAsLast(current.decision.id, last), { pose: "learning", title: "Thanks! That helps me learn." })}
+            note={controls.ask && current.decision.source === "gmail" && canAct
+              ? "Right also approves it, so I'll do it in Gmail now. You can undo it after." : undefined}
           />
         ) : (
           <div className="flex flex-col gap-3">
