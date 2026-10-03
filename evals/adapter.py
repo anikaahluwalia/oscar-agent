@@ -54,8 +54,8 @@ class ScenarioEmail(BaseModel):
 
 
 class Taught(BaseModel):
-    """Feedback the user already gave before this email arrived. By default, that they told Oscar
-    to just handle emails like this: approving alone only says the action was right."""
+    """Feedback the user gave before this email arrived. The default is "just handle them"
+    (JUST_HANDLE_IT), because approving alone only says the action was right, not how much to ask."""
 
     action: Action
     feedback: FeedbackKind = FeedbackKind.JUST_HANDLE_IT

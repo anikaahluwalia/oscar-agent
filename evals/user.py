@@ -13,6 +13,8 @@ How the user reacts:
   Just handle them.
 - Oscar acts silently: nothing if it was right. If it was wrong they notice most
   of the time and undo it.
+- "Right" when he acts means the right action on an email they were happy for him
+  to handle. Acting on one they wanted to be asked about counts as wrong.
 - When they undo something they wanted to be asked about, they sometimes say
   "always ask me".
 

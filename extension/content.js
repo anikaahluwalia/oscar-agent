@@ -10,7 +10,8 @@
 (() => {
   if (window.top !== window || document.getElementById("oscar-for-gmail")) return;
 
-  // His call on an email, as the Gmail labels and the app say it.
+  // His call on an email, in the app's words. The Gmail labels are only Stopped, Needs you and FYI
+  // (handled emails get none), and can be renamed in Settings (oscar/labels.py).
   const STATUS = {
     Handled: { tone: "handled", icon: "check", why: "Why I handled it" },
     FYI: { tone: "fyi", icon: "bell", why: "Why I'm telling you" },
@@ -224,7 +225,8 @@
       }
     });
 
-  // A thread id as Gmail's page shows it (hex, the same id Gmail's API uses).
+  // The thread id of a list row or the open email, in hex: the same id Gmail's API uses. Newer
+  // Gmail markup has it in decimal ("thread-f:..."), so that's converted.
   function threadOf(node) {
     if (!node) return null;
     const legacy = node.querySelector("[data-legacy-thread-id]")?.getAttribute("data-legacy-thread-id");
@@ -626,7 +628,7 @@
     draggable(peek);
     const companion = { show: true, animate: true, ...(s?.settings?.companion ?? {}) };
     wrap.classList.toggle("still", !companion.animate);
-    // "Show Oscar in Gmail" off: no Oscar in the corner and no cards. The labels on your emails stay.
+    // "Show Oscar in Gmail" off: no Oscar in the corner and no cards. The chips and labels on your emails stay.
     wrap.replaceChildren(...(companion.show ? [peek, card() ?? ""] : []), panel());
   }
 
@@ -642,7 +644,8 @@
     const status = await ask({ type: "status" });
     state.status = status.ok ? status.data : state.status;
     state.error = status.ok ? null : status.error;
-    // Where he starts, from Oscar's Settings. Once set, dragging him still works until it changes there.
+    // Which side he starts on, from Oscar's Settings. He only moves when that setting changes, so
+    // otherwise he stays wherever you last dragged him.
     const position = status.ok ? status.data.settings?.companion?.position : null;
     if (position && memory.position !== position) {
       state.spot = position === "left" ? 0 : 1;
@@ -714,8 +717,9 @@
         }
         painted.set(row, { host: chipHost, status });
       }
-      // Gmail shows his status label too; the chip says the same, so hide Gmail's copy in this
-      // row. His labels can be renamed in Settings, so it's matched by today's names as well.
+      // Gmail shows his status label on the row too, and the chip says the same, so Gmail's copy is
+      // hidden here. The labels can be renamed in Settings, so it's matched by the chip names and
+      // by the names in Settings.
       if (status) {
         const labels = state.status?.settings?.labels ?? {};
         const his = new Set([...Object.keys(STATUS), labels.stopped, labels.needs_you, labels.fyi].filter(Boolean).map((n) => n.toLowerCase()));

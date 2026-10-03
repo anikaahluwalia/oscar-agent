@@ -7,8 +7,9 @@
 --model fill: the model reads each email too, with saved readings (evals/cache), so only emails
   it hasn't seen cost a call. Without GEMINI_API_KEY it uses the saved readings alone, and stops
   if an email has none.
---model fresh: the model reads every email again on every run, to measure how much its answers
-  vary. This calls the API runs x scenarios times.
+--model fresh: the model reads every email again, ignoring the saved readings. Each email is still
+  read only once per process (the reader keeps its answers in memory), so repeats reuse that
+  reading and don't show how much the model's answers vary.
 
 Writes evals/results/latest/: runs.jsonl (every run), metrics.json, pair_results.json,
 learning_curve.json and report.md. Every number in the report comes from those files.

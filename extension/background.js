@@ -2,8 +2,9 @@
 // script asks here, by message, for one of a few things, and everything else is refused.
 
 const DEFAULTS = { api: "http://localhost:8000", app: "http://localhost:3000" };
-// The buttons in the panel, nothing else. The "always" ones and "for emails like this" only teach him;
-// on their own they change nothing in Gmail.
+// The buttons in the panel, nothing else. The "always" ones and "for emails like this" teach him a
+// rule. A yes to a rule also does the asks already waiting that it covers, as an Approve would
+// (oscar/api.py, _approve_waiting); "always ask me" and "keep asking" change nothing in Gmail.
 const ANSWERS = new Set(["APPROVE", "REJECT", "UNDO", "SEEN", "ALWAYS_DO_THIS", "ALWAYS_ASK_ME",
   "JUST_HANDLE_IT", "HANDLE_AND_TELL_ME", "KEEP_ASKING"]);
 // "Was that right?": yes, or what he should have done instead. Lessons come from reviews, as on the Review page.

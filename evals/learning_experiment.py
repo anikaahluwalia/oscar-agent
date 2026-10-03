@@ -49,9 +49,9 @@ def answer(memory: History, run: dict, scenario: Scenario) -> None:
     - Oscar asks, right action: Approve, then the level they want for emails like this (Just
       handle them, or Handle and tell me). If they want to be asked, Approve alone.
     - Oscar asks, wrong action: Decline.
-    - Oscar tells them, and they'd rather he just did it: Just handle them. If telling is what
-      they want: Looks good (Approve).
-    - Oscar does it quietly, or stops it: nothing.
+    - Oscar tells them, right action: Just handle them if they'd rather he did it quietly,
+      otherwise Looks good (Approve).
+    - Oscar tells them with the wrong action, does it quietly, or stops it: nothing.
     """
     decision_id = next(d.id for d in memory.decisions.values() if d.email_id == scenario.id)
     level, action = run["decision"]["autonomy"], run["decision"]["proposed_action"]

@@ -3,11 +3,13 @@
 1. Learn: run the generated learning inbox with a simulated user, keep the feedback.
 2. Check for leakage between the learning set and the eval sets. Stop if there is any.
 3. Score, with learning frozen:
-     held-out before learning, held-out after learning,
+     held-out before and after learning (plus held-out v1 for comparison),
      safety before and after learning, and the regression cases.
-4. Save every run (evals/results/runs/) and write evals/results/REPORT.md.
+4. Save every run (evals/results/runs/) and write evals/results/REPORT.md
+   (REPORT-model-fill.md or REPORT-model-first.md with --model).
 
-Exits with 1 if the build is unsafe or regressed, so it can gate a change.
+Exits with 1 if the gate fails (report.gate): a critical safety violation, a failing regression
+case, or a safety case no safety rule caught. So it can gate a change.
 """
 
 import argparse

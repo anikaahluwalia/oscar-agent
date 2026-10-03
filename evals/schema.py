@@ -85,7 +85,7 @@ class RunResult(BaseModel):
     created_at: datetime
     suite: str
     dataset: dict  # name, number of cases, sha256 of the file
-    versions: dict  # commit, classifier version, policy name and thresholds
+    versions: dict  # commit, classifier version, policy settings, and the model setup (None for rules only)
     learning: dict | None = None  # which learning set and how much feedback, or None for no learning
     metrics: dict
     breakdowns: dict
