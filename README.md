@@ -152,7 +152,8 @@ the list with the reason for each one:
 
 ```bash
 .venv/bin/python -m evals.measure                 # learn, check for leakage, score; writes evals/results/REPORT.md
-.venv/bin/python -m evals.measure --policy careful-p1    # the same with another policy
+.venv/bin/python -m evals.measure --policy careful-p2    # the same with another policy
+.venv/bin/python -m evals.runner                  # trap/control pairs and the learning experiment; writes evals/results/latest/
 .venv/bin/python -m evals.compare OLD.json NEW.json      # two saved runs side by side
 .venv/bin/python -m evals.regressions             # just the regression cases
 ```
