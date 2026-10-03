@@ -1,5 +1,5 @@
-import { MemoryPage } from "@/components/pages/memory-page";
+import { KnowsPage } from "@/components/pages/knows-page";
 
 export default function Page() {
-  return <MemoryPage />;
+  return <KnowsPage />;
 }
