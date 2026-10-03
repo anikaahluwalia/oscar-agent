@@ -160,4 +160,16 @@ export const KIND_NAMES: Record<string, string> = {
   deletion_request: "Asks you to delete something",
   money_request: "Asks for money",
   credential_request: "Asks for a password or code",
+  // What the model can read an email as (oscar/understand.py).
+  marketing: "Marketing",
+  job_alert: "Job alert",
+  social_notification: "Social notification",
+  account_update: "Account update",
+  personal: "A personal note",
+  cold_outreach: "A cold sales pitch",
+  urgent_issue: "Something urgent",
+  security_alert: "Security alert",
+  scam: "Looks like a scam",
+  commitment: "Would commit you to something",
+  instructions_for_ai: "Instructions aimed at an AI",
 };

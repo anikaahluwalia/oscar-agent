@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { DecisionCard } from "@/components/decision-card";
 import { EmptyState } from "@/components/empty-state";
+import { OscarAvatar } from "@/components/oscar-avatar";
 import { Loading, Page, PageHeader, Section } from "@/components/page";
+import { ReviewStats } from "@/components/review/review-stats";
+import { ReviewWorkspace } from "@/components/review/review-workspace";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { checkGmail } from "@/lib/demo";
-import { isOldWay } from "@/lib/labels";
+import { needsReview } from "@/lib/labels";
 import { isOpen, isUnchecked, useOscar, type OscarData } from "@/lib/use-oscar";
 
 type Feedback = ReturnType<typeof useOscar>["feedback"];
@@ -22,22 +23,6 @@ function Cards({ items, feedback }: { items: DecisionWithFeedback[]; feedback: F
         </li>
       ))}
     </ul>
-  );
-}
-
-/** A section that starts folded, for lists you don't need every time. */
-function Folded({ title, show, children }: { title: string; show: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Section title={title}>
-      {open ? (
-        children
-      ) : (
-        <button type="button" onClick={() => setOpen(true)} className="self-start text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
-          {show}
-        </button>
-      )}
-    </Section>
   );
 }
 
@@ -76,46 +61,7 @@ function WaitingOnYou({ data, feedback }: { data: OscarData; feedback: Feedback 
   );
 }
 
-/** Grading Oscar's decisions on the real inbox, which he only reads. */
-function CheckHisCalls({ data, feedback }: { data: OscarData; feedback: Feedback }) {
-  const real = data.items.filter((i) => i.decision.source === "gmail");
-  const toReview = real.filter((i) => !i.review);
-  const oldWay = real.filter((i) => isOldWay(i.review));
-  const reviewed = real.filter((i) => i.review && !isOldWay(i.review));
-
-  if (!real.length) {
-    return (
-      <EmptyState title="Nothing read yet." text="Oscar checks your inbox every few minutes, or press Check now.">
-        <Button onClick={checkGmail}>Check now</Button>
-      </EmptyState>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-8">
-      <p className="text-sm text-muted-foreground">Each answer grades Oscar and teaches him about that sender.</p>
-      {toReview.length > 0 ? (
-        <Section title={`To review (${toReview.length})`}>
-          <Cards items={toReview} feedback={feedback} />
-        </Section>
-      ) : (
-        !oldWay.length && <EmptyState title="All checked!" text="New emails show up here as Oscar reads them." mood="sleepy" />
-      )}
-      {oldWay.length > 0 && (
-        <Folded title={`Finish these (${oldWay.length})`} show="Show them">
-          <p className="text-sm text-muted-foreground">The old review screen only saved half of your answer.</p>
-          <Cards items={oldWay} feedback={feedback} />
-        </Folded>
-      )}
-      {reviewed.length > 0 && (
-        <Folded title={`Reviewed (${reviewed.length})`} show="Show the ones you've reviewed">
-          <Cards items={reviewed} feedback={feedback} />
-        </Folded>
-      )}
-    </div>
-  );
-}
-
-/** Everything waiting on you. On the real inbox, also checking Oscar's calls, in its own tab. */
+/** Everything waiting on you. On the real inbox, the workspace for checking Oscar's calls. */
 export function ReviewPage() {
   const { data, error, feedback } = useOscar();
   if (!data) {
@@ -126,31 +72,40 @@ export function ReviewPage() {
     );
   }
 
-  const real = data.gmail.connected;
-  return (
-    <Page className="max-w-3xl">
-      <PageHeader title="Review">
-        {real && (
-          <Button size="sm" variant="outline" onClick={checkGmail}>
-            Check now
-          </Button>
-        )}
-      </PageHeader>
-      {real ? (
-        <Tabs defaultValue="check" className="gap-6">
-          <TabsList>
-            <TabsTrigger value="check">Check his calls</TabsTrigger>
-            <TabsTrigger value="waiting">Waiting on you</TabsTrigger>
-          </TabsList>
-          <TabsContent value="check">
-            <CheckHisCalls data={data} feedback={feedback} />
-          </TabsContent>
-          <TabsContent value="waiting">
-            <WaitingOnYou data={data} feedback={feedback} />
-          </TabsContent>
-        </Tabs>
-      ) : (
+  if (!data.gmail.connected) {
+    return (
+      <Page className="max-w-3xl">
+        <PageHeader title="Review" />
         <WaitingOnYou data={data} feedback={feedback} />
+      </Page>
+    );
+  }
+
+  const real = data.items.filter((i) => i.decision.source === "gmail");
+  const waiting = real.filter(needsReview).length;
+  return (
+    <Page className="max-w-7xl gap-6">
+      <header className="flex flex-wrap items-center gap-5">
+        <OscarAvatar size={72} mood={waiting ? "curious" : "sleepy"} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            {waiting ? `Help Oscar with ${waiting.toLocaleString()} ${waiting === 1 ? "call" : "calls"}.` : "All checked!"}
+          </h1>
+          <p className="text-muted-foreground">Each answer grades him and teaches him about that sender.</p>
+        </div>
+        <Button variant="outline" className="rounded-full" onClick={checkGmail}>
+          Check Gmail now
+        </Button>
+      </header>
+      {real.length ? (
+        <>
+          <ReviewStats data={data} />
+          <ReviewWorkspace items={real} />
+        </>
+      ) : (
+        <EmptyState title="Nothing read yet." text="Oscar checks your inbox every few minutes, or press Check Gmail now.">
+          <Button onClick={checkGmail}>Check Gmail now</Button>
+        </EmptyState>
       )}
     </Page>
   );
