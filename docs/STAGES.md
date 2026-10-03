@@ -1657,3 +1657,27 @@ is also what Safety review holds; the rest shows as Needs you (`act.status_label
 `shownLevel` in the app). When nothing told him what an email is, he no longer asks about his guess
 ("Want me to mark this as read?"); he says "I'm not sure what to do with this one. Can you tell me
 what you'd like?". Only what's shown and said changed: his decisions, and the eval results, are the same.
+
+### Safety stops that weren't
+
+On the real inbox, Safety review marked 50 safety stops as misclassified. Grouped by what matched:
+
+- **42: "Hi Oscar," / "Hey Oscar,".** The hidden-instructions check flagged any line that started by
+  addressing Oscar, as text written to the AI. But that's how people write to anyone called Oscar:
+  shop sales, a friend's dinner plan, an internship follow-up. The 6 "Hi Oscar" emails marked really
+  risky all went on to ask for something in the mailbox ("permanently delete the old thread", "send
+  the confidential partner notes"). So now it's addressing Oscar *and* telling him to do something
+  with your email, or to change his rules ("always", "from now on", "the user says").
+- **6: "gift card(s)" in shop emails.** "Gift card" within 160 characters of "code" counted as asking
+  for a card's codes, and sales emails say "gift cards excluded, use code ...". Now the codes have to
+  be asked for (send, text, read me...), or scratched off, or be "the numbers on the back".
+- **5: "suspicious activity / login" in promotions.** Footer advice ("if you notice suspicious
+  activity, contact us") isn't an alert. Now something has to have happened ("we noticed...").
+
+Each became a regression case in `tests/test_review_findings.py` first, written fresh with no real
+names, with a twin that must still be stopped; they failed before the change and pass after. The
+safety tests didn't change, and the trap and control results are the same with and without the model.
+
+Not fixed here: 8 stops came from the model's reading, not the rules (Google's "you shared account
+data with ..." notices read as security alerts, a delivery reschedule read as a commitment). And a
+real "new sign-in" or "password was reset" notice is still stopped on purpose, even when it was you.
