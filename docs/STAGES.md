@@ -1445,3 +1445,101 @@ names are plain, no `Oscar/` in front (his older `Oscar/...` labels still count 
 - **Kept up to date.** Each check relabels emails whose call changed (an ask you approved, an undo,
   a re-read), at most 50 per check, so the backlog fills in over a few checks.
 - **Off in the evals.** They grade the inbox by what changed, so the label is only on the app's check.
+
+## Stage 15 — Telling him what he got wrong, and seeing what he knows
+
+The app now keeps five things apart, each stored and answered on its own: what kind of email it
+is, your own categories, what Oscar does with it, how much he involves you, and safety. Before,
+one "No" in Review had to stand for all of them.
+
+### What kind of email it is
+
+On any email you can say what it really is ("a promotion, not a job alert"). That's saved in
+`classifications.jsonl` (`oscar/classification.py`), apart from feedback.
+
+- It changes how he reads that sender's next emails, so the rule for that kind applies. It never
+  changes the action by itself, and it's never counted as an answer about how much to ask.
+- It can't replace a risky reading. If he read a scam or a security alert, saying "it's a
+  newsletter" doesn't make it one, and a risky kind is never used to read later emails.
+- A decision made this way says so (`type_from_you`), and the Why panel shows it.
+
+### Your categories
+
+Shopping, School, anything you make, in `categories.json` (`oscar/categories.py`). They're only
+for you to sort and browse the Inbox by. Decisions and the safety checks never read them.
+
+### Safety review
+
+Emails a safety rule stopped get their own tab in Review, with one question: did he read the risk
+right? "Yes, this was risky" or "No, this was misclassified" (and what it really is, if you want).
+There's no "just handle it" there, and no answer relaxes a rule: a correction only helps him read
+when the rule applies (`oscar/safety_review.py`). Answering takes it off your list.
+
+The regular tab asks "Was the action right?" and "How much should I involve you next time?"
+separately. Yes on an ask also approves it, so the Approve and Decline buttons that sat under Yes
+and No are gone.
+
+### What Oscar knows
+
+The page now has your rules for kinds of email (change or forget each), the patterns your answers
+add up to, what he learned about single senders, and your categories, with one search.
+
+Each pattern says what it rests on in words (`overview.evidence_label`): a rule you set, strong
+evidence (twice the answers and senders it takes to act, with 80% agreeing), moderate (enough to
+act on), or still learning. Two kinds of row were noise and are left out: a domain with only one
+sender (that's just the sender), and answers that were only approvals (an okay says the action
+was right, not how much to ask).
+
+### Promises
+
+Grouped the way the code works: what he always stops (money, passwords, personal info, hidden
+instructions, security alerts, agreeing to things) and what always needs your yes (delete or
+unsubscribe, send or forward, invites, anything that mentions something sensitive).
+
+### Progress
+
+`GET /progress` (`oscar/progress.py`) grades a decision only once you've said what you wanted for
+it: a Review answer (scored the same as the evals), a safety review, or feedback on that decision
+(an undo or "keep asking" says he should have asked, "just handle it" says how much, a decline says
+the action was wrong). An approval alone isn't graded, for the same reason as above. Nothing is
+estimated.
+
+- The headline compares your latest answered decisions with your first ones, up to 20 each, and
+  only when the two don't overlap. Under 5 answers it says there aren't enough yet.
+- Three counts: unsafe actions (he acted on something you'd have stopped), unnecessary asks, and
+  too-permissive calls.
+- How often he needed you, per day or per week, and the rules you set along the way. If asks go
+  up, it says so.
+- Where he learned the most: how much he involved you on the first email of a kind and on the
+  latest, leaving out anything a safety rule stopped.
+
+The test results stay underneath, kept apart from your numbers.
+
+### Settings
+
+- **Oscar in Gmail** (show him, which corner, animate) and **Notifications** (approvals and safety
+  stops on, what he handled off) are saved in `data/app_settings.json`, and `/extension/status`
+  sends them to the extension, so the corner and the cards follow them. They never change a
+  decision.
+- **Clear learned preferences** deletes nothing. It saves a time (`learning_since`), and learning
+  only uses answers after it. Your decisions, answers and categories stay, and "Bring it back"
+  undoes it.
+- **Export** downloads every decision on the inbox with your answers, as JSON.
+
+The extension also tidies itself away when Chrome reloads it while Gmail is open, instead of
+throwing "Extension context invalidated" until the page is refreshed.
+
+### A mistake along the way
+
+Another session was building part of this at the same time, in the same folder. I reverted four
+files with `git checkout` to undo my own duplicate of its work, and took its uncommitted changes
+with them. Tests showed two of the losses; its session log showed the third (a pattern with no
+answers behind it was being listed). All three are back, with a test for each. Lesson: look at
+`git diff` before checking anything out.
+
+### Not done
+
+- The phone layout of the new pages wasn't checked; they were built desktop first.
+- Of the extension's new settings, only showing and hiding him has been tried, on real Gmail.
+  The corner, animation and card switches are only checked by reading the code. The reload fix
+  was tested on a stand-in page, where the old version threw the same error.

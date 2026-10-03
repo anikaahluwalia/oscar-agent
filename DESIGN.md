@@ -59,6 +59,19 @@ set a rule for every email like this one ("just archive promotions"). What you s
 sender always beats the rule for their kind, and a no from a sender takes them back to asking.
 Email text never becomes feedback: only you can teach him.
 
+**Keep what an email is apart from what to do with it.** You can correct what kind of email it
+is, put senders in your own categories, say whether the action was right, say how much to involve
+you, and review a safety stop. Each is stored and learned on its own. Correcting the kind only
+changes which rule applies to that sender's next emails: it never picks the action, and it can't
+turn a risky reading into a safe one. Categories are only for browsing. A safety review helps him
+see when a rule applies, but nothing you answer there relaxes it.
+
+**Progress counts only what you answered.** A decision is graded once you've said what you
+wanted: a Review answer, a safety review, an undo, or "just handle it". An approval alone isn't,
+since it says nothing about how much to ask. There's no percentage until 5 answers, and earlier
+and recent are only compared when they don't overlap. Clearing what he learned deletes nothing:
+learning just ignores the answers before that moment, so it can be brought back.
+
 **Earn trust on a real inbox in steps.** Gmail started read-only. Oscar noted what he would
 do, I reviewed his calls in the app, and real mistakes became de-identified regression tests
 before anything was fixed. Only then could he act, and only in ways that can be undone: mark
@@ -78,9 +91,9 @@ if one applied, and what he learned from you, if anything. Oscar speaks in first
 loyal little watchdog: cheerful when things are tidy, calm and firm when he stops something. He
 only says he did something if Gmail says it happened.
 
-**Meet you where you read email.** There's a web app (Today, Review, what he's learned) and a
-Chrome extension that puts his call in Gmail: chips on each email, a corner Oscar with cards,
-and a side panel. His call is also a coloured Gmail label (Handled, FYI, Needs you, Stopped),
+**Meet you where you read email.** There's a web app (Today, Inbox, Review, what he knows,
+his promises and his progress) and a Chrome extension that puts his call in Gmail: chips on each
+email, a corner Oscar with cards (which ones show is set in the app), and a side panel. His call is also a coloured Gmail label (Handled, FYI, Needs you, Stopped),
 so it shows on your phone and in any browser. The extension's page code never talks to the API:
 a background script does, only for a short list of requests, and only on localhost.
 
