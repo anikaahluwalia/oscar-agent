@@ -40,7 +40,7 @@ def measure(policy_name: str = DEFAULT_POLICY.name, emails: int = 400, seed: int
         setup = harness.ModelSetup(reader, first=model == "first")
     heldout_path, safety_path = harness.CASES / f"{heldout_name}.jsonl", harness.CASES / "safety_v1.jsonl"
     heldout, safety = harness.load(heldout_path), harness.load(safety_path)
-    regression = harness.regression_suite()
+    regression = harness.regression_suite(with_model=setup is not None)
 
     events, stream = learn(emails, seed, policy, setup)
     problems = leaks(heldout + safety + regression + harness.load(harness.CASES / "heldout_v1.jsonl"), stream)

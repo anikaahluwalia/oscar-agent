@@ -29,6 +29,7 @@ class Case(BaseModel):
     email: dict
     settings: dict = {}  # preferences the case depends on, e.g. {"bulk_action": "MARK_READ"}
     expect: Expect
+    with_model: Expect | None = None  # when the model reading it gives a different right answer from the rules alone
 
 
 def load() -> list[Case]:

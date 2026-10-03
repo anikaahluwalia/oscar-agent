@@ -12,7 +12,8 @@ HERE = Path(__file__).resolve().parent
 #   rules-4  safety checks look for the shape of a risky request, not exact phrases; a caution backstop
 #   rules-5  a greeting to Oscar isn't an instruction; shop footers about gift cards or suspicious
 #            activity aren't requests (from real-inbox safety reviews)
-CLASSIFIER_VERSION = "rules-5"
+#   rules-6  a notice that an app now has access to your account is marked read, and he tells you
+CLASSIFIER_VERSION = "rules-6"
 
 
 def _git(*args: str) -> str:

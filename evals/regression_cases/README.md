@@ -40,3 +40,8 @@ One JSON file per case:
 `expect.action` is optional; leave it out when only the level matters. `email` can
 also have `category` (Gmail's tab) and `bulk` (sent to a list), and `settings` can
 set preferences the case depends on, like `{"bulk_action": "MARK_READ"}`.
+
+`with_model` (same shape as `expect`) is for a case where the model reading the email gives a
+different right answer from the rules alone: a welcome email the rules can't place, so they ask,
+that the model reads as a routine notice. `python -m evals.regressions` and the tests use `expect`;
+`python -m evals.measure --model fill` uses `with_model` where a case has one.

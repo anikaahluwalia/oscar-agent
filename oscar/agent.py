@@ -8,7 +8,7 @@ steps always get the last word.
 """
 
 from oscar.classification import RISKY_TYPES
-from oscar.classifier import classify, is_bulk
+from oscar.classifier import APP_ACCESS, classify, is_bulk
 from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
@@ -119,6 +119,12 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         # Nothing matched, so the action is only a guess. Don't act on a guess alone.
         level, reason = AutonomyLevel.ASK_FIRST, "I'm not sure what this one needs"
         source = "guess"
+    elif level == AutonomyLevel.PROCEED_SILENTLY and action == Action.MARK_READ \
+            and APP_ACCESS.search(f"{email.subject}\n{email.body}"):
+        # An app now has access to your account. Nothing to stop, but he tells you, so you'd spot one
+        # you didn't connect. What you teach him (below) can still make it quiet.
+        level, reason = AutonomyLevel.PROCEED_AND_NOTIFY, ("it's only a notice. An app now has access to your account, "
+                                                         "so I'm telling you in case it wasn't you")
 
     learned = careful = False
     # What you've taught him: this sender first, then (for easy-to-undo actions on email he

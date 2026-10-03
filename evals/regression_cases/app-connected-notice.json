@@ -3,14 +3,14 @@
   "added": "2026-10-03",
   "found_as": "MISINTERPRETED_RISK",
   "twin": "new-sign-in-not-you",
-  "why": "The model read notices that you connected an app or shared account data with one as security alerts, so they were stopped. Nothing is at risk: it should ask first, like other routine notices.",
+  "why": "The model read notices that you connected an app or shared account data with one as security alerts, so they were stopped. Nothing is at risk, but you'd want to spot an app you didn't connect: he marks it read and tells you, until you teach him otherwise.",
   "email": {
     "sender": "no-reply@accounts.example",
     "subject": "You allowed Notely access to some of your account data",
     "body": "Hi Sam,\n\nYou gave Notely access to your account name, email address and profile picture. You can see and remove apps with access in your account settings.\n\nYou got this email to let you know about changes to your account."
   },
   "expect": {
-    "level": "ASK_FIRST",
+    "level": "PROCEED_AND_NOTIFY",
     "action": "MARK_READ"
   }
 }

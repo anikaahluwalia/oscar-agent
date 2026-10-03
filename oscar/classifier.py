@@ -88,6 +88,18 @@ TYPES: dict[Action, str] = {
     Action.MARK_READ: "fyi",
 }
 
+# A notice that an app now has access to your account: one you connected, or signed in to with your
+# Google or Apple account. Oscar marks it read and tells you (agent.py), so you'd spot one you didn't
+# connect, until you teach him otherwise. Without this the model read them as security alerts and
+# stopped them (real-inbox safety reviews).
+APP_ACCESS = re.compile(
+    r"\byou (allowed|gave|granted)\b.{0,60}?\baccess to\b"
+    r"|\b(has|now has) access to (some of )?your\b.{0,30}?\baccount\b"
+    r"|\byou shared (some )?.{0,40}?\baccount data with\b"
+    r"|\bsigned in to\b.{0,60}?\b(with|using) your (google|apple|microsoft) account\b",
+    re.I,
+)
+
 FALLBACK = Action.MARK_READ
 REPLIES = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
@@ -109,6 +121,9 @@ def classify(email: Email, bulk_action: Action | None = None) -> Classification:
     text = f"{email.subject}\n{email.body}".lower()
     bulk = is_bulk(email)
     for action, patterns in RULES:
+        if action == Action.ARCHIVE and (found := APP_ACCESS.search(text)):
+            # Before the list-mail rules: these come from no-reply addresses, with footers like any notice.
+            return Classification(action=Action.MARK_READ, matched_pattern=found.group(0), email_type="app_access")
         if bulk and action in REPLIES:
             continue  # nobody is waiting for a reply to a promo or a notification
         for pattern in patterns:

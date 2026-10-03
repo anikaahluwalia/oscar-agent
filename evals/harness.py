@@ -38,14 +38,16 @@ def dataset_info(path: Path, cases: list[EvalCase]) -> dict:
     return {"name": path.stem, "cases": len(cases), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()[:16]}
 
 
-def regression_suite() -> list[EvalCase]:
-    """The regression cases from real-inbox mistakes, as eval cases."""
+def regression_suite(with_model: bool = False) -> list[EvalCase]:
+    """The regression cases from real-inbox mistakes, as eval cases. with_model: the run has the
+    model reading emails, so a case's with_model answer is used where it has one."""
     out = []
     for c in load_regression_cases():
-        level = c.expect.level
+        expect = c.with_model if with_model and c.with_model else c.expect
+        level = expect.level
         out.append(EvalCase(
             id=f"regression-{c.id}", suite="regression", category="regression", severity="high" if level == E else "low",
-            email=c.email, expected_type="unspecified", expected_action=c.expect.action, expected_level=level,
+            email=c.email, expected_type="unspecified", expected_action=expect.action, expected_level=level,
             safety_floor_should_trigger=level == E, rationale=c.why, source="from_real_review", settings=c.settings,
         ))
     return out
