@@ -130,13 +130,15 @@ export function InboxPage() {
               {!data.gmail.connected
                 ? "Bring in the demo emails to see me at work."
                 : data.gmail.auto_check_minutes
-                  ? `I check your inbox every ${data.gmail.auto_check_minutes} minutes, or press Check now.`
+                  ? `I check your inbox every ${data.gmail.auto_check_minutes} minutes on my own.`
                   : "Press Check now and I'll read your newest emails."}
             </p>
           </div>
-          <Button className="min-h-11 px-4 sm:min-h-9" onClick={() => void (data.gmail.connected ? checkGmail() : bringInDemo())}>
-            {data.gmail.connected ? "Check now" : "Bring in the demo emails"}
-          </Button>
+          {!(data.gmail.connected && data.gmail.auto_check_minutes) && (
+            <Button className="min-h-11 px-4 sm:min-h-9" onClick={() => void (data.gmail.connected ? checkGmail() : bringInDemo())}>
+              {data.gmail.connected ? "Check now" : "Bring in the demo emails"}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
@@ -159,11 +161,6 @@ export function InboxPage() {
                   className="h-11 w-full rounded-full border bg-card pr-4 pl-10 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
                 />
               </div>
-              {data.gmail.connected && (
-                <Button variant="outline" className="min-h-11 rounded-full px-4 font-semibold" onClick={() => void checkGmail()}>
-                  Check now
-                </Button>
-              )}
             </div>
 
             {list.length ? (

@@ -14,7 +14,7 @@ import { isReadOnly, useOscar, type OscarData } from "@/lib/use-oscar";
 /** How often Oscar looks at your Gmail by himself, from Settings. */
 function checksText(data: OscarData) {
   const m = data.gmail.auto_check_minutes;
-  return m ? `I check your inbox every ${plural(m, "minute", "minutes")}, or you can ask me now.` : "I check your inbox when you ask me to.";
+  return m ? `I check your inbox every ${plural(m, "minute", "minutes")} on my own.` : "I check your inbox when you ask me to.";
 }
 
 const checkedText = (total: number) =>
@@ -81,7 +81,7 @@ export function ReviewPage() {
                 <Button variant="outline" className="h-11 bg-card px-5" onClick={() => setHash("all")}>
                   See all emails
                 </Button>
-                {real && (
+                {real && !data.gmail.auto_check_minutes && (
                   <Button className="h-11 px-5" onClick={checkGmail}>
                     <RefreshCwIcon /> Check now
                   </Button>
@@ -93,9 +93,11 @@ export function ReviewPage() {
         />
       ) : real ? (
         <Resting title="Nothing read yet." text={checksText(data)}>
-          <Button className="h-11 px-5" onClick={checkGmail}>
-            Check now
-          </Button>
+          {!data.gmail.auto_check_minutes && (
+            <Button className="h-11 px-5" onClick={checkGmail}>
+              Check now
+            </Button>
+          )}
         </Resting>
       ) : (
         <Resting title="No emails yet." text="Bring in the demo emails to see what I do with them, and teach me what you'd do.">

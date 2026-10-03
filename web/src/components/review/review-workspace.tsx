@@ -241,7 +241,6 @@ export function ReviewWorkspace({
         filter={filter}
         onFilter={setChosen}
         stats={stats}
-        real={real}
         onBack={() => setHash("")}
       />
     );

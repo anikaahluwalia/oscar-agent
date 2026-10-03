@@ -1,12 +1,11 @@
 "use client";
 
 import { Fragment } from "react";
-import { ArrowLeftIcon, RefreshCwIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { EmailRow } from "@/components/review/email-row";
 import type { Filter, FilterKey } from "@/components/review/filters";
 import { Button } from "@/components/ui/button";
 import type { DecisionWithFeedback } from "@/lib/api";
-import { checkGmail } from "@/lib/demo";
 import { timeOf } from "@/lib/insights";
 import { dayLabel } from "@/lib/time";
 import { setHash } from "@/lib/use-hash";
@@ -23,7 +22,6 @@ export function ReviewList({
   filter,
   onFilter,
   stats,
-  real,
   onBack,
 }: {
   items: DecisionWithFeedback[];
@@ -32,7 +30,6 @@ export function ReviewList({
   filter: Filter;
   onFilter: (key: FilterKey) => void;
   stats: React.ReactNode;
-  real: boolean;
   onBack: () => void;
 }) {
   const needs = filters.find((f) => f.key === "needs");
@@ -42,11 +39,6 @@ export function ReviewList({
         <Button variant="ghost" className="-ml-3 h-11 text-[15px] font-semibold" onClick={onBack}>
           <ArrowLeftIcon /> One at a time
         </Button>
-        {real && (
-          <Button variant="outline" className="h-11 bg-card sm:h-9" onClick={checkGmail}>
-            <RefreshCwIcon /> Check now
-          </Button>
-        )}
       </div>
       <h1 className="text-3xl leading-tight font-extrabold tracking-[-0.03em]">All emails</h1>
       {stats}
