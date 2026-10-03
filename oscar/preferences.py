@@ -250,6 +250,7 @@ class Preferences:
         desired = record.desired if enough and record.confidence >= p.min_confidence else None
         if desired is None and enough and record.acting_share >= p.min_confidence:
             desired = N  # sure you're fine with him doing it, not yet that you don't want to hear
+            info = (scope, info[1], round(record.acting_share, 3))  # and that's how sure he is
         if desired in (S, N):
             if broad or action in CEILINGS:
                 desired = N

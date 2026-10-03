@@ -82,7 +82,8 @@ export function WhyDrawer() {
             <Fact label="Decided by">{LEVEL_SOURCES[decision.level_source]}</Fact>
             <Fact label="Your answers">{answers ? answerLine(answers) : "No answers yet"}</Fact>
             {learned?.always_ask && <Fact label="Your rule">Always ask</Fact>}
-            {anyAnswers && learned && !learned.always_ask && (
+            {/* When a learned preference set the level, "Learned from" already says how sure he is. */}
+            {anyAnswers && learned && !learned.always_ask && !decision.preference && (
               <Fact label="Oscar's estimate">{Math.round(learned.mean * 100)}% you&apos;re fine with it</Fact>
             )}
             {decision.preference && (

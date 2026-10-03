@@ -227,7 +227,7 @@ def _factors(email: Email, guess: bool, email_type: str, preferences: Preference
     out.append("A sender you've taught me about" if preferences and preferences.knows(email.sender)
                else "A sender I haven't learned about yet")
     if used and learned_reason:
-        out.append(f"{learned_reason[0].upper()}{learned_reason[1:]} ({round(used.confidence * 100)}% sure)")
+        out.append(f"{learned_reason[0].upper()}{learned_reason[1:]} ({int(used.confidence * 100 + 0.5)}% sure)")  # rounds like the app
     if safety_rule:
         out.append(f"Safety rule: {safety_rule}")
     elif safety_floor == AutonomyLevel.ASK_FIRST:

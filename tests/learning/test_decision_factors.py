@@ -22,6 +22,19 @@ def test_a_learned_level_says_what_it_rests_on():
     assert decision.safety_floor is None and decision.safety_rule is None
 
 
+def test_how_sure_he_is_is_the_number_that_set_the_level():
+    # 4 okays: 75% sure you're fine with him acting, which is what moves him to "tell me".
+    # It used to say 62% (how sure he was about doing it quietly), which read like he broke his rule.
+    first = decide(NEWSLETTER)
+    events = [FeedbackEvent(decision_id=f"d{i}", kind=FeedbackKind.APPROVE, action=first.action,
+                            autonomy_level=AutonomyLevel.ASK_FIRST, sender=NEWSLETTER.sender,
+                            email_type=first.email_type) for i in range(8)]
+    for n, level, sure in ((4, AutonomyLevel.PROCEED_AND_NOTIFY, 0.75), (8, AutonomyLevel.PROCEED_SILENTLY, 0.75)):
+        decision = decide(NEWSLETTER, Preferences.from_feedback(events[:n]))
+        assert decision.autonomy_level == level and decision.preference.confidence == sure
+        assert any(f"okayed this {n} times (75% sure)" in f for f in decision.factors)
+
+
 def test_a_stopped_email_names_the_rule():
     decision = decide(Email(id="w", sender="billing@vendor.example", subject="Overdue",
                             body="Please wire $4,800 today to the new account below."))
