@@ -1,4 +1,4 @@
-"""Measure Oscar: python -m evals.measure [--policy default-p2] [--emails 400] [--seed 1]
+"""Measure Oscar: python -m evals.measure [--policy default-p3] [--emails 400] [--seed 1]
 
 1. Learn: run the generated learning inbox with a simulated user, keep the feedback.
 2. Check for leakage between the learning set and the eval sets. Stop if there is any.
@@ -15,7 +15,7 @@ import sys
 
 from evals import harness, report
 from evals.learning import learn, leaks
-from oscar.preferences import POLICIES
+from oscar.preferences import DEFAULT_POLICY, POLICIES
 
 
 # The held-out set reports lead with. v1's failures were looked at while fixing Oscar, so
@@ -23,7 +23,7 @@ from oscar.preferences import POLICIES
 HELDOUT = "heldout_v2"
 
 
-def measure(policy_name: str = "default-p2", emails: int = 400, seed: int = 1, save: bool = True,
+def measure(policy_name: str = DEFAULT_POLICY.name, emails: int = 400, seed: int = 1, save: bool = True,
             heldout_name: str = HELDOUT, model: str = "none") -> dict:
     """model: "none" (the rules alone), "fill" (the model reads what the rules miss) or
     "first" (the model's reading comes first, except for rule actions with a safety floor)."""
@@ -74,7 +74,7 @@ def measure(policy_name: str = "default-p2", emails: int = 400, seed: int = 1, s
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m evals.measure")
-    parser.add_argument("--policy", default="default-p2", choices=sorted(POLICIES))
+    parser.add_argument("--policy", default=DEFAULT_POLICY.name, choices=sorted(POLICIES))
     parser.add_argument("--emails", type=int, default=400)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--heldout", default=HELDOUT, help="which held-out set to lead with")
