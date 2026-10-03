@@ -12,6 +12,7 @@ import { ACTIONS, statusLabel } from "@/lib/labels";
 import { isReadOnly, type OscarData } from "@/lib/use-oscar";
 import { firstAnswer, forgotAt, startedAgo } from "./facts";
 import { HabitRow } from "./habit-row";
+import { matches } from "./patterns";
 
 type Send = (decisionId: string, kind: FeedbackKind) => Promise<unknown>;
 
@@ -109,19 +110,25 @@ function OtherSenders({ data, onFeedback }: { data: OscarData; onFeedback: Send 
   );
 }
 
-/** One row per thing Oscar learned about a sender, then the senders he hasn't learned about yet. */
-export function SendersIKnow({ data, onFeedback, now }: { data: OscarData; onFeedback: Send; now: number }) {
+/**
+ * Sender exceptions: one row per thing Oscar learned about a single sender, then the senders he
+ * hasn't learned about yet. What you said about a sender comes before any rule for their kind.
+ */
+export function SendersIKnow({ data, onFeedback, now, query }: { data: OscarData; onFeedback: Send; now: number; query: string }) {
   const forgot = forgotAt(data.all);
   // What he does on his own first, then the senders he asks about.
-  const items = memoryItems(data).sort((a, b) => Number(a.asks) - Number(b.asks));
+  const items = memoryItems(data)
+    .filter((i) => matches(query, i.learned.sender, displayName(i.learned.sender), ACTIONS[i.learned.action]))
+    .sort((a, b) => Number(a.asks) - Number(b.asks));
 
   return (
     <section aria-labelledby="knows-senders" className="flex flex-col">
       <h2 id="knows-senders" className="mb-1 text-lg font-bold">
-        Senders I know
+        Sender exceptions
       </h2>
       <p className="mb-2 text-[13px] text-muted-foreground">
-        An okay tells me the action was right. How much I check with you is what you pick under For emails like this. A no or an undo steps me back. {inboxNote(data)}
+        What I learned about one sender. It comes before any rule or pattern for their kind. An okay tells me the action was right, and a no or an
+        undo steps me back. {inboxNote(data)}
       </p>
 
       {items.length ? (
@@ -143,16 +150,18 @@ export function SendersIKnow({ data, onFeedback, now }: { data: OscarData; onFee
         </ul>
       ) : (
         <div className="mt-2 flex flex-col gap-1 rounded-2xl border border-dashed px-5 py-6">
-          <p className="font-semibold">Nothing learned yet</p>
+          <p className="font-semibold">{query ? "No senders match your search" : "Nothing learned yet"}</p>
           <p className="text-[13px] text-muted-foreground">
-            {data.gmail.connected
+            {query
+              ? "Try another word, or clear the search."
+              : data.gmail.connected
               ? "Every okay, decline, undo and review teaches me a little about how you like things done. What I pick up shows here."
               : "Every okay, decline and undo teaches me a little about how you like things done. What I pick up shows here."}
           </p>
         </div>
       )}
 
-      <div className="mt-2">
+      <div className={query ? "hidden" : "mt-2"}>
         <OtherSenders data={data} onFeedback={onFeedback} />
       </div>
     </section>
