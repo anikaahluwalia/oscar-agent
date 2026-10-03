@@ -24,8 +24,9 @@ from oscar.agent import decide
 from oscar.review import teaching
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
-from oscar.models import Decision, new_id, now
+from oscar.models import AutonomyLevel, Decision, new_id, now
 from oscar.preferences import Preferences
+from oscar.reminders import ReminderReader
 from oscar.understand import Reader, reads_real_email
 from oscar.version import policy_version
 
@@ -66,9 +67,18 @@ def reader_for(history: History) -> Reader | None:
     return Reader(httpx.Client(timeout=40), cache, reads=reads)
 
 
+def reminders_for(history: History) -> ReminderReader | None:
+    """The reminder reader for this inbox, or None when reading real email with a model is off."""
+    reads = reads_real_email()
+    if reads == "off":
+        return None
+    cache = history.data_dir / "reminders.jsonl" if history.data_dir else None
+    return ReminderReader(httpx.Client(timeout=40), cache, reads=reads)
+
+
 def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None,
          act_since: datetime | None = None, still_acting: Callable[[], bool] | None = None, *,
-         safety: bool = True) -> SyncResult:
+         safety: bool = True, reminders: ReminderReader | None = None) -> SyncResult:
     """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first.
 
     With act_since (Stage 12), he also does what he decided to do on his own, if it's one of his
@@ -82,14 +92,17 @@ def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader |
     if not _syncing.acquire(blocking=False):
         raise AlreadySyncing("I'm already checking your inbox.")
     try:
+        # The app's own path (no reader passed in) also looks for reminders; evals and tests don't.
+        if reminders is None and reader is None:
+            reminders = reminders_for(history)
         return _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act_since,
-                     still_acting or (lambda: True), safety)
+                     still_acting or (lambda: True), safety, reminders)
     finally:
         _syncing.release()
 
 
 def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None, act_since: datetime | None,
-          still_acting: Callable[[], bool], safety: bool = True) -> SyncResult:
+          still_acting: Callable[[], bool], safety: bool = True, reminders: ReminderReader | None = None) -> SyncResult:
     act = act_since is not None
     seen = {d.email_id for d in history.decisions.values()}
     # Walk back through the inbox, so emails that arrived since the last check
@@ -127,6 +140,10 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             # said no), so his note says what he would do, never "I archived this".
             would = decide(email, prefs, read_only=True, understanding=understanding, safety=safety)
             decision = decision.model_copy(update={"explanation": would.explanation, "message": would.message, "steps": would.steps})
+        # Something coming up, for Today. Never from an email he stopped or flagged.
+        if reminders and decision.autonomy_level != AutonomyLevel.ESCALATE and not decision.safety_flags:
+            received = info.received_at.date() if info.received_at else datetime.now().date()
+            decision = decision.model_copy(update={"reminder": reminders.read(email, received)})
         history.add_decision(decision)
         new += 1
     follow_up(history, gmail)

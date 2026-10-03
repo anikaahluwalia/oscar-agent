@@ -76,6 +76,16 @@ class GmailInfo(BaseModel):
     preview: str = ""  # Gmail's own one-line preview, for showing the email in the app
 
 
+class Reminder(BaseModel):
+    """Something coming up that an email mentions: an event, or a date something is due."""
+
+    title: str = Field(max_length=80)
+    date: str  # YYYY-MM-DD
+    time: str | None = None  # HH:MM, when the email gives one
+    kind: Literal["event", "due"]
+    detail: str = Field(default="", max_length=80)
+
+
 class PreferenceUsed(BaseModel):
     """What Oscar learned from you that set this decision's level."""
 
@@ -119,6 +129,7 @@ class Decision(BaseModel):
     safety_floor: AutonomyLevel | None = None
     safety_rule: str | None = None
     preference: PreferenceUsed | None = None
+    reminder: Reminder | None = None  # an event or due date the email mentions (oscar/reminders.py)
     # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he
     # didn't do anything; the decision is what he would have done.
     source: Literal["demo", "gmail"] = "demo"
