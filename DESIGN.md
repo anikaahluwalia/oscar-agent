@@ -1234,6 +1234,50 @@ text. The baseline table compares what really exists (rules only, with the model
 after learning), not "LLM only / + Safety". And a card only says Oscar did something
 when Gmail says he did; his note on an email he didn't act on says what he would do.
 
+### The UI from the third mock-up
+
+The second mock-up was too busy and too blue. The third one is calmer: charcoal,
+white and grey, in light and dark, with colour kept for the four status dots. The
+pages are Today, Chat, Inbox, Review, What Oscar knows, Promises, How he's doing and
+Settings. Old addresses redirect to the new ones.
+
+- **Today** shows one waiting email at a time, the way Gmail shows it, with Oscar's
+  question under it. Below that is the rest of what's waiting and what he took care
+  of today.
+- **Chat** is its own page now, so the Ask Oscar button in the corner is gone. A rule
+  you teach him shows as a card, and nothing changes until you say yes.
+- **Review** is one email at a time: Right or Not quite. Not quite asks what he should
+  have done. What gets sent to the API is the same as before.
+- **What Oscar knows** took in What Oscar can do. **Promises** took over Safety, and
+  **How he's doing** took over Evals.
+
+Oscar has twelve poses (asking, guarding, alert, thinking, checking, working, typing,
+reporting, sleeping, done, proud, learning). Each one comes from something that
+happened: guarding means he held something back, sleeping means nothing is waiting.
+An animated Oscar in the chat was tried and dropped.
+
+Other changes that came with it:
+
+- **No promotions setting.** People treat promos differently, so Oscar learns it from
+  each person's answers instead. He learns one sender at a time; learning per kind
+  of email is off in the default policy, so What Oscar knows says a new sender still
+  starts where the rules put it. The evals never used the setting, so the numbers
+  don't change.
+- **Your name and photo.** Connecting Gmail also asks Google for your basic profile,
+  shown at the bottom of the sidebar. Only a photo from Google's own image server is
+  kept. Without it, the app shows your initial.
+- **Email images load through Oscar.** The sender sees Oscar's request, not your IP
+  address or browser. Tracking pixels are taken out, and you can hide images. Since
+  an email decides what gets fetched, Oscar only fetches public web addresses (never
+  this computer or your network), checks every redirect, and only returns real
+  images up to 5 MB. No SVG. Tested in `tests/test_images.py`.
+- **A test could write to the real data folder.** Connecting saved the account file
+  to a path worked out when the API started, not the one tests point to. It's looked
+  up each time now.
+
+Each page was built by its own agent, owning only its files, then checked in light,
+dark and on a phone. Review was also checked end to end on a fake Gmail inbox.
+
 ### Next
 
 - A blind held-out v3, since v2 has now been seen.
