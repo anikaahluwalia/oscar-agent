@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRightIcon, EyeIcon, HelpCircleIcon, ShieldIcon } from "lucide-react";
-import { EmailLink } from "@/components/email-link";
+import { InboxLink } from "@/components/inbox/inbox-link";
 import { addressOf } from "@/components/kit/sender";
 import { Button } from "@/components/ui/button";
 import { didLine } from "@/lib/counts";
@@ -46,9 +46,9 @@ function NeedsRow({ item, canAct, onFeedback }: { item: DecisionWithFeedback; ca
           <Icon className="size-[18px]" />
         </span>
         <div className="flex min-w-0 flex-col gap-0.5">
-          <EmailLink id={decision.id} className="truncate text-[15px] font-semibold underline-offset-4 hover:underline">
+          <InboxLink id={decision.id} className="truncate text-[15px] font-semibold underline-offset-4 hover:underline">
             {decision.subject || "(no subject)"}
-          </EmailLink>
+          </InboxLink>
           <p className="text-sm leading-snug text-muted-foreground">{note}</p>
           <p className="truncate text-xs text-muted-foreground">{addressOf(decision.sender) || decision.sender}</p>
         </div>
@@ -73,12 +73,12 @@ function NeedsRow({ item, canAct, onFeedback }: { item: DecisionWithFeedback; ca
               {ACTIONS[decision.action]}
             </Button>
             <Button asChild variant="outline" className={SMALL}>
-              <EmailLink id={decision.id}>Review</EmailLink>
+              <InboxLink id={decision.id}>Review</InboxLink>
             </Button>
           </>
         ) : (
           <Button asChild variant="outline" className={SMALL}>
-            <EmailLink id={decision.id}>Review</EmailLink>
+            <InboxLink id={decision.id}>Review</InboxLink>
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { CalendarIcon, FileTextIcon } from "lucide-react";
 import { displayName } from "@/components/kit/sender";
-import { EmailLink } from "@/components/email-link";
+import { InboxLink } from "@/components/inbox/inbox-link";
 import type { DecisionWithFeedback, Reminder } from "@/lib/api";
 
 const SHOWN = 6;
@@ -66,7 +66,7 @@ export function ComingUp({ items, now }: { items: DecisionWithFeedback[]; now: n
               <ul className="flex flex-col">
                 {d.rows.map(({ item, reminder }) => (
                   <li key={item.decision.id}>
-                    <EmailLink id={item.decision.id} className="flex items-center gap-3 py-2.5 hover:bg-surface-hover sm:rounded-xl sm:px-2">
+                    <InboxLink id={item.decision.id} className="flex items-center gap-3 py-2.5 hover:bg-surface-hover sm:rounded-xl sm:px-2">
                       <span className="w-16 shrink-0 text-sm text-muted-foreground tabular-nums">{clock(reminder.time) ?? "All day"}</span>
                       <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
                         {reminder.kind === "due" ? <FileTextIcon className="size-4" /> : <CalendarIcon className="size-4" />}
@@ -77,7 +77,7 @@ export function ComingUp({ items, now }: { items: DecisionWithFeedback[]; now: n
                           {[reminder.kind === "due" ? "Due" : null, reminder.detail, `from ${displayName(item.decision.sender)}`].filter(Boolean).join(" · ")}
                         </span>
                       </span>
-                    </EmailLink>
+                    </InboxLink>
                   </li>
                 ))}
               </ul>

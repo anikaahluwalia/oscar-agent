@@ -1,9 +1,7 @@
 "use client";
 
-import { BIG } from "@/components/review/decision-controls";
-import { describeAnswer, describeReview } from "@/components/review/answer";
-import { Button } from "@/components/ui/button";
-import type { DecisionWithFeedback, Review } from "@/lib/api";
+import { describeReview } from "@/components/review/answer";
+import type { DecisionWithFeedback } from "@/lib/api";
 import { isOldWay, whatOscarDid } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -27,71 +25,6 @@ export function KeysHint({ teaches }: { teaches: boolean }) {
       <Kbd>J</Kbd>
       <Kbd>K</Kbd> to move{teaches && " · every answer teaches me about this sender"}
     </span>
-  );
-}
-
-/**
- * Did he get it right? Right, Not quite, or not sure. On the real inbox, every answer but a skip
- * grades him and teaches him about this sender (oscar/review.py lessons()).
- */
-export function GradeButtons({
-  busy,
-  last,
-  onRight,
-  onNotQuite,
-  onSkip,
-  onBack,
-  onSameAsLast,
-  note,
-}: {
-  busy: boolean;
-  /** What Right also does, when it's more than a grade (approving an ask he's waiting on). */
-  note?: string;
-  /** Your last full "No", to give again with one tap, when it fits this email. */
-  last: Review | null;
-  onRight: () => void;
-  onNotQuite: () => void;
-  onSkip: () => void;
-  /** Changing an answer you gave before: go back without changing it. */
-  onBack?: () => void;
-  onSameAsLast: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-3">
-        <Button className={BIG} disabled={busy} onClick={onRight}>
-          Right <Kbd onDark>Y</Kbd>
-        </Button>
-        <Button variant="outline" className={cn(BIG, "bg-card")} disabled={busy} onClick={onNotQuite}>
-          Not quite <Kbd>N</Kbd>
-        </Button>
-      </div>
-      {note && <p className="text-sm text-muted-foreground">{note}</p>}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 text-sm text-muted-foreground">
-        <span className="flex flex-wrap items-center gap-x-4">
-          <button type="button" disabled={busy} onClick={onSkip} className="min-h-11 hover:text-foreground">
-            Not sure, skip it
-          </button>
-          {onBack && (
-            <button type="button" onClick={onBack} className="min-h-11 hover:text-foreground">
-              Back
-            </button>
-          )}
-        </span>
-        <KeysHint teaches />
-      </div>
-      {last?.should_be_level && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onSameAsLast}
-          className="-mt-2 min-h-11 self-start text-left text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          Not quite, same as the last one: {describeAnswer(last.should_be_level, last.should_be_action, last.reasons).toLowerCase()}
-          {last.why === "misread" && last.actual_type && <>, I misread it (it&apos;s {last.actual_type.toLowerCase()})</>}
-        </button>
-      )}
-    </div>
   );
 }
 

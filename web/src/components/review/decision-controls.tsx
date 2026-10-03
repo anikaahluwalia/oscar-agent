@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 type Feedback = ReturnType<typeof useOscar>["feedback"];
 
 // The big pill buttons from the design: 56px tall, half the row each.
-export const BIG = "h-14 flex-1 basis-0 gap-2.5 px-7 text-[17px] font-bold";
+const BIG = "h-14 flex-1 basis-0 gap-2.5 px-7 text-[17px] font-bold";
 
 /** What Oscar is waiting on you for with this email, if anything: the same rules as the buttons below. */
 export function controlsFor(item: DecisionWithFeedback) {

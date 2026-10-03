@@ -49,24 +49,6 @@ export function taughtBy(all: DecisionWithFeedback[], sender: string, action: Ac
   return out;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-/** "3 okays, 1 decline and 2 reviews", or null when there's nothing to count. */
-export function taughtLine(t: Taught): string | null {
-  const parts = [
-    t.okayed && plural(t.okayed, "okay", "okays"),
-    t.declined && plural(t.declined, "decline", "declines"),
-    t.undone && plural(t.undone, "undo", "undos"),
-    t.reviews && plural(t.reviews, "review", "reviews"),
-    t.alwaysDo && (t.alwaysDo === 1 ? "“Always do this” once" : `“Always do this” ${t.alwaysDo} times`),
-  ].filter((p): p is string => !!p);
-  if (!parts.length) return null;
-  return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
-}
-
-/** Answers that count as real evidence (the rule "Always ask me" isn't evidence). */
-export const evidenceOf = (t: Taught) => t.okayed + t.declined + t.undone + t.reviews + t.alwaysDo;
-
 /**
  * A decision to send feedback on for this sender and action. Feedback takes its sender and action
  * from the decision, and feedback on a stopped email teaches nothing, so it must match and not be stopped.
@@ -87,21 +69,6 @@ export function decisionFor(
   return pick ? { id: pick.decision.id, flagged: pick.decision.safety_flags.length > 0 } : null;
 }
 
-// How each action reads in "I archive these on my own".
-const THESE: Record<Action, string> = {
-  MARK_READ: "mark these as read",
-  ARCHIVE: "archive these",
-  APPLY_LABEL: "label these",
-  DRAFT_REPLY: "draft a reply to these",
-  SEND_REPLY: "reply to these",
-  FORWARD: "forward these",
-  UNSUBSCRIBE: "unsubscribe you from these",
-  ACCEPT_MEETING: "accept these invites",
-  PERMANENTLY_DELETE: "delete these for good",
-  SEND_CREDENTIALS: "send credentials",
-  MOVE_MONEY: "move money",
-};
-
 /**
  * On the real inbox Oscar only says he does something when he really can: acting is on and it's
  * one of the few things he does in Gmail. Otherwise it's what he would do.
@@ -110,30 +77,8 @@ export function onlyWould(data: OscarData, action: Action) {
   return data.gmail.connected && (isReadOnly(data) || !data.gmail.acting || !DOABLE.has(action));
 }
 
-const cap = (s: string) => `${s[0].toUpperCase()}${s.slice(1)}`;
-
 /** On the real inbox, actions other than mark read, archive and label are never done in Gmail. */
 export const notInGmail = (data: OscarData, action: Action) => data.gmail.connected && !DOABLE.has(action);
-
-/**
- * One plain sentence for what Oscar does now with this sender and action, and why. outsideGmail:
- * the real inbox and an action he never does there (a reply, unsubscribing...), so it stays yours.
- */
-export function whatHeDoes(level: Level, action: Action, reason: string, would: boolean, outsideGmail = false): string {
-  const these = THESE[action];
-  const why = reason ? `, since ${reason}` : "";
-  const yours = outsideGmail ? " I don't do this in Gmail, so it stays yours to do." : "";
-  switch (level) {
-    case "PROCEED_SILENTLY":
-      return `${would ? "I'd" : "I"} ${these} on my own${why}.${yours}`;
-    case "PROCEED_AND_NOTIFY":
-      return `${would ? "I'd" : "I"} ${these} and tell you${why}.${yours}`;
-    case "ASK_FIRST":
-      return `${would ? "I'd ask" : "I ask"} you before I ${these}${why}.${yours}`;
-    case "ESCALATE":
-      return reason ? `These always come to you. ${cap(reason)}.` : "These always come to you.";
-  }
-}
 
 export type MemoryItem = {
   learned: LearnedRow;
@@ -171,11 +116,4 @@ export function memoryItems(data: OscarData): MemoryItem[] {
       };
     })
     .sort((a, b) => b.learned.yes + b.learned.no - (a.learned.yes + a.learned.no) || a.learned.sender.localeCompare(b.learned.sender));
-}
-
-/** The name part of "Name <address>", and the address when there is one. */
-export function senderParts(sender: string): { name: string; address: string | null } {
-  const address = sender.match(/<([^>]+)>/)?.[1] ?? null;
-  const name = sender.replace(/<.*>/, "").replace(/"/g, "").trim();
-  return { name: name || address || sender, address: name ? address : null };
 }

@@ -1,4 +1,4 @@
-import { EmailLink } from "@/components/email-link";
+import { InboxLink } from "@/components/inbox/inbox-link";
 import { displayName, SenderAvatar } from "@/components/kit/sender";
 import { StatusWords } from "@/components/kit/status";
 import type { DecisionWithFeedback } from "@/lib/api";
@@ -8,7 +8,7 @@ import { didLine, when } from "@/lib/counts";
 export function EmailCard({ item }: { item: DecisionWithFeedback }) {
   const { decision } = item;
   return (
-    <EmailLink
+    <InboxLink
       id={decision.id}
       className="flex min-h-11 items-center gap-3 rounded-[14px] border bg-muted px-3.5 py-3 text-foreground no-underline transition-colors hover:bg-surface-hover"
     >
@@ -26,6 +26,6 @@ export function EmailCard({ item }: { item: DecisionWithFeedback }) {
       <StatusWords level={decision.autonomy_level} className="hidden shrink-0 text-xs sm:inline-flex">
         {didLine(item)}
       </StatusWords>
-    </EmailLink>
+    </InboxLink>
   );
 }

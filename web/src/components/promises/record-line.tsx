@@ -1,4 +1,4 @@
-import { EmailLink } from "@/components/email-link";
+import { InboxLink } from "@/components/inbox/inbox-link";
 import type { EvalRun } from "@/lib/api";
 import { plural } from "@/lib/counts";
 import { whatOscarDid } from "@/lib/labels";
@@ -36,9 +36,9 @@ export function RecordLine({ data, readOnly, run }: { data: OscarData; readOnly:
         {r.actedOn.map((i, n) => (
           <span key={i.decision.id}>
             {n > 0 && ", "}
-            <EmailLink id={i.decision.id} className="font-medium text-status-blocked underline underline-offset-4">
+            <InboxLink id={i.decision.id} className="font-medium text-status-blocked underline underline-offset-4">
               {whatOscarDid(i.decision, i.done)}: {i.decision.subject || "(no subject)"}
-            </EmailLink>
+            </InboxLink>
           </span>
         ))}
         .{test && ` My latest safety test ${test.text}.`}

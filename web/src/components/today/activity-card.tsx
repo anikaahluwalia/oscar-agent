@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRightIcon, CalendarIcon, CheckIcon } from "lucide-react";
-import { EmailLink } from "@/components/email-link";
+import { InboxLink } from "@/components/inbox/inbox-link";
 import { formatTime } from "@/lib/time";
 import type { ActivityRow } from "@/components/today/words";
 
@@ -30,9 +30,9 @@ function Row({ row }: { row: ActivityRow }) {
   return (
     <li className="border-t first:border-t-0">
       {row.type === "reminder" ? (
-        <EmailLink id={row.id} className={cls}>
+        <InboxLink id={row.id} className={cls}>
           {body}
-        </EmailLink>
+        </InboxLink>
       ) : (
         <Link href="/inbox?show=done" className={cls}>
           {body}

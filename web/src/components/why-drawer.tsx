@@ -10,8 +10,15 @@ import type { Action, AutonomyRow, Decision, DecisionWithFeedback, Level } from 
 import { onOpenWhy } from "@/lib/drawers";
 import { safetyChecks } from "@/lib/insights";
 import { ACTIONS, LEVEL_SOURCES, STATUS, typeName, typeOf, wouldOnly } from "@/lib/labels";
-import { answersFor, useOscar } from "@/lib/use-oscar";
-import { answerLine } from "@/components/preference-card";
+import { answersFor, useOscar, type Answers } from "@/lib/use-oscar";
+
+/** "Approved 3 · declined 1": how you've actually answered, counted from your feedback. */
+function answerLine(a: Answers) {
+  const parts = [a.approved && `approved ${a.approved}`, a.declined && `declined ${a.declined}`, a.undone && `undone ${a.undone}`].filter(Boolean);
+  if (!parts.length) return "No answers yet";
+  const line = parts.join(" · ");
+  return line[0].toUpperCase() + line.slice(1);
+}
 
 /** The most Oscar may do for this sender and action, in words. */
 function limitFor(row: AutonomyRow | undefined, decision: Decision) {

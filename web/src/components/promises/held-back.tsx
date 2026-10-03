@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EmailLink } from "@/components/email-link";
+import { InboxLink } from "@/components/inbox/inbox-link";
 import { SenderAvatar, addressOf, displayName } from "@/components/kit/sender";
 import { StatusWords } from "@/components/kit/status";
 import type { DecisionWithFeedback } from "@/lib/api";
@@ -32,7 +32,7 @@ function Row({ item }: { item: DecisionWithFeedback }) {
   const at = timeOf(item);
   return (
     <li className="flex items-center gap-1 border-t">
-      <EmailLink
+      <InboxLink
         id={decision.id}
         className="group flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg py-3.5 outline-offset-2"
       >
@@ -48,7 +48,7 @@ function Row({ item }: { item: DecisionWithFeedback }) {
         <time dateTime={at} title={`${dayLabel(at)}, ${formatTime(at)}`} className="shrink-0 self-start pt-0.5 text-[13px] text-muted-foreground">
           {when(at)}
         </time>
-      </EmailLink>
+      </InboxLink>
       <button
         type="button"
         onClick={() => openWhy(decision.id)}
