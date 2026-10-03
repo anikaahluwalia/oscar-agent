@@ -7,7 +7,7 @@ the last word.
 """
 
 from oscar.classifier import classify, is_bulk
-from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, SafetyCategory
+from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
@@ -171,9 +171,21 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         message = explain(action, level, reason, False, read_only)
         noticed = sensitive
 
+    # The least involvement the safety rules allow here, and the rule that set the level, if one did.
+    floor = ACTION_FLOORS.get(action)
+    stopped = bool(flags) or source == "model_check"
+    safety_floor = AutonomyLevel.ESCALATE if stopped else floor[0] if floor else None
+    safety_rule = (flags[0].reason if flags else message.removeprefix("I stopped this one. ").rstrip(".")
+                   if source == "model_check" else floor[1] if source == "floor" and floor
+                   else reason if source == "caution" else None)
+
     email_type = (FLAG_TYPES[flags[0].category] if flags else risky if source == "model_check"
                   else classification.email_type)
     evidence = suggestion.evidence if suggestion and source == "learned" else 0.0
+    used = (PreferenceUsed(scope=suggestion.scope, evidence=suggestion.evidence, confidence=suggestion.confidence)
+            if suggestion and learned and source == "learned" else None)
+    factors = _factors(email, guess, email_type, preferences, used, suggestion.reason if used else None,
+                       safety_rule, safety_floor)
 
     return Decision(
         email_id=email.id,
@@ -194,4 +206,24 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         confidence=confidence_for(source, evidence),
         understood_by=understood_by,
         summary=understanding.summary if understanding else "",
+        factors=factors,
+        safety_floor=safety_floor,
+        safety_rule=safety_rule,
+        preference=used,
     )
+
+
+def _factors(email: Email, guess: bool, email_type: str, preferences: Preferences | None, used: PreferenceUsed | None,
+             learned_reason: str | None, safety_rule: str | None, safety_floor: AutonomyLevel | None) -> list[str]:
+    """A few plain words on what mattered, for the UI. Facts only, never his working-out."""
+    out = ["I couldn't tell what kind of email this is" if guess and not safety_rule
+           else f"Reads like {email_type.replace('_', ' ')}"]
+    out.append("A sender you've taught me about" if preferences and preferences.knows(email.sender)
+               else "A sender I haven't learned about yet")
+    if used and learned_reason:
+        out.append(f"{learned_reason[0].upper()}{learned_reason[1:]} ({round(used.confidence * 100)}% sure)")
+    if safety_rule:
+        out.append(f"Safety rule: {safety_rule}")
+    elif safety_floor == AutonomyLevel.ASK_FIRST:
+        out.append("The safety rules say I ask first for this")
+    return out

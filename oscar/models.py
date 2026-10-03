@@ -76,6 +76,14 @@ class GmailInfo(BaseModel):
     preview: str = ""  # Gmail's own one-line preview, for showing the email in the app
 
 
+class PreferenceUsed(BaseModel):
+    """What Oscar learned from you that set this decision's level."""
+
+    scope: Literal["sender", "domain", "kind"]
+    evidence: float  # how many of your answers it rests on
+    confidence: float
+
+
 class Decision(BaseModel):
     id: str = Field(default_factory=new_id)
     created_at: datetime = Field(default_factory=now)
@@ -104,6 +112,13 @@ class Decision(BaseModel):
     acting: bool = False
     summary: str = ""
     confidence: float = 0.5  # how sure Oscar is that the level is right (see agent.confidence_for)
+    # For the UI, in a few words each: what mattered for this call (never his full working notes),
+    # the least involvement the safety rules allow here, the rule or check that set the level if
+    # one did, and what he learned from you that he used, if anything.
+    factors: list[str] = Field(default_factory=list)
+    safety_floor: AutonomyLevel | None = None
+    safety_rule: str | None = None
+    preference: PreferenceUsed | None = None
     # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he
     # didn't do anything; the decision is what he would have done.
     source: Literal["demo", "gmail"] = "demo"
