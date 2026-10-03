@@ -38,7 +38,7 @@ export function filtersFor({ real, readOnly }: { real: boolean; readOnly: boolea
       label: "Needs you",
       match: readOnly ? needsReview : isOpen,
       ranked: readOnly,
-      empty: readOnly ? "All checked! Every call he's made has your answer." : "All caught up! Nothing needs you right now.",
+      empty: readOnly ? "All checked! Every call I've made has your answer." : "All caught up! Nothing needs you right now.",
     },
     {
       key: "check",
@@ -46,27 +46,27 @@ export function filtersFor({ real, readOnly }: { real: boolean; readOnly: boolea
       match: (i) => toGrade(i) && !isOldWay(i.review),
       ranked: true,
       optional: true,
-      empty: "All checked! Every call he's made has your answer.",
+      empty: "All checked! Every call I've made has your answer.",
     },
     readOnly
       ? {
           key: "done",
           label: "He'd do on his own",
           match: (i) => ON_HIS_OWN.has(i.decision.autonomy_level),
-          empty: "Nothing he'd do on his own yet.",
+          empty: "Nothing I'd do on my own yet.",
         }
       : {
           key: "done",
           label: "Done on his own",
           // On the real inbox, only what Gmail says he did himself (not what you approved).
           match: (i) => ON_HIS_OWN.has(i.decision.autonomy_level) && reallyDone(i) && (!real || i.done?.by === "oscar"),
-          empty: "He hasn't done anything on his own yet.",
+          empty: "I haven't done anything on my own yet.",
         },
     {
       key: "stopped",
       label: "Stopped",
       match: (i) => i.decision.autonomy_level === "ESCALATE",
-      empty: "Nothing stopped. If an email looks risky, he'll stop and bring it here.",
+      empty: "Nothing stopped. If an email looks risky, I'll stop and bring it here.",
     },
     {
       key: "finish",

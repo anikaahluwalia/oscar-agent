@@ -9,52 +9,74 @@ import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { reallyDone } from "@/lib/insights";
 import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, wouldOnly } from "@/lib/labels";
 import { isAnswered, type useOscar } from "@/lib/use-oscar";
+import { cn } from "@/lib/utils";
 
 type Feedback = ReturnType<typeof useOscar>["feedback"];
 
-// Big enough to tap on a phone.
-const TAP = "h-11 px-5 text-sm";
+// The big pill buttons from the design: 56px tall, half the row each.
+export const BIG = "h-14 flex-1 basis-0 gap-2.5 px-7 text-[17px] font-bold";
 
-/**
- * Approve, decline, mark as reviewed, looks good, and undo: only the ones that would really do
- * something. On the real inbox that means Oscar acts in Gmail and it's something he can do there
- * (mark as read, archive, label); otherwise grading is how you answer.
- */
-export function DecisionControls({ item, canAct, feedback }: { item: DecisionWithFeedback; canAct: boolean; feedback: Feedback }) {
-  const [busy, setBusy] = useState(false);
+/** What Oscar is waiting on you for with this email, if anything: the same rules as the buttons below. */
+export function controlsFor(item: DecisionWithFeedback) {
   const d = item.decision;
   const level = d.autonomy_level;
   const real = d.source === "gmail";
   const would = wouldOnly(d);
   const answered = isAnswered(item);
+  const canUndo = real ? !!item.done && !item.done.undone_at : (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && !item.feedback.some((f) => f.kind === "UNDO");
+  const ask = !would && level === "ASK_FIRST" && !answered && (!real || DOABLE.has(d.action));
+  const stop = !would && level === "ESCALATE" && !answered;
+  const told = !would && level === "PROCEED_AND_NOTIFY" && !answered && reallyDone(item);
+  return { ask, stop, told, canUndo, any: ask || stop || told || canUndo || item.feedback.length > 0 };
+}
+
+/**
+ * Approve, decline, mark as reviewed, looks good, and undo: only the ones that would really do
+ * something. On the real inbox that means Oscar acts in Gmail and it's something he can do there
+ * (mark as read, archive, label); otherwise grading is how you answer. `big` is the demo inbox,
+ * where these are the main answer; on the real inbox they sit under the grading, smaller.
+ */
+export function DecisionControls({
+  item,
+  canAct,
+  feedback,
+  big = false,
+  onAnswered,
+}: {
+  item: DecisionWithFeedback;
+  canAct: boolean;
+  feedback: Feedback;
+  big?: boolean;
+  /** Called after an answer went through, to move on to the next email. */
+  onAnswered?: (kind: FeedbackKind) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const d = item.decision;
+  const real = d.source === "gmail";
+  const { ask, stop, told, canUndo, any } = controlsFor(item);
+  const needsActing = ask && real && !canAct;
+  const hold = !real ? HOLD_TO_CONFIRM[d.action] : undefined;
+  const size = big ? BIG : "h-11 px-5 text-sm";
 
   async function give(kind: FeedbackKind) {
     if (busy) return;
     setBusy(true);
-    await feedback(d.id, kind);
+    const ok = await feedback(d.id, kind);
     setBusy(false);
+    if (ok) onAnswered?.(kind);
   }
 
-  const canUndo = real ? !!item.done && !item.done.undone_at : (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && !item.feedback.some((f) => f.kind === "UNDO");
-  const ask = !would && level === "ASK_FIRST" && !answered && (!real || DOABLE.has(d.action));
-  const needsActing = ask && real && !canAct;
-  const stop = !would && level === "ESCALATE" && !answered;
-  const told = !would && level === "PROCEED_AND_NOTIFY" && !answered && reallyDone(item);
-  const hold = !real ? HOLD_TO_CONFIRM[d.action] : undefined;
-
+  if (!any) return null;
   const youSaid = item.feedback;
-  if (!ask && !stop && !told && !canUndo && !youSaid.length) return null;
 
   return (
     <div className="flex flex-col gap-3">
-      {youSaid.length > 0 && (
-        <p className="text-sm text-muted-foreground">You: {youSaid.map((f) => FEEDBACK[f.kind]).join(", ")}</p>
-      )}
+      {youSaid.length > 0 && <p className="text-sm text-muted-foreground">You: {youSaid.map((f) => FEEDBACK[f.kind]).join(", ")}</p>}
 
       {needsActing && (
         <p className="rounded-xl bg-muted px-3.5 py-3 text-sm">
-          Oscar can do this in Gmail once acting is on.{" "}
-          <Link href="/settings" className="font-medium text-primary underline-offset-4 hover:underline">
+          I can do this in Gmail once acting is on.{" "}
+          <Link href="/settings" className="font-semibold underline underline-offset-4">
             Turn it on in Settings
           </Link>
         </p>
@@ -63,41 +85,45 @@ export function DecisionControls({ item, canAct, feedback }: { item: DecisionWit
       {ask && !needsActing && (
         <>
           {hold && <p className="text-sm text-muted-foreground">{hold}, so press and hold to approve.</p>}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-wrap gap-3">
             {hold ? (
-              <HoldButton size="lg" disabled={busy} onConfirm={() => give("APPROVE")}>
-                Hold to approve
-              </HoldButton>
+              <span className={cn("flex", big ? "flex-1 basis-0 [&>button]:h-14 [&>button]:w-full [&>button]:text-[17px] [&>button]:font-bold" : "")}>
+                <HoldButton size="lg" disabled={busy} onConfirm={() => give("APPROVE")}>
+                  Hold to approve
+                </HoldButton>
+              </span>
             ) : (
-              <Button className={TAP} disabled={busy} onClick={() => give("APPROVE")}>
+              <Button className={size} disabled={busy} onClick={() => give("APPROVE")}>
                 Approve
               </Button>
             )}
-            <Button variant="outline" className={TAP} disabled={busy} onClick={() => give("REJECT")}>
+            <Button variant="outline" className={cn(size, big && "bg-card")} disabled={busy} onClick={() => give("REJECT")}>
               Decline
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {real ? "Approving does it in Gmail now, and you can undo it." : "Your answer teaches him about this sender."}
+          <p className="text-sm text-muted-foreground">
+            {real ? "Approving does it in Gmail now, and you can undo it." : "Your answer teaches me about this sender."}
           </p>
         </>
       )}
 
       {stop && (
-        <Button variant="outline" className={TAP} disabled={busy} onClick={() => give("SEEN")}>
-          Mark as reviewed
-        </Button>
+        <div className="flex">
+          <Button variant={big ? "default" : "outline"} className={size} disabled={busy} onClick={() => give("SEEN")}>
+            Mark as reviewed
+          </Button>
+        </div>
       )}
 
       {(told || canUndo) && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {told && (
-            <Button className={TAP} disabled={busy} onClick={() => give("APPROVE")}>
+            <Button className={size} disabled={busy} onClick={() => give("APPROVE")}>
               Looks good
             </Button>
           )}
           {canUndo && (
-            <Button variant="outline" className={TAP} disabled={busy} onClick={() => give("UNDO")}>
+            <Button variant="outline" className={cn(size, big && "bg-card")} disabled={busy} onClick={() => give("UNDO")}>
               <Undo2Icon /> Undo
             </Button>
           )}

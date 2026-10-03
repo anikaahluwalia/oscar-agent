@@ -1,9 +1,9 @@
-import { SenderAvatar } from "@/components/review/sender-avatar";
-import { outcomeOf, splitSender } from "@/components/review/filters";
-import { StatusPill } from "@/components/status-pill";
+import { displayName, SenderAvatar } from "@/components/kit/sender";
+import { StatusWords } from "@/components/kit/status";
+import { outcomeOf } from "@/components/review/filters";
 import type { DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
-import { wouldOnly } from "@/lib/labels";
+import { STATUS } from "@/lib/labels";
 import { previewOf } from "@/lib/text";
 import { dayLabel, formatTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ export function EmailRow({
   onSelect: () => void;
 }) {
   const d = item.decision;
-  const { name } = splitSender(d.sender);
+  const name = displayName(d.sender);
   return (
     <li>
       <button
@@ -58,7 +58,7 @@ export function EmailRow({
           <span className={cn("truncate text-sm", selected ? "font-medium text-primary" : "text-foreground")}>{d.subject || "(no subject)"}</span>
           <span className="truncate text-xs text-muted-foreground">{previewOf(d)}</span>
           <span className="mt-1 flex min-w-0 items-center gap-2">
-            <StatusPill level={d.autonomy_level} readOnly={wouldOnly(d)} />
+            <StatusWords level={d.autonomy_level} className="shrink-0 text-xs">{STATUS[d.autonomy_level].label}</StatusWords>
             <span className="truncate text-xs text-muted-foreground">{outcomeOf(item)}</span>
           </span>
         </span>
