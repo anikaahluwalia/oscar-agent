@@ -97,6 +97,12 @@ Try "what needs me?", "what did you handle?" or a rule like "always archive emai
 from digest@morningbrew-weekly.example" in **Chat**. Approve the newsletter a few
 times and bring the emails in again to watch Oscar learn.
 
+## Oscar in Gmail (Chrome extension)
+
+Load the `extension` folder in Chrome (`chrome://extensions` → Developer mode → Load unpacked).
+Oscar peeks out of the corner of Gmail with what needs you and his call on the open email.
+See `extension/README.md`.
+
 ## Connect a real Gmail inbox (read-only)
 
 Oscar can read a real Gmail inbox and note what he *would* do with each email.

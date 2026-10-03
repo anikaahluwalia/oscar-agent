@@ -1387,3 +1387,21 @@ An empty Today now reads like a short briefing:
 - **Approve actions**: where you've said yes to an easy-to-undo action for a sender twice, never no,
   and he hasn't earned it yet. Yes is "always do this" (he does it and tells you, and the safety
   rules still win); No is "always ask".
+
+## Stage 14 — Oscar in Gmail
+
+A Chrome extension (`extension/`). Oscar peeks out of the corner of Gmail, half hidden, with a
+count of what needs you. Clicking him opens a small panel: his call on the email you have open
+(with its reason and factors), what else is waiting (each opens that email), and a link to the app.
+
+- **The page never talks to Oscar.** The content script draws Oscar in a closed shadow root and
+  asks the background script, by message, for one of three things: the status, one thread, or an
+  answer. The background script refuses anything else and only reaches localhost.
+- **Two read-only endpoints**: `/extension/status` (what's waiting, from `needs_you`, the same as the
+  chat) and `/extension/thread/{id}` (his latest call on a thread, by the hex id Gmail's page shows).
+- **Answers go through `POST /feedback`**, the same as the app: Approve, Not this one, Undo. Every
+  rule there and the safety floor still apply, and while he only reads, it's "Check this call".
+- **Email text is untrusted**: subjects and senders are only ever set as text, never HTML.
+
+Tested by loading the real extension in Chrome against a stand-in Gmail page and a test API.
+It hasn't been tried on real Gmail here: that's yours to do (README).
