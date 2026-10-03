@@ -10,6 +10,7 @@ import { Impact } from "@/components/doing/impact";
 import { RealInboxResults } from "@/components/doing/real-results";
 import { leadRun } from "@/components/doing/runs";
 import { Tests } from "@/components/doing/tests";
+import { YourEmail } from "@/components/doing/your-email";
 import { MoodHeader } from "@/components/kit/mood-header";
 import { Panel } from "@/components/kit/panel";
 import { Loading, Page } from "@/components/page";
@@ -44,56 +45,61 @@ export function DoingPage() {
   // Proud only when the latest test acted on no risky email.
   const proud = lead ? (lead.held.metrics.critical_violations ?? 0) === 0 : false;
 
+  const graded = data?.reviews.graded;
+  const real = data?.gmail.connected && graded && "passed" in graded && graded.n > 0 ? graded : null;
+  // On your email: proud once most of my calls are right and none went too far; until then, learning.
+  const pose = real
+    ? real.passed / real.n >= 0.8 && real.acted_when_you_would_stop === 0 ? "proud" : "learning"
+    : proud ? "proud" : "thinking";
+
   return (
     <Page className="sm:pt-12">
       <div className="mx-auto flex w-full max-w-[760px] flex-col gap-9">
-        <MoodHeader
-          pose={proud ? "proud" : "thinking"}
-          title="My progress"
-          text="Tested on emails I'd never seen, and checked against your answers."
-        />
+        <MoodHeader pose={pose} title="My progress" text="How I'm doing on your Gmail, from the calls you've checked." />
 
-        {problem && <p className="text-sm text-muted-foreground">I can&apos;t reach my API, so there are no test results to show.</p>}
-        {!runs && !problem && <p className="text-sm text-muted-foreground">Fetching the saved test runs...</p>}
-        {runs && !lead && (
-          <Panel>
-            <p className="text-sm text-muted-foreground">No test runs saved yet. Open How to run the tests, at the bottom, then come back.</p>
-          </Panel>
-        )}
-
-        {runs && lead && (
+        {!data ? (
+          <Loading error={error} />
+        ) : (
           <>
-            <Headline all={runs} held={lead.held} reviews={data?.reviews} connected={data?.gmail.connected} />
-            <DifferenceTable all={runs} heldout={lead.held.dataset.name} />
-            <Disclosure label="See every test, and the ones I got wrong" className="-mt-3">
-              <Tests all={runs} />
-            </Disclosure>
+            <YourEmail reviews={data.reviews} items={data.items} connected={data.gmail.connected} />
+            {data.items.length > 0 && (
+              <div className="grid items-start gap-4 sm:grid-cols-2">
+                <AskRate items={data.items} readOnly={isReadOnly(data)} />
+                <Impact items={data.items} readOnly={isReadOnly(data)} now={now} />
+              </div>
+            )}
+            {data.reviews.reviewed > 0 && (
+              <Disclosure label="How you graded me" className="-mt-3">
+                <RealInboxResults summary={data.reviews} />
+              </Disclosure>
+            )}
           </>
         )}
 
-        <section aria-labelledby="real" className="flex flex-col gap-4 border-t pt-8">
+        <section aria-labelledby="tests" className="flex flex-col gap-6 border-t pt-8">
           <div className="flex flex-col gap-1">
-            <h2 id="real" className="text-lg font-semibold">
-              On the emails I&apos;ve read
+            <h2 id="tests" className="text-lg font-semibold">
+              On test emails I&apos;d never seen
             </h2>
             <p className="text-sm text-muted-foreground">
-              {data?.gmail.connected ? "From my calls on your inbox, not the tests." : "From the example emails I've read, not the tests."}
+              Made-up emails, the same ones each time, so every change to me is measured the same way.
             </p>
           </div>
-          {!data ? (
-            <Loading error={error} />
-          ) : data.items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">I haven&apos;t read any emails yet, so there&apos;s nothing to show here.</p>
-          ) : (
-            <div className="grid items-start gap-4 sm:grid-cols-2">
-              <AskRate items={data.items} readOnly={isReadOnly(data)} />
-              <Impact items={data.items} readOnly={isReadOnly(data)} now={now} />
-            </div>
+          {problem && <p className="text-sm text-muted-foreground">I can&apos;t reach my API, so there are no test results to show.</p>}
+          {!runs && !problem && <p className="text-sm text-muted-foreground">Fetching the saved test runs...</p>}
+          {runs && !lead && (
+            <Panel>
+              <p className="text-sm text-muted-foreground">No test runs saved yet. Open How to run the tests, at the bottom, then come back.</p>
+            </Panel>
           )}
-          {data && data.reviews.reviewed > 0 && (
-            <Disclosure label="How you graded me">
-              <RealInboxResults summary={data.reviews} />
-            </Disclosure>
+          {runs && lead && (
+            <>
+              <Headline all={runs} held={lead.held} />
+              <DifferenceTable all={runs} heldout={lead.held.dataset.name} />
+              <Disclosure label="See every test, and the ones I got wrong" className="-mt-3">
+                <Tests all={runs} />
+              </Disclosure>
+            </>
           )}
         </section>
 
