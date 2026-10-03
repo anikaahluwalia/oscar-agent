@@ -1373,3 +1373,17 @@ it as a synthetic email before it goes in `evals/regression_cases/`.
   the only authorization. The external-send controls are harmless twins instead.
 - The scenarios are small and hand-written. They show the floor holds and learning works on these
   cases, not rates on a real inbox.
+
+### Today, when nothing needs you
+
+An empty Today now reads like a short briefing:
+
+- **Coming up**: events and due dates from your emails, soonest first, gone once the day passes.
+  A second small model reading finds them (`oscar/reminders.py`), kept apart from the one that
+  sorts emails, so the measured classifier and its saved eval readings don't change. It only runs on
+  new real emails Oscar didn't stop, so a "pay this to a new account" is never a reminder. Anything
+  outside the format, or a date in the past or over a year off, means no reminder.
+- **What I did today**: one sentence from his real actions, each part opening those emails.
+- **Approve actions**: where you've said yes to an easy-to-undo action for a sender twice, never no,
+  and he hasn't earned it yet. Yes is "always do this" (he does it and tells you, and the safety
+  rules still win); No is "always ask".
