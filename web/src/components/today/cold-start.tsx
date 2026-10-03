@@ -35,7 +35,7 @@ function choiceLabel(h: Habit, choice: HabitChoice) {
     case "tell":
       return `${verb} and tell me`;
     case "label":
-      return `Label them “${h.label_name ?? "Sorted"}”, keep in inbox`;
+      return h.label_name ? `Label them “${h.label_name}”, keep in inbox` : "Label them, keep in inbox";
     case "ask":
       return h.habit === "kept" ? "Leave them to me" : "Ask me first";
     case "reject":

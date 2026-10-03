@@ -247,6 +247,16 @@ def update_app_settings(changes: dict, path: Path = Depends(get_app_settings_pat
 
 # --- Learning from your last six months, the first time (oscar/cold_start.py) ------------------
 
+def _with_label_names(now: dict) -> dict:
+    """Each habit with the Gmail label "Label them" would use, by its name in Settings
+    (oscar/labels.py): Receipts for receipts, Sorted for anything else, unless you renamed them.
+    Every cold-start reply goes through this, so the card always names the right label."""
+    names = label_names()
+    for habit in now.get("candidates", []):
+        habit["label_name"] = names[kind_role(habit["email_type"])]
+    return now
+
+
 @app.get("/cold-start")
 def cold_start_status(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
                       real: History = Depends(get_real_history)) -> dict:
@@ -255,12 +265,7 @@ def cold_start_status(tokens: gmail.TokenStore = Depends(get_tokens), http: http
         return {"state": "unavailable"}
     if cold_start.status(real)["state"] == "running" and not cold_start.is_running(real):
         cold_start.start(real, tokens, http)  # the API stopped partway: carry on where it left off
-    now = cold_start.status(real)
-    # The label "Label them" would use, by its name in Settings (oscar/labels.py).
-    names = label_names()
-    for habit in now["candidates"]:
-        habit["label_name"] = names[kind_role(habit["email_type"])]
-    return {**now, "new_account": not real.decisions}
+    return {**_with_label_names(cold_start.status(real)), "new_account": not real.decisions}
 
 
 @app.post("/cold-start/start")
@@ -270,12 +275,12 @@ def cold_start_begin(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx
     if not tokens.load():
         raise HTTPException(409, "Connect Gmail first.")
     cold_start.start(real, tokens, http)
-    return cold_start.status(real)
+    return _with_label_names(cold_start.status(real))
 
 
 @app.post("/cold-start/skip")
 def cold_start_skip(real: History = Depends(get_real_history)) -> dict:
-    return cold_start.skip(real)
+    return _with_label_names(cold_start.skip(real))
 
 
 class ColdStartAnswer(BaseModel):
@@ -287,7 +292,7 @@ class ColdStartAnswer(BaseModel):
 def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real_history)) -> dict:
     """Your answer to one habit he found. Saved as a "for emails like this" rule, so safety still wins."""
     try:
-        return cold_start.answer(real, request.pattern_id, request.choice)
+        return _with_label_names(cold_start.answer(real, request.pattern_id, request.choice))
     except cold_start.ColdStartError as e:
         raise HTTPException(400, str(e))
 
@@ -295,7 +300,7 @@ def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real
 @app.post("/cold-start/done")
 def cold_start_done(real: History = Depends(get_real_history)) -> dict:
     try:
-        return cold_start.finish(real)
+        return _with_label_names(cold_start.finish(real))
     except cold_start.ColdStartError as e:
         raise HTTPException(400, str(e))
 

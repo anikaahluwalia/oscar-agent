@@ -536,6 +536,20 @@ def test_candidates_need_enough_emails_and_senders():
     assert candidates({"bulk_mail": {**row, "archived": 4}}) == [], "4 of 6 is under 80%"
 
 
+def test_every_reply_names_the_label_for_receipts(signed_in):
+    client, real, fake = signed_in
+    receipts = [message(f"r{i}", f"orders@store{i}.example", "Your order", RECEIPT, labels=KEPT_UNREAD) for i in range(8)]
+    fake.messages.update({m["id"]: m for m in receipts})
+    sign_in(client)
+    cold_start.wait(real, 10)
+    shown = client.get("/cold-start").json()
+    names = {c["id"]: c["label_name"] for c in shown["candidates"]}
+    assert names["receipt:kept"] == "Receipts"
+    # Answering another habit first used to come back without the names, so receipts said "Sorted".
+    after = client.post("/cold-start/answer", json={"pattern_id": "bulk_mail:archived", "choice": "reject"}).json()
+    assert {c["id"]: c["label_name"] for c in after["candidates"]}["receipt:kept"] == "Receipts"
+
+
 def test_api_answer_and_skip(signed_in):
     client, real, fake = signed_in
     sign_in(client)
