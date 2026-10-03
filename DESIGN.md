@@ -38,8 +38,13 @@ security changes, private data and commitments. The floor is a separate step aft
 not more rows in the policy table, so learning can only move Oscar inside it. The safety code
 doesn't import anything from learning, and its tables are read-only.
 
-**Don't act on a guess.** If nothing recognised the email, Oscar asks. Being unsure is a
-reason to check with you, not to pick the most likely action.
+**Don't act on a guess.** If nothing recognised the email, Oscar says he isn't sure what to do
+with it and asks you, without offering a guess. Being unsure is a reason to check with you, not
+to pick the most likely action.
+
+**"Stopped" means a safety stop.** The red Stopped label and Safety review are only for what a
+safety rule stopped: scams, hidden instructions, money and password requests, and the like.
+Anything else he brings to you without doing anything, like an urgent email, is "Needs you".
 
 **Learn the action and how much to ask, separately.** Approving, or "Right" in Review, says the
 action was right and nothing else. It never means "stop asking", and never "keep asking". How

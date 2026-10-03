@@ -1647,3 +1647,13 @@ email gets the FYI label, a card in Gmail and a line in the app). He never sends
   the draft. The app and the Gmail panel show the draft, with a link to Gmail's Drafts.
 - **Needs a model key.** Without `GEMINI_API_KEY` there are no drafts, and he says it's yours to
   answer. The evals never pass a drafter, so their results are the same as before.
+
+### "Stopped" is only for safety, and he says when he's unsure
+
+Oscar's "bring it to you and do nothing" level is used for safety stops, but also for an urgent
+email or a sender you said to only tell you about. All of it used to show as Stopped. Now Stopped
+(the red label, the chip, the card, the Held back filter) is only what a safety rule stopped, which
+is also what Safety review holds; the rest shows as Needs you (`act.status_label`, `act.gmail_label`,
+`shownLevel` in the app). When nothing told him what an email is, he no longer asks about his guess
+("Want me to mark this as read?"); he says "I'm not sure what to do with this one. Can you tell me
+what you'd like?". Only what's shown and said changed: his decisions, and the eval results, are the same.
