@@ -14,7 +14,7 @@ from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.overview import brief, done_in_gmail, is_read_only, latest_per_email, needs_you
-from oscar.preferences import Preferences
+from oscar.preferences import HABIT_ACTIONS, Preferences, family
 from oscar.review import teaching
 from oscar.safety import ACTION_FLOORS
 from oscar.voice import describe_learning
@@ -26,7 +26,17 @@ class ChatReply(BaseModel):
 
 
 HELP = ('I can tell you what needs you, what I handled, what I know about you, or why I made a call. '
-        'You can also teach me, like "always archive emails from digest@ai-weekly.example"!')
+        'You can also teach me, like "always archive emails from digest@ai-weekly.example" '
+        'or "just archive promotions"!')
+
+# Words that mean a whole kind of email, not one sender, and the kind they mean. "Emails like
+# this" means the kind of the email you're asking about.
+KIND_WORDS: list[tuple[str, str | None]] = [
+    (r"\b(promotions?|promotional|promos?|newsletters?|marketing|deals|sales emails?|digests?)\b", "bulk_mail"),
+    (r"\b(receipts?|order confirmations?|shipping updates?)\b", "receipt"),
+    (r"\bemails? like (this|these|that)\b", None),
+]
+RULE = re.compile(r"\b(always|never|stop asking|ask me)\b|\b(don'?t|do not) ask\b|\bjust (archive|handle|mark|label)")
 
 # Words in a rule, and the action they mean.
 ACTION_WORDS: list[tuple[str, Action]] = [
@@ -120,7 +130,7 @@ def _known(history: History) -> ChatReply:
     return ChatReply(reply="Here's what I've picked up so far! " + " ".join(line[0].upper() + line[1:] for line in lines))
 
 
-def _rule(history: History, text: str) -> ChatReply:
+def _rule(history: History, text: str, decision_id: str | None = None) -> ChatReply:
     # "don't ask me" and "stop asking" mean go ahead, even though they contain "ask me".
     go_ahead = re.search(r"\b(don'?t|do not|stop|no need to) ask", text)
     ask = not go_ahead and bool(re.search(r"\b(always ask|ask me|check with me|never)\b", text))
@@ -132,8 +142,12 @@ def _rule(history: History, text: str) -> ChatReply:
         return ChatReply(reply=f"I'll always bring these to you. {floor[1][0].upper()}{floor[1][1:]}, and that's not something I'll guess on.")
 
     match = re.search(r"\bfrom ([\w.@+-]+)", text)
+    kind_word = None if match else next(((p, k) for p, k in KIND_WORDS if re.search(p, text)), None)
+    if kind_word:
+        return _kind_rule(history, text, kind_word[1], action, ask, decision_id)
     if not match:
-        return ChatReply(reply='Who from? Say something like "always archive emails from digest@ai-weekly.example".')
+        return ChatReply(reply='Who from? Say something like "always archive emails from digest@ai-weekly.example", '
+                               'or "just archive promotions".')
     who = match.group(1).strip(".").lower()
 
     seen = [d for d in sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
@@ -152,6 +166,36 @@ def _rule(history: History, text: str) -> ChatReply:
     return ChatReply(reply=reply, decisions=[decision.id])
 
 
+def _kind_rule(history: History, text: str, kind: str | None, action: Action | None, ask: bool,
+               decision_id: str | None) -> ChatReply:
+    """A rule about every email of a kind: "just archive promotions", "always ask me about newsletters".
+    Only for archiving, marking read and labelling. The safety checks still run on every email."""
+    about = history.get_decision(decision_id) if decision_id else None
+    if kind is None:
+        if about is None or not family(about.email_type):
+            return ChatReply(reply="Which emails? Open one and ask me there, or say something like \"just archive promotions\".")
+        kind = family(about.email_type)
+    if action is None:
+        action = about.action if about and family(about.email_type) == kind else Action.ARCHIVE if kind == "bulk_mail" else None
+    if action not in HABIT_ACTIONS:
+        return ChatReply(reply="I can only take care of emails like that by archiving, marking them read or labelling them.")
+    seen = [d for d in sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
+            if family(d.email_type) == kind and d.action == action and d.level_source not in ("safety_check", "model_check")
+            and d.autonomy_level != AutonomyLevel.ESCALATE]
+    if about is not None and about in seen:
+        seen.remove(about)
+        seen.insert(0, about)
+    if not seen:
+        return ChatReply(reply="I haven't seen one of those yet. Once one comes in, tell me again and I'll remember!")
+    told = AutonomyLevel.PROCEED_AND_NOTIFY if re.search(r"\b(tell me|let me know|heads up)\b", text) else AutonomyLevel.PROCEED_SILENTLY
+    feedback = FeedbackKind.ALWAYS_ASK_ME if ask else FeedbackKind.ALWAYS_DO_THIS
+    try:
+        _, reply = record_feedback(history, seen[0].id, feedback, scope="kind", desired_level=None if ask else told)
+    except FeedbackError as e:
+        reply = str(e)
+    return ChatReply(reply=reply, decisions=[seen[0].id])
+
+
 def answer(history: History, message: str, decision_id: str | None = None) -> ChatReply:
     text = message.lower().strip()
 
@@ -162,8 +206,8 @@ def answer(history: History, message: str, decision_id: str | None = None) -> Ch
         if not text or "why" in text:
             return _why(decision)
 
-    if re.search(r"\b(always|never|stop asking|ask me)\b", text) or re.search(r"\b(don'?t|do not) ask\b", text):
-        return _rule(history, text)
+    if RULE.search(text):
+        return _rule(history, text, decision_id)
     if "why" in text:
         return ChatReply(reply="Which email? Tap Why? on one and I'll walk you through it!")
     if re.search(r"\b(need|needs|waiting|for me|pending)\b", text):

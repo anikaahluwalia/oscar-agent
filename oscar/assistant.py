@@ -17,13 +17,14 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Literal
 
 import httpx
 from pydantic import BaseModel
 
 from oscar.chat import ChatReply, answer
 from oscar.config import setting
-from oscar.feedback import FeedbackKind, check_allowed, floor_reply, FeedbackError
+from oscar.feedback import FeedbackError, FeedbackKind, check_allowed, check_kind_rule, floor_reply
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.overview import brief, done_in_gmail, is_read_only, latest_per_email, needs_you
@@ -64,6 +65,7 @@ class Proposal(BaseModel):
     decision_id: str
     kind: FeedbackKind
     text: str
+    scope: Literal["sender", "kind"] = "sender"  # this sender, or every email like this one
 
 
 class ModelReply(ChatReply):
@@ -121,10 +123,13 @@ def _tools() -> list[dict]:
         fn("inbox_summary", "How the inbox stands: what needs the user, what Oscar handled, counts by status."),
         fn("what_oscar_knows", "The habits Oscar has learned from the user's feedback."),
         fn("review_results", "How Oscar did on the real inbox, from the user's reviews."),
-        fn("propose_rule", "Suggest a rule for the user to confirm: always do this for a sender, or always ask first.", {
-            "sender": {"type": "string", "description": "the sender's address, or a unique part of it"},
+        fn("propose_rule", "Suggest a rule for the user to confirm: always do this, or always ask first, either for "
+           "one sender or for every email like one of theirs (only archive, mark read or label).", {
+            "sender": {"type": "string", "description": "the sender's address, or a unique part of it (for emails_like_this, "
+                                                       "the sender of an example email)"},
             "action": {"type": "string", "enum": [a.value for a in Action], "description": "optional; which action"},
             "kind": {"type": "string", "enum": ["always_do_this", "always_ask_me"]},
+            "scope": {"type": "string", "enum": ["this_sender", "emails_like_this"], "description": "optional; this_sender by default"},
         }, ["sender", "kind"]),
     ]
 
@@ -211,6 +216,9 @@ RULE_PHRASES: dict[Action, str] = {
 }
 
 
+KIND_VERBS = {Action.ARCHIVE: "archive", Action.MARK_READ: "mark as read", Action.APPLY_LABEL: "label"}
+
+
 def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
     if is_read_only(history):
         return {"error": "rules are off while Oscar only reads the real inbox"}, None
@@ -225,18 +233,26 @@ def _propose(history: History, args: dict) -> tuple[object, Proposal | None]:
     if len({d.sender for d in matches}) > 1:
         return {"error": "that matches more than one sender", "senders": sorted({d.sender for d in matches})[:5]}, None
     decision = matches[0]
+    scope = "kind" if args.get("scope") == "emails_like_this" else "sender"
     if kind == FeedbackKind.ALWAYS_DO_THIS:
         refused = floor_reply(decision)
         if refused:
             return {"refused": refused}, None
     try:
         check_allowed(decision, kind, None)
+        if scope == "kind":
+            check_kind_rule(decision, kind, None)
     except FeedbackError as e:
         return {"error": str(e)}, None
-    phrase = RULE_PHRASES[decision.action].format(who=decision.sender)
-    text = (f"Always {phrase}?" if kind == FeedbackKind.ALWAYS_DO_THIS
-            else f"Always ask you before I {phrase}?")
-    proposal = Proposal(decision_id=decision.id, kind=kind, text=text)
+    if scope == "kind":
+        verb = KIND_VERBS[decision.action]
+        text = (f"Just {verb} emails like this from now on? Anything risky still comes to you."
+                if kind == FeedbackKind.ALWAYS_DO_THIS else f"Always ask you before I {verb} emails like this?")
+    else:
+        phrase = RULE_PHRASES[decision.action].format(who=decision.sender)
+        text = (f"Always {phrase}?" if kind == FeedbackKind.ALWAYS_DO_THIS
+                else f"Always ask you before I {phrase}?")
+    proposal = Proposal(decision_id=decision.id, kind=kind, text=text, scope=scope)
     return {"proposed": text, "note": "shown to the user as a Yes / No card; not saved"}, proposal
 
 

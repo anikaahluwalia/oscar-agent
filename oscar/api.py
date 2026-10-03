@@ -15,6 +15,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from typing import Literal
+
 from pydantic import BaseModel
 
 from oscar import gmail, images
@@ -23,13 +25,13 @@ from oscar.config import API_URL, WEB_URL, setting
 from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
-from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
+from oscar.feedback import ASKS_FOR_MORE, FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, permissions
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
-from oscar.preferences import HABIT_ACTIONS, Preferences
+from oscar.preferences import HABIT_ACTIONS, Preferences, family
 from oscar.review import teaching
 from oscar.voice import describe_learning
 
@@ -147,6 +149,10 @@ class FeedbackRequest(BaseModel):
     decision_id: str
     kind: FeedbackKind
     edited_text: str | None = None
+    # A rule about every email like this one ("always do this for emails like this"), and the
+    # level it sets. Only for archive, mark as read and label; checked in feedback.check_kind_rule.
+    scope: Literal["sender", "kind"] = "sender"
+    desired_level: AutonomyLevel | None = None
 
 
 class FeedbackResponse(BaseModel):
@@ -290,7 +296,7 @@ def chat(request: ChatRequest, history: History = Depends(get_history), http: ht
     rules = [e for e in history.feedback[before:] if e.kind == FeedbackKind.ALWAYS_DO_THIS and not e.blocked_by_floor]
     for event in rules:
         decision = history.get_decision(event.decision_id)
-        done = _approve_waiting(history, decision, tokens, http) if decision else None
+        done = _approve_waiting(history, decision, tokens, http, event.scope) if decision else None
         if done:
             reply = reply.model_copy(update={"reply": done})
     return reply
@@ -346,9 +352,10 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
     if decision is None:
         raise HTTPException(404, f"I can't find decision {request.decision_id}.")
     try:
-        event, reply = _answer(history, decision, request.kind, request.edited_text, tokens, http)
-        if request.kind == FeedbackKind.ALWAYS_DO_THIS and not event.blocked_by_floor:
-            reply = _approve_waiting(history, decision, tokens, http) or reply
+        event, reply = _answer(history, decision, request.kind, request.edited_text, tokens, http,
+                               scope=request.scope, desired_level=request.desired_level)
+        if request.kind in ASKS_FOR_MORE and not event.blocked_by_floor:
+            reply = _approve_waiting(history, decision, tokens, http, event.scope) or reply
     except (FeedbackError, ActionError) as e:
         raise HTTPException(400, str(e))
     except gmail.GmailError as e:
@@ -359,7 +366,8 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
 
 
 def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_text: str | None,
-            tokens: gmail.TokenStore, http: httpx.Client) -> tuple[FeedbackEvent, str]:
+            tokens: gmail.TokenStore, http: httpx.Client, *, scope: Literal["sender", "kind"] = "sender",
+            desired_level: AutonomyLevel | None = None) -> tuple[FeedbackEvent, str]:
     # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back. Gmail
     # goes first, and the feedback is only saved if it worked: it never says "done" (or teaches
     # Oscar) when nothing happened.
@@ -375,21 +383,32 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
             do(history, gmail.GmailClient(tokens, http), decision, by="you")
         elif kind == FeedbackKind.UNDO:
             undo(history, gmail.GmailClient(tokens, http), decision.id)
-    return record_feedback(history, decision.id, kind, edited_text, undoable)
+    return record_feedback(history, decision.id, kind, edited_text, undoable, scope=scope, desired_level=desired_level)
 
 
 DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled"}
 
 
-def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenStore, http: httpx.Client) -> str | None:
-    """A yes to "always do this" also does the asks already waiting from that sender for that
-    action, as if you'd approved each one, so you don't have to go and approve them too. Only
-    for the easy-to-undo actions (archive, mark read, label): anything else still comes to you
-    one at a time. Each is done (and undoable) exactly as an Approve would be."""
+# Asks a rule never clears for you: a safety check, the caution backstop or a floor put them on
+# your list, or he couldn't tell what the email was. Those you answer one at a time.
+NOT_BY_RULE = {"safety_check", "model_check", "caution", "floor", "guess"}
+
+
+def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenStore, http: httpx.Client,
+                     scope: str = "sender") -> str | None:
+    """A yes to a rule ("always do this", "just handle them", "handle and tell me") also does the
+    asks already waiting that it covers, as if you'd approved each one, so you don't have to go
+    and approve them too: from that sender, or (for a rule about emails like this) every email
+    of that kind. Only for the easy-to-undo actions (archive, mark read, label), never for an ask
+    a safety rule or caution made, and at most a check's worth at a time. Each is done (and
+    undoable) exactly as an Approve would be."""
     if decision.action not in HABIT_ACTIONS:
         return None
+    kind = family(decision.email_type)
+    covers = ((lambda d: family(d.email_type) == kind) if scope == "kind"
+              else (lambda d: d.sender == decision.sender))
     waiting = [d for d in needs_you(history)[AutonomyLevel.ASK_FIRST]
-               if d.sender == decision.sender and d.action == decision.action]
+               if d.action == decision.action and covers(d) and d.level_source not in NOT_BY_RULE][:MAX_PER_CHECK]
     done = 0
     for d in waiting:
         try:
@@ -402,7 +421,8 @@ def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenSt
     if not done:
         return None
     were = "one that was" if done == 1 else f"{done} that were"
-    return f"Got it! I {DONE_WORDS[decision.action]} the {were} waiting, and I'll take care of these from now on."
+    later = "I'll just handle emails like this from now on" if scope == "kind" else "I'll take care of these from now on"
+    return f"Got it! I {DONE_WORDS[decision.action]} the {were} waiting, and {later}."
 
 
 def acting_on(tokens: gmail.TokenStore, real: History) -> bool:
