@@ -81,6 +81,8 @@
              background: #16171a; color: #ffffff; box-shadow: 0 0 0 2px #ffffff; font-size: 12px; font-weight: 800;
              line-height: 22px; text-align: center; }
     @media (prefers-reduced-motion: reduce) { .peek, .note { transition: none; animation: none; } }
+    /* "Animate" off in Oscar's Settings. */
+    .still .peek, .still .note { transition: none; animation: none; }
 
     /* One card at a time, just above him. */
     .note { position: fixed; bottom: 82px; z-index: 2147483000; width: 292px; max-width: calc(100vw - 32px); padding: 14px 16px;
@@ -231,7 +233,7 @@
     spot: 1, // where Oscar sits along the bottom: 0 is the far left, 1 the far right
   };
   // What you've already seen, so each card shows once. Kept in this browser only.
-  let memory = { seen: [], quietDay: null, quietCount: null, started: false };
+  let memory = { seen: [], quietDay: null, quietCount: null, started: false, position: null };
 
   const SIZE = 84, EDGE = 24;
   const leftFor = (spot) => EDGE + spot * Math.max(0, window.innerWidth - SIZE - 2 * EDGE);
@@ -260,17 +262,19 @@
     keep();
   }
 
-  // The most important thing you haven't seen yet, one at a time.
+  // The most important thing you haven't seen yet, one at a time. Only the kinds you turned on
+  // under Notifications in Oscar's Settings (safety stops and approvals on, what he handled off).
   function nextCard() {
     const s = state.status;
     if (!s?.connected) return null;
-    const stopped = s.waiting.find((i) => i.level === "ESCALATE" && !seen(i.id));
+    const notify = { approvals: true, safety: true, handled: false, ...(s.settings?.notify ?? {}) };
+    const stopped = notify.safety && s.waiting.find((i) => i.level === "ESCALATE" && !seen(i.id));
     if (stopped) return { kind: "stopped", item: stopped };
-    const asking = s.waiting.find((i) => i.level === "ASK_FIRST" && !seen(i.id));
+    const asking = notify.approvals && s.waiting.find((i) => i.level === "ASK_FIRST" && !seen(i.id));
     if (asking) return { kind: "approval", item: asking };
-    const handled = (s.recent ?? []).find((i) => !seen(i.id));
+    const handled = notify.handled && (s.recent ?? []).find((i) => !seen(i.id));
     if (handled) return { kind: "handled", item: handled };
-    if (s.count && memory.quietCount !== s.count) return { kind: "attention" };
+    if ((notify.approvals || notify.safety) && s.count && memory.quietCount !== s.count) return { kind: "attention" };
     if (!s.count && memory.quietDay !== today()) return { kind: "idle" };
     return null;
   }
@@ -599,7 +603,10 @@
       } },
     el("img", { src: mood(pose), alt: "", draggable: "false" }), count ? el("span", { class: "badge", text: count > 99 ? "99+" : String(count) }) : null);
     draggable(peek);
-    wrap.replaceChildren(peek, card() ?? "", panel());
+    const companion = { show: true, animate: true, ...(s?.settings?.companion ?? {}) };
+    wrap.classList.toggle("still", !companion.animate);
+    // "Show Oscar in Gmail" off: no Oscar in the corner and no cards. The labels on your emails stay.
+    wrap.replaceChildren(...(companion.show ? [peek, card() ?? ""] : []), panel());
   }
 
   let refreshing = null;
@@ -613,6 +620,13 @@
     const status = await ask({ type: "status" });
     state.status = status.ok ? status.data : state.status;
     state.error = status.ok ? null : status.error;
+    // Where he starts, from Oscar's Settings. Once set, dragging him still works until it changes there.
+    const position = status.ok ? status.data.settings?.companion?.position : null;
+    if (position && memory.position !== position) {
+      state.spot = position === "left" ? 0 : 1;
+      memory.position = position;
+      keep();
+    }
     if (status.ok && !memory.started) {
       // The first time: everything already there counts as seen, so you aren't flooded with cards.
       for (const i of [...status.data.waiting, ...(status.data.recent ?? [])]) markSeen(i.id);

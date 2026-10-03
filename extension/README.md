@@ -6,7 +6,9 @@ Oscar inside Gmail, in three parts:
   Needs you or Stopped. They take the place of his Gmail labels in the list, so you don't see both.
 - **Oscar at the bottom of the page**, with a count of what needs you and one card at a time:
   all caught up, what needs you, something he handled (with Undo), an approval, something he
-  stopped, and "Was that right?" (thumbs up, or what he should have done instead).
+  stopped, and "Was that right?" (thumbs up, or what he should have done instead). Which cards
+  show, whether he's there at all, which side he starts on and whether he moves are set in the
+  app, under Settings > Oscar in Gmail and Notifications.
 - **A panel down the right** for the open email: Summary (what it is, what he recommends and why),
   Actions (what he did, Approve, Undo, "always do this" or "always ask me", and "Was that right?"),
   Why? (what mattered and any safety rule) and Thread (his call on each email in it).
