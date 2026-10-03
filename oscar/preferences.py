@@ -5,16 +5,16 @@ confirm in the chat. Email text never becomes feedback.
 
 Two things are learned, and kept apart:
 
-- Which action you want (archive, mark as read, label). Approve and "Right" say the action
-  was right, Decline says it wasn't. That never changes how much he asks.
+- Which action you want (archive, mark as read, label). Approve and "Yes" on the Review page
+  say the action was right, Decline says it wasn't. Approving alone never changes how much he asks.
 - How much he should do on his own. Only an answer that says so counts: Just handle them,
-  Handle and tell me, Keep asking, a Review answer that picks a level, and a no or an undo
-  (he'd have been wrong to do it alone). Each is evidence for one of the four levels (see
-  feedback.normalize). For each scope Oscar keeps a count per level, starting at 1 each (a
-  Dirichlet prior), so
+  Handle + tell me, Keep asking, a Review answer that picks a level, and a no or an undo
+  (he'd have been wrong to do it alone; an undo counts double). Each is evidence for one of the
+  four levels (see feedback.normalize). For each scope Oscar keeps a count per level, starting
+  at 1 each (a Dirichlet prior), so
 
     desired level = the level with the most evidence
-    confidence    = its share of all the counts
+    confidence    = its share of all the counts, the starting 1s included
 
 Scopes, most specific first. The most specific one with something to say wins:
 
@@ -24,14 +24,17 @@ Scopes, most specific first. The most specific one with something to say wins:
     kind of email + action           (3 senders; can reach "quietly")
 
 For one sender: "for emails like this" choices and "always do this" / "always ask me" are
-rules from you, used straight away, and the newer one wins. Other evidence needs at least
-MIN_EVIDENCE answers and MIN_CONFIDENCE confidence.
+rules from you, used straight away, and the newer one wins. Other evidence needs at least 3
+answers (Policy.min_evidence) and a 75% share (Policy.min_confidence). Because each level starts
+at 1, that takes more than 3 in practice: with only "quietly" answers, 4 get him to "do it and
+tell you" and 8 to "quietly". Two undos and nothing else put him back to asking.
 
 Across senders (domain, kind), only for actions that are easy to undo: the explicit
-evidence from every sender adds up, with no sender having to earn it alone first. A kind of
-email needs 6 answers from at least 3 different senders: then "do it and tell you" when 75%
-say he can act, and "quietly" when 80% say quietly and none of the last few said no. You can
-also set a rule for every email of a kind ("always do this for emails like this"), used
+evidence from every sender adds up, with no sender having to earn it alone first. A domain or a
+kind of email needs 6 answers (from at least 2 or 3 different senders). Then it's "do it and tell
+you" once 75% of the counts say he can act, and "quietly" (kinds only) once 80% say quietly and
+none of the last 5 answers about it said no. With only "quietly" answers, that's 6 and 11 answers. You
+can also set a rule for every email of a kind ("always do this for emails like this"), used
 straight away. What you said about one sender always beats what's true across senders, and a
 no or an undo from a sender limits what the kind can give them.
 
@@ -64,7 +67,7 @@ class Policy:
     different thresholds can be compared, and recorded with every eval run."""
 
     name: str
-    min_evidence: float = 3  # answers about one sender before learning can give him more autonomy
+    min_evidence: float = 3  # the fewest answers about one sender that learning acts on (a no or an undo acts sooner)
     min_confidence: float = 0.75
     ask_at_or_below: float = 0.25  # after a no or an undo: back to asking when okays are this share or less
     broad: bool = True  # learn across senders (domain, then kind of email)
@@ -133,7 +136,7 @@ class Record:
     kinds: Counter = field(default_factory=Counter)  # how many of each feedback kind
     senders: set[str] = field(default_factory=set)  # who the evidence about the level is from
     votes: list[AutonomyLevel] = field(default_factory=list)  # the levels you said, oldest first
-    approved: float = 0  # the action was right (Approve, Right)
+    approved: float = 0  # the action was right (Approve, or "Yes" on the Review page)
     declined: float = 0  # the action was wrong (Decline, or a Review answer with another action)
     always_ask: bool = False
     told: AutonomyLevel | None = None  # a level you set as a rule (quietly, or with a heads up)

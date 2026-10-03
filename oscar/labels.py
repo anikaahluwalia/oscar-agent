@@ -6,8 +6,8 @@ so renaming a label never changes what it's for, and undo keeps working because 
 same label id when it's renamed.
 
 There are two kinds:
-- Status labels, his call on an email: Stopped, Needs you and FYI. Emails he handled on his own
-  get no label, since they're already archived or read and a label would just be clutter.
+- Status labels, his call on an email: Stopped, Needs you and FYI. Emails he handled quietly get
+  no label, since they're already archived, read or labelled and a status label would be clutter.
 - Labels for a kind of email, from the "Label it" action: Receipts, and Sorted for anything else.
 
 Names only ever come from you, in Settings, never from an email or the model.

@@ -1,9 +1,10 @@
-"""Oscar's decision loop.
+"""Oscar's decision on one email.
 
-Classify the email, look up the policy, use what Oscar has learned, apply the
-safety floor, then check the email text. Learning can only make Oscar less strict
-than the policy. The floor and the email checks come after it, so they always get
-the last word.
+In order: work out what kind of email it is (the keyword rules, or the model when they find
+nothing), look up the policy level for the action, use what you've taught him, apply the safety
+floor, then check the email text, the model's risk reading and the caution backstop. Learning can
+move the level either way, but everything after it can only make him stricter, so the safety
+steps always get the last word.
 """
 
 from oscar.classification import RISKY_TYPES
@@ -25,15 +26,14 @@ FLAG_TYPES: dict[SafetyCategory, str] = {
     SafetyCategory.COMMITMENT: "commitment",
 }
 
-# How sure Oscar is that the level is right, by what decided it. These are starting
-# values, not measured ones: the eval harness checks them (calibration) on held-out
-# data, and any adjustment is fitted on the learning set only.
+# How sure Oscar is that the level is right, by what decided it. Set by hand, not measured: the
+# eval harness checks how well they match how often he's right (calibration, evals/scoring.py).
 CONFIDENCE = {"safety_check": 0.97, "floor": 0.95, "policy": 0.75, "guess": 0.5, "caution": 0.6, "model_check": 0.85}
 
-# Stage 11. Below this the model's reading is ignored and Oscar treats the email as a guess.
+# Below this the model's reading (Stage 11) is ignored, and an email the rules didn't match stays a guess.
 MODEL_MIN_CONFIDENCE = 0.6
 # Rule actions the model's reading may replace: the ones with no safety floor. Anything floored
-# (money, codes, sending, forwarding, deleting, invites) stays as the rules decided.
+# (money, codes, sending, forwarding, unsubscribing, deleting, invites) stays as the rules decided.
 REPLACEABLE = frozenset({Action.MARK_READ, Action.ARCHIVE, Action.APPLY_LABEL, Action.DRAFT_REPLY})
 # What a risky reading stops, and why, in Oscar's words.
 MODEL_RISK: dict[str, tuple[Action | None, str]] = {
@@ -48,7 +48,7 @@ MODEL_RISK: dict[str, tuple[Action | None, str]] = {
 
 def read_by_model(email: Email, found: Understanding, bulk_action: Action | None) -> Classification:
     """The action for what the model says the email is. Mail sent to a list never gets a reply
-    drafted, whatever the model thinks, and your promotions setting applies to list mail."""
+    drafted, whatever the model thinks. bulk_action swaps archive for list mail, as in classify()."""
     action, rule_action = found.action, None
     if found.kind in ("question", "personal") and is_bulk(email):
         action = Action.ARCHIVE  # nobody is waiting for a reply to a list
@@ -109,7 +109,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         action = habit
     level, reason = autonomy_for(action)
     if classification.rule_action:
-        # A setting swapped the action (mark promos read instead of archiving): it changes what he
+        # bulk_action swapped the action (mark promos read instead of archiving): it changes what he
         # does, not how sure he is, so a new sender is still asked about first.
         rule_level, rule_reason = autonomy_for(classification.rule_action)
         if is_stricter(rule_level, level):
@@ -122,7 +122,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
 
     learned = careful = False
     # What you've taught him: this sender first, then (for easy-to-undo actions on email he
-    # recognised) senders at the same domain, then emails like it. Never past notify for those.
+    # recognised) senders at the same domain, then emails like it. A domain never goes past notify.
     suggestion = (preferences.suggest(action, level, email.sender, classification.email_type, broad=not guess)
                   if preferences else None)
     if suggestion and guess and is_stricter(AutonomyLevel.PROCEED_AND_NOTIFY, suggestion.level):

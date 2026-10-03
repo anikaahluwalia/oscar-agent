@@ -103,8 +103,9 @@ def is_bulk(email: Email) -> bool:
 
 
 def classify(email: Email, bulk_action: Action | None = None) -> Classification:
-    """The action for an email. bulk_action is what you want done with mail sent to a list
-    (mark as read, or archive); without it, list mail that matches nothing else is marked read."""
+    """The action for an email. bulk_action replaces archive for mail sent to a list (mark as read,
+    say); without it, list mail that matches nothing else is marked read. The app no longer has
+    this setting (Oscar learns it from your answers instead); some regression cases and tests still set it."""
     text = f"{email.subject}\n{email.body}".lower()
     bulk = is_bulk(email)
     for action, patterns in RULES:

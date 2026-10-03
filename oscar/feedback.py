@@ -1,8 +1,8 @@
-"""User feedback on Oscar's decisions.
+"""What you tell Oscar about his decisions: the buttons in the app and rules from the chat.
 
-Stage 4 only records feedback. Oscar doesn't change what he does because of it
-until Stage 5. Feedback can't get around the safety floor: "always do this" on a
-risky decision is saved but marked blocked_by_floor, and Oscar says so.
+This file checks and saves it; oscar/preferences.py turns it into what he learns. Feedback can't
+get around the safety floor: asking for more ("always do this", Just handle them, Handle + tell me)
+on a risky decision is saved but marked blocked_by_floor, Oscar says why, and learning skips it.
 """
 
 from datetime import datetime
@@ -66,7 +66,7 @@ class FeedbackEvent(BaseModel):
     # How much you said he should ask (a Review answer, or Just handle them / Handle and tell me /
     # Keep asking), or for an "emails like this" rule, the level it sets. None: you didn't say.
     desired_level: AutonomyLevel | None = None
-    # Whether the action was the right one for this email: Approve and Right say yes, Decline says
+    # Whether the action was the right one for this email: Approve and Review's "Yes" say yes, Decline says
     # no. Kept apart from desired_level, so approving never counts as "you can stop asking".
     action_feedback: Literal["CORRECT", "INCORRECT"] | None = None
     # Who a rule ("always do this", "always ask me", forget) is about: this sender, or every email
@@ -97,7 +97,7 @@ def normalize(event: FeedbackEvent) -> Learned:
     it came from.
 
     Only an answer that says the level counts: Just handle them, Handle and tell me, Keep asking,
-    or a Review answer with a level. Approving, and "Right" in Review, only say the action was
+    or a Review answer with a level. Approving, and "Yes" in Review, only say the action was
     right (ACTION_ONLY): they never mean "stop asking", and never "keep asking". A no or an undo
     says he'd have been wrong to do it alone, so he should have asked. "Always" rules, Forget and
     "got it" are rules or nothing, so they read as CORRECT or SKIP here.
@@ -116,7 +116,8 @@ def normalize(event: FeedbackEvent) -> Learned:
 
 
 def action_verdict(event: FeedbackEvent) -> Literal["CORRECT", "INCORRECT"] | None:
-    """Whether this feedback said the action was right, for lines saved before it was recorded."""
+    """Whether this feedback said the action was right. Older lines have no action_feedback, so it's
+    worked out from the kind."""
     if event.action_feedback:
         return event.action_feedback
     if event.kind in (FeedbackKind.APPROVE, FeedbackKind.EDIT_THEN_SEND):
@@ -156,7 +157,7 @@ OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
 REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
-# Change nothing in Gmail: they only teach him (or untaught him).
+# Change nothing in Gmail: they only teach him (or make him forget).
 TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.FORGET, *CHOICES}
 ASKS_FOR_MORE = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.JUST_HANDLE_IT, FeedbackKind.HANDLE_AND_TELL_ME}
 
@@ -169,7 +170,7 @@ def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | Non
     if kind in CHOICES and decision.autonomy_level == AutonomyLevel.ESCALATE:
         raise FeedbackError("I bring these straight to you, so there's nothing to teach me here.")
     if kind == FeedbackKind.FORGET or (decision.source == "gmail" and kind in TEACHING_ONLY) or kind in CHOICES:
-        return  # these only teach him (or untaught him); they're fine on any email
+        return  # these only teach him (or make him forget); they're fine on any email
     if decision.source == "gmail" and kind == FeedbackKind.UNDO:
         if not undoable:
             raise FeedbackError("I didn't do anything in Gmail with that one, so there's nothing to undo.")

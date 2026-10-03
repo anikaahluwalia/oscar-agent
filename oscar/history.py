@@ -1,7 +1,9 @@
-"""Keeps Oscar's decisions and the feedback given on them.
+"""Keeps everything about one inbox: Oscar's decisions, your feedback and reviews, what he did
+in Gmail, and so on.
 
-If a data folder is given, everything is also appended to JSON Lines files
-there and loaded back on startup. Without one, history only lives in memory.
+If a data folder is given, each record is also appended to a JSON Lines file there and loaded
+back on startup. Settings and categories are small, so they're saved as whole JSON files instead.
+Without a data folder, history only lives in memory.
 """
 
 from __future__ import annotations

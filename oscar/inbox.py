@@ -1,8 +1,10 @@
-"""Oscar on a real Gmail inbox, read-only (Stage 9).
+"""Oscar on a real Gmail inbox.
 
 sync() reads the newest emails Oscar hasn't seen, decides on each one, and logs
-the decision with where it came from. Nothing is done in Gmail. Decisions are
-logged before anyone reviews them, so reviews score what Oscar decided on his own.
+the decision with where it came from (Stage 9). Nothing is done in Gmail unless you've
+turned acting on (Stage 12): then he does his undoable actions on new emails and keeps his
+status labels up to date. Decisions are logged before anyone reviews them, so reviews
+score what Oscar decided on his own.
 
 It also notes what you did with recent emails since (still in the inbox? still
 unread? deleted?), as a second opinion next to your reviews.
@@ -164,7 +166,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
 def label_inbox(history: History, gmail: GmailClient, still_acting: Callable[[], bool],
                 limit: int = TAGS_PER_CHECK) -> int:
     """Bring the status labels in Gmail up to date with Oscar's latest call on each email, newest
-    first, a few at a time. Only emails whose label is missing, out of date, or should come off
+    first, up to `limit` per check. Only emails whose label is missing, out of date, or should come off
     (he handled it, or you answered) are touched."""
     waiting = {d.id for d in needs_you(history)[AutonomyLevel.ASK_FIRST]}
     changed = 0

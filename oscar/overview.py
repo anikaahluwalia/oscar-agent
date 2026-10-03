@@ -1,4 +1,5 @@
-"""Summaries for the web app: Oscar's brief and how much he does for each sender."""
+"""What the web app's pages show: Oscar's brief, what's waiting on you, and how much he does for
+each sender and kind of email."""
 
 from oscar.classifier import TYPES
 from oscar.feedback import FeedbackKind
@@ -50,8 +51,8 @@ def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
     return {level: [d for d in current if d.autonomy_level == level and d.id not in answered] for level in levels}
 
 
-# Asks a rule never clears for you: a safety check, the caution backstop or a floor put them on
-# your list, or he couldn't tell what the email was. Those you answer one at a time.
+# Asks a rule never clears for you: a safety check (his or the model's), the caution backstop or a
+# floor put them on your list, or he couldn't tell what the email was. Those you answer one at a time.
 NOT_BY_RULE = {"safety_check", "model_check", "caution", "floor", "guess"}
 
 
@@ -203,7 +204,8 @@ def _rule_decisions(events: list) -> dict[tuple, str]:
 def evidence_label(row: dict, prefs: Preferences) -> str:
     """How much a pattern rests on, in words rather than a number: "rule" when you set it,
     "strong" once well past what it took to start (twice the answers and twice the senders,
-    with most of them agreeing), "moderate" once it's enough to act on, "learning" before that."""
+    with at least Policy.quiet_confidence, 80%, agreeing), "moderate" once it's enough to act on,
+    "learning" before that."""
     if row["rule"]:
         return "rule"
     if row["level"] is None:

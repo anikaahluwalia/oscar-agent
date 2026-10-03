@@ -1,9 +1,10 @@
-"""Talking to Oscar.
+"""The basic chat, with no language model.
 
-No LLM yet: Oscar understands a few kinds of message and answers from what he
-already knows. Rules ("always archive emails from ...") go through the same
-feedback path as the buttons, so the safety floor answers here too. Anything
-else gets an honest "I can't do that yet".
+oscar/assistant.py answers with a model when there's a key, and falls back to this when there
+isn't or the model fails. Here Oscar understands a few kinds of message by keywords and answers
+from what he already knows. Rules ("always archive emails from ...", "just archive promotions")
+go through the same feedback path as the buttons, so the safety floor answers here too. Anything
+else gets "That one's beyond me for now" and a list of what he can do.
 """
 
 import re

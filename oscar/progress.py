@@ -26,7 +26,7 @@ from oscar.models import AutonomyLevel, Decision
 from oscar.preferences import HABIT_ACTIONS, family
 from oscar.review import answer_for, grade_answer
 
-WINDOW = 20  # how many graded decisions "recent" and "earlier" each look at
+WINDOW = 20  # the most graded decisions "recent" and "earlier" each look at
 MIN_GRADED = 5  # fewer answers than this say too little for a percentage
 DAYS = 14  # up to two weeks of email is shown per day, longer per week
 WEEKS = 26  # the trend goes back at most this many points
@@ -155,7 +155,8 @@ def _learned_most(history: History) -> list[dict]:
 
 def progress(history: History) -> dict:
     """Everything the Progress page shows. "recent" and "earlier" are the latest and the first
-    WINDOW decisions you answered; "earlier" is only there when the two don't overlap."""
+    decisions you answered, up to WINDOW each and never overlapping. "earlier" only shows once each
+    side has MIN_GRADED. Until then "recent" covers all of them, and below MIN_GRADED there's none."""
     rows = graded(history)
     size = min(WINDOW, len(rows) // 2)
     enough = len(rows) >= MIN_GRADED

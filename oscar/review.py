@@ -69,9 +69,9 @@ class Reason(str, Enum):
 
 Why = Literal["preference", "misread", "risk"]
 
-# What each level can be done with. The safety floor never lets Oscar quietly reply,
-# forward or unsubscribe, and money and passwords only ever come to you, so a review
-# can't ask for those: no version of Oscar could pass it.
+# What each level can be done with. The safety floor never lets Oscar quietly reply, forward,
+# unsubscribe, accept an invite or delete, and money and passwords only ever come to you, so a
+# review can't ask for those: no version of Oscar could pass it.
 QUIET_ACTIONS = frozenset({Action.MARK_READ, Action.ARCHIVE, Action.APPLY_LABEL, Action.DRAFT_REPLY})
 NEVER_ASKED = frozenset({Action.MOVE_MONEY, Action.SEND_CREDENTIALS})
 
@@ -333,12 +333,12 @@ def summary(history: History) -> dict:
 def _lesson(decision: Decision, review: Review, right: Answer) -> list[FeedbackEvent]:
     """What one full answer teaches (FeedbackKind.REVIEW).
 
-    Right: the action was right, and nothing more. It isn't a vote for the level he used: "Right"
+    "Yes": the action was right, and nothing more. It isn't a vote for the level he used: "Yes"
     on something he asked about means "yes, archive it", not "keep asking me". How much he should
-    ask is said with Just handle them / Handle and tell me / Keep asking, or a Review answer that
+    ask is said with Just handle them / Handle + tell me / Keep asking, or a Review answer that
     picks a level. Should have been quietly or with a heads up, with an action: one answer for
     that level and action. Acting when you'd have done something else: one answer that he should
-    have asked about what he did. One answer is never enough on its own (preferences.MIN_EVIDENCE).
+    have asked about what he did. One answer is never enough on its own (Policy.min_evidence is 3).
     A missed risk: always ask about it, which can only make him stricter, so it's a rule straight away.
     """
     def event(kind: FeedbackKind, action: Action, desired: AutonomyLevel | None = None,

@@ -1,4 +1,5 @@
-"""How Oscar words things. Everything the user reads about a decision comes from here.
+"""How Oscar words things. Most of what you read about a decision comes from here; agent.py
+adds the "I stopped this one" messages and the short factors for the UI.
 
 His voice: a small, loyal, cheerful Shih Tzu who watches the door for you. Upbeat
 about good news (exclamation marks welcome), calm and firm about anything risky,
@@ -60,7 +61,7 @@ def describe_learning(row: dict) -> str:
     return f"{what}: {row['reason']}, so {LEVEL_HABITS[row['level']]}."
 
 
-# On a real inbox in Stage 9 Oscar only reads, so he says what he would do.
+# While Oscar only reads a real inbox (read_only), he says what he would do.
 READ_ONLY_TEMPLATES: dict[AutonomyLevel, str] = {
     AutonomyLevel.PROCEED_SILENTLY: "Easy one! I'd {phrase} without bothering you, since {reason}.",
     AutonomyLevel.PROCEED_AND_NOTIFY: "I'd {phrase} and give you a heads up, since {reason}.",

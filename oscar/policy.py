@@ -1,6 +1,6 @@
-"""Baseline policy: a fixed table mapping each action to one autonomy level.
+"""Baseline policy: the starting autonomy level for each action, before learning and the safety steps.
 
-The level depends only on the action — not the sender, the content, or the user.
+The level depends only on the action: not the sender, the content, or you.
 """
 
 from oscar.models import Action, AutonomyLevel

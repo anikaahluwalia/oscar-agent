@@ -52,7 +52,7 @@ class Classification(BaseModel):
     action: Action
     matched_pattern: str | None = None  # None means the fallback was used
     email_type: str = "unknown"  # what kind of email Oscar thinks it is (see classifier.TYPES)
-    rule_action: Action | None = None  # the matching rule's own action, when a setting swapped it
+    rule_action: Action | None = None  # the matching rule's own action, when bulk_action swapped it
 
 
 def new_id() -> str:
@@ -109,8 +109,9 @@ class Decision(BaseModel):
     noticed: str | None = None  # the phrase that triggered the decision, if any
     safety_flags: list[SafetyCategory] = Field(default_factory=list)
     learned: bool = False  # True when the level came from feedback
-    # Which step decided the level: the policy table, a guess (nothing matched),
-    # what Oscar learned, the safety floor for the action, or a safety check on the email.
+    # Which step decided the level: the policy table, a guess (nothing matched), what Oscar learned,
+    # the safety floor for the action, a safety check on the email, the caution backstop, or the
+    # model reading it as risky.
     level_source: Literal["policy", "guess", "learned", "floor", "safety_check", "caution", "model_check"] = "policy"
     steps: list[str] = Field(default_factory=list)  # Oscar's working notes, in order
     email_type: str = "unknown"  # what kind of email Oscar thinks it is
@@ -136,8 +137,8 @@ class Decision(BaseModel):
     caution: str | None = None
     preference: PreferenceUsed | None = None
     reminder: Reminder | None = None  # an event or due date the email mentions (oscar/reminders.py)
-    # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he
-    # didn't do anything; the decision is what he would have done.
+    # "gmail" decisions are on a real inbox. Unless acting was on (see acting above), he didn't do
+    # anything; the decision is what he would have done.
     source: Literal["demo", "gmail"] = "demo"
     gmail: GmailInfo | None = None
     policy_version: str | None = None  # the git commit that made this decision

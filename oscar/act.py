@@ -10,8 +10,8 @@ what the email had at the time, so undo puts it back the way it was.
 Separately, emails get his call as a coloured label (Stopped, Needs you or FYI), so you
 can see it in Gmail itself, even on your phone. That's a note on the email, not the
 email's action: it never reads, archives or answers anything, and an email he stopped
-still gets "Stopped". Emails he handled on his own get no status label. What each label
-is called is up to you (oscar/labels.py).
+still gets "Stopped". Emails he handled quietly get no status label. What each label is
+called is up to you (oscar/labels.py).
 """
 
 from __future__ import annotations
@@ -37,7 +37,9 @@ CHANGES: dict[Action, tuple[list[str], list[str]]] = {
     Action.APPLY_LABEL: ([], []),
 }
 ACTED_LEVELS = frozenset({AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY})
-MAX_PER_CHECK = 25  # the most Oscar does on his own in one check, so a bug can't touch the whole inbox
+# The most Oscar does in Gmail in one go (one check, or the asks a yes to a rule clears), so a bug
+# can't touch the whole inbox.
+MAX_PER_CHECK = 25
 
 
 # Oscar's call on an email, in the words the app and the Gmail extension show. "Handled" only
@@ -76,7 +78,7 @@ class Tag(BaseModel):
     """The status label Oscar last put on an email, by role (oscar/labels.py)."""
     email_id: str
     message_id: str
-    label: str | None  # None: no status label on it (he handled it, or it's gone from Gmail)
+    label: str | None  # None: no status label on it (he handled it quietly, you answered, or it's gone from Gmail)
     gone: bool = False  # the email isn't in Gmail any more, so he stops trying to label it
     added: bool = False  # he put it on (it wasn't already there), so it's his to take off later
     at: datetime = Field(default_factory=now)

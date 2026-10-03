@@ -39,7 +39,7 @@ PROFILE_SCOPES = ("openid", "email", "profile")  # your name and photo, for the 
 # The labels Oscar makes and uses are listed in oscar/labels.py, by role. If you already have a
 # label with one of their names, he uses yours and leaves its colour alone.
 OLD_PREFIX = "Oscar/"  # his labels used to be "Oscar/Receipts" and so on; still his, so undo works
-SYSTEM_LABELS = frozenset({"UNREAD", "INBOX"})  # the only Gmail labels Oscar may add or remove
+SYSTEM_LABELS = frozenset({"UNREAD", "INBOX"})  # apart from his own, the only labels Oscar may add or remove
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
@@ -152,7 +152,8 @@ class TokenStore:
 
 
 class GmailClient:
-    """Access to one Gmail account. Reads go through _get. The one write is modify_labels."""
+    """Access to one Gmail account. Reads go through _get. The only writes change labels: modify_labels,
+    label_id (making one of his labels) and rename_label."""
 
     def __init__(self, tokens: TokenStore, http: httpx.Client | None = None, names: dict[str, str] | None = None) -> None:
         self.tokens = tokens
@@ -209,7 +210,7 @@ class GmailClient:
     def emailed_before(self, address: str) -> bool:
         return bool(self._get("/messages", q=f"in:sent to:{address}", maxResults=1).get("messages"))
 
-    # --- Stage 12: the only writes ------------------------------------------------
+    # --- The only writes: labels (Stage 12), and renaming his labels (Stage 15) ---
 
     def _post(self, path: str, body: dict) -> dict:
         response = self.http.post(GMAIL_URL + path, json=body, headers={"Authorization": f"Bearer {self._access_token()}"})

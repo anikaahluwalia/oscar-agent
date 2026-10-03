@@ -527,8 +527,8 @@ def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenSt
     asks already waiting that it covers, as if you'd approved each one, so you don't have to go
     and approve them too: from that sender, or (for a rule about emails like this) every email
     of that kind. Only for the easy-to-undo actions (archive, mark read, label), never for an ask
-    a safety rule or caution made, and at most a check's worth at a time. Each is done (and
-    undoable) exactly as an Approve would be."""
+    a safety rule, caution or a guess made (overview.NOT_BY_RULE), and at most a check's worth at
+    a time. Each is done (and undoable) exactly as an Approve would be."""
     waiting = waiting_for_rule(history, decision, scope)[:MAX_PER_CHECK]
     done = 0
     for d in waiting:
@@ -563,7 +563,7 @@ def stop_acting(real: History) -> None:
     real.set_setting("acting_since", None)
 
 
-# --- Gmail, read-only (Stage 9) ---------------------------------------------
+# --- Gmail: connecting and checking (Stage 9), and acting (Stage 12) ---------
 
 _states: dict[str, float] = {}  # sign-in attempts in progress, so a callback can't be forged
 
@@ -676,7 +676,7 @@ def gmail_sync(
     real: History = Depends(get_real_history),
 ) -> dict:
     """Read the newest emails and decide on each. Nothing changes in Gmail unless acting is on;
-    then he also does what he's sure of and labels each email with his call.
+    then he also does what he's sure of and puts a status label on the emails worth a look.
     Oscar also does this on his own every few minutes; this is for checking right now."""
     if not tokens.load():
         raise HTTPException(409, "Gmail isn't connected.")
