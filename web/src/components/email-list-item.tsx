@@ -22,7 +22,7 @@ export function EmailListItem({ item, selected, onSelect }: Props) {
       >
         <span className="flex items-center gap-2">
           {/* A small dot for anything still waiting on you. */}
-          {isOpen(item) && <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-label="Waiting on you" />}
+          {isOpen(item) && <span className="size-1.5 shrink-0 rounded-full bg-foreground" aria-label="Waiting on you" />}
           <span className="min-w-0 flex-1 truncate text-sm font-medium">{decision.sender}</span>
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatTime(decision.created_at)}</span>
         </span>

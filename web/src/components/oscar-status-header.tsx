@@ -76,7 +76,7 @@ export function OscarStatusHeader({ items, brief, realInbox }: { items: Decision
       <div className="flex min-w-0 flex-col gap-1.5">
         <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
           {lead}
-          <span className="text-gradient">{accent}</span>
+          {accent}
           {rest}
         </h1>
         <p className="text-muted-foreground">{sentence}</p>

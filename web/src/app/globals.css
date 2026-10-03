@@ -20,7 +20,6 @@
   --color-status-blocked: var(--status-blocked);
   --color-surface-hover: var(--surface-hover);
   --color-brand: var(--brand);
-  --color-brand-2: var(--brand-2);
   --shadow-card: var(--shadow-card);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -61,55 +60,54 @@
 }
 
 :root {
-  /* Light and airy: a faintly blue page, white cards with a soft shadow, near-black text.
-     Greys are dark enough to read on white (4.5:1 or more). */
-  --background: #f4f6fb;
-  --foreground: #14161c;
+  /* Oscar's own colours: charcoal, white and soft grey, like his coat. There's no brand colour;
+     colour only ever means something (the four statuses). Greys read at 4.5:1 or more. */
+  --background: #f6f6f7;
+  --foreground: #16171a;
   --card: #ffffff;
-  --card-foreground: #14161c;
+  --card-foreground: #16171a;
   --popover: #ffffff;
-  --popover-foreground: #14161c;
-  --primary: #14161c;
+  --popover-foreground: #16171a;
+  --primary: #16171a;
   --primary-foreground: #ffffff;
-  --secondary: #eef1f8;
-  --secondary-foreground: #14161c;
-  --muted: #eef1f6;
-  --muted-foreground: #596073;
-  --accent: #eef1f8;
-  --accent-foreground: #14161c;
+  --secondary: #efeff1;
+  --secondary-foreground: #16171a;
+  --muted: #efeff1;
+  --muted-foreground: #5c5f68;
+  --accent: #efeff1;
+  --accent-foreground: #16171a;
   --destructive: #b42318;
-  --border: #e4e8f1;
-  --input: #d9deea;
-  --ring: #3d63e8;
-  --chart-1: #c9d3ee;
-  --chart-2: #8a9ccf;
-  --chart-3: #5b70b3;
-  --chart-4: #3d63e8;
-  --chart-5: #23336b;
+  --border: #e6e6e9;
+  --input: #dadade;
+  --ring: #16171a;
+  --chart-1: #d4d4d8;
+  --chart-2: #a1a1aa;
+  --chart-3: #71717a;
+  --chart-4: #3f3f46;
+  --chart-5: #18181b;
   --radius: 0.75rem;
   /* Status colours: dark enough for text on their own tint. */
   --status-handled: #11613f;
   --status-fyi: #2449b0;
   --status-needs: #7a4a00;
   --status-blocked: #a11f15;
-  --surface-hover: #eef1f8;
-  /* The accent, and the second colour of the headline gradient. */
-  --brand: #3d63e8;
-  --brand-2: #7652e6;
-  --shadow-card: 0 1px 2px rgb(20 24 40 / 0.04), 0 10px 28px rgb(20 24 40 / 0.06);
+  --surface-hover: #efeff1;
+  /* The accent is ink, so selected things are solid black (white in dark mode). */
+  --brand: #16171a;
+  --shadow-card: 0 1px 2px rgb(22 23 26 / 0.04), 0 8px 24px rgb(22 23 26 / 0.05);
   /* One colour per autonomy level */
   --level-silent: #2fb67a;
   --level-notify: #4a7cf0;
   --level-ask: #e09a2b;
   --level-escalate: #e05545;
-  --sidebar: #fbfcfe;
-  --sidebar-foreground: #14161c;
-  --sidebar-primary: #14161c;
+  --sidebar: #fbfbfc;
+  --sidebar-foreground: #16171a;
+  --sidebar-primary: #16171a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e9eefc;
-  --sidebar-accent-foreground: #1c3c99;
-  --sidebar-border: #e4e8f1;
-  --sidebar-ring: #3d63e8;
+  --sidebar-accent: #ececef;
+  --sidebar-accent-foreground: #16171a;
+  --sidebar-border: #e6e6e9;
+  --sidebar-ring: #16171a;
 }
 
 .dark {
@@ -143,8 +141,7 @@
   --status-fyi: oklch(0.78 0.05 240);
   --status-needs: oklch(0.82 0.11 75);
   --status-blocked: oklch(0.75 0.12 20);
-  --brand: oklch(0.76 0.11 275);
-  --brand-2: oklch(0.74 0.14 295);
+  --brand: #f5f5f5;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
   --sidebar: #0d0d0d;
   --sidebar-foreground: #f5f5f5;
@@ -179,12 +176,4 @@
   h1, h2, h3 {
     font-family: var(--font-heading);
   }
-}
-
-/* Oscar's gradient, for one phrase of a headline at most. */
-@utility text-gradient {
-  background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }

@@ -22,14 +22,14 @@ function EmailPreview({ decision }: { decision: DecisionWithFeedback["decision"]
     <div className="flex flex-col gap-3 rounded-2xl bg-muted/40 p-4">
       {preview ? (
         <p className="leading-relaxed">
-          <Highlight text={preview} phrase={noticed} className="bg-brand/20" />
+          <Highlight text={preview} phrase={noticed} className="bg-status-needs/15" />
         </p>
       ) : (
         <p className="text-sm italic text-muted-foreground">No preview. This email is mostly images or links.</p>
       )}
       {noticed && !shown && (
         <p className="text-sm text-muted-foreground">
-          Oscar noticed <mark className="rounded-sm bg-brand/20 px-0.5 text-foreground">&ldquo;{noticed}&rdquo;</mark>
+          Oscar noticed <mark className="rounded-sm bg-status-needs/15 px-0.5 text-foreground">&ldquo;{noticed}&rdquo;</mark>
         </p>
       )}
       {link && (
@@ -53,7 +53,7 @@ function EmailLinks({ decision }: { decision: DecisionWithFeedback["decision"] }
     <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
       {decision.noticed ? (
         <span>
-          Oscar noticed <mark className="rounded-sm bg-brand/20 px-0.5 text-foreground">&ldquo;{decision.noticed}&rdquo;</mark>
+          Oscar noticed <mark className="rounded-sm bg-status-needs/15 px-0.5 text-foreground">&ldquo;{decision.noticed}&rdquo;</mark>
         </span>
       ) : (
         <span />
