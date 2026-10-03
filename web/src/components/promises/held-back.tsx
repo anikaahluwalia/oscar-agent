@@ -55,7 +55,7 @@ function Row({ item }: { item: DecisionWithFeedback }) {
         aria-label={`Why Oscar held back "${decision.subject || "this email"}"`}
         className="flex min-h-11 shrink-0 items-center rounded-full px-3 text-[13px] font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground"
       >
-        Why
+        Why?
       </button>
     </li>
   );
