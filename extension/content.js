@@ -38,7 +38,18 @@
     close: "M6 6l12 12M18 6L6 18",
     chevron: "M6 9l6 6 6-6",
   };
-  const mood = (name) => chrome.runtime.getURL(`moods/${name}.webp`);
+  // After the extension is reloaded or updated, this copy keeps running in an open Gmail tab but
+  // can't reach Chrome any more ("Extension context invalidated"). It then tidies itself away
+  // (retire, below) and the new copy takes over when Gmail is next loaded.
+  const alive = () => {
+    try {
+      return !!chrome.runtime?.id;
+    } catch {
+      return false;
+    }
+  };
+  const url = (path) => (alive() ? chrome.runtime.getURL(path) : "");
+  const mood = (name) => url(`moods/${name}.webp`);
   const today = () => new Date().toDateString();
   const time = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "");
   const address = (sender) => sender.match(/<([^>]+)>/)?.[1] ?? sender;
@@ -197,6 +208,11 @@
 
   const ask = (message) =>
     new Promise((resolve) => {
+      if (!alive()) {
+        retire();
+        resolve({ ok: false, error: "Reload the page to reconnect to Oscar." });
+        return;
+      }
       try {
         chrome.runtime.sendMessage(message, (reply) => resolve(reply ?? { ok: false, error: "I can't reach Oscar right now." }));
       } catch {
@@ -529,7 +545,7 @@
       : s?.count ? "thinking" : "sleeping";
     return el("section", { class: "panel", role: "dialog", "aria-label": "Oscar", hidden: !state.open },
       el("div", { class: "head" },
-        el("img", { src: chrome.runtime.getURL("icons/oscar-48.png"), alt: "" }),
+        el("img", { src: url("icons/oscar-48.png"), alt: "" }),
         el("p", { class: "name" }, "Oscar", s?.read_only ? el("small", { text: "I only read your Gmail for now" }) : null),
         el("button", { class: "x", type: "button", "aria-label": "Close", onclick: () => { state.open = false; render(); } }, icon("close", 18))),
       item ? el("div", { class: "tabs", role: "tablist" }, TABS.map(([key, words]) =>
@@ -585,6 +601,7 @@
   }
 
   function render() {
+    if (!alive()) return retire();
     dark = gmailIsDark();
     wrap.classList.toggle("dark", dark);
     const s = state.status;
@@ -611,6 +628,7 @@
 
   let refreshing = null;
   function refresh() {
+    if (!alive()) return Promise.resolve(retire());
     if (!loaded) return Promise.resolve();
     refreshing ??= load().finally(() => (refreshing = null));
     return refreshing;
@@ -665,6 +683,7 @@
   let fetching = false;
 
   async function paintRows() {
+    if (!alive()) return retire();
     const rows = [...document.querySelectorAll("tr.zA")];
     const wanted = [...new Set(rows.map(threadOf).filter((id) => id && !chips.has(id)))].slice(0, 100);
     if (wanted.length && !fetching && state.status?.connected) {
@@ -695,33 +714,60 @@
       if (status) {
         for (const tag of row.querySelectorAll(".ar.as, .at")) {
           const name = (tag.getAttribute("title") ?? tag.textContent ?? "").trim();
-          if (STATUS[name]) (tag.closest(".ar") ?? tag).style.display = "none";
+          if (STATUS[name]) {
+            const label = tag.closest(".ar") ?? tag;
+            label.style.display = "none";
+            label.dataset.oscarHid = "";
+          }
         }
       }
     }
   }
 
   let soon = null;
-  new MutationObserver(() => {
+  const watcher = new MutationObserver(() => {
     clearTimeout(soon);
     soon = setTimeout(paintRows, 400);
-  }).observe(document.body, { childList: true, subtree: true });
+  });
+  watcher.observe(document.body, { childList: true, subtree: true });
 
   // The open email changes without a page load: watch the address, and check the page now and then.
   let lastThread = null;
-  window.addEventListener("hashchange", () => setTimeout(refresh, 600));
-  window.addEventListener("resize", () => render());
+  const onHash = () => setTimeout(refresh, 600);
+  const onResize = () => render();
+  window.addEventListener("hashchange", onHash);
+  window.addEventListener("resize", onResize);
   // Escape closes the panel when you're in it; anywhere else it's Gmail's.
   host.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.open) { state.open = false; render(); }
   });
-  setInterval(() => {
+  const watching = setInterval(() => {
     const now = openThread();
     if (now !== lastThread) {
       lastThread = now;
       refresh();
     }
   }, 1500);
-  setInterval(refresh, 60_000);
+  const checking = setInterval(refresh, 60_000);
+
+  // This copy can't reach Chrome any more: stop everything and take Oscar and the chips off the page.
+  let retired = false;
+  function retire() {
+    if (retired) return;
+    retired = true;
+    watcher.disconnect();
+    clearTimeout(soon);
+    clearInterval(watching);
+    clearInterval(checking);
+    window.removeEventListener("hashchange", onHash);
+    window.removeEventListener("resize", onResize);
+    host.remove();
+    for (const chip of document.querySelectorAll("[data-oscar-chip]")) chip.remove();
+    for (const label of document.querySelectorAll("[data-oscar-hid]")) {
+      label.style.display = "";
+      delete label.dataset.oscarHid;
+    }
+  }
+
   render();
 })();
