@@ -23,6 +23,10 @@
     PERMANENTLY_DELETE: "Delete it for good", SEND_CREDENTIALS: "Send login details", MOVE_MONEY: "Send money",
   };
   const DID = { ARCHIVE: "Archived", MARK_READ: "Marked as read", APPLY_LABEL: "Labelled" };
+  // What he did, naming the label for "Label it": 'Labelled "Receipts"'. The name is the one from
+  // Oscar's Settings, sent by the API with each email.
+  const didWords = (item, action) =>
+    action === "APPLY_LABEL" && item.label ? `Labelled "${item.label}"` : DID[action] ?? "Done";
   const LIKE_THIS_ACTIONS = new Set(["ARCHIVE", "MARK_READ", "APPLY_LABEL"]);
   const INSTEAD = [
     ["ASK_FIRST", "Should have asked"], ["PROCEED_AND_NOTIFY", "Should have told me"],
@@ -346,7 +350,7 @@
     if (state.said && c.kind !== "feedback") return note("", el("p", { class: "note-text", text: state.said }));
     if (c.kind === "handled") {
       return note("", el("p", { class: "note-title" }, el("span", { class: "tick bg-handled handled-t" }, icon("check", 14)), "Oscar handled this"),
-        el("p", { class: "note-text" }, `${DID[item.done?.action] ?? "Done"} · `, el("b", { text: item.subject || "(no subject)" })),
+        el("p", { class: "note-text" }, `${didWords(item, item.done?.action)} · `, el("b", { text: item.subject || "(no subject)" })),
         el("div", { class: "row" },
           el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "UNDO", () => {
             markSeen(item.id);
@@ -425,7 +429,7 @@
 
   function recommends(item) {
     if (item.level === "ESCALATE") return "Leave it with me. Don't reply, click its links or send anything.";
-    if (item.undoable) return `${DID[item.done.action] ?? "Done"}. You can undo it if that wasn't right.`;
+    if (item.undoable) return `${didWords(item, item.done.action)}. You can undo it if that wasn't right.`;
     const doing = DOING[item.action] ?? "Look at it";
     return item.level === "ASK_FIRST" ? `${doing}, once you say yes.` : `${doing}.`;
   }
@@ -478,7 +482,7 @@
     const by = done?.by === "oscar" ? "me" : "you";
     return [
       el("div", { class: "box" }, el("h3", { text: "What I did" }),
-        el("p", { class: "text ink", text: done ? `${DID[done.action] ?? "Done"} by ${by} at ${time(done.at)}${done.undone ? ", then undone" : ""}.`
+        el("p", { class: "text ink", text: done ? `${didWords(item, done.action)} by ${by} at ${time(done.at)}${done.undone ? ", then undone" : ""}.`
           : item.level === "ESCALATE" ? "Nothing. I never act on an email I've stopped."
             : item.acting ? "Nothing in Gmail yet." : "Nothing. I was only reading your Gmail when this came in." }),
         item.undoable ? el("div", { class: "row" }, el("button", { class: "btn", type: "button", disabled: state.busy,
@@ -710,11 +714,14 @@
         }
         painted.set(row, { host: chipHost, status });
       }
-      // Gmail shows his label too; the chip says the same, so hide Gmail's copy in this row.
+      // Gmail shows his status label too; the chip says the same, so hide Gmail's copy in this
+      // row. His labels can be renamed in Settings, so it's matched by today's names as well.
       if (status) {
+        const labels = state.status?.settings?.labels ?? {};
+        const his = new Set([...Object.keys(STATUS), labels.stopped, labels.needs_you, labels.fyi].filter(Boolean).map((n) => n.toLowerCase()));
         for (const tag of row.querySelectorAll(".ar.as, .at")) {
           const name = (tag.getAttribute("title") ?? tag.textContent ?? "").trim();
-          if (STATUS[name]) {
+          if (his.has(name.toLowerCase())) {
             const label = tag.closest(".ar") ?? tag;
             label.style.display = "none";
             label.dataset.oscarHid = "";

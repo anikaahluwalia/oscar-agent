@@ -64,9 +64,9 @@ export function didLine(decision: Decision, done: ActionDone | null | undefined,
   return whatOscarDid(decision, done);
 }
 
-// Mirrors LABEL_FOR and DEFAULT_LABEL in oscar/act.py: the label Oscar puts on each kind of email.
-const LABEL_FOR: Record<string, string> = { receipt: "Receipts" };
-export const labelName = (decision: Decision) => LABEL_FOR[decision.email_type ?? ""] ?? "Sorted";
+/** The Gmail label "Label it" uses for this email, by the name you gave it in Settings. The API works
+ * it out (oscar/labels.py), so a rename shows up here straight away. */
+export const labelName = (item: DecisionWithFeedback) => item.label ?? "Sorted";
 
 export type Outcome = { tone: "done" | "undone" | "waiting" | "stopped" | "nothing"; text: string };
 
@@ -79,7 +79,7 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
   if (d.source === "gmail") {
     if (done) {
       const how = done.by === "you" ? "after you approved it" : "on my own";
-      const what = d.action === "APPLY_LABEL" ? `Added the "${labelName(d)}" label in Gmail` : `Done in Gmail (${action})`;
+      const what = d.action === "APPLY_LABEL" ? `Added the "${labelName(item)}" label in Gmail` : `Done in Gmail (${action})`;
       if (done.undone_at) {
         return { tone: "undone", text: `${what} ${how}, ${when(done.done_at)}. Undone ${when(done.undone_at)}, so it's back the way it was.` };
       }
@@ -148,8 +148,10 @@ const PAST: Record<Action, string> = {
   MOVE_MONEY: "moved money",
 };
 
-/** What he did, in his words: 'I added the "Receipts" label' on Gmail, where we know the label. */
-const past = (d: Decision) => (d.action === "APPLY_LABEL" && d.source === "gmail" ? `added the "${labelName(d)}" label` : PAST[d.action]);
+/** What he'd do and what he did, in his words, naming the label when it's "Label it":
+ * 'add the "Receipts" label', 'added the "Receipts" label'. */
+const phraseOf = (i: DecisionWithFeedback) => (i.decision.action === "APPLY_LABEL" ? `add the "${labelName(i)}" label` : PHRASE[i.decision.action]);
+const past = (i: DecisionWithFeedback) => (i.decision.action === "APPLY_LABEL" ? `added the "${labelName(i)}" label` : PAST[i.decision.action]);
 
 /**
  * Oscar's one bold line about an email, in his words. Like didLine, it only says he did something
@@ -158,7 +160,7 @@ const past = (d: Decision) => (d.action === "APPLY_LABEL" && d.source === "gmail
 export function noteLine(item: DecisionWithFeedback): string {
   const { decision: d, done, feedback } = item;
   const level = d.autonomy_level;
-  const phrase = PHRASE[d.action];
+  const phrase = phraseOf(item);
 
   if (wouldOnly(d)) {
     if (level === "ESCALATE") return "I'd hold this one back.";
@@ -167,15 +169,15 @@ export function noteLine(item: DecisionWithFeedback): string {
   }
   if (level === "ESCALATE") return "I held this one back.";
   if (level === "ASK_FIRST") {
-    if (d.source === "gmail" && done) return done.undone_at ? `You said yes and I ${past(d)}, then it was undone.` : `You said yes, so I ${past(d)}.`;
+    if (d.source === "gmail" && done) return done.undone_at ? `You said yes and I ${past(item)}, then it was undone.` : `You said yes, so I ${past(item)}.`;
     if (answered(feedback, "REJECT")) return "You said no, so I left it alone.";
     if (answered(feedback, "APPROVE", "EDIT_THEN_SEND")) {
       return d.source === "gmail" ? "You said yes, but Gmail doesn't show it done." : "You said yes.";
     }
     return `Want me to ${phrase}?`;
   }
-  if (didIt(d, done, feedback)) return level === "PROCEED_AND_NOTIFY" ? `I ${past(d)}, and I'm letting you know.` : `I ${past(d)}.`;
-  if (isUndone(d, done, feedback)) return d.source === "gmail" ? `I ${past(d)}, and it's been undone.` : `I ${past(d)}, then you undid it.`;
+  if (didIt(d, done, feedback)) return level === "PROCEED_AND_NOTIFY" ? `I ${past(item)}, and I'm letting you know.` : `I ${past(item)}.`;
+  if (isUndone(d, done, feedback)) return d.source === "gmail" ? `I ${past(item)}, and it's been undone.` : `I ${past(item)}, then you undid it.`;
   if (!DOABLE.has(d.action)) return `I'd ${phrase}.`; // the line under it says he doesn't do it himself
   return `I was going to ${phrase}, but Gmail doesn't show it done.`;
 }

@@ -20,10 +20,12 @@ import {
   exportUrl,
   getAppSettings,
   getLearning,
+  renameLabel,
   restoreLearning,
   saveAppSettings,
   type AppSettings,
   type GmailStatus,
+  type LabelRole,
 } from "@/lib/api";
 import { recheckRecent } from "@/lib/demo";
 import { notifyChanged, oscarSays } from "@/lib/use-oscar";
@@ -41,7 +43,7 @@ function useAppSettings() {
     if (!settings) return;
     // Show it at once; put it back if the API says no.
     const before = settings;
-    setSettings({ companion: { ...settings.companion, ...changes.companion }, notify: { ...settings.notify, ...changes.notify } });
+    setSettings({ ...settings, companion: { ...settings.companion, ...changes.companion }, notify: { ...settings.notify, ...changes.notify } });
     try {
       setSettings(await saveAppSettings(changes));
     } catch (e) {
@@ -49,7 +51,7 @@ function useAppSettings() {
       oscarSays(e instanceof Error ? e.message : "Something went wrong.");
     }
   }
-  return { settings, failed, change };
+  return { settings, failed, change, setSettings };
 }
 
 function Unavailable({ failed }: { failed: boolean }) {
@@ -138,13 +140,94 @@ function NotificationSettings({ app }: { app: ReturnType<typeof useAppSettings> 
   );
 }
 
-/** Oscar in Gmail and Notifications share one fetch of the saved choices. */
+// His Gmail labels, in the order they matter, each with the colour Gmail shows (oscar/labels.py COLOURS).
+const LABELS: { role: LabelRole; colour: string; text: string }[] = [
+  { role: "stopped", colour: "#fb4c2f", text: "A safety rule stopped this email." },
+  { role: "needs_you", colour: "#ffad47", text: "I'm waiting for your yes." },
+  { role: "fyi", colour: "#4a86e8", text: "I did it, or would, and I'm letting you know." },
+  { role: "receipts", colour: "#a479e2", text: "What I put on receipts and orders when I label them." },
+  { role: "sorted", colour: "#999999", text: "What I put on anything else I label." },
+];
+
+/** One label's name, edited in place and saved with Save (or Enter). */
+function LabelRow({ role, colour, text, name, onSaved }: (typeof LABELS)[number] & { name: string; onSaved: (s: AppSettings) => void }) {
+  const [draft, setDraft] = useState(name);
+  const [busy, setBusy] = useState(false);
+  const changed = draft.trim() !== name;
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!changed || busy) return;
+    setBusy(true);
+    try {
+      const { settings, reply } = await renameLabel(role, draft);
+      onSaved(settings);
+      setDraft(settings.labels[role]);
+      oscarSays(reply);
+      notifyChanged();
+    } catch (err) {
+      oscarSays(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={save} className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 sm:px-5">
+      <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ background: colour }} />
+      <div className="flex min-w-0 flex-1 basis-[12rem] flex-col gap-0.5">
+        <label htmlFor={`label-${role}`} className="text-[15px] font-bold">
+          {name}
+        </label>
+        <p className="text-[13px] text-muted-foreground">{text}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          id={`label-${role}`}
+          value={draft}
+          maxLength={40}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Escape" && setDraft(name)}
+          className="h-10 w-44 rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
+        <Button type="submit" variant={changed ? "default" : "outline"} className={ROW_BUTTON} disabled={!changed || busy || !draft.trim()}>
+          Save
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/** What his Gmail labels are called. Renaming one renames it in Gmail too, so emails he already labelled follow. */
+function LabelSettings({ app }: { app: ReturnType<typeof useAppSettings> }) {
+  const { settings: s, failed, setSettings } = app;
+  return (
+    <SettingsGroup title="Gmail labels" note="Rename any of them">
+      {!s ? (
+        <Unavailable failed={failed} />
+      ) : (
+        <>
+          <p className="p-4 text-[13px] leading-normal text-muted-foreground sm:px-5">
+            The labels I put on your emails in Gmail. What I handled quietly gets no label. Renaming one renames it in Gmail too,
+            so the emails I already labelled follow.
+          </p>
+          {LABELS.map((l) => (
+            <LabelRow key={l.role} {...l} name={s.labels[l.role]} onSaved={setSettings} />
+          ))}
+        </>
+      )}
+    </SettingsGroup>
+  );
+}
+
+/** Oscar in Gmail, Notifications and Gmail labels share one fetch of the saved choices. */
 export function GmailCompanionSettings() {
   const app = useAppSettings();
   return (
     <>
       <CompanionSettings app={app} />
       <NotificationSettings app={app} />
+      <LabelSettings app={app} />
     </>
   );
 }

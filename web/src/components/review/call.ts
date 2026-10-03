@@ -3,6 +3,7 @@
 
 import type { Action, DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
+import { labelName } from "@/components/inbox/outcome";
 import { DOABLE, REPLIES, wouldOnly } from "@/lib/labels";
 
 // Mirrors ACTION_PHRASES and ACTION_DONE in oscar/voice.py.
@@ -40,8 +41,10 @@ export function callLine(item: DecisionWithFeedback): string {
   const { decision: d, done } = item;
   const real = d.source === "gmail";
   const would = wouldOnly(d);
-  const phrase = PHRASE[d.action];
-  const past = DONE[d.action];
+  // "Label it" names the label: 'add the "Receipts" label'.
+  const label = d.action === "APPLY_LABEL" ? `"${labelName(item)}" label` : null;
+  const phrase = label ? `add the ${label}` : PHRASE[d.action];
+  const past = label ? `added the ${label}` : DONE[d.action];
 
   if (d.autonomy_level === "ESCALATE") {
     if (would) return "I'd stop this and bring it to you, without doing anything.";

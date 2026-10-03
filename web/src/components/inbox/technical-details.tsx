@@ -71,7 +71,7 @@ export function TechnicalDetails({ item }: { item: DecisionWithFeedback }) {
               <Row label="Emails in thread">{d.gmail.thread_length}</Row>
             </>
           )}
-          {d.action === "APPLY_LABEL" && d.source === "gmail" && <Row label="Oscar's label">{labelName(d)}</Row>}
+          {d.action === "APPLY_LABEL" && d.source === "gmail" && <Row label="Oscar's label">{labelName(item)}</Row>}
           {done && (
             <>
               <Row label="Gmail action id">{done.id}</Row>

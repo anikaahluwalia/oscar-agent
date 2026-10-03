@@ -239,6 +239,7 @@ export interface DecisionWithFeedback {
   review: Review | null;
   done: ActionDone | null; // Stage 12: what Oscar did in Gmail for it
   classification?: ClassificationFeedback | null; // your latest word on what kind of email it is
+  label?: string | null; // for "Label it": the Gmail label he used or would use, by its name in Settings
   safety_review?: SafetyReview | null; // your answer, when a safety rule stopped it
   // Real inbox: what you said he should have done, and how this decision does against it.
   answer: {
@@ -407,7 +408,12 @@ export const getProgress = () => call<Progress>("/progress");
 export interface AppSettings {
   companion: { show: boolean; position: "right" | "left"; animate: boolean };
   notify: { approvals: boolean; safety: boolean; handled: boolean };
+  labels: Record<LabelRole, string>; // what each of his Gmail labels is called (oscar/labels.py)
 }
+export type LabelRole = "stopped" | "needs_you" | "fyi" | "receipts" | "sorted";
+/** Rename one of his Gmail labels. It's renamed in Gmail too when he can change labels there. */
+export const renameLabel = (role: LabelRole, name: string) =>
+  call<{ settings: AppSettings; reply: string }>("/labels/rename", { method: "POST", body: JSON.stringify({ role, name }) });
 export const getAppSettings = () => call<AppSettings>("/app-settings");
 export const saveAppSettings = (changes: { companion?: Partial<AppSettings["companion"]>; notify?: Partial<AppSettings["notify"]> }) =>
   call<AppSettings>("/app-settings", { method: "POST", body: JSON.stringify(changes) });

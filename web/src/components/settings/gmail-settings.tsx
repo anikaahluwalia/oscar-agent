@@ -181,7 +181,7 @@ function AccountCard({ gmail }: { gmail: GmailStatus }) {
 }
 
 const ACTING_FACTS = [
-  "He marks emails as read, archives them, and labels each one with his call: Handled, FYI, Needs you or Stopped.",
+  "He marks emails as read, archives them, and labels the ones worth a look: Stopped, Needs you or FYI. You can rename his labels below.",
   "On his own only when he's sure; otherwise he asks, and does it when you approve.",
   "Never sends, deletes, unsubscribes or touches money. Anything risky still comes to you.",
   "Every action can be undone. He only acts on emails that arrive from now on, at most 25 per check.",
