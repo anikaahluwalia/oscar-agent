@@ -1606,6 +1606,18 @@ and asks you about the few clearest habits (`oscar/cold_start.py`).
 - **Picks up where it stopped.** Progress is saved in the account's folder (`cold_start.json`) after
   every page and every 25 emails, so a restart carries on, and accounts never mix.
 
+### After you teach him, his calls catch up
+
+Setting a rule used to leave his earlier calls as they were, so Review kept asking about emails the
+rule already answered. Now, after anything that teaches him how to handle emails like one (a rule,
+"just handle these", a Review answer, a six-month habit), he decides again in the background on
+the recent emails it covers (`inbox.rethink`), like a period tracker redoing its predictions when
+you add a date. Only his calls from while he was just reading, that you haven't answered and no
+safety rule stopped, re-read from Gmail and put through `decide()` with every check. Nothing in
+Gmail changes, and the real-inbox results still only count first reads. Asks still waiting are done
+by the rule itself, as before, and now a yes to a six-month habit does them too. Review leaves out
+calls your own rules made and says how many.
+
 ### Not done
 
 - Habits about one sender. A sender rule in the learning applies to all of that sender's email with
