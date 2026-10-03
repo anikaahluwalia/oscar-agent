@@ -105,7 +105,12 @@ def demo_history() -> History:
 
 
 GMAIL_DIR = default_data_dir() / "gmail"
-ACCOUNT_FILE = GMAIL_DIR / "account.txt"  # the last Gmail address connected
+
+
+def account_file() -> Path:
+    """The last Gmail address connected. Looked up each time, like real_inbox_dir(), so both
+    always agree on the data folder."""
+    return default_data_dir() / "gmail" / "account.txt"
 
 
 @lru_cache
@@ -386,8 +391,8 @@ def google_callback(
         return _back_to_settings("google_error")
     trial.delete()
     tokens.save(saved)
-    ACCOUNT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    ACCOUNT_FILE.write_text(saved["address"])
+    account_file().parent.mkdir(parents=True, exist_ok=True)
+    account_file().write_text(saved["address"])
     stop_acting(get_real_history())  # the account just connected: a new connection starts with acting off
     return _back_to_settings("connected")
 
