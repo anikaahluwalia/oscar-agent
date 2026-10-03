@@ -72,7 +72,7 @@ export function when(iso: string) {
 }
 
 /**
- * One line for what Oscar did, for Home's lists. Like whatOscarDid, but on the demo inbox
+ * One line for what Oscar did, for Today and the chat's email cards. Like whatOscarDid, but on the demo inbox
  * an action you undid says so, instead of still saying he did it.
  */
 export function didLine({ decision, done, feedback }: DecisionWithFeedback): string {

@@ -18,7 +18,7 @@ type Send = (decisionId: string, kind: FeedbackKind) => Promise<unknown>;
 
 const SHOWN = 8; // senders listed before "Show all"; a search always shows every match
 
-/** Which inbox this is, and what that means for what he learns. Kept from the old Memory page. */
+/** Which inbox this is, and what that means for what he learns. */
 function inboxNote(data: OscarData) {
   if (!data.gmail.connected) return "This is the example inbox. What I learn here stays here, apart from your real inbox.";
   const reviews = "On your real inbox I learn from your reviews too. Each answer teaches me about that sender.";

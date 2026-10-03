@@ -52,7 +52,7 @@ function Question({ title, children }: { title: string; children: React.ReactNod
 const field = "min-h-11 rounded-xl border bg-card px-3.5 text-sm";
 
 /**
- * After "Not quite": what he should have done. How much on his own, then what, then whether he
+ * After a "No": what he should have done. How much on his own, then what, then whether he
  * understood the email. That's the same answer the evals use. It grades him, and it teaches him
  * about the sender. Finishing an old half-answer starts from what was saved.
  */

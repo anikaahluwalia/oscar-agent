@@ -13,8 +13,8 @@ export const LIKE_THIS: { kind: FeedbackKind; label: string }[] = [
 ];
 
 /**
- * How much Oscar should do on his own with emails like this one. Approving (or "Right") only says
- * the action was right; this is the one place you say how much he should ask.
+ * How much Oscar should do on his own with emails like this one, asked in the Inbox. Approving only
+ * says the action was right; this says how much he should ask. Review asks the same in its own panel.
  */
 export function LikeThis({
   busy,

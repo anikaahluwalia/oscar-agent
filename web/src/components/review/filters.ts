@@ -1,4 +1,4 @@
-// The tabs along the top of Review, and the order emails are shown in. Every count is worked
+// The tabs in Review's "See all" list, and the order emails are shown in. Every count is worked
 // out from Oscar's real decisions.
 
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";

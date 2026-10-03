@@ -33,8 +33,8 @@ export function controlsFor(item: DecisionWithFeedback) {
 /**
  * Approve, decline, mark as reviewed, looks good, and undo: only the ones that would really do
  * something. On the real inbox that means Oscar acts in Gmail and it's something he can do there
- * (mark as read, archive, label); otherwise grading is how you answer. `big` is the demo inbox,
- * where these are the main answer; on the real inbox they sit under the grading, smaller.
+ * (mark as read, archive, label). On the demo inbox these are how you answer; on the real inbox
+ * Yes and No are the answer, so the decision panel only shows Undo (`undoOnly`). Nothing passes `big` now.
  */
 export function DecisionControls({
   item,

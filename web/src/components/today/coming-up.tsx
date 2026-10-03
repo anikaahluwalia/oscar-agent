@@ -20,7 +20,7 @@ function dayName(when: Date, now: number) {
   return when.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
-/** Events and due dates from your emails, soonest first, until the day has passed. */
+/** Events and due dates from your emails, soonest first, until the day has passed. Never from emails he stopped or flagged as risky. */
 export function upcoming(items: DecisionWithFeedback[], now: number) {
   const today = new Date(now);
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();

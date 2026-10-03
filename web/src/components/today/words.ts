@@ -55,8 +55,8 @@ export type ActivityRow =
 
 /**
  * What Oscar took care of since `since`, grouped: "Archived 4 promotions" rather than four rows,
- * newest first. Only what really happened (the same rule as tookCare), or while he only reads
- * Gmail, what he would have done. Reminders he found in today's emails are listed too.
+ * newest first. Only what really happened (reallyDone), or, while he only reads Gmail, what he would
+ * have done on his own. Reminders from emails he read since then are listed too, unless the email was stopped or flagged.
  */
 export function activity(items: DecisionWithFeedback[], since: number, readOnly: boolean): ActivityRow[] {
   const groups = new Map<string, { action: Action; type: string; senders: string[]; at: number }>();

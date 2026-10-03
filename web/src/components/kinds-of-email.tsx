@@ -15,7 +15,7 @@ export function usePermissions() {
   const { data } = useOscar();
   const [rows, setRows] = useState<PermissionRow[] | null>(null);
   const [failed, setFailed] = useState(false);
-  // Fetch again when Oscar's data refreshes, so a changed promotions setting shows up.
+  // Fetch again when Oscar's data refreshes, so a rule you just set or forgot for a kind of email shows up.
   useEffect(() => {
     getPermissions().then(
       (r) => {

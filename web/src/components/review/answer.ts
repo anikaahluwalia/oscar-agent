@@ -1,5 +1,5 @@
-// What a "Not quite" can say, and how it's checked. Mirrors oscar/review.py, and the grading
-// that was in components/review-panel.tsx: the same choices and the same answer sent.
+// What a "No" in Review can say, and how it's checked. Mirrors oscar/review.py. The older grading
+// in components/review-panel.tsx (still used by the Inbox) keeps its own copy of these choices.
 
 import type { Action, DecisionWithFeedback, Level, Reason, Review, ReviewInput, Why } from "@/lib/api";
 import { ACTIONS, REVIEW_LABELS } from "@/lib/labels";

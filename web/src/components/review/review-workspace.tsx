@@ -447,7 +447,7 @@ export function ReviewWorkspace({
             onChange={() => setStep({ id: current.decision.id, mode: old ? "fix" : "change" })}
             onInvolve={(kind) => void involve(kind)}
             onAnswered={(kind) => {
-              // Answering an ask or a stop moves on; "Looks good" and undo stay on the email.
+              // Approve, Decline, Mark as reviewed and Looks good (also an APPROVE) move on; Undo stays on the email.
               if (inQueue && (kind === "APPROVE" || kind === "REJECT" || kind === "SEEN")) next();
             }}
             footer={footer}

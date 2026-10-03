@@ -12,7 +12,7 @@ import { setHash } from "@/lib/use-hash";
 import { cn } from "@/lib/utils";
 
 /**
- * Every email Oscar has decided on, with the tabs from before (Needs you, Stopped, Finish these…),
+ * "See all" in Review: every email Oscar has decided on, in tabs (Needs you, Stopped, Finish these…),
  * for going back over older ones. Picking one opens it in Review.
  */
 export function ReviewList({

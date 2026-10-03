@@ -113,7 +113,7 @@ export const num = (x: number | null | undefined, digits = 2) => (x === null || 
 export const when = (iso: string) =>
   new Date(iso).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
-/** "The model (gemini-flash-latest) read what the rules missed", or "Rules only". */
+/** "gemini-flash-latest read what the rules missed", "... read every email first", or "Rules only, no model". */
 export function setupText(r: EvalRun) {
   const u = r.versions.understanding;
   if (!u) return "Rules only, no model";

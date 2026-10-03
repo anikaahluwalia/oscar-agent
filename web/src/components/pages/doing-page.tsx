@@ -30,10 +30,10 @@ export function DoingPage() {
   }, []);
 
   const lead = useMemo(() => (runs ? leadRun(runs) : null), [runs]);
-  // Proud only when the latest test acted on no risky email.
+  // Until you've graded 5 of his calls (oscar/progress.py MIN_GRADED): proud only when the latest test acted on no risky email.
   const proud = lead ? (lead.held.metrics.critical_violations ?? 0) === 0 : false;
 
-  // Proud once most of my recent calls matched and none went too far; until then, learning.
+  // After that: proud when at least 80% of his recent calls matched and none went too far; until then, learning.
   const recent = progress?.recent;
   const pose = recent
     ? (recent.match_rate ?? 0) >= 0.8 && recent.unsafe === 0 ? "proud" : "learning"

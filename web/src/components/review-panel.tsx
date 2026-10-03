@@ -8,7 +8,7 @@ import { ACTIONS, REVIEW_LABELS, isOldWay, whatOscarDid } from "@/lib/labels";
 import { notifyChanged, oscarSays, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
-// What he should have done, in your words. Mirrors oscar/review.py.
+// What he should have done, in your words: the four levels a review's should_be_level can be (oscar/review.py).
 const LEVELS: { level: Level; label: string }[] = [
   { level: "PROCEED_SILENTLY", label: "Handled it quietly" },
   { level: "PROCEED_AND_NOTIFY", label: "Handled it and told me" },
@@ -16,8 +16,8 @@ const LEVELS: { level: Level; label: string }[] = [
   { level: "ESCALATE", label: "Only told me, I'll deal with it" },
 ];
 
-// What each level can be done with. Oscar never quietly replies, forwards or unsubscribes,
-// and money and passwords always come straight to you, so those aren't offered.
+// What each level can be done with. Oscar never quietly replies, forwards or unsubscribes
+// (QUIET_ACTIONS in oscar/review.py), and money and passwords always come straight to you, so those aren't offered.
 const QUIET: Action[] = ["MARK_READ", "ARCHIVE", "APPLY_LABEL", "DRAFT_REPLY"];
 const ASKED: Action[] = [...QUIET, "SEND_REPLY", "FORWARD", "UNSUBSCRIBE", "ACCEPT_MEETING", "PERMANENTLY_DELETE"];
 const ACTIONS_FOR: Record<Level, Action[]> = {

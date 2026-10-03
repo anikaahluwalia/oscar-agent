@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** A white card from the mock-up, with an optional title row (title on the left, an action on the right). */
+/** A card from the mock-up, with an optional title row (title on the left, an action on the right). */
 export function Panel({
   title,
   action,

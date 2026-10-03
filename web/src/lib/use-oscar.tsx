@@ -34,7 +34,7 @@ export const notifyChanged = () => window.dispatchEvent(new Event(CHANGED));
 
 export const API_DOWN = "I can't reach my API. Start it from the repo root with: .venv/bin/uvicorn oscar.api:app --reload";
 
-/** Gmail is connected and Oscar only reads it (before Stage 12, or with acting turned off). */
+/** Gmail is connected and Oscar only reads it: acting is off, or the connection can't change labels (GET /gmail read_only). */
 export const isReadOnly = (data: OscarData) => data.gmail.connected && data.gmail.read_only;
 
 export type OscarData = {
@@ -49,7 +49,7 @@ export type OscarData = {
 };
 
 const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND", "SEEN"]);
-/** You've dealt with it: answered Oscar, or (on the real inbox, which is read-only) reviewed his decision. */
+/** You've dealt with it: answered Oscar, answered it in Safety review, or reviewed a call he only would have made (wouldOnly). */
 export const isAnswered = (i: DecisionWithFeedback) =>
   (wouldOnly(i.decision) && !!i.review) || !!i.safety_review || i.feedback.some((f) => ANSWERS.has(f.kind));
 /** Still waiting on you: an ask you haven't answered, or something Oscar stopped that you haven't reviewed. */
@@ -77,7 +77,7 @@ export function answersFor(all: DecisionWithFeedback[], sender: string, action: 
 
 export type Counts = Record<Level, number>;
 
-/** Handled and FYI count everything Oscar did; Needs You and Blocked count what's still open. */
+/** Quietly and Tell me count every decision at that level; Ask me and Stopped count only what's still waiting on you (isOpen). */
 export function countsOf(items: DecisionWithFeedback[]): Counts {
   const of = (level: Level, open = false) =>
     items.filter((i) => i.decision.autonomy_level === level && (!open || isOpen(i))).length;
@@ -116,9 +116,9 @@ export function oscarSays(text: string) {
 const UNDO_WINDOW_MS = 10_000;
 
 /**
- * After new emails come in, tell you about what Oscar did with a heads-up, with a
- * chance to undo it. That's what PROCEED_AND_NOTIFY means. Silent actions stay
- * silent; they can still be undone from All email.
+ * After the demo inbox brings in new emails, a toast with an Undo button for each one Oscar handled
+ * and told you about (PROCEED_AND_NOTIFY). More than three get one toast instead. Quiet ones get no
+ * toast; they can still be undone from the Inbox.
  */
 export function offerUndo(decisions: Decision[]) {
   const told = decisions.filter((d) => d.autonomy_level === "PROCEED_AND_NOTIFY");
@@ -158,7 +158,10 @@ let loading = false;
 let again = false; // something changed while we were loading, so load once more after
 let retry: ReturnType<typeof setTimeout> | null = null;
 
-/** Fetches everything. `changed` means Oscar's state just changed, so a load already on its way may be stale. */
+/**
+ * Gets everything the app shows from the API in one go. If something changes while a load is still running (say you
+ * approve an email), `changed` makes it load once more after, so the page never shows the old state.
+ */
 function load(changed = true) {
   if (loading) {
     again ||= changed;

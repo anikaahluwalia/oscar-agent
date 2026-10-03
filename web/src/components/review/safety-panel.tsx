@@ -11,7 +11,8 @@ import { FLAGS, typeName } from "@/lib/labels";
 import { notifyChanged, oscarSays } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
-// What each safety check found, as a headline, and the thing it protects. Mirrors oscar/safety.py.
+// What each safety check found, as a headline, and the thing it protects. Keyed by the safety flags
+// (SafetyCategory in oscar/models.py, set by the checks in oscar/safety.py).
 const FOUND: Record<string, [string, string]> = {
   MONEY: ["Money movement detected", "Moving money is protected"],
   CREDENTIALS: ["Password or code request detected", "Sharing passwords and codes is protected"],

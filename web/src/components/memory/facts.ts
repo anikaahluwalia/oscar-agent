@@ -1,4 +1,4 @@
-// What the Memory page says about one learned sender and action, worked out from real data only.
+// What the "What Oscar knows" page says about one learned sender and action, worked out from real data only.
 
 import type { Action, AutonomyRow, DecisionWithFeedback, LearnedRow, Level } from "@/lib/api";
 import { DOABLE } from "@/lib/labels";
@@ -17,14 +17,15 @@ export type Taught = {
 const same = (sender: string, action: Action) => (s: string, a: Action) => s === sender && a === action;
 
 /**
- * Counts what Oscar learned from for one sender and action. Mirrors Preferences.add in
- * oscar/preferences.py: feedback on stopped emails, or blocked by a protected rule, teaches nothing,
- * and Forget wipes everything before it.
+ * Counts what Oscar learned from for one sender and action. Mirrors Preferences in oscar/preferences.py:
+ * add() ignores feedback on stopped emails or blocked by a protected rule, and from_feedback() drops
+ * everything before a Forget.
  */
 export function taughtBy(all: DecisionWithFeedback[], sender: string, action: Action): Taught {
   const match = same(sender, action);
   const events = all.flatMap((i) => i.feedback).filter((f) => match(f.sender, f.action));
-  // Like the server, a Forget on a stopped email (or one the floor blocked) doesn't wipe anything.
+  // A Forget on a stopped email (or one the floor blocked) is skipped here. The server would still count it,
+  // but the app never sends one: decisionFor never picks a stopped email.
   const forgotAt = events
     .filter((f) => f.kind === "FORGET" && !f.blocked_by_floor && f.autonomy_level !== "ESCALATE")
     .reduce((latest, f) => (f.created_at > latest ? f.created_at : latest), "");
@@ -147,7 +148,7 @@ export type MemoryItem = {
   asks: boolean;
 };
 
-/** Everything the Memory page shows, one item per learned sender and action. */
+/** Every learned sender and action, one item each, for the sender rows on the "What Oscar knows" page. */
 export function memoryItems(data: OscarData): MemoryItem[] {
   return data.learned
     .map((learned) => {

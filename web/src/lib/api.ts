@@ -64,7 +64,7 @@ export interface Decision {
   acting?: boolean; // Stage 12: made while Oscar could act in Gmail; before that, only what he would do
   summary: string; // the model's one line on what the email is, when it read it
   steps: string[];
-  /** "gmail" is a real inbox. Oscar only reads it for now, so the decision is what he would do. */
+  /** "gmail" is your real inbox, "demo" the example emails. On Gmail, `acting` says whether he could act when he decided. */
   source: "demo" | "gmail";
   gmail: GmailInfo | null;
   policy_version: string | null;
@@ -454,13 +454,13 @@ export const setActing = (on: boolean) => call<{ acting: boolean }>("/gmail/acti
 export const syncGmail = () => call<{ new: number; skipped: number; done: number }>("/gmail/sync", { method: "POST" });
 export const recheckGmail = () => call<{ new: number; skipped: number }>("/gmail/recheck", { method: "POST" });
 export const disconnectGmail = () => call<{ ok: boolean }>("/gmail/disconnect", { method: "POST" });
-/** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 /** An email's image, fetched by Oscar (GET /email-image) so the sender never sees your address or browser. */
 export const imageThroughOscar = (url: string) => `${API}/email-image?url=${encodeURIComponent(url)}`;
 export const API_ORIGIN = new URL(API).origin;
+/** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 export const getEmailContent = (decisionId: string) =>
   call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
-/** A saved eval run (evals/results/runs). Every test number on the Evals page comes from one of these. */
+/** A saved eval run (evals/results/runs). Every test number on Promises and Oscar's Progress comes from one of these. */
 export interface EvalRun {
   run_id: string;
   created_at: string;

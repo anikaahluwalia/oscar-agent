@@ -15,7 +15,7 @@ import { getChatStatus } from "@/lib/api";
 import { bringInDemo, startOver } from "@/lib/demo";
 import { useLocalSetting } from "@/lib/local-setting";
 
-/** Your first name, kept in this browser. Home uses it to say hello. */
+/** Your first name, kept in this browser. The Today page uses it to say hello when Google hasn't given one. */
 export function NameRow() {
   const [name, setName] = useLocalSetting<string>("name", "");
   // What you're typing, so spaces aren't trimmed away mid-word. Saved as you go.

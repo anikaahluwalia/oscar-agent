@@ -1,6 +1,6 @@
-// Where Oscar is for one sender and action: Ask me, Tell me or Quietly.
-// It only shows the level. Feedback moves Oscar up or down, so the buttons that
-// change it live next to it and say what they do (see PreferenceControls).
+// How much Oscar does on his own for one kind of email: Ask me, Tell me or Quietly, with the steps
+// a protected rule or a ceiling keeps him from shown locked. It only shows the level; nothing here changes it.
+// lockFor is also used by the sender rows on the "What Oscar knows" page.
 
 import { LockIcon } from "lucide-react";
 import type { AutonomyRow, Level } from "@/lib/api";

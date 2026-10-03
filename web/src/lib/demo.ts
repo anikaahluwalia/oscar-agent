@@ -1,4 +1,5 @@
-// The demo inbox: until Gmail is connected, the inbox is the example emails in emails/.
+// Bringing in email. Until Gmail is connected, the inbox is the example emails in emails/ (the demo
+// inbox); after that, it's checking your real inbox.
 
 import { disconnectGmail, loadDemoInbox, recheckGmail, resetDemo, syncGmail } from "@/lib/api";
 import { notifyChanged, offerUndo, oscarSays } from "@/lib/use-oscar";

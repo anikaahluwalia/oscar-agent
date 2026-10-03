@@ -6,8 +6,8 @@ import { setHash } from "@/lib/use-hash";
 type Props = { id: string; className?: string; onClick?: () => void; children: React.ReactNode };
 
 /**
- * A link that opens one email in Activity. Next changes a same-page #hash without a
- * hashchange event, so on /activity itself we set the hash ourselves.
+ * A link that opens one email in the Inbox. Next changes a same-page #hash without a
+ * hashchange event, so on /inbox itself we set the hash ourselves.
  */
 export function EmailLink({ id, className, onClick, children }: Props) {
   return (

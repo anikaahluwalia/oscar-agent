@@ -43,6 +43,7 @@ function poseOf(item: DecisionWithFeedback): OscarPose | null {
  * - read-only or not something he does in Gmail: grade it (ReviewPanel), nothing to approve or undo
  * - stopped: mark it as reviewed
  * - asked: approve or decline; on Gmail, approving does it there
+ * - told you: "Looks good"
  * - done: undo, only when he really did it (Gmail's record, or the demo)
  * There's no "edit and send": Oscar never writes or sends replies.
  */

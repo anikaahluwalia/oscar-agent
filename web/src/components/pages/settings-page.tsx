@@ -7,7 +7,7 @@ import { AdvancedSettings, GmailCompanionSettings } from "@/components/settings/
 import { SettingsGroup } from "@/components/settings/rows";
 import { useOscar } from "@/lib/use-oscar";
 
-/** Settings under short headings: Gmail, Oscar in Gmail and his notifications, you, how it looks, the chat, advanced, and your data. */
+/** Settings under short headings: Gmail, Oscar in Gmail with his notifications and labels, you, the look, the chat, advanced, your data. */
 export function SettingsPage() {
   const { data } = useOscar();
   const gmail = data?.gmail;

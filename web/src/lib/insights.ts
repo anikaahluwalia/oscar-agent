@@ -81,7 +81,7 @@ export function whatItIs(d: Decision): string | null {
   return KIND_NAMES[kind] ?? kind.replace(/_/g, " ");
 }
 
-/** Whether Oscar really did this in Gmail (real inbox), or did it at all (demo). */
+/** Whether Oscar really did this and it wasn't undone: in Gmail on the real inbox, or at all on the demo. */
 export function reallyDone(i: DecisionWithFeedback): boolean {
   if (i.decision.source !== "gmail") return ACTED.has(i.decision.autonomy_level) && !i.feedback.some((f) => f.kind === "UNDO");
   return !!i.done && !i.done.undone_at && DOABLE.has(i.decision.action);

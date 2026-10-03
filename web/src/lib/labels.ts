@@ -60,7 +60,7 @@ export const wouldOnly = (decision: Decision) =>
 export function whatOscarDid(decision: Decision, done?: ActionDone | null): string {
   const { action, autonomy_level: level } = decision;
   if (decision.source === "gmail" && decision.acting && (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY")) {
-    if (!done) return `Would ${ACTIONS[action].toLowerCase()}`; // decided, but not something he does in Gmail
+    if (!done) return `Would ${ACTIONS[action].toLowerCase()}`; // Gmail doesn't say he did it, or it's not something he does there
     return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[action];
   }
   // An ask you approved: once Gmail says it was done, it's done.
@@ -127,12 +127,13 @@ export const REVIEW_LABELS: Record<ReviewLabel, { label: string; meaning: string
   SKIP: { label: "Skip", meaning: "Not sure, or don't count this one." },
 };
 
-// Mirrors ACTION_FLOORS in oscar/safety.py. Learning can never lower these.
+// The actions ACTION_FLOORS in oscar/safety.py always stops (ESCALATE). Learning can never lower these.
 const NEVER: Partial<Record<Action, string>> = {
   MOVE_MONEY: "I don't touch money",
   SEND_CREDENTIALS: "I don't share passwords or login details",
 };
 // Actions you can't approve with one tap, because they're hard to undo or leave your inbox.
+// The same actions ACTION_FLOORS sets to ASK_FIRST.
 export const HOLD_TO_CONFIRM: Partial<Record<Action, string>> = {
   PERMANENTLY_DELETE: "Deleted email can't be brought back",
   UNSUBSCRIBE: "Unsubscribing is hard to undo",

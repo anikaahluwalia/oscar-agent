@@ -7,8 +7,10 @@ import { timeOf } from "@/lib/insights";
 import { formatTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
-/** One email in the list: who, when, the subject, and what Oscar did with it. */
-/** `selected` is the open email; "wide" when it's only open because it's first, which a phone doesn't show. */
+/**
+ * One email in the list: who, when, the subject, and what Oscar did with it. `selected` is the open email;
+ * "wide" when it's only open because it's first, which a phone doesn't show. `waiting` adds the dot.
+ */
 export function InboxRow({ item, selected, waiting }: { item: DecisionWithFeedback; selected: boolean | "wide"; waiting: boolean }) {
   const { decision: d, done, feedback } = item;
   return (
