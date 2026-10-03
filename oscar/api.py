@@ -13,10 +13,10 @@ import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel
 
-from oscar import gmail
+from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
 from oscar.act import ActionError, ActionRecord, can_do, do, undo
@@ -484,6 +484,20 @@ def email_content(
         raise HTTPException(502, str(e))
     except httpx.HTTPError:
         raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
+
+
+@app.get("/email-image")
+def email_image(url: str, http: httpx.Client = Depends(get_http)) -> Response:
+    """An image from an email, fetched by Oscar so the sender never sees your address or browser."""
+    try:
+        data, kind = images.fetch(url, http)
+    except (images.ImageError, httpx.HTTPError):
+        raise HTTPException(404, "No image there.")
+    return Response(data, media_type=kind, headers={
+        "Cache-Control": "private, max-age=86400",
+        "Content-Security-Policy": "default-src 'none'",
+        "X-Content-Type-Options": "nosniff",
+    })
 
 
 class ReviewRequest(BaseModel):
