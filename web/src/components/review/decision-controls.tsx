@@ -41,19 +41,25 @@ export function DecisionControls({
   canAct,
   feedback,
   big = false,
+  undoOnly = false,
   onAnswered,
 }: {
   item: DecisionWithFeedback;
   canAct: boolean;
   feedback: Feedback;
   big?: boolean;
+  /** Only the Undo button, for the real inbox where grading is the answer. */
+  undoOnly?: boolean;
   /** Called after an answer went through, to move on to the next email. */
   onAnswered?: (kind: FeedbackKind) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const d = item.decision;
   const real = d.source === "gmail";
-  const { ask, stop, told, canUndo, any } = controlsFor(item);
+  const all = controlsFor(item);
+  const { canUndo } = all;
+  const [ask, stop, told] = undoOnly ? [false, false, false] : [all.ask, all.stop, all.told];
+  const any = undoOnly ? canUndo : all.any;
   const needsActing = ask && real && !canAct;
   const hold = !real ? HOLD_TO_CONFIRM[d.action] : undefined;
   const size = big ? BIG : "h-11 px-5 text-sm";
@@ -71,7 +77,7 @@ export function DecisionControls({
 
   return (
     <div className="flex flex-col gap-3">
-      {youSaid.length > 0 && <p className="text-sm text-muted-foreground">You: {youSaid.map((f) => FEEDBACK[f.kind]).join(", ")}</p>}
+      {!undoOnly && youSaid.length > 0 && <p className="text-sm text-muted-foreground">You: {youSaid.map((f) => FEEDBACK[f.kind]).join(", ")}</p>}
 
       {needsActing && (
         <p className="rounded-xl bg-muted px-3.5 py-3 text-sm">

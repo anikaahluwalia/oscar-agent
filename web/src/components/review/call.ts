@@ -65,7 +65,8 @@ export function callLine(item: DecisionWithFeedback): string {
   return said(item, "UNDO") ? `I ${past}, and you undid it.` : `I ${past} ${how}.`;
 }
 
-const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+// "I" stays a capital, and so does a name or a word in capitals.
+export const lower = (s: string) => (/^(I\b|[A-Z]{2})/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1));
 
 /**
  * The reason from his explanation (oscar/voice.py: "...since {reason}.", "...because {reason}.",

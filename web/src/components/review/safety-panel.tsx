@@ -28,7 +28,8 @@ function foundOf(d: Decision): { title: string; why: string[] } {
   const [first] = keys;
   const title = first ? FOUND[first]?.[0] ?? FLAGS[first] : "It looked risky when I read it closely";
   const why = [
-    ...keys.map((k) => FLAGS[k]).filter(Boolean),
+    // The rule says it in full; the short name only when there's no rule to quote.
+    ...(d.safety_rule ? [] : keys.map((k) => FLAGS[k]).filter(Boolean)),
     ...(d.safety_rule ? [`${d.safety_rule.charAt(0).toUpperCase()}${d.safety_rule.slice(1)}`] : []),
     ...keys.map((k) => FOUND[k]?.[1]).filter(Boolean),
     "This safety rule can't be learned away",

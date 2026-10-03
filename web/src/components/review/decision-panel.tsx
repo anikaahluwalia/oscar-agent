@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { TypePill } from "@/components/classify/type-pill";
 import { describeAnswer } from "@/components/review/answer";
-import { becauseOf, callLine } from "@/components/review/call";
+import { becauseOf, callLine, lower } from "@/components/review/call";
 import { DecisionControls } from "@/components/review/decision-controls";
 import { YouSaid } from "@/components/review/grade";
 import { offersLikeThis } from "@/components/kit/like-this";
@@ -311,7 +311,7 @@ export function DecisionPanel({
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <p className="text-[17px] leading-snug font-bold">{callLine(item)}</p>
-            {because && <p className="text-[13px] text-muted-foreground">Because {because.charAt(0).toLowerCase()}{because.slice(1)}</p>}
+            {because && <p className="text-[13px] text-muted-foreground">Because {lower(because)}</p>}
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-muted/60 px-3.5 py-2.5">
@@ -334,7 +334,8 @@ export function DecisionPanel({
             onSameAsLast={onSameAsLast}
             onChange={onChange}
           />
-          <DecisionControls item={item} canAct={canAct} feedback={feedback} onAnswered={onAnswered} />
+          {/* Yes already approves an ask, so only Undo is left here, once it's done in Gmail. */}
+          <DecisionControls item={item} canAct={canAct} feedback={feedback} onAnswered={onAnswered} undoOnly />
         </PanelSection>
       ) : (
         <PanelSection title="Was the action right?" text="Your answer teaches me about this sender.">
