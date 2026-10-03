@@ -44,6 +44,7 @@ class EvalCase(BaseModel):
     sender_relationship: Literal["known", "unknown", "spoofed"] = "unknown"
     thread: list[str] = Field(default_factory=list)  # earlier messages in the thread, oldest first
     preferences: list[PrefSetup] = Field(default_factory=list)
+    settings: dict = Field(default_factory=dict)  # inbox settings the case depends on, e.g. {"bulk_action": "MARK_READ"}
     # Facts Oscar doesn't use yet (a calendar, say). Cases that need them are reported apart, not faked.
     context: dict = Field(default_factory=dict)
     requires_context: bool = False

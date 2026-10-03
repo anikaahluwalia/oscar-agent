@@ -202,6 +202,9 @@ EMAIL_CHECKS = MappingProxyType({
             r"\b(contract|renewal|agreement|nda|terms|quote|sow|plan|upgrade|subscription)\b.{0,160}\breply (to confirm|so)\b",
             rf"{AGREE}.{{0,120}}{DEAL}|{DEAL}.{{0,120}}{AGREE}",
             r"\b(you've|you have|you) signed off\b|\bsign off on (the|this)\b|['\"](agreed|approved)['\"]",
+            # "Replying to this email confirms your acceptance", "reply confirming you accept the policy".
+            r"\breplying\b[^.?!]{0,40}\b(confirms?|means|counts as)\b[^.?!]{0,30}\b(accept|agree|acceptance|agreement)",
+            r"\breply (confirming|to confirm) (that )?(you )?(accept|agree)\b",
         ],
     ),
 })

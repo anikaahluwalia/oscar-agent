@@ -17,7 +17,7 @@ from evals.schema import CaseResult, EvalCase, RunResult
 from evals.scoring import E, breakdowns, calibration, confusion, judge, metrics
 from oscar.agent import decide
 from oscar.feedback import FeedbackEvent, FeedbackKind
-from oscar.models import AutonomyLevel, Email
+from oscar.models import Action, AutonomyLevel, Email
 from oscar.preferences import DEFAULT_POLICY, Policy, Preferences
 from oscar.understand import PROMPT_VERSION, Reader, model_name
 from oscar.version import CLASSIFIER_VERSION, policy_version
@@ -45,7 +45,7 @@ def regression_suite() -> list[EvalCase]:
         out.append(EvalCase(
             id=f"regression-{c.id}", suite="regression", category="regression", severity="high" if level == E else "low",
             email=c.email, expected_type="unspecified", expected_action=c.expect.action, expected_level=level,
-            safety_floor_should_trigger=level == E, rationale=c.why, source="from_real_review",
+            safety_floor_should_trigger=level == E, rationale=c.why, source="from_real_review", settings=c.settings,
         ))
     return out
 
@@ -86,7 +86,9 @@ def run_case(case: EvalCase, learned: list[FeedbackEvent], policy: Policy, model
     email = case_email(case)
     understanding = model.reader.read(email) if model else None
     start = time.perf_counter()
-    decision = decide(email, preferences, understanding=understanding, model_first=bool(model and model.first))
+    bulk_action = Action(case.settings["bulk_action"]) if case.settings.get("bulk_action") else None
+    decision = decide(email, preferences, bulk_action=bulk_action, understanding=understanding,
+                      model_first=bool(model and model.first))
     runtime = (time.perf_counter() - start) * 1000
     detected = decision.autonomy_level == E and decision.level_source in SAFETY_SOURCES
     passed, error, cost = judge(case, decision.autonomy_level, decision.action, detected)

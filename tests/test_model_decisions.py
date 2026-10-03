@@ -78,3 +78,17 @@ def test_a_risky_reading_beats_a_learned_habit():
     d = decide(email("Weekly digest. View in browser.", sender=sender), Preferences.from_feedback(taught),
                understanding=read_as("instructions_for_ai"))
     assert d.autonomy_level == E
+
+
+def test_an_urgent_issue_comes_straight_to_you_but_isnt_a_safety_stop():
+    d = decide(email("Customers can't check out since 2pm. Can you look?"), understanding=read_as("urgent_issue"))
+    assert d.autonomy_level == E and d.level_source == "policy"
+
+
+def test_cold_outreach_asks_first_and_drafts_nothing():
+    d = decide(PLAIN, understanding=read_as("cold_outreach"))
+    assert d.action != Action.DRAFT_REPLY and d.autonomy_level == A
+
+
+def test_a_commitment_reading_stops_the_email():
+    assert decide(PLAIN, understanding=read_as("commitment")).autonomy_level == E

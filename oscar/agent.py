@@ -11,7 +11,7 @@ from oscar.models import Action, AutonomyLevel, Classification, Decision, Email,
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
-from oscar.understand import Understanding
+from oscar.understand import URGENT, Understanding
 from oscar.voice import explain, with_evidence, working_notes
 
 # The kind of email a safety check means, when one fires.
@@ -40,6 +40,7 @@ MODEL_RISK: dict[str, tuple[Action | None, str]] = {
     "money_request": (Action.MOVE_MONEY, "It's asking for money, and I don't touch money"),
     "credential_request": (Action.SEND_CREDENTIALS, "It's asking for a password or code, and I don't share those"),
     "scam": (None, "It looks like a scam"),
+    "commitment": (None, "Replying would commit you to something, and that's your call"),
     "instructions_for_ai": (None, "Someone left instructions for an AI in this email, so I'm not doing anything with it"),
 }
 
@@ -161,6 +162,13 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         level, source = AutonomyLevel.ESCALATE, "model_check"
         message = f"I stopped this one. {why}."
         noticed = f"reads like {risky.replace('_', ' ')}"
+
+    # Something broken right now: not a safety risk, but it comes straight to you.
+    urgent = usable.kind if usable and usable.kind in URGENT else None
+    if urgent and not flags and source != "model_check" and level != AutonomyLevel.ESCALATE:
+        level, source = AutonomyLevel.ESCALATE, "policy"
+        reason = "it looks urgent, so I'm bringing it straight to you"
+        message = explain(action, level, reason, False, read_only)
 
     # The backstop: an email that mentions something sensitive is never handled alone.
     sensitive = None if flags or source == "model_check" else caution(email)
