@@ -1,5 +1,5 @@
-import { EvalsPage } from "@/components/pages/evals-page";
+import { DoingPage } from "@/components/pages/doing-page";
 
 export default function Page() {
-  return <EvalsPage />;
+  return <DoingPage />;
 }
