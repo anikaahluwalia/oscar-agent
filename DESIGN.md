@@ -1405,3 +1405,19 @@ count of what needs you. Clicking him opens a small panel: his call on the email
 
 Tested by loading the real extension in Chrome against a stand-in Gmail page and a test API.
 It hasn't been tried on real Gmail here: that's yours to do (README).
+
+### His call as a label in Gmail
+
+While acting is on, every email Oscar has read gets one coloured label with his call, so Gmail
+itself shows it, on any browser and on your phone: **Handled** (green, only once he really did it),
+**FYI** (blue), **Needs you** (orange, only asks still on your list) and **Stopped** (red). The
+names are plain, no `Oscar/` in front (his older `Oscar/...` labels still count as his, so undo works).
+
+- **A note, not an action.** The label never reads, archives or answers anything, which is why an
+  email he stopped still gets "Stopped". It's kept apart from `do()` (`act.tag`).
+- **Only his own, and never yours.** The Gmail client only makes labels from a fixed list of names.
+  If you already have one of those names, he uses yours and leaves its colour alone, and a label
+  you put on an email yourself is never taken off.
+- **Kept up to date.** Each check relabels emails whose call changed (an ask you approved, an undo,
+  a re-read), at most 50 per check, so the backlog fills in over a few checks.
+- **Off in the evals.** They grade the inbox by what changed, so the label is only on the app's check.

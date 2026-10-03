@@ -42,7 +42,7 @@ def test_labelling_uses_oscars_own_label_and_undo_takes_it_off(tmp_path):
     history = History()
     d = real(email, info, action=Action.APPLY_LABEL, autonomy_level=AutonomyLevel.PROCEED_SILENTLY, email_type="receipt")
     do(history, client, d, by="oscar")
-    label = next(l["id"] for l in fake.labels if l["name"] == "Oscar/Receipts")
+    label = next(l["id"] for l in fake.labels if l["name"] == "Receipts")
     assert label in fake.messages["m1"]["labelIds"]
     undo(history, client, d.id)
     assert label not in fake.messages["m1"]["labelIds"]

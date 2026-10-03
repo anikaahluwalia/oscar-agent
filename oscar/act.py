@@ -6,6 +6,11 @@ with money. The Gmail client can't do those either (oscar/gmail.py).
 
 Each action records exactly which labels it added and which it removed, given
 what the email had at the time, so undo puts it back the way it was.
+
+Separately, every email he reads gets his call as a coloured label (Handled, FYI,
+Needs you, Stopped), so you can see it in Gmail itself. That's a note on the email,
+not the email's action: it never reads, archives or answers anything, and an email
+he stopped still gets "Stopped".
 """
 
 from __future__ import annotations
@@ -35,6 +40,12 @@ ACTED_LEVELS = frozenset({AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_
 MAX_PER_CHECK = 25  # the most Oscar does on his own in one check, so a bug can't touch the whole inbox
 
 
+# Oscar's call on an email, as the label you see in Gmail. "Handled" only once he really did it.
+HANDLED, FYI, NEEDS_YOU, STOPPED = "Handled", "FYI", "Needs you", "Stopped"
+STATUS_LABELS = (HANDLED, FYI, NEEDS_YOU, STOPPED)
+TAGS_PER_CHECK = 50  # the most emails he labels or relabels in one check
+
+
 class ActionError(RuntimeError):
     pass
 
@@ -54,6 +65,15 @@ class ActionRecord(BaseModel):
     removed: list[str] = Field(default_factory=list)  # label ids actually removed
     done_at: datetime = Field(default_factory=now)
     undone_at: datetime | None = None
+
+
+class Tag(BaseModel):
+    """The status label Oscar last put on an email."""
+    email_id: str
+    message_id: str
+    label: str | None  # None once the email is gone from Gmail
+    added: bool = False  # he put it on (it wasn't already there), so it's his to take off later
+    at: datetime = Field(default_factory=now)
 
 
 def can_do(decision: Decision) -> bool:
@@ -104,3 +124,39 @@ def undo(history: History, gmail: GmailClient, decision_id: str) -> ActionRecord
         record = record.model_copy(update={"undone_at": now()})
         history.save_action(record)
         return record
+
+
+def status_label(history: History, decision: Decision, waiting: set[str]) -> str:
+    """The label for Oscar's latest call on an email. waiting is the ids of asks still on your list."""
+    if decision.autonomy_level == AutonomyLevel.ESCALATE:
+        return STOPPED
+    done = history.action_for(decision.id)
+    if done and not done.undone_at:
+        return HANDLED
+    if decision.autonomy_level == AutonomyLevel.ASK_FIRST and decision.id in waiting:
+        return NEEDS_YOU
+    return FYI
+
+
+def tag(history: History, gmail: GmailClient, decision: Decision, label: str) -> Tag:
+    """Put one status label on the email, taking off the one Oscar put there before. Nothing
+    else on the email changes, and a label you put there yourself is never taken off."""
+    with _lock:
+        before = history.tags.get(decision.email_id)
+        message_id = decision.gmail.message_id
+        current = set(gmail.labels(message_id))
+        new = gmail.label_id(label)
+        old = gmail.find_label(before.label) if before and before.added and before.label else None
+        add = [new] if new not in current else []
+        remove = [old] if old and old != new and old in current else []
+        gmail.modify_labels(message_id, add=add, remove=remove)
+        # Still his if he added it now, or added it before and it's the same label.
+        added = bool(add) or bool(before and before.added and before.label == label)
+        record = Tag(email_id=decision.email_id, message_id=message_id, label=label, added=added)
+        history.save_tag(record)
+        return record
+
+
+def gone(history: History, decision: Decision) -> None:
+    """The email isn't in Gmail any more, so stop trying to label it."""
+    history.save_tag(Tag(email_id=decision.email_id, message_id=decision.gmail.message_id, label=None))

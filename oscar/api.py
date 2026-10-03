@@ -450,7 +450,8 @@ def gmail_sync(
     http: httpx.Client = Depends(get_http),
     real: History = Depends(get_real_history),
 ) -> dict:
-    """Read the newest emails and log what Oscar would do with each. Nothing changes in Gmail.
+    """Read the newest emails and decide on each. Nothing changes in Gmail unless acting is on;
+    then he also does what he's sure of and labels each email with his call.
     Oscar also does this on his own every few minutes; this is for checking right now."""
     if not tokens.load():
         raise HTTPException(409, "Gmail isn't connected.")
@@ -468,7 +469,8 @@ def gmail_sync(
 def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, limit: int = 25):
     """One check for new email, by you or by the timer, and note when it happened."""
     result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100),
-                  act_since=acting_since(tokens, real), still_acting=lambda: acting_on(tokens, real))
+                  act_since=acting_since(tokens, real), still_acting=lambda: acting_on(tokens, real),
+                  label=acting_on(tokens, real))
     saved = tokens.load()
     if saved:
         saved["last_sync"] = time.time()

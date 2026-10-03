@@ -198,15 +198,15 @@ function AccountCard({ gmail }: { gmail: GmailStatus }) {
 }
 
 const ACTING_FACTS = [
-  "He marks emails as read, archives them, and puts his own labels on them.",
+  "He marks emails as read, archives them, and labels each one with his call: Handled, FYI, Needs you or Stopped.",
   "On his own only when he's sure; otherwise he asks, and does it when you approve.",
   "Never sends, deletes, unsubscribes or touches money. Anything risky still comes to you.",
-  "Every action can be undone. Only emails he reads from now on, at most 25 per check.",
+  "Every action can be undone. He only acts on emails that arrive from now on, at most 25 per check.",
 ];
 
 /**
  * Stage 12: letting Oscar act in Gmail. Off until you turn it on, and only after Gmail was connected
- * with permission to change labels. He only marks read, archives and labels, and only new emails.
+ * with permission to change labels. He only marks read, archives and labels, and only acts on new emails.
  */
 function ActingRow({ gmail }: { gmail: GmailStatus }) {
   if (!gmail.can_act) {

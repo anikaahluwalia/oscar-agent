@@ -75,7 +75,7 @@ def test_signing_in_works_without_a_profile(setup, monkeypatch):
 def test_sync_review_and_summary(setup):
     client, state, real, demo, tmp_path = setup
     state["tokens"] = connected(tmp_path)
-    assert client.post("/gmail/sync").json() == {"new": 1, "skipped": 0, "done": 0}
+    assert client.post("/gmail/sync").json() == {"new": 1, "skipped": 0, "done": 0, "labelled": 0}
     item = client.get("/decisions").json()[0]
     assert item["decision"]["source"] == "gmail" and item["review"] is None
     assert item["decision"]["autonomy_level"] in ("ASK_FIRST", "ESCALATE")
@@ -196,9 +196,9 @@ def test_recheck_makes_new_decisions_and_keeps_the_old(setup, monkeypatch):
     state["tokens"] = connected(tmp_path)
     client.post("/gmail/sync")
     old = next(iter(real.decisions.values()))
-    assert client.post("/gmail/recheck").json() == {"new": 0, "skipped": 0, "done": 0}  # same version: nothing to redo
+    assert client.post("/gmail/recheck").json() == {"new": 0, "skipped": 0, "done": 0, "labelled": 0}  # same version: nothing to redo
     monkeypatch.setattr(inbox, "policy_version", lambda: "newer")
-    assert client.post("/gmail/recheck").json() == {"new": 1, "skipped": 0, "done": 0}
+    assert client.post("/gmail/recheck").json() == {"new": 1, "skipped": 0, "done": 0, "labelled": 0}
     redo = [d for d in real.decisions.values() if d.recheck_of == old.id]
     assert len(redo) == 1 and old.id in real.decisions
     assert client.get("/decisions").json()[0]["decision"]["id"] == redo[0].id  # the newest is what's shown

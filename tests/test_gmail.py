@@ -62,7 +62,7 @@ def test_oscar_makes_his_own_labels_and_can_use_them(tmp_path):
     assert receipts == client.label_id("Receipts"), "made once"
     client.modify_labels("m1", add=[receipts], remove=["UNREAD"])
     assert fake.messages["m1"]["labelIds"] == ["INBOX", receipts]
-    assert any(l["name"] == "Oscar/Receipts" for l in fake.labels)
+    assert any(l["name"] == "Receipts" for l in fake.labels)
 
 
 def test_parses_a_message():

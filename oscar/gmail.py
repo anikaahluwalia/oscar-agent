@@ -2,9 +2,9 @@
 
 Connecting asks Google for read-only access (gmail.readonly). Oscar only asks for
 gmail.modify when you choose to let him act. Even then, the only writes in this
-client are modify_labels, which only adds or removes UNREAD, INBOX and labels
-Oscar made himself (under "Oscar/"), and label_id, which makes one of those labels
-from a fixed list of names: marking read, archiving and labelling, all undoable. There is no code here that can send, trash or delete anything;
+client are modify_labels, which only adds or removes UNREAD, INBOX and Oscar's own
+labels, and label_id, which makes one of those labels from a fixed list of names:
+marking read, archiving and labelling, all undoable. There is no code here that can send, trash or delete anything;
 tests/test_gmail.py checks that.
 
 Google's OAuth: the user is sent to Google to say yes, Google sends them back to
@@ -33,7 +33,18 @@ from oscar.models import Email, GmailInfo
 SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 ACT_SCOPE = "https://www.googleapis.com/auth/gmail.modify"  # only asked for when you let Oscar act
 PROFILE_SCOPES = ("openid", "email", "profile")  # your name and photo, for the corner of the app
-LABEL_PREFIX = "Oscar/"
+# The only labels Oscar makes or uses, by name, with the colour each gets when he makes it
+# (background, text; Gmail only takes colours from its own palette). If you already have a
+# label with one of these names, he uses yours and leaves its colour alone.
+OSCAR_LABELS: dict[str, tuple[str, str]] = {
+    "Handled": ("#16a766", "#ffffff"),
+    "FYI": ("#4a86e8", "#ffffff"),
+    "Needs you": ("#ffad47", "#ffffff"),
+    "Stopped": ("#fb4c2f", "#ffffff"),
+    "Receipts": ("#a479e2", "#ffffff"),
+    "Sorted": ("#999999", "#ffffff"),
+}
+OLD_PREFIX = "Oscar/"  # his labels used to be "Oscar/Receipts" and so on; still his, so undo works
 SYSTEM_LABELS = frozenset({"UNREAD", "INBOX"})  # the only Gmail labels Oscar may add or remove
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -212,19 +223,38 @@ class GmailClient:
         return response.json()
 
     def _mine(self) -> dict[str, str]:
-        """Oscar's own labels (named "Oscar/..."), by name, looked up once per client."""
+        """Oscar's own labels by name, looked up once per client. Gmail treats label names
+        without regard to case, so "needs you" is the same label as "Needs you"."""
         if self._oscar_labels is None:
-            self._oscar_labels = {l["name"]: l["id"] for l in self._get("/labels").get("labels", [])
-                                  if l.get("name", "").startswith(LABEL_PREFIX)}
+            names = {name.lower(): name for name in OSCAR_LABELS}
+            self._oscar_labels = {}
+            for label in self._get("/labels").get("labels", []):
+                name = label.get("name", "")
+                if name.lower() in names:
+                    self._oscar_labels[names[name.lower()]] = label["id"]
+                elif name.startswith(OLD_PREFIX):
+                    self._oscar_labels[name] = label["id"]
         return self._oscar_labels
 
+    def find_label(self, name: str) -> str | None:
+        """The id of one of Oscar's labels, if it's in Gmail. Never makes one."""
+        return self._mine().get(name)
+
     def label_id(self, name: str) -> str:
-        """The id of Oscar's label "Oscar/<name>", made the first time it's needed."""
-        full = LABEL_PREFIX + name
-        if full not in self._mine():
-            made = self._post("/labels", {"name": full, "labelListVisibility": "labelShow", "messageListVisibility": "show"})
-            self._oscar_labels[full] = made["id"]
-        return self._oscar_labels[full]
+        """The id of one of Oscar's labels, made (in its colour) the first time it's needed."""
+        if name not in OSCAR_LABELS:
+            raise GmailError(f"{name!r} isn't one of Oscar's labels.")
+        if name not in self._mine():
+            new = {"name": name, "labelListVisibility": "labelShow", "messageListVisibility": "show"}
+            background, text = OSCAR_LABELS[name]
+            try:
+                made = self._post("/labels", {**new, "color": {"backgroundColor": background, "textColor": text}})
+            except GmailError as e:
+                if e.status != 400:
+                    raise
+                made = self._post("/labels", new)  # Gmail turned down the colour: plain is still fine
+            self._oscar_labels[name] = made["id"]
+        return self._oscar_labels[name]
 
     def modify_labels(self, message_id: str, add: list[str], remove: list[str]) -> None:
         """Add and remove labels on one email. Only UNREAD, INBOX and Oscar's own labels: anything

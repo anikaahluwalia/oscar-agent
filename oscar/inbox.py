@@ -19,12 +19,13 @@ from datetime import datetime, timedelta
 import httpx
 from pydantic import BaseModel, Field
 
-from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, ActionError, can_do, do
+from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, TAGS_PER_CHECK, ActionError, can_do, do, gone, status_label, tag
 from oscar.agent import decide
 from oscar.review import teaching
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
 from oscar.models import AutonomyLevel, Decision, new_id, now
+from oscar.overview import latest_per_email, needs_you
 from oscar.preferences import Preferences
 from oscar.reminders import ReminderReader
 from oscar.understand import Reader, reads_real_email
@@ -56,6 +57,7 @@ class SyncResult(BaseModel):
     new: int
     skipped: int  # emails Oscar couldn't read this time; they're tried again next check
     done: int = 0  # Stage 12: actions Oscar took in Gmail on his own
+    labelled: int = 0  # emails whose status label he put on or changed
 
 
 def reader_for(history: History) -> Reader | None:
@@ -78,12 +80,15 @@ def reminders_for(history: History) -> ReminderReader | None:
 
 def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None,
          act_since: datetime | None = None, still_acting: Callable[[], bool] | None = None, *,
-         safety: bool = True, reminders: ReminderReader | None = None) -> SyncResult:
+         safety: bool = True, reminders: ReminderReader | None = None, label: bool = False) -> SyncResult:
     """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first.
 
     With act_since (Stage 12), he also does what he decided to do on his own, if it's one of his
     undoable actions, but only for emails that arrived after acting was turned on: never the
     backlog. still_acting is asked before each action, so turning acting off stops a check midway.
+
+    With label (the app's own check, while acting is on), he also puts his call on emails as a
+    coloured label in Gmail (label_inbox). The evals leave it off: they grade the world by what changed.
 
     safety=False is for the evals' simulated inbox only (agent.decide), and refused for anything else.
     """
@@ -95,8 +100,12 @@ def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader |
         # The app's own path (no reader passed in) also looks for reminders; evals and tests don't.
         if reminders is None and reader is None:
             reminders = reminders_for(history)
-        return _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act_since,
-                     still_acting or (lambda: True), safety, reminders)
+        still = still_acting or (lambda: True)
+        result = _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act_since,
+                       still, safety, reminders)
+        if label:
+            result.labelled = label_inbox(history, gmail, still)
+        return result
     finally:
         _syncing.release()
 
@@ -148,6 +157,34 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         new += 1
     follow_up(history, gmail)
     return SyncResult(new=new, skipped=skipped, done=done)
+
+
+def label_inbox(history: History, gmail: GmailClient, still_acting: Callable[[], bool],
+                limit: int = TAGS_PER_CHECK) -> int:
+    """Bring the status labels in Gmail up to date with Oscar's latest call on each email, newest
+    first, a few at a time. Only emails whose label is missing or out of date are touched."""
+    waiting = {d.id for d in needs_you(history)[AutonomyLevel.ASK_FIRST]}
+    changed = 0
+    for decision in latest_per_email(history):
+        if changed >= limit or not still_acting():
+            break
+        if decision.source != "gmail" or decision.gmail is None:
+            continue
+        before = history.tags.get(decision.email_id)
+        want = status_label(history, decision, waiting)
+        if before and (before.label is None or before.label == want):
+            continue  # gone from Gmail, or already right
+        try:
+            tag(history, gmail, decision, want)
+            changed += 1
+        except GmailError as e:
+            if e.status == 404:
+                gone(history, decision)
+            elif e.status in (401, 403):
+                break  # Gmail stopped letting him change labels; the app says so elsewhere
+        except httpx.HTTPError:
+            pass  # tried again next check
+    return changed
 
 
 def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reader | None = None) -> SyncResult:

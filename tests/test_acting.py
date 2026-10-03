@@ -49,6 +49,12 @@ def decision_for(real, message_id):
     return next(d for d in real.decisions.values() if d.gmail.message_id == message_id)
 
 
+def names(fake, message_id):
+    """The email's labels by name: Gmail's own (INBOX, UNREAD) as they are, the rest by their name."""
+    by_id = {l["id"]: l["name"] for l in fake.labels}
+    return sorted(by_id.get(l, l) for l in fake.messages[message_id]["labelIds"])
+
+
 def writes(fake):
     return [r for r in fake.gmail_requests() if r.method == "POST"]
 
@@ -71,12 +77,14 @@ def test_oscar_does_what_he_decided_on_his_own_and_it_can_be_undone(api):
     assert client.post("/gmail/sync").json()["done"] == 1
     receipt = decision_for(real, "r1")
     assert receipt.acting and real.action_for(receipt.id) is not None
-    assert any(l.startswith("Label_") for l in fake.messages["r1"]["labelIds"])
-    # Asks and stops are left alone.
-    assert fake.messages["n1"]["labelIds"] == ["INBOX", "UNREAD"]
-    assert fake.messages["w1"]["labelIds"] == ["INBOX", "UNREAD"]
+    assert names(fake, "r1") == ["Handled", "INBOX", "Receipts", "UNREAD"]
+    # Asks and stops stay unread in the inbox: the only change is the label with his call.
+    assert names(fake, "n1") == ["INBOX", "Needs you", "UNREAD"]
+    assert names(fake, "w1") == ["INBOX", "Stopped", "UNREAD"]
     assert client.post("/feedback", json={"decision_id": receipt.id, "kind": "UNDO"}).status_code == 200
-    assert fake.messages["r1"]["labelIds"] == ["INBOX", "UNREAD"]
+    assert names(fake, "r1") == ["Handled", "INBOX", "UNREAD"]
+    client.post("/gmail/sync")  # the next check notices it was undone
+    assert names(fake, "r1") == ["FYI", "INBOX", "UNREAD"]
 
 
 def test_approving_an_ask_does_it_and_declining_doesnt(api):
@@ -159,7 +167,7 @@ def test_a_reread_keeps_what_was_done_and_it_can_still_be_undone(api):
     latest = next(i for i in client.get("/decisions").json() if i["decision"]["recheck_of"] == first.id)
     assert latest["decision"]["acting"] and latest["done"] is not None
     assert client.post("/feedback", json={"decision_id": latest["decision"]["id"], "kind": "UNDO"}).status_code == 200
-    assert fake.messages["r1"]["labelIds"] == ["INBOX", "UNREAD"]
+    assert names(fake, "r1") == ["Handled", "INBOX", "UNREAD"], "the receipt label is off; his status label waits for the next check"
 
 
 def test_reconnecting_needs_acting_turned_on_again(api):
