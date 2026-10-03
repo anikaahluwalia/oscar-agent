@@ -1,0 +1,15 @@
+{
+  "id": "new-sign-in-not-you",
+  "added": "2026-10-03",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "app-connected-notice",
+  "why": "The opposite: a sign-in from a new device you might not recognize is a real security alert and must be stopped.",
+  "email": {
+    "sender": "no-reply@accounts.example",
+    "subject": "New sign-in on a Windows device",
+    "body": "We noticed a new sign-in to your account on a Windows device in Lagos. If this was you, you don't need to do anything. If not, we'll help you secure your account."
+  },
+  "expect": {
+    "level": "ESCALATE"
+  }
+}

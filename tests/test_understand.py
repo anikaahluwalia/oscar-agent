@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from oscar.models import Action, Email
-from oscar.understand import KINDS, NoSavedReading, Reader, email_text, parse
+from oscar.understand import KINDS, SYSTEM, NoSavedReading, Reader, email_text, parse
 
 
 def fake(answer: str | None = None, status: int = 200, calls: list | None = None) -> httpx.Client:
@@ -103,3 +103,10 @@ def test_saved_readings_work_without_a_key_and_a_missing_one_stops(monkeypatch, 
 
 def test_every_kind_maps_to_an_action():
     assert all(isinstance(action, Action) for _, action in KINDS.values())
+
+
+def test_the_prompt_says_what_only_sounds_risky():
+    # From real-inbox reviews: each of these was stopped by a misreading (evals/regression_cases/).
+    assert "greeting by name" in SYSTEM
+    assert "connected an app" in SYSTEM and "connected an app" in KINDS["account_update"][0]
+    assert "Moving a delivery or a meeting" in SYSTEM
