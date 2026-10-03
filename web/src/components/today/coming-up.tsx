@@ -1,13 +1,23 @@
+import { CalendarIcon, FileTextIcon } from "lucide-react";
 import { displayName } from "@/components/kit/sender";
 import { EmailLink } from "@/components/email-link";
 import type { DecisionWithFeedback, Reminder } from "@/lib/api";
 
-const day = (d: Date) => d.toLocaleDateString([], { weekday: "short" }).toUpperCase();
+const SHOWN = 6;
 
 function clock(time: string | null) {
   if (!time) return null;
   const [h, m] = time.split(":").map(Number);
   return new Date(2000, 0, 1, h, m).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/** "Today", "Tomorrow", or "Wed, Oct 8". */
+function dayName(when: Date, now: number) {
+  const today = new Date(now);
+  const days = Math.round((when.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  return when.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
 /** Events and due dates from your emails, soonest first, until the day has passed. */
@@ -26,40 +36,58 @@ export function upcoming(items: DecisionWithFeedback[], now: number) {
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .slice(0, 5);
+    });
 }
 
+/** What's coming up, grouped by day: from the reminders Oscar found in your emails. */
 export function ComingUp({ items, now }: { items: DecisionWithFeedback[]; now: number }) {
-  const rows = upcoming(items, now);
-  if (!rows.length) return null;
+  const all = upcoming(items, now);
+  const rows = all.slice(0, SHOWN);
+  const days: { name: string; rows: typeof rows }[] = [];
+  for (const r of rows) {
+    const name = dayName(r.when, now);
+    if (days.at(-1)?.name === name) days.at(-1)!.rows.push(r);
+    else days.push({ name, rows: [r] });
+  }
   return (
-    <section aria-labelledby="coming-up" className="flex flex-col">
-      <h2 id="coming-up" className="mb-2 text-lg font-bold">
-        Coming up
-      </h2>
-      <ul className="flex flex-col">
-        {rows.map(({ item, reminder, when }) => (
-          <li key={item.decision.id} className="border-t first:border-t-0">
-            <EmailLink id={item.decision.id} className="flex min-h-14 items-center gap-3 py-3 hover:bg-surface-hover sm:rounded-xl sm:px-2">
-              <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-muted py-1.5 leading-tight">
-                <span className="text-[11px] font-bold text-muted-foreground">{day(when)}</span>
-                <span className="text-xl font-extrabold">{when.getDate()}</span>
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate font-bold">{reminder.title}</span>
-                <span className="truncate text-sm text-muted-foreground">
-                  {[clock(reminder.time), reminder.detail, `from ${displayName(item.decision.sender)}`].filter(Boolean).join(" · ")}
-                </span>
-              </span>
-              <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-[13px] font-semibold text-muted-foreground">
-                {reminder.kind === "due" ? "Due" : "Event"}
-              </span>
-            </EmailLink>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-[13px] text-muted-foreground">Found in your emails. Each one goes away once the day has passed.</p>
+    <section aria-labelledby="coming-up" className="flex flex-col rounded-[24px] border bg-card px-5 py-5 sm:px-6">
+      <div className="mb-2 flex min-h-11 items-center">
+        <h2 id="coming-up" className="text-lg font-bold">
+          Coming up
+        </h2>
+      </div>
+      {!rows.length ? (
+        <p className="py-6 text-[15px] text-muted-foreground">Nothing coming up.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {days.map((d) => (
+            <div key={d.name} className="flex flex-col">
+              <h3 className="border-b pb-1.5 text-sm font-semibold text-foreground/80">{d.name}</h3>
+              <ul className="flex flex-col">
+                {d.rows.map(({ item, reminder }) => (
+                  <li key={item.decision.id}>
+                    <EmailLink id={item.decision.id} className="flex items-center gap-3 py-2.5 hover:bg-surface-hover sm:rounded-xl sm:px-2">
+                      <span className="w-16 shrink-0 text-sm text-muted-foreground tabular-nums">{clock(reminder.time) ?? "All day"}</span>
+                      <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
+                        {reminder.kind === "due" ? <FileTextIcon className="size-4" /> : <CalendarIcon className="size-4" />}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-[15px] font-semibold">{reminder.title}</span>
+                        <span className="truncate text-[13px] text-muted-foreground">
+                          {[reminder.kind === "due" ? "Due" : null, reminder.detail, `from ${displayName(item.decision.sender)}`].filter(Boolean).join(" · ")}
+                        </span>
+                      </span>
+                    </EmailLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {all.length > SHOWN && (
+            <p className="text-[13px] text-muted-foreground">and {(all.length - SHOWN).toLocaleString()} more later on</p>
+          )}
+        </div>
+      )}
     </section>
   );
 }

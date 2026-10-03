@@ -147,3 +147,13 @@ def test_permissions_come_from_the_rules():
     assert rows[Action.MOVE_MONEY]["floor"] == AutonomyLevel.ESCALATE
     assert rows[Action.DRAFT_REPLY]["ceiling"] == AutonomyLevel.PROCEED_AND_NOTIFY
     assert rows[Action.APPLY_LABEL]["level"] == AutonomyLevel.PROCEED_SILENTLY
+
+
+def test_permissions_say_what_was_learned_for_a_kind_and_when():
+    from oscar.overview import permissions
+    history = History()
+    d = add(history, NEWSLETTER, "n1")
+    record_feedback(history, d.id, FeedbackKind.ALWAYS_DO_THIS, scope="kind")
+    row = next(r for r in permissions(history) if r["action"] == d.action)
+    assert row["learned"]["level"] == AutonomyLevel.PROCEED_SILENTLY and row["learned"]["rule"]
+    assert row["learned"]["updated_at"] is not None

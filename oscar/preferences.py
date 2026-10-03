@@ -467,5 +467,6 @@ class Preferences:
                          "senders": len(record.senders), "evidence": record.evidence,
                          "confidence": round(record.confidence, 3), "desired": record.desired,
                          "rule": "ask" if record.always_ask else record.told,
-                         "level": found.level if found else A, "reason": found.reason if found else ""})
+                         "level": found.level if found else A, "reason": found.reason if found else "",
+                         "updated_at": record.updated_at})
         return rows

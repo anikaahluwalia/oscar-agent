@@ -188,6 +188,7 @@ def permissions(history: History) -> list[dict]:
             # What your answers (or your rule) say for a new sender of this kind. The safety rules
             # still run after it on every email.
             "learned": {"level": apply_floor(action, found["level"], "")[0], "reason": found["reason"],
-                        "senders": found["senders"], "rule": key in rules, "decision_id": rules.get(key)} if found else None,
+                        "senders": found["senders"], "rule": key in rules, "decision_id": rules.get(key),
+                        "updated_at": found["updated_at"]} if found else None,
         })
     return rows

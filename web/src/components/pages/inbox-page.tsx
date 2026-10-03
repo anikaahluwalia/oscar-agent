@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { FilterPills } from "@/components/inbox/filter-pills";
 import { InboxLink } from "@/components/inbox/inbox-link";
@@ -46,11 +46,17 @@ function byDay(items: DecisionWithFeedback[]) {
   return days;
 }
 
+const noSubscribe = () => () => {};
+
 /** Inbox: every email Oscar has read and what he did with it (or, while he only reads Gmail, would do). */
 export function InboxPage() {
   const { data, error, feedback } = useOscar();
   const hash = useHash();
-  const [filter, setFilter] = useState<Filter>("ALL");
+  // "See all" from Today's list of what he took care of opens on that filter (/inbox?show=done),
+  // until you pick another.
+  const show = useSyncExternalStore(noSubscribe, () => new URLSearchParams(window.location.search).get("show"), () => null);
+  const [chosen, setFilter] = useState<Filter | null>(null);
+  const filter: Filter = chosen ?? (show === "done" ? "DONE" : "ALL");
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PAGE);
 

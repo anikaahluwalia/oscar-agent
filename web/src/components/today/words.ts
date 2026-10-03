@@ -1,10 +1,10 @@
 // What Today says, worked out from Oscar's real decisions.
 
 import type { Action, DecisionWithFeedback } from "@/lib/api";
-import { addressOf } from "@/components/kit/sender";
+import { displayName } from "@/components/kit/sender";
 import { plural } from "@/lib/counts";
-import { reallyDone, timeOf } from "@/lib/insights";
-import { ACTIONS, KIND_NAMES, wouldOnly } from "@/lib/labels";
+import { reallyDone } from "@/lib/insights";
+import { ACTIONS, wouldOnly } from "@/lib/labels";
 
 const ON_OWN = new Set(["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY"]);
 
@@ -16,63 +16,74 @@ export function startOfToday(now: number) {
 
 const handledAt = (i: DecisionWithFeedback) => new Date(i.done?.done_at ?? i.decision.created_at).getTime();
 
-const DID: Partial<Record<Action, (n: number) => string>> = {
-  MARK_READ: (n) => `Marked ${n.toLocaleString()} as read`,
-  ARCHIVE: (n) => `Archived ${n.toLocaleString()}`,
-  APPLY_LABEL: (n) => `Labelled ${n.toLocaleString()}`,
+// What to call a few emails of one kind, for "Archived 4 promotions".
+const NOUNS: Record<string, [string, string]> = {
+  marketing: ["promotion", "promotions"],
+  promotion: ["promotion", "promotions"],
+  newsletter: ["newsletter", "newsletters"],
+  job_alert: ["job alert", "job alerts"],
+  receipt: ["receipt", "receipts"],
+  fyi: ["notice", "notices"],
+  account_update: ["notice", "notices"],
+  social_notification: ["notification", "notifications"],
+};
+const noun = (type: string, n: number) => (NOUNS[type] ?? ["email", "emails"])[n === 1 ? 0 : 1];
+
+const GROUP_DID: Partial<Record<Action, (n: number, what: string) => string>> = {
+  ARCHIVE: (n, what) => `Archived ${n.toLocaleString()} ${what}`,
+  MARK_READ: (n, what) => `Marked ${n.toLocaleString()} ${what} as read`,
+  APPLY_LABEL: (n, what) => `Labelled ${n.toLocaleString()} ${what}`,
   DRAFT_REPLY: (n) => `Drafted ${plural(n, "reply", "replies")}`,
 };
-const WOULD: Partial<Record<Action, (n: number) => string>> = {
-  MARK_READ: (n) => `Would mark ${n.toLocaleString()} as read`,
-  ARCHIVE: (n) => `Would archive ${n.toLocaleString()}`,
-  APPLY_LABEL: (n) => `Would label ${n.toLocaleString()}`,
+const GROUP_WOULD: Partial<Record<Action, (n: number, what: string) => string>> = {
+  ARCHIVE: (n, what) => `Would archive ${n.toLocaleString()} ${what}`,
+  MARK_READ: (n, what) => `Would mark ${n.toLocaleString()} ${what} as read`,
+  APPLY_LABEL: (n, what) => `Would label ${n.toLocaleString()} ${what}`,
   DRAFT_REPLY: (n) => `Would draft ${plural(n, "reply", "replies")}`,
 };
 
+/** "Nike, Sephora, Aritzia and 2 more": who the emails were from, without repeats. */
+export function whoFrom(senders: string[], shown = 3) {
+  const names = [...new Set(senders.map((s) => displayName(s)))];
+  if (names.length <= shown) return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0] ?? "";
+  return `${names.slice(0, shown).join(", ")} and ${names.length - shown} more`;
+}
+
+export type ActivityRow =
+  | { key: string; type: "done"; title: string; detail: string; at: number }
+  | { key: string; type: "reminder"; title: string; detail: string; at: number; id: string };
+
 /**
- * What Oscar took care of since `since`, one chip per action, biggest first. Same rule as
- * handledSince: only what really happened, or while he only reads Gmail, what he would have done.
+ * What Oscar took care of since `since`, grouped: "Archived 4 promotions" rather than four rows,
+ * newest first. Only what really happened (the same rule as tookCare), or while he only reads
+ * Gmail, what he would have done. Reminders he found in today's emails are listed too.
  */
-export function tookCare(items: DecisionWithFeedback[], since: number, readOnly: boolean): { action: Action; n: number; label: string }[] {
-  const counts = new Map<Action, number>();
+export function activity(items: DecisionWithFeedback[], since: number, readOnly: boolean): ActivityRow[] {
+  const groups = new Map<string, { action: Action; type: string; senders: string[]; at: number }>();
   for (const i of items) {
     const counted = readOnly ? wouldOnly(i.decision) && ON_OWN.has(i.decision.autonomy_level) : reallyDone(i);
-    if (counted && handledAt(i) >= since) counts.set(i.decision.action, (counts.get(i.decision.action) ?? 0) + 1);
+    const at = handledAt(i);
+    if (!counted || at < since) continue;
+    const type = i.decision.action === "DRAFT_REPLY" ? "" : noun(i.decision.email_type ?? "", 2);
+    const key = `${i.decision.action}|${type}`;
+    const g = groups.get(key) ?? { action: i.decision.action, type: i.decision.email_type ?? "", senders: [], at: 0 };
+    g.senders.push(i.decision.sender);
+    g.at = Math.max(g.at, at);
+    groups.set(key, g);
   }
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([action, n]) => {
-      const words = (readOnly ? WOULD : DID)[action];
-      return { action, n, label: words ? words(n) : `${readOnly ? "Would " + ACTIONS[action].toLowerCase() : ACTIONS[action]}: ${n.toLocaleString()}` };
-    });
+  const rows: ActivityRow[] = [...groups.entries()].map(([key, g]) => {
+    const n = g.senders.length;
+    const words = (readOnly ? GROUP_WOULD : GROUP_DID)[g.action];
+    const title = words ? words(n, noun(g.type, n)) : `${ACTIONS[g.action]}: ${n.toLocaleString()}`;
+    return { key, type: "done", title, detail: `From ${whoFrom(g.senders)}`, at: g.at };
+  });
+  for (const i of items) {
+    const r = i.decision.reminder;
+    const at = new Date(i.decision.created_at).getTime();
+    if (!r || at < since || i.decision.autonomy_level === "ESCALATE" || i.decision.safety_flags.length) continue;
+    rows.push({ key: `reminder|${i.decision.id}`, type: "reminder", id: i.decision.id, title: "Noted something coming up", detail: r.title, at });
+  }
+  return rows.sort((a, b) => b.at - a.at);
 }
 
-/**
- * Small facts about an email for its card: what kind it is, and what Oscar knows about the sender.
- * Only what the data says. The demo inbox is the whole inbox, so there "first email" is known;
- * on Gmail he only reads recent mail, so he only says how many earlier ones he's seen.
- */
-export function tagsFor(item: DecisionWithFeedback, items: DecisionWithFeedback[]): string[] {
-  const { decision } = item;
-  const tags: string[] = [];
-  const kind = decision.email_type;
-  if (kind && kind !== "unknown" && kind !== "bulk") tags.push(KIND_NAMES[kind] ?? kind.replace(/_/g, " "));
 
-  const from = (addressOf(decision.sender) || decision.sender).toLowerCase();
-  const at = timeOf(item);
-  const earlier = items.filter(
-    (i) => i.decision.id !== decision.id && (addressOf(i.decision.sender) || i.decision.sender).toLowerCase() === from && timeOf(i) < at,
-  ).length;
-  if (earlier) tags.push(`${earlier.toLocaleString()} earlier from them`);
-  else if (decision.source !== "gmail") tags.push("First email from them");
-
-  if (decision.gmail?.emailed_before === true) tags.push("You've emailed them");
-  else if (decision.gmail?.emailed_before === false) tags.push("You've never emailed them");
-  return tags;
-}
-
-/** The few words next to Oscar's note: what kind of wait this is. */
-export function waitWords(item: DecisionWithFeedback, readOnly: boolean) {
-  if (readOnly || wouldOnly(item.decision)) return "Check my call";
-  return item.decision.autonomy_level === "ESCALATE" ? "I held this back" : "Asking first";
-}

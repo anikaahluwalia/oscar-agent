@@ -257,6 +257,8 @@ export interface LearnedRow {
   level: Level | null;
   reason: string;
   sentence: string;
+  told?: Level | null; // a level you set for this sender ("for emails like this")
+  updated_at?: string | null; // when you last taught him about it
 }
 
 export interface Brief {
@@ -309,7 +311,7 @@ export interface PermissionRow {
   floor: Level | null;
   ceiling: Level | null;
   /** What your answers, or your "emails like this" rule, say for a new sender of this kind. */
-  learned: { level: Level; reason: string; senders: number; rule: boolean; decision_id: string | null } | null;
+  learned: { level: Level; reason: string; senders: number; rule: boolean; decision_id: string | null; updated_at: string | null } | null;
 }
 export const getPermissions = () => call<PermissionRow[]>("/permissions");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
