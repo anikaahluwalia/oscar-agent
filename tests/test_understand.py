@@ -110,3 +110,9 @@ def test_the_prompt_says_what_only_sounds_risky():
     assert "greeting by name" in SYSTEM
     assert "connected an app" in SYSTEM and "connected an app" in KINDS["account_update"][0]
     assert "Moving a delivery or a meeting" in SYSTEM
+
+
+def test_changes_to_how_you_sign_in_or_pay_stay_security_alerts():
+    # understand-3 dropped these and read "a new card was added to your wallet" as routine.
+    assert "payment card" in KINDS["security_alert"][0] and "recovery email" in KINDS["security_alert"][0]
+    assert "is security_alert, even when it says you don't need to do anything" in SYSTEM
