@@ -1,5 +1,5 @@
-import { SafetyPage } from "@/components/pages/safety-page";
+import { PromisesPage } from "@/components/pages/promises-page";
 
 export default function Page() {
-  return <SafetyPage />;
+  return <PromisesPage />;
 }
