@@ -1537,9 +1537,16 @@ with them. Tests showed two of the losses; its session log showed the third (a p
 answers behind it was being listed). All three are back, with a test for each. Lesson: look at
 `git diff` before checking anything out.
 
+### On phones and tablets
+
+The pages were built desktop first, then checked at 375 and 768 pixels wide: nothing scrolls
+sideways. Rows on What Oscar knows and Progress put the name on its own line on a phone, Yes and No
+stack, the Review tabs shorten to Regular and Safety, the chart's labels grow so they stay
+readable, and the search on What Oscar knows gets its own line until there's room beside the
+title. Sender exceptions shows the first 8 and a Show all, at every size.
+
 ### Not done
 
-- The phone layout of the new pages wasn't checked; they were built desktop first.
 - The extension's new settings (showing him, the corner, animation and the card switches) have
   been tried on real Gmail, but they have no automated test. The reload fix was tested on a
   stand-in page, where the old version threw the same error.
