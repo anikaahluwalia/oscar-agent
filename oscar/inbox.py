@@ -15,6 +15,7 @@ folder, never in the repo.
 """
 
 import threading
+import time
 from collections.abc import Callable
 from datetime import datetime, timedelta
 
@@ -228,6 +229,99 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reade
         return SyncResult(new=new, skipped=skipped)
     finally:
         _syncing.release()
+
+
+RETHINK_LIMIT = 100  # recent emails looked at after you teach him something
+
+
+def rethink(history: History, gmail: GmailClient, limit: int = RETHINK_LIMIT, reader: Reader | None = None) -> SyncResult:
+    """After you teach Oscar something (a rule, "just handle these", an answer in Review), decide
+    again on the recent emails it now has a say in, so his calls catch up with what you told him
+    instead of you reviewing each one. Like a period tracker redoing its predictions when you add
+    a date.
+
+    Only his calls from while he was just reading (acting off), that you haven't answered or
+    reviewed, and that no safety rule stopped. Each is read again from Gmail and goes through
+    decide() with every safety check, like recheck(). Nothing in Gmail changes: an ask still waiting
+    for you is done (or not) by the rule itself (api._approve_waiting). A new decision is only kept
+    when the call really changed, and it points back at the old one (recheck_of), so the real-inbox
+    results, which only count first reads, stay as they were."""
+    if not _syncing.acquire(blocking=False):
+        raise AlreadySyncing("I'm already checking your inbox.")
+    try:
+        prefs = Preferences.from_feedback(teaching(history))
+        hints = type_hints(history)
+        answered = ({e.decision_id for e in history.feedback} | {r.decision_id for r in history.reviews}
+                    | {r.decision_id for r in history.safety_reviews})
+        recent = [d for d in latest_per_email(history) if d.source == "gmail"][:limit]
+        reader = reader if reader is not None else reader_for(history)
+        version = policy_version()
+        new = skipped = 0
+        for old in reversed(recent):
+            if (old.acting or old.autonomy_level == AutonomyLevel.ESCALATE or old.safety_flags or old.id in answered
+                    or history.review_carried_over(old.id) is not None):
+                continue
+            # Only emails your answers now say something about: a cheap check before reading Gmail.
+            if not (prefs.suggest(old.action, AutonomyLevel.ASK_FIRST, old.sender, old.email_type)
+                    or prefs.habit(old.sender, old.email_type)):
+                continue
+            try:
+                email, info = _read(gmail, old.email_id)
+            except (GmailError, httpx.HTTPError):
+                skipped += 1
+                continue
+            decision = decide(email, prefs, read_only=True, understanding=reader.read(email) if reader else None,
+                              type_hint=hints.get(email.sender))
+            if (decision.action, decision.autonomy_level) == (old.action, old.autonomy_level):
+                continue  # what you taught doesn't change this one
+            history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
+                                                             "acting": False, "recheck_of": old.id}))
+            new += 1
+        return SyncResult(new=new, skipped=skipped)
+    finally:
+        _syncing.release()
+
+
+_rethinking = {"running": False, "again": False}
+_rethink_lock = threading.Lock()
+
+
+def start_rethink(history: History, make_client: Callable[[], GmailClient], wait: Callable[[float], None] = time.sleep) -> None:
+    """Run rethink() in the background. If you teach him several things quickly, it runs once
+    more at the end rather than once per click. If a check of your inbox is running, it waits for it."""
+    with _rethink_lock:
+        if _rethinking["running"]:
+            _rethinking["again"] = True
+            return
+        _rethinking.update(running=True, again=False)
+
+    def work() -> None:
+        try:
+            while True:
+                for _ in range(20):
+                    try:
+                        rethink(history, make_client())
+                        break
+                    except AlreadySyncing:
+                        wait(3)
+                with _rethink_lock:
+                    if not _rethinking["again"]:
+                        _rethinking["running"] = False
+                        return
+                    _rethinking["again"] = False
+        except Exception:  # noqa: BLE001  a background tidy-up: never leave it marked as running
+            with _rethink_lock:
+                _rethinking["running"] = False
+
+    threading.Thread(target=work, daemon=True, name="oscar-rethink").start()
+
+
+rethink_soon = start_rethink  # what the API calls; tests swap it out so no thread outlives a test
+
+
+def rethinking() -> bool:
+    """Whether Oscar is redoing his calls after something you taught him, for the app to refresh after."""
+    return _rethinking["running"]
 
 
 def _read(gmail: GmailClient, message_id: str):

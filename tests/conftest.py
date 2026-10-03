@@ -13,6 +13,14 @@ def no_real_data(monkeypatch, tmp_path_factory):
 
 
 @pytest.fixture(autouse=True)
+def no_background_rethink(monkeypatch):
+    """Teaching Oscar starts a background re-think of recent emails (oscar/inbox.py rethink_soon).
+    Tests run it directly instead, so no thread outlives a test or holds the sync lock."""
+    from oscar import inbox
+    monkeypatch.setattr(inbox, "rethink_soon", lambda *args, **kwargs: None)
+
+
+@pytest.fixture(autouse=True)
 def no_waiting(monkeypatch):
     """The six-month look back pauses between Gmail reads (oscar/cold_start.py); tests don't wait."""
     from oscar import cold_start

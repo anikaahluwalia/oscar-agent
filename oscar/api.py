@@ -34,12 +34,13 @@ from oscar.categories import CategoryError
 from oscar.classification import EMAIL_TYPES, RISKY_TYPES, ClassificationError, ClassificationFeedback, record_classification, type_hints
 from oscar.feedback import ASKS_FOR_MORE, FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
+from oscar import inbox
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, patterns, permissions, waiting_for_rule
 from oscar.progress import progress
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
-from oscar.preferences import Preferences
+from oscar.preferences import Preferences, family
 from oscar.review import teaching
 from oscar.safety_review import SafetyReview, SafetyReviewError, Verdict, record_safety_review
 from oscar.voice import describe_learning
@@ -289,12 +290,25 @@ class ColdStartAnswer(BaseModel):
 
 
 @app.post("/cold-start/answer")
-def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real_history)) -> dict:
-    """Your answer to one habit he found. Saved as a "for emails like this" rule, so safety still wins."""
+def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real_history),
+                      tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> dict:
+    """Your answer to one habit he found. Saved as a "for emails like this" rule, so safety still wins.
+    Like a rule set anywhere else, a yes also does the asks waiting that it covers, and his calls on
+    recent emails catch up with it."""
     try:
-        return _with_label_names(cold_start.answer(real, request.pattern_id, request.choice))
+        now = cold_start.answer(real, request.pattern_id, request.choice)
     except cold_start.ColdStartError as e:
         raise HTTPException(400, str(e))
+    reply = None
+    if request.choice in ("handle", "tell", "label"):
+        habit = next(c for c in now["candidates"] if c["id"] == request.pattern_id)
+        action = Action.APPLY_LABEL if request.choice == "label" else Action(habit["action"])
+        example = next((d for d in needs_you(real)[AutonomyLevel.ASK_FIRST]
+                        if d.action == action and family(d.email_type) == habit["kind"]), None)
+        reply = _approve_waiting(real, example, tokens, http, "kind") if example else None
+    if request.choice != "reject":
+        _rethink_after_teaching(real, tokens, http)
+    return {**_with_label_names(now), "reply": reply}
 
 
 @app.post("/cold-start/done")
@@ -493,6 +507,8 @@ def chat(request: ChatRequest, history: History = Depends(get_history), http: ht
         done = _approve_waiting(history, decision, tokens, http, event.scope) if decision else None
         if done:
             reply = reply.model_copy(update={"reply": done})
+    if len(history.feedback) > before:
+        _rethink_after_teaching(history, tokens, http)
     return reply
 
 
@@ -550,6 +566,8 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
                                scope=request.scope, desired_level=request.desired_level)
         if request.kind in ASKS_FOR_MORE and not event.blocked_by_floor:
             reply = _approve_waiting(history, decision, tokens, http, event.scope) or reply
+        if request.kind in TEACHES and not event.blocked_by_floor:
+            _rethink_after_teaching(history, tokens, http)
     except (FeedbackError, ActionError) as e:
         raise HTTPException(400, str(e))
     except gmail.GmailError as e:
@@ -581,6 +599,18 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
 
 
 DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled"}
+
+# Answers that teach Oscar how to handle emails like one: after any of these, his calls on recent
+# emails catch up (inbox.rethink).
+TEACHES = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.JUST_HANDLE_IT,
+           FeedbackKind.HANDLE_AND_TELL_ME, FeedbackKind.KEEP_ASKING, FeedbackKind.FORGET}
+
+
+def _rethink_after_teaching(history: History, tokens: gmail.TokenStore, http: httpx.Client) -> None:
+    """You taught Oscar something on the real inbox: decide again, in the background, on the recent
+    emails it covers, so you don't have to review each one. The demo inbox has nothing to re-read."""
+    if tokens.load() and any(d.source == "gmail" for d in history.decisions.values()):
+        inbox.rethink_soon(history, lambda: gmail_client(tokens, http))
 
 
 def _approve_waiting(history: History, decision: Decision, tokens: gmail.TokenStore, http: httpx.Client,
@@ -643,6 +673,7 @@ def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens), real: History =
         "connected_at": saved.get("connected_at"),
         "last_sync": saved.get("last_sync"),
         "auto_check_minutes": auto_check_minutes(),
+        "rethinking": inbox.rethinking(),  # redoing his calls after something you taught him
         "can_act": gmail.can_act(saved),  # the connection allows changing labels
         "acting": acting,  # Oscar acts in Gmail (Stage 12)
         "read_only": not acting,
@@ -879,6 +910,8 @@ def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_his
     except ReviewError as e:
         raise HTTPException(400, str(e))
     approve_from_review(real, saved, tokens, http)
+    if saved.label != ReviewLabel.SKIP:
+        _rethink_after_teaching(real, tokens, http)  # a review teaches him about that sender
     return saved
 
 
