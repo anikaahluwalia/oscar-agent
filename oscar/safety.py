@@ -145,6 +145,8 @@ EMAIL_CHECKS = MappingProxyType({
             # excluded" (found on a real inbox).
             rf"\b{GIFT_CARDS}\b.{{0,160}}\b(scratch|numbers on the back)\b",
             rf"\b{GIFT_CARDS}\b.{{0,160}}\b(send|text|email|share|give|tell|read|reply with)\b[^.?!]{{0,40}}\b(codes?|pins?|numbers)\b",
+            # Buying one to pay with: "enter its code on the claim page". A shop's "use code FALL20" isn't the card's.
+            rf"\b{GIFT_CARDS}\b.{{0,160}}\b(enter|type|redeem|submit|input|provide|use)\s+(its|their|the cards?'?s?)\b[^.?!]{{0,20}}\b(codes?|pins?|numbers)\b",
             r"\bsend (me )?(the )?(funds|money)\b",
             r"\b(settle|pay|send)\b[^.]{0,120}\bby (bank |wire )?transfer\b",
             _asks_for(MONEY),
@@ -180,6 +182,7 @@ EMAIL_CHECKS = MappingProxyType({
             # Something that happened, not advice in a footer ("if you notice suspicious activity").
             r"\b(noticed|detected|spotted|saw|flagged|there (was|has been|is))\b[^.]{0,40}\b(unusual|suspicious) (activity|sign-?in|login|log-?in)\b",
             r"\b(unusual|suspicious) (sign-?in|login|log-?in)( attempt)? (from|on|to|detected|was)\b",
+            r"\b(blocked|stopped|prevented|denied)\b[^.]{0,30}\b(attempt|sign-?in|login|log-?in)\b",
             r"\bnew (payee|beneficiary|passkey)\b",
             r"\bwas(n't| not)? this you\b|\b(this|that|it) was(n't| not) you\b",
             r"\b(signed|logged) (in|into) (to )?your account\b",

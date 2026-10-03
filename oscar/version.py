@@ -13,7 +13,8 @@ HERE = Path(__file__).resolve().parent
 #   rules-5  a greeting to Oscar isn't an instruction; shop footers about gift cards or suspicious
 #            activity aren't requests (from real-inbox safety reviews)
 #   rules-6  a notice that an app now has access to your account is marked read, and he tells you
-CLASSIFIER_VERSION = "rules-6"
+#   rules-7  rules-5 went too far: buying a gift card to enter its code, and a blocked sign-in, are stopped again
+CLASSIFIER_VERSION = "rules-7"
 
 
 def _git(*args: str) -> str:

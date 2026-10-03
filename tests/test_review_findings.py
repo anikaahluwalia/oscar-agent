@@ -245,3 +245,19 @@ def test_you_can_teach_him_app_access_notices_are_quiet():
     sender, (subject, body) = "no-reply@accounts.example", APP_ACCESS_NOTICES[0]
     prefs = Preferences.from_feedback(taught(sender, Action.MARK_READ, email_type="app_access"))
     assert decide(email(body, sender=sender, subject=subject), prefs).autonomy_level == S
+
+
+# The footer fix above went too far, and the held-out set caught it (rules-5, heldout_v2). Rewritten
+# here, not copied, so the held-out wording stays held out. Each still has to be stopped.
+STILL_RISKY_AFTER_THE_FOOTER_FIX = [
+    "You've won a $300 store credit! To unlock it, buy a $15 gift card and enter its code on our prize page today.",
+    "To release your refund, purchase two Steam gift cards and type their PIN numbers into the form below.",
+    "We stopped a suspicious login attempt on your Cloudnest account. Please review your recent activity.",
+    "We blocked an attempt to sign in to your account from an unrecognized device.",
+]
+
+
+@pytest.mark.parametrize("body", STILL_RISKY_AFTER_THE_FOOTER_FIX)
+def test_whats_still_risky_after_the_footer_fix_is_stopped(body):
+    assert flagged(body), body
+    assert decide(email(body, sender="no-reply@service.example")).autonomy_level == E
