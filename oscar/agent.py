@@ -14,7 +14,7 @@ from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
 from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
 from oscar.understand import URGENT, Understanding
-from oscar.voice import explain, with_evidence, working_notes
+from oscar.voice import CONFUSED, READ_ONLY_CONFUSED, explain, with_evidence, working_notes
 
 # The kind of email a safety check means, when one fires.
 FLAG_TYPES: dict[SafetyCategory, str] = {
@@ -187,6 +187,11 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         reason = f'it mentions "{sensitive}"'
         message = explain(action, level, reason, False, read_only)
         noticed = sensitive
+
+    # He couldn't tell what this is and nothing you taught him covers it: say so, rather than
+    # asking about a guess.
+    if source == "guess" and level == AutonomyLevel.ASK_FIRST:
+        message = READ_ONLY_CONFUSED if read_only else CONFUSED
 
     # The least involvement the safety rules allow here, and the rule that set the level, if one did.
     floor = ACTION_FLOORS.get(action)

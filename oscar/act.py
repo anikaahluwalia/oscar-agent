@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from oscar.labels import kind_role
 from oscar.models import Action, AutonomyLevel, Decision, new_id, now
+from oscar.safety_review import is_safety_stop
 
 if TYPE_CHECKING:
     from oscar.gmail import GmailClient
@@ -175,9 +176,11 @@ def undo(history: History, gmail: GmailClient, decision_id: str) -> ActionRecord
 
 def status_label(history: History, decision: Decision, waiting: set[str]) -> str:
     """Oscar's latest call on an email, in words: Stopped, Handled, Needs you or FYI. For the
-    app and the extension's chips. waiting is the ids of asks still on your list."""
+    app and the extension's chips. waiting is the ids of asks still on your list. "Stopped" is
+    only for what a safety rule stopped (Safety review); anything else he brings to you, like an
+    urgent email or a sender you said to only tell you about, "Needs you"."""
     if decision.autonomy_level == AutonomyLevel.ESCALATE:
-        return STOPPED
+        return STOPPED if is_safety_stop(decision) else NEEDS_YOU
     done = history.action_for(decision.id)
     if done and not done.undone_at:
         return HANDLED
@@ -189,11 +192,15 @@ def status_label(history: History, decision: Decision, waiting: set[str]) -> str
 def gmail_label(history: History, decision: Decision, waiting: set[str]) -> str | None:
     """The status label this email should have in Gmail, by role, or None for no label:
     - stopped: a safety rule stopped it
-    - needs_you: an ask still waiting for your answer
+    - needs_you: an ask still waiting for your answer, or something else he brought to you that you
+      haven't dealt with (an urgent email, say): it's for you, but not risky
     - fyi: he did it (or would) and tells you, so it's worth a look
-    Emails he handled quietly, and asks you've already answered, get nothing."""
+    Emails he handled quietly, and ones you've already answered, get nothing. waiting is the ids of
+    everything still on your list."""
     if decision.autonomy_level == AutonomyLevel.ESCALATE:
-        return "stopped"
+        if is_safety_stop(decision):
+            return "stopped"
+        return "needs_you" if decision.id in waiting else None
     if decision.autonomy_level == AutonomyLevel.ASK_FIRST:
         return "needs_you" if decision.id in waiting else None
     if decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY:

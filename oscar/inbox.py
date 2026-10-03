@@ -191,7 +191,8 @@ def label_inbox(history: History, gmail: GmailClient, still_acting: Callable[[],
     """Bring the status labels in Gmail up to date with Oscar's latest call on each email, newest
     first, up to `limit` per check. Only emails whose label is missing, out of date, or should come off
     (he handled it, or you answered) are touched."""
-    waiting = {d.id for d in needs_you(history)[AutonomyLevel.ASK_FIRST]}
+    open_ = needs_you(history)
+    waiting = {d.id for level in (AutonomyLevel.ASK_FIRST, AutonomyLevel.ESCALATE) for d in open_[level]}
     changed = 0
     for decision in latest_per_email(history):
         if changed >= limit or not still_acting():

@@ -70,6 +70,11 @@ READ_ONLY_TEMPLATES: dict[AutonomyLevel, str] = {
 }
 READ_ONLY_CAREFUL = "I'd {phrase} and give you a heads up, because {reason}."
 
+# When nothing told Oscar what an email is (a guess), he doesn't offer his guess: he says he's
+# not sure and asks you what you'd like.
+CONFUSED = "I'm not sure what to do with this one. Can you tell me what you'd like?"
+READ_ONLY_CONFUSED = "I wasn't sure what to do with this one, so I'd ask you what you'd like."
+
 # Used when Oscar is being more careful than usual because of feedback.
 CAREFUL_NOTIFY = "Heads up! I {done}. I'm telling you because {reason}."
 
