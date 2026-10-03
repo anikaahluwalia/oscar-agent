@@ -7,7 +7,7 @@ import time
 
 import httpx
 
-from oscar.gmail import GMAIL_URL, TOKEN_URL, TokenStore
+from oscar.gmail import GMAIL_URL, SCOPE, TOKEN_URL, USERINFO_URL, TokenStore
 
 
 def b64(text: str) -> str:
@@ -41,12 +41,18 @@ class FakeGmail:
         self.sent_to = set(sent_to)
         self.requests: list[httpx.Request] = []
         self.labels = [{"id": "Label_9", "name": "Work"}]  # the user's own label, which Oscar must never touch
+        self.profile = {"name": "Sam Lee", "picture": "https://lh3.googleusercontent.com/a/sam"}  # Google's userinfo
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         url = str(request.url)
         if url.startswith(TOKEN_URL):
+            if b"grant_type=authorization_code" in request.content:  # signing in
+                return httpx.Response(200, json={"access_token": "fresh", "refresh_token": "r", "expires_in": 3600,
+                                                 "scope": f"openid {SCOPE} https://www.googleapis.com/auth/userinfo.profile"})
             return httpx.Response(200, json={"access_token": "fresh", "expires_in": 3600})
+        if url.startswith(USERINFO_URL):
+            return httpx.Response(200, json=self.profile) if self.profile else httpx.Response(401)
         path = request.url.path.removeprefix("/gmail/v1/users/me")
         if path == "/profile":
             return httpx.Response(200, json={"emailAddress": "me@example.com"})

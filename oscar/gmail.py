@@ -23,7 +23,7 @@ import time
 from datetime import datetime, timezone
 from email.utils import getaddresses, parseaddr
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 
@@ -32,11 +32,13 @@ from oscar.models import Email, GmailInfo
 
 SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 ACT_SCOPE = "https://www.googleapis.com/auth/gmail.modify"  # only asked for when you let Oscar act
+PROFILE_SCOPES = ("openid", "email", "profile")  # your name and photo, for the corner of the app
 LABEL_PREFIX = "Oscar/"
 SYSTEM_LABELS = frozenset({"UNREAD", "INBOX"})  # the only Gmail labels Oscar may add or remove
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
+USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 GMAIL_URL = "https://gmail.googleapis.com/gmail/v1/users/me"
 REDIRECT_PATH = "/auth/google/callback"
 BODY_LIMIT = 5000  # characters of the body Oscar reads; only the first 160 are stored
@@ -67,7 +69,7 @@ def auth_url(state: str, act: bool = False) -> str:
         "client_id": client_id(),
         "redirect_uri": redirect_uri(),
         "response_type": "code",
-        "scope": ACT_SCOPE if act else SCOPE,
+        "scope": " ".join([ACT_SCOPE if act else SCOPE, *PROFILE_SCOPES]),
         "access_type": "offline",  # so Google gives a refresh token
         "prompt": "consent",
         "include_granted_scopes": "false",
@@ -90,6 +92,25 @@ def exchange_code(code: str, http: httpx.Client) -> dict:
     if not {SCOPE, ACT_SCOPE} & set(tokens.get("scope", "").split()):
         raise GmailError("Gmail access wasn't granted. Tick the Gmail box on Google's screen and try again.")
     return tokens
+
+
+def profile(access_token: str, http: httpx.Client) -> dict:
+    """Your name and Google photo. Optional: if Google doesn't send them, the app shows your initial.
+    Only a photo from Google's own image server is kept."""
+    try:
+        response = http.get(USERINFO_URL, headers={"Authorization": f"Bearer {access_token}"})
+    except httpx.HTTPError:
+        return {}
+    if response.status_code != 200:
+        return {}
+    info, found = response.json(), {}
+    if isinstance(info.get("name"), str) and info["name"].strip():
+        found["name"] = info["name"].strip()[:100]
+    picture = info.get("picture")
+    if isinstance(picture, str) and (urlparse(picture).hostname or "").endswith(".googleusercontent.com") \
+            and picture.startswith("https://"):
+        found["picture"] = picture
+    return found
 
 
 def can_act(saved: dict | None) -> bool:

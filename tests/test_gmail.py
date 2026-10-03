@@ -3,7 +3,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
-from oscar.gmail import SCOPE, GmailClient, auth_url, parse_message
+from oscar.gmail import PROFILE_SCOPES, SCOPE, GmailClient, auth_url, parse_message
 from oscar.history import History
 from oscar.inbox import sync
 from oscar.models import AutonomyLevel
@@ -19,7 +19,7 @@ INBOX = [
 def test_only_asks_for_read_only_access():
     assert SCOPE == "https://www.googleapis.com/auth/gmail.readonly"
     scopes = parse_qs(urlparse(auth_url("s")).query)["scope"][0].split()
-    assert scopes == [SCOPE]
+    assert scopes == [SCOPE, *PROFILE_SCOPES]  # Gmail read-only, and your name and photo
 
 
 def test_never_changes_anything_in_gmail(tmp_path):
@@ -40,7 +40,7 @@ def test_client_has_no_way_to_send_trash_or_delete():
 
 def test_connecting_is_read_only_and_acting_is_asked_for_separately():
     from oscar.gmail import ACT_SCOPE
-    assert parse_qs(urlparse(auth_url("s", act=True)).query)["scope"][0].split() == [ACT_SCOPE]
+    assert parse_qs(urlparse(auth_url("s", act=True)).query)["scope"][0].split() == [ACT_SCOPE, *PROFILE_SCOPES]
 
 
 @pytest.mark.parametrize("label", ["Label_9", "SPAM", "TRASH", "SENT", "DRAFT", "IMPORTANT", "STARRED"])

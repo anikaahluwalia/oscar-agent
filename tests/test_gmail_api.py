@@ -1,3 +1,5 @@
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,7 +13,7 @@ from tests.fake_gmail import FakeGmail, connected, message
 def setup(tmp_path, monkeypatch):
     real, demo = History(), History()
     fake = FakeGmail([message("m1", "digest@newsletter.example", "Digest", "Top stories. Unsubscribe", labels=("INBOX", "UNREAD", "CATEGORY_PROMOTIONS"))])
-    state = {"tokens": TokenStore(tmp_path / "token.json")}
+    state = {"tokens": TokenStore(tmp_path / "token.json"), "fake": fake}
     app.dependency_overrides[get_tokens] = lambda: state["tokens"]
     app.dependency_overrides[get_real_history] = lambda: real
     app.dependency_overrides[get_http] = fake.http
@@ -37,6 +39,37 @@ def test_callback_needs_a_state_we_issued(setup):
     client, *_ = setup
     r = client.get("/auth/google/callback?state=forged&code=x", follow_redirects=False)
     assert r.headers["location"].endswith("/settings?gmail=expired")
+
+
+def sign_in(client) -> str:
+    """Go through Google's sign-in with the fake Google, and return where it sent you back to."""
+    start = client.get("/auth/google/start", follow_redirects=False).headers["location"]
+    state = parse_qs(urlparse(start).query)["state"][0]
+    return client.get(f"/auth/google/callback?state={state}&code=c", follow_redirects=False).headers["location"]
+
+
+def test_signing_in_shows_your_name_and_photo(setup, monkeypatch):
+    client, *_ = setup
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    assert sign_in(client).endswith("/settings?gmail=connected")
+    status = client.get("/gmail").json()
+    assert status["address"] == "me@example.com"
+    assert status["name"] == "Sam Lee" and status["picture"] == "https://lh3.googleusercontent.com/a/sam"
+
+
+def test_signing_in_works_without_a_profile(setup, monkeypatch):
+    # Google may not send a name or photo (or send a photo from somewhere else): you still connect.
+    client, state, *_ = setup
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    state["fake"].profile = None
+    assert sign_in(client).endswith("/settings?gmail=connected")
+    status = client.get("/gmail").json()
+    assert status["connected"] and status["name"] is None and status["picture"] is None
+    state["fake"].profile = {"name": "Sam Lee", "picture": "http://tracker.example/pixel.png"}
+    sign_in(client)
+    assert client.get("/gmail").json()["picture"] is None
 
 
 def test_sync_review_and_summary(setup):

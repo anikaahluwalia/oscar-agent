@@ -308,6 +308,8 @@ def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens), real: History =
         "configured": gmail.configured(),
         "connected": bool(saved),
         "address": saved.get("address"),
+        "name": saved.get("name"),  # from your Google account, when it was shared
+        "picture": saved.get("picture"),
         "connected_at": saved.get("connected_at"),
         "last_sync": saved.get("last_sync"),
         "auto_check_minutes": auto_check_minutes(),
@@ -383,6 +385,7 @@ def google_callback(
         })
         saved = trial.load()
         saved["address"] = gmail.GmailClient(trial, http).address()
+        saved.update(gmail.profile(granted["access_token"], http))
     except gmail.GmailError as e:
         trial.delete()
         return _back_to_settings("not_granted" if "wasn't granted" in str(e) else "google_error")
