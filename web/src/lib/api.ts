@@ -24,7 +24,7 @@ export type FeedbackKind =
   | "ALWAYS_ASK_ME"
   | "SEEN";
 
-/** How you score one of Oscar's decisions on a real inbox (oscar/review.py). Evaluation only; Oscar doesn't learn from it. */
+/** How you score one of Oscar's decisions on a real inbox (oscar/review.py). It grades him, and teaches him (lessons()). */
 export type ReviewLabel =
   | "CORRECT"
   | "QUESTIONED_TOO_MUCH"

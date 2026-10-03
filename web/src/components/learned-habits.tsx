@@ -23,7 +23,7 @@ export function LearnedHabits() {
     <div className="flex flex-col gap-3">
       {readOnly && (
         <p className="text-sm text-muted-foreground">
-          I only read your real inbox for now, so I&apos;m not learning from it yet. That starts in a later stage.
+          On your real inbox I learn from your reviews. Each answer teaches me about that sender.
         </p>
       )}
       {data.learned.length ? (

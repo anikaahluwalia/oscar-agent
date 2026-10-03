@@ -92,7 +92,7 @@ function CheckHisCalls({ data, feedback }: { data: OscarData; feedback: Feedback
   }
   return (
     <div className="flex flex-col gap-8">
-      <p className="text-sm text-muted-foreground">This grades Oscar. He doesn&apos;t learn from it.</p>
+      <p className="text-sm text-muted-foreground">Each answer grades Oscar and teaches him about that sender.</p>
       {toReview.length > 0 ? (
         <Section title={`To review (${toReview.length})`}>
           <Cards items={toReview} feedback={feedback} />

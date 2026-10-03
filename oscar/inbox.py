@@ -15,6 +15,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 from oscar.agent import decide
+from oscar.review import teaching
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
 from oscar.models import Action, Decision, new_id, now
@@ -77,7 +78,7 @@ def _sync(history: History, gmail: GmailClient, limit: int) -> SyncResult:
         except (GmailError, httpx.HTTPError):
             skipped += 1
             continue
-        decision = decide(email, Preferences.from_feedback(history.feedback), read_only=True, bulk_action=bulk_action)
+        decision = decide(email, Preferences.from_feedback(teaching(history)), read_only=True, bulk_action=bulk_action)
         history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version}))
         new += 1
     follow_up(history, gmail)
@@ -106,7 +107,9 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50) -> SyncResult
             except (GmailError, httpx.HTTPError):
                 skipped += 1
                 continue
-            decision = decide(email, Preferences.from_feedback(history.feedback), read_only=True, bulk_action=bulk_action)
+            # Re-reading never uses your answer to this same email: that's what it's graded against.
+            prefs = Preferences.from_feedback(teaching(history, skip_email=old.email_id))
+            decision = decide(email, prefs, read_only=True, bulk_action=bulk_action)
             history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
                                                              "recheck_of": old.id}))
             new += 1

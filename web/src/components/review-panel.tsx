@@ -129,7 +129,7 @@ function Question({ title, children }: { title: string; children: React.ReactNod
 /**
  * Scoring one of Oscar's decisions on the real inbox: "did he get it right?", and if not,
  * what he should have done: how much on his own, then what, then whether he understood
- * the email. That's the same answer the evals use. It measures him; he doesn't learn from it.
+ * the email. That's the same answer the evals use. It grades him, and it teaches him about the sender.
  */
 export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
   const { decision, review, answer: graded } = item;

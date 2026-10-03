@@ -6,9 +6,10 @@ graded the same way (oscar/grading.py), and the label (Questioned too much, Need
 ask...) is worked out from it instead of being picked. Reviews from before this only
 saved half the answer; they still load, and are counted apart.
 
-Reviews are for evaluation only. They're kept apart from feedback (oscar/feedback.py),
-which is what Oscar learns from, so scoring a decision never teaches him anything
-about that same decision. A decision is always logged before it's reviewed.
+Since Stage 11 reviews also teach Oscar (lessons(), below). That stays honest because a
+decision is always logged before it's reviewed: every first read was made only with what
+earlier reviews taught. A re-read of an email never learns from your answer to that same
+email. Old half-answers don't teach anything.
 """
 
 from __future__ import annotations
@@ -20,7 +21,8 @@ from typing import TYPE_CHECKING, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from oscar.grading import ACTED, LEVELS, A, E, grade
+from oscar.feedback import FeedbackEvent, FeedbackKind
+from oscar.grading import ACTED, LEVELS, A, E, S, grade
 from oscar.models import Action, AutonomyLevel, Decision, new_id, now
 
 if TYPE_CHECKING:
@@ -326,3 +328,47 @@ def summary(history: History) -> dict:
     for d in real:
         by_version.setdefault(d.policy_version or "unknown", []).append(d)
     return {**tally(real), "by_version": {v: tally(ds) for v, ds in sorted(by_version.items())}, "rereads": tally(rereads)}
+
+
+def _lesson(decision: Decision, review: Review, right: Answer) -> list[FeedbackEvent]:
+    """What one full answer teaches, as ordinary feedback on that sender's emails.
+
+    Right: a yes for what he did. Quietly or with a heads up, with an action: a yes for that
+    action ("quietly" counts as a strong yes, so one answer goes a long way). Acting when you'd
+    have done something else: a no for what he did. A missed risk: always ask about it, which
+    can only make him stricter.
+    """
+    def event(kind: FeedbackKind, action: Action) -> FeedbackEvent:
+        return FeedbackEvent(decision_id=decision.id, kind=kind, action=action, autonomy_level=decision.autonomy_level,
+                             sender=decision.sender, email_type=decision.email_type, created_at=review.reviewed_at)
+
+    error, _ = grade_answer(right, decision.autonomy_level, decision.action)
+    if error == "none":
+        return [event(FeedbackKind.APPROVE, decision.action)] if decision.autonomy_level != E else []
+    out = []
+    if right.level in ACTED and isinstance(right.action, Action):
+        out.append(event(FeedbackKind.ALWAYS_DO_THIS if right.level == S else FeedbackKind.APPROVE, right.action))
+    if decision.autonomy_level in ACTED and (right.level not in ACTED or right.action != decision.action):
+        out.append(event(FeedbackKind.REJECT, decision.action))
+    if review.why == "risk" or (right.level == E and not right.escalate_ok):
+        out.append(event(FeedbackKind.ALWAYS_ASK_ME, decision.action))
+    return out
+
+
+def lessons(history: History, skip_email: str | None = None) -> list[FeedbackEvent]:
+    """What your reviews on the real inbox teach Oscar, oldest first. skip_email leaves out your
+    answers about one email, for re-reading it: he mustn't learn the answer he's graded against."""
+    out = []
+    for decision in history.decisions.values():
+        if decision.source != "gmail" or decision.email_id == skip_email:
+            continue
+        review = history.review_for(decision.id)
+        right = expected_answer(review, decision) if review else None
+        if right:
+            out += _lesson(decision, review, right)
+    return sorted(out, key=lambda e: e.created_at)
+
+
+def teaching(history: History, skip_email: str | None = None) -> list[FeedbackEvent]:
+    """Everything Oscar learns from in this history: your feedback, and what your reviews teach."""
+    return [e for e in history.feedback] + lessons(history, skip_email)

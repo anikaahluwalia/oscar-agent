@@ -286,3 +286,70 @@ def test_missed_a_risk_needs_a_careful_answer(level, action, reasons):
     review.reviewed_at = d.created_at + timedelta(seconds=1)
     with pytest.raises(ReviewError, match="missed a risk"):
         record_review(history, review)
+
+
+# --- Stage 11: reviews teach Oscar ---------------------------------------------
+
+from oscar.feedback import FeedbackKind as FK  # noqa: E402
+from oscar.preferences import Preferences  # noqa: E402
+from oscar.review import lessons, teaching  # noqa: E402
+
+PROMO = "Big sale this week. Manage your preferences."
+
+
+def promo_decision(history, id, sender="deals@shop.example", seconds=0):
+    d = decide(Email(id=id, sender=sender, subject="Sale", body=PROMO, category="promotions"), read_only=True)
+    d = d.model_copy(update={"source": "gmail", "policy_version": "v1"})
+    history.add_decision(d)
+    return d
+
+
+def answered(history, d, level, action=None, **kw):
+    review = answer(d, level, action, **kw)
+    review.reviewed_at = d.created_at + timedelta(seconds=1)
+    record_review(history, review)
+
+
+def test_a_quiet_answer_teaches_the_sender_and_one_answer_goes_a_long_way():
+    history = History()
+    first = promo_decision(history, "e1")
+    assert first.autonomy_level == A
+    answered(history, first, S, Action.ARCHIVE, why="preference")
+    assert [e.kind for e in lessons(history)] == [FK.ALWAYS_DO_THIS]
+    later = decide(Email(id="e2", sender="deals@shop.example", subject="Sale", body=PROMO, category="promotions"),
+                   Preferences.from_feedback(teaching(history)))
+    assert later.autonomy_level in (S, N) and later.level_source == "learned"
+
+
+def test_a_missed_risk_only_makes_him_stricter():
+    history = History()
+    d = promo_decision(history, "e1")
+    history.decisions[d.id] = d = d.model_copy(update={"autonomy_level": N, "action": Action.DRAFT_REPLY})
+    answered(history, d, A, Action.MARK_READ, why="risk")
+    kinds = {e.kind for e in lessons(history)}
+    assert FK.ALWAYS_ASK_ME in kinds and FK.REJECT in kinds and FK.ALWAYS_DO_THIS not in kinds
+
+
+def test_a_yes_approves_what_he_did():
+    history = History()
+    d = promo_decision(history, "e1")
+    record_review(history, Review(decision_id=d.id, label=ReviewLabel.CORRECT, reviewed_at=d.created_at + timedelta(seconds=1)))
+    assert [(e.kind, e.action) for e in lessons(history)] == [(FK.APPROVE, d.action)]
+
+
+def test_old_half_answers_teach_nothing():
+    history = History()
+    d = promo_decision(history, "e1")
+    record_review(history, Review(decision_id=d.id, label=ReviewLabel.INCORRECT_ACTION, should_be_action=Action.ARCHIVE,
+                                  reviewed_at=d.created_at + timedelta(seconds=1)))
+    assert lessons(history) == []
+
+
+def test_a_reread_never_learns_from_its_own_answer():
+    history = History()
+    d = promo_decision(history, "e1")
+    answered(history, d, S, Action.ARCHIVE, why="preference")
+    assert lessons(history, skip_email=d.email_id) == []
+    other = promo_decision(history, "e2")
+    answered(history, other, S, Action.ARCHIVE, why="preference")
+    assert {e.decision_id for e in lessons(history, skip_email=d.email_id)} == {other.id}

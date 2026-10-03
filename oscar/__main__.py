@@ -18,6 +18,7 @@ from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.models import Action, Email
 from oscar.preferences import Preferences
+from oscar.review import teaching
 from oscar.review import OTHER_ACTION, REVIEW_LABEL_NAMES, ReviewLabel, answer_for, summary
 from oscar.voice import describe_learning
 
@@ -28,7 +29,7 @@ def run_decide(history: History, files: list[str]) -> None:
     paths = [Path(p) for p in files] or sorted(DEFAULT_DIR.glob("*.json"))
     for path in paths:
         email = Email.model_validate_json(path.read_text())
-        decision = decide(email, Preferences.from_feedback(history.feedback))
+        decision = decide(email, Preferences.from_feedback(teaching(history)))
         history.add_decision(decision)
         print(f"── {email.id}  (decision {decision.id})")
         print(f"   From:    {email.sender}")
@@ -49,7 +50,7 @@ def run_feedback(history: History, decision_id: str, kind: str, text: str | None
 
 
 def run_learned(history: History) -> None:
-    rows = Preferences.from_feedback(history.feedback).summary()
+    rows = Preferences.from_feedback(teaching(history)).summary()
     if not rows:
         print("Oscar: I haven't learned anything yet. Give me some feedback first.")
         return

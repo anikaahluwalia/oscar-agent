@@ -6,7 +6,7 @@ from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.policy import autonomy_for
 from oscar.preferences import CEILINGS, Preferences
-from oscar.review import half_answered
+from oscar.review import half_answered, teaching
 from oscar.safety import ACTION_FLOORS, apply_floor
 
 ANSWERS = {FeedbackKind.APPROVE, FeedbackKind.REJECT, FeedbackKind.UNDO, FeedbackKind.EDIT_THEN_SEND, FeedbackKind.SEEN}
@@ -87,7 +87,7 @@ def brief(history: History) -> dict:
         elif then > 0 and now < then:
             trend = f"I'm asking you about {round((then - now) / then * 100)}% less than when we started!"
 
-    habits = sum(1 for row in Preferences.from_feedback(history.feedback).summary() if row["level"])
+    habits = sum(1 for row in Preferences.from_feedback(teaching(history)).summary() if row["level"])
     learned = None
     if habits:
         learned = f"I've picked up {habits} of your habits so far!" if habits > 1 else "I've picked up one of your habits so far!"
@@ -102,7 +102,7 @@ def autonomy(history: History) -> list[dict]:
     Emails escalated by a safety check are left out, because the escalation is
     about that email, not about the sender and action.
     """
-    prefs = Preferences.from_feedback(history.feedback)
+    prefs = Preferences.from_feedback(teaching(history))
     latest: dict[tuple[str, Action], Decision] = {}
     for d in sorted(history.decisions.values(), key=lambda d: d.created_at):
         if d.level_source != "safety_check":

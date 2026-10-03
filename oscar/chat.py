@@ -15,6 +15,7 @@ from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
 from oscar.overview import brief, is_read_only, latest_per_email, needs_you
 from oscar.preferences import Preferences
+from oscar.review import teaching
 from oscar.safety import ACTION_FLOORS
 from oscar.voice import describe_learning
 
@@ -104,7 +105,7 @@ def _handled(history: History) -> ChatReply:
 
 
 def _known(history: History) -> ChatReply:
-    rows = Preferences.from_feedback(history.feedback).summary()
+    rows = Preferences.from_feedback(teaching(history)).summary()
     if not rows:
         return ChatReply(reply="Nothing yet! Tell me how I did on a few emails and I'll start picking up your habits.")
     lines = [describe_learning(r) for r in rows]

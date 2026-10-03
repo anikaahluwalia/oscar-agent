@@ -28,6 +28,7 @@ from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import autonomy, brief, permissions
 from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
 from oscar.preferences import Preferences
+from oscar.review import teaching
 from oscar.voice import describe_learning
 
 def auto_check_minutes() -> float:
@@ -219,7 +220,7 @@ def reset(history: History = Depends(get_demo_history)) -> dict:
 @app.post("/decide", response_model=Decision)
 def decide_endpoint(email: Email, history: History = Depends(get_demo_history)) -> Decision:
     bulk = history.settings.get("bulk_action")
-    decision = decide(email, Preferences.from_feedback(history.feedback), bulk_action=Action(bulk) if bulk else None)
+    decision = decide(email, Preferences.from_feedback(teaching(history)), bulk_action=Action(bulk) if bulk else None)
     history.add_decision(decision)
     return decision
 
@@ -251,7 +252,7 @@ def set_inbox_settings(settings: InboxSettings, history: History = Depends(get_h
 
 @app.get("/learned")
 def learned(history: History = Depends(get_history)) -> list[dict]:
-    rows = Preferences.from_feedback(history.feedback).summary()
+    rows = Preferences.from_feedback(teaching(history)).summary()
     return [{**row, "sentence": describe_learning(row)} for row in rows]
 
 
@@ -443,7 +444,7 @@ class ReviewRequest(BaseModel):
 
 @app.post("/reviews", response_model=Review)
 def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_history)) -> Review:
-    """Score one of Oscar's decisions on the real inbox. Oscar doesn't learn from this."""
+    """Score one of Oscar's decisions on the real inbox. It also teaches him about that sender."""
     decision = real.get_decision(request.decision_id)
     try:
         if request.should_be_level is not None and decision is not None:
