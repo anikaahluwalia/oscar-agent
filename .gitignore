@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 data/
 .env
+# Drafts of regression cases start from real emails: rewrite them before they go in the repo.
+evals/regression_cases/drafts/

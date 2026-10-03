@@ -6,6 +6,7 @@
     python -m oscar feedback <decision_id> EDIT_THEN_SEND --text "Sure, Thursday works."
     python -m oscar learned                         show what Oscar has learned
     python -m oscar reviews                         real inbox: how Oscar did, and where you disagreed
+    python -m oscar regression <decision_id>        real inbox: draft a scrubbed regression case from a review
 """
 
 import argparse
@@ -125,12 +126,24 @@ def main(argv: list[str]) -> int:
 
     commands.add_parser("learned", help="show what Oscar has learned")
     commands.add_parser("reviews", help="real inbox: review summary and disagreements")
+    regression_cmd = commands.add_parser("regression", help="real inbox: draft a regression case from a review")
+    regression_cmd.add_argument("decision_id")
 
     args = parser.parse_args(argv)
     history = History(default_data_dir())
 
     if args.command == "reviews":
         run_reviews(History(real_inbox_dir()))
+        return 0
+    if args.command == "regression":
+        from oscar.regression import write_draft
+        try:
+            path = write_draft(History(real_inbox_dir()), args.decision_id)
+        except KeyError as e:
+            print(e.args[0])
+            return 1
+        print(f"Draft written to {path} (git ignores it). Rewrite the email as a synthetic one, fill in the TODOs,")
+        print("then move it into evals/regression_cases/ and run python -m evals.regressions.")
         return 0
     if args.command == "learned":
         run_learned(history)
