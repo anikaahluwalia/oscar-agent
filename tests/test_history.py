@@ -1,3 +1,5 @@
+"""Oscar's history: each decision gets its own id, and decisions and feedback are saved and loaded back."""
+
 from oscar.agent import decide
 from oscar.history import History
 from oscar.models import Email
@@ -29,7 +31,7 @@ def test_history_is_saved_and_loaded(tmp_path):
     from oscar.feedback import FeedbackKind, record_feedback
 
     history = History(tmp_path)
-    decision = decide(make_email(subject="weekly newsletter"))  # ARCHIVE, ASK_FIRST
+    decision = decide(make_email(subject="weekly newsletter"))  # MARK_READ, ASK_FIRST
     history.add_decision(decision)
     event, _ = record_feedback(history, decision.id, FeedbackKind.APPROVE)
 

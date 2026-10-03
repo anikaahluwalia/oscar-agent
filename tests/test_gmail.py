@@ -1,3 +1,7 @@
+"""Oscar on a real Gmail, tested against the fake one. Connecting asks for read-only access, a read-only
+check only ever reads, and he logs what he would do. Since Stage 12 the only change he can make is to
+labels: INBOX, UNREAD and his own. Also covers messy emails and Gmail hiccups."""
+
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -128,7 +132,7 @@ def test_no_approving_or_undoing_what_was_only_read(tmp_path):
     record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
 
 
-# --- review fixes ------------------------------------------------------------
+# --- found by a code review ---------------------------------------------------
 
 import base64  # noqa: E402
 

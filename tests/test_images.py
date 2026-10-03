@@ -1,3 +1,6 @@
+"""Email images, fetched by Oscar instead of your browser so the sender never sees you. Only public web
+addresses (checked again after every redirect), only real images, and nothing about you is sent."""
+
 import httpx
 import pytest
 

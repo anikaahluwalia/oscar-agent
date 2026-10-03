@@ -63,7 +63,8 @@ def test_a_safety_review_grades_the_stop():
 
 def test_earlier_and_recent_from_real_answers():
     history = History()
-    # Earlier: he asked about every promotion and you said to just handle them.
+    # Earlier: 12 promotions from different shops, and each time you said to just handle them. He asks
+    # about the first few, then does more on his own as your answers add up.
     for n in range(1, 13):
         record_feedback(history, decide_in(history, promo(n)).id, FeedbackKind.JUST_HANDLE_IT)
     # Recent: he handles them quietly now, and you said that's right.

@@ -1,3 +1,6 @@
+"""The example transcripts still run through the real Oscar, and he still refuses "always do this" for
+money."""
+
 from evals import transcripts
 
 

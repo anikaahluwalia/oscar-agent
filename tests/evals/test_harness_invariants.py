@@ -1,5 +1,6 @@
-"""The eval harness can't fool itself: it never learns from test emails, never runs without
-safety against a real Gmail, and grades from the world, not from what Oscar says."""
+"""The eval harness can't fool itself. Test emails never change what Oscar learned, safety can only be
+switched off in the simulated inbox (never on a real Gmail), and a run is graded on what actually changed
+in the inbox, not on what Oscar says he did."""
 
 import json
 from pathlib import Path

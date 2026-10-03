@@ -1,3 +1,6 @@
+"""The basic chat, which needs no model: what needs you, why Oscar made a call, what he handled, and
+plain requests turned into rules. A rule that would go below the safety floor is refused."""
+
 from pathlib import Path
 
 from oscar.agent import decide

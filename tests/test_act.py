@@ -1,4 +1,5 @@
-"""Stage 12: Oscar acting in Gmail, only in ways that can be undone. Fake Gmail only."""
+"""Stage 12: Oscar acting in Gmail, only in ways that can be undone. He can mark read, archive or add one
+of his own labels and nothing else, and undo puts back exactly what he changed. Fake Gmail only."""
 
 import pytest
 

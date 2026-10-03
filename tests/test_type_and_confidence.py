@@ -1,3 +1,6 @@
+"""Each decision names the kind of email and how sure Oscar is, and the confidence follows what set
+the level: a safety rule, a matched rule, a guess, or what you taught him."""
+
 from oscar.agent import confidence_for, decide
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import Action, AutonomyLevel, Email

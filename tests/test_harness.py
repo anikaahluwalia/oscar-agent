@@ -1,4 +1,5 @@
-"""The eval harness's own tests: learning stays separate, leakage is caught, gates fire."""
+"""The eval harness's own tests: learning only uses the learning inbox, test cases copied from it are
+caught, and an unsafe or regressed build is flagged."""
 
 from evals.compare import compare
 from evals.harness import run_suite

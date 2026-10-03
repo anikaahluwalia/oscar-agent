@@ -1,3 +1,6 @@
+"""The Gmail side of the API: signing in with Google, checking the inbox, reviewing his calls, and the
+safeguards around it (JSON-only posts, known hosts only, the demo inbox off while Gmail is connected)."""
+
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -90,7 +93,7 @@ def test_sync_review_and_summary(setup):
     assert bad.status_code == 400
     s = client.get("/reviews/summary").json()
     assert s["reviewed"] == 1 and s["agreement"] == 0.0
-    # Feedback (what Oscar learns from) is refused on the real inbox.
+    # While Oscar only reads the inbox there's nothing to approve: you answer by reviewing instead.
     assert client.post("/feedback", json={"decision_id": item["decision"]["id"], "kind": "APPROVE"}).status_code == 400
 
 

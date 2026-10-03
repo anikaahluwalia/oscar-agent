@@ -1,8 +1,8 @@
 """Two things learned apart: which action you want, and how much Oscar should ask.
 
-Approving says the action was right. Only Just handle them / Handle and tell me / Keep asking, a
-Review answer with a level, a rule for emails like this, or a no / undo say how much to ask. And
-whatever is learned, the safety checks still run after it.
+Approving only says the action was right. How much to ask comes from "Just handle them", "Handle and
+tell me" or "Keep asking", a Review answer with a level, a rule for emails like this, or a no or an undo.
+Whatever he learns, the safety checks still run after it.
 """
 
 from oscar.agent import decide
@@ -183,6 +183,8 @@ def test_h_right_in_review_plus_the_approval_it_makes_teaches_nothing_about_aski
     record = prefs.records[("sender", ask.sender, ask.action)]
     assert record.evidence == 1 and record.counts[A] == 2 and record.always_ask, "only when you say keep asking"
 
+
+# --- A rule for emails like this, through the API ------------------------------------------------
 
 def test_a_rule_for_emails_like_this_clears_only_what_it_safely_covers(api):  # noqa: F811
     body = "New arrivals are here. View in browser. Manage your preferences."

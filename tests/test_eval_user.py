@@ -1,3 +1,6 @@
+"""The simulated user who answers Oscar in the evals: how they react to each kind of call, and that the
+same seed always reacts the same way."""
+
 from evals.dataset import ASK, ESCALATE, NOTIFY, SILENT, Truth
 from evals.user import SimulatedUser
 from oscar.feedback import FeedbackKind

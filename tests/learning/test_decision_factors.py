@@ -1,4 +1,5 @@
-"""Each decision says, in a few words, what set its level: for the UI, never Oscar's working-out."""
+"""Each decision lists, in a few words, what set its level, so the UI can show it: a safety rule, or what
+you taught him and how sure he is."""
 
 from oscar.agent import decide
 from oscar.feedback import FeedbackEvent, FeedbackKind

@@ -1,3 +1,6 @@
+"""Feedback on a single decision (Stage 4): which answers fit which call, what Oscar says back, and that
+"always do this" can't take a risky action below the safety floor."""
+
 from pathlib import Path
 
 import pytest

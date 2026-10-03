@@ -1,3 +1,6 @@
+"""The summaries the app shows: what needs you, how much less Oscar asks over time, and each action's
+level with its floor and ceiling."""
+
 from oscar.agent import decide
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History

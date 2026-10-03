@@ -1,3 +1,7 @@
+"""Reviewing Oscar's calls on a real inbox. A review says what he should have done and the label is
+worked out from that; answers no version of Oscar could pass are refused; re-reads are graded on the same
+email; and since Stage 11 a review also teaches him."""
+
 from oscar.feedback import FeedbackKind
 from oscar.review import REVIEW_LABEL_NAMES, Review, ReviewLabel
 
@@ -7,7 +11,7 @@ def test_every_label_has_a_name():
 
 
 def test_review_labels_are_not_feedback():
-    # Reviews score Oscar; feedback teaches him. They must never be mixed up.
+    # Review labels and feedback kinds are separate things and never share a name.
     assert not {label.value for label in ReviewLabel} & {kind.value for kind in FeedbackKind}
 
 
@@ -59,6 +63,7 @@ def test_something_else_needs_a_note():
 
 
 def test_reviews_teach_oscar_nothing():
+    # A review isn't saved as feedback. What it teaches is worked out from it (see the Stage 11 tests below).
     history = History()
     d = real(history, "1")
     record_review(history, Review(decision_id=d.id, label=ReviewLabel.QUESTIONED_TOO_MUCH))

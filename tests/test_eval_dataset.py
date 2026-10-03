@@ -1,3 +1,6 @@
+"""The synthetic inbox the evals run on: the same seed gives the same emails, and what the simulated
+user wants never asks Oscar to go below the safety floor."""
+
 from evals.dataset import ASK, ESCALATE, KINDS, generate
 from oscar.safety import ACTION_FLOORS, LEVEL_ORDER
 

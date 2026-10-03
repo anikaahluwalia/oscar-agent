@@ -1,4 +1,6 @@
-"""The model-backed chat, with a fake model so no key or network is needed."""
+"""The model-backed chat, with a fake model so no key or network is needed. The model can only look
+things up and propose rules, nothing changes until you say yes, and if the model fails you get the basic
+chat instead."""
 
 import json
 
@@ -123,8 +125,8 @@ def test_read_only_inbox_gets_told_so(tmp_path):
 
 
 def test_once_acting_is_on_the_chat_isnt_read_only(tmp_path):
-    # From a real inbox: acting was switched on, but the chat still said rules were off because
-    # it only read Gmail. Emails read before acting stay "would", and the chat mustn't say they were done.
+    # Found on a real inbox: after acting was switched on, the chat still said rules were off, as if
+    # Gmail were read-only. Emails read before acting stay "I'd have", and the chat mustn't say they were done.
     from oscar.gmail import GmailClient
     from oscar.history import History
     from oscar.inbox import sync

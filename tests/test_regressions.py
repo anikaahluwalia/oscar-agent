@@ -1,3 +1,6 @@
+"""Cases written from mistakes on a real inbox (evals/regression_cases/): each one still gets the right
+call, and every case's twin, the look-alike that must stay as it is, exists."""
+
 import pytest
 
 from evals.regressions import check, load

@@ -1,4 +1,6 @@
-"""Oscar should ask less as feedback builds up, but never below the safety floor."""
+"""How your answers change what Oscar does for one sender. Approving only says the action was right;
+"just handle it" or "handle and tell me" sets how much he asks; an undo makes him more careful; and the
+newest "always" rule wins."""
 
 from pathlib import Path
 

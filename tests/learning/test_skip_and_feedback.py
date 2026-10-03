@@ -1,4 +1,4 @@
-"""Only your answers teach Oscar, and "Not sure, skip it" teaches him nothing."""
+""""Not sure, skip it" in Review teaches Oscar nothing."""
 
 from oscar.gmail import GmailClient
 from oscar.history import History

@@ -160,7 +160,7 @@ def test_kind_habits_dont_cover_mail_he_couldnt_read():
 
 
 def test_kind_habits_count_only_answers_about_that_kind():
-    # Each sender was okayed for archiving FYIs many times, but only one newsletter each.
+    # Each sender said 5 times that FYIs could be archived quietly, but only once about a newsletter.
     events = []
     for sender in ("a@x.example", "b@y.example", "c@z.example"):
         events += taught(sender, Action.ARCHIVE, 5, "fyi") + taught(sender, Action.ARCHIVE, 1, "newsletter")

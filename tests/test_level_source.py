@@ -1,4 +1,5 @@
-"""decide() says which step set the level, so the UI can explain it."""
+"""decide() says which step set the level, and lists its working-out in plain words, so the UI can
+explain it."""
 
 from pathlib import Path
 

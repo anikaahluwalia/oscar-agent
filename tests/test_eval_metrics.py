@@ -1,3 +1,6 @@
+"""The calibration metrics, checked on small hand-made cases, and a quick check that a run without
+learning never learns."""
+
 from evals.dataset import ASK, ESCALATE, NOTIFY, SILENT, EvalEmail, Truth
 from evals.metrics import Record, compute, is_correct
 from evals.run import run
