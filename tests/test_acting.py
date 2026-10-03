@@ -11,9 +11,14 @@ from oscar.gmail import ACT_SCOPE, SCOPE, TokenStore
 from oscar.history import History
 from tests.fake_gmail import FakeGmail, message
 
-RECEIPT = message("r1", "orders@shop.example", "Your receipt", "Thanks for your order. Your receipt is attached.")
-NEWSLETTER = message("n1", "digest@letters.example", "This week", "Top stories. View in browser. Manage your preferences.")
-WIRE = message("w1", "accounts@vendor.example", "Overdue", "Please wire me $4,800 today to the account below.")
+def new(*args, **kwargs):
+    """An email that arrives after acting is turned on: the only kind Oscar acts on."""
+    return message(*args, received_ms=int((time.time() + 60) * 1000), **kwargs)
+
+
+RECEIPT = new("r1", "orders@shop.example", "Your receipt", "Thanks for your order. Your receipt is attached.")
+NEWSLETTER = new("n1", "digest@letters.example", "This week", "Top stories. View in browser. Manage your preferences.")
+WIRE = new("w1", "accounts@vendor.example", "Overdue", "Please wire me $4,800 today to the account below.")
 
 
 def tokens(tmp_path, scope: str) -> TokenStore:
@@ -75,7 +80,7 @@ def test_oscar_does_what_he_decided_on_his_own_and_it_can_be_undone(api):
 
 
 def test_approving_an_ask_does_it_and_declining_doesnt(api):
-    client, real, fake = api([NEWSLETTER, message("n2", "news@other.example", "Digest", "Weekly digest. View in browser.")])
+    client, real, fake = api([NEWSLETTER, new("n2", "news@other.example", "Digest", "Weekly digest. View in browser.")])
     client.post("/gmail/sync")
     ask, other = decision_for(real, "n1"), decision_for(real, "n2")
     assert ask.autonomy_level == "ASK_FIRST"
@@ -98,16 +103,81 @@ def test_re_reading_never_acts(api):
 
 
 def test_at_most_a_few_actions_per_check(api):
-    receipts = [message(f"r{i}", f"orders{i}@shop.example", "Your receipt", "Your receipt is attached.") for i in range(MAX_PER_CHECK + 5)]
+    receipts = [new(f"r{i}", f"orders{i}@shop.example", "Your receipt", "Your receipt is attached.") for i in range(MAX_PER_CHECK + 5)]
     client, real, fake = api(receipts)
     assert client.post("/gmail/sync?limit=100").json()["done"] == MAX_PER_CHECK
 
 
 def test_turning_acting_off_stops_new_actions_but_undo_still_works(api):
-    client, real, fake = api([RECEIPT, message("r2", "orders@shop.example", "Receipt 2", "Your receipt is attached.")])
+    client, real, fake = api([RECEIPT, new("r2", "orders@shop.example", "Receipt 2", "Your receipt is attached.")])
     client.post("/gmail/sync?limit=1")
     first = decision_for(real, "r1")
     client.post("/gmail/acting", json={"on": False})
     client.post("/gmail/sync")
     assert real.action_for(decision_for(real, "r2").id) is None
     assert client.post("/feedback", json={"decision_id": first.id, "kind": "UNDO"}).status_code == 200
+
+
+
+# --- found by the review before acting was turned on for real -----------------------------
+
+def test_the_backlog_is_never_acted_on(api):
+    old = [message(f"o{i}", f"orders{i}@shop.example", "Your receipt", "Your receipt is attached.") for i in range(5)]
+    client, real, fake = api(old + [RECEIPT])
+    assert client.post("/gmail/sync").json()["done"] == 1, "only the email that arrived after acting was turned on"
+    assert real.action_for(decision_for(real, "r1").id) is not None
+
+
+def test_an_approved_ask_can_be_undone(api):
+    client, real, fake = api([NEWSLETTER])
+    client.post("/gmail/sync")
+    ask = decision_for(real, "n1")
+    client.post("/feedback", json={"decision_id": ask.id, "kind": "APPROVE"})
+    assert client.post("/feedback", json={"decision_id": ask.id, "kind": "UNDO"}).status_code == 200
+    assert "INBOX" in fake.messages["n1"]["labelIds"]
+
+
+def test_nothing_is_said_or_learned_when_nothing_happened(api):
+    client, real, fake = api([NEWSLETTER, new("q1", "sam@work.example", "Hi", "Can you send me the notes from today?")])
+    client.post("/gmail/sync")
+    ask = decision_for(real, "n1")
+    client.post("/gmail/acting", json={"on": False})
+    assert client.post("/feedback", json={"decision_id": ask.id, "kind": "APPROVE"}).status_code == 409
+    assert "INBOX" in fake.messages["n1"]["labelIds"] and not real.feedback
+    reply = decision_for(real, "q1")  # a draft: not something he does in Gmail
+    assert client.post("/feedback", json={"decision_id": reply.id, "kind": "UNDO"}).status_code == 400
+    assert client.post("/feedback", json={"decision_id": reply.id, "kind": "EDIT_THEN_SEND", "edited_text": "hi"}).status_code == 400
+    assert not real.feedback
+
+
+def test_a_reread_keeps_what_was_done_and_it_can_still_be_undone(api):
+    client, real, fake = api([RECEIPT])
+    client.post("/gmail/sync")
+    first = decision_for(real, "r1")
+    real.decisions[first.id] = first.model_copy(update={"policy_version": "older"})
+    client.post("/gmail/recheck")
+    latest = next(i for i in client.get("/decisions").json() if i["decision"]["recheck_of"] == first.id)
+    assert latest["decision"]["acting"] and latest["done"] is not None
+    assert client.post("/feedback", json={"decision_id": latest["decision"]["id"], "kind": "UNDO"}).status_code == 200
+    assert fake.messages["r1"]["labelIds"] == ["INBOX", "UNREAD"]
+
+
+def test_reconnecting_needs_acting_turned_on_again(api):
+    client, real, fake = api([RECEIPT])
+    client.post("/gmail/disconnect")
+    assert real.settings["acting"] is False
+
+
+def test_turning_acting_off_stops_a_check_midway(api):
+    from oscar.api import acting_since
+    from oscar.gmail import GmailClient
+    from oscar.inbox import sync
+    client, real, fake = api([new(f"r{i}", f"o{i}@shop.example", "Your receipt", "Your receipt is attached.") for i in range(6)])
+    asked = []
+    store = app.dependency_overrides[get_tokens]()
+
+    def still():
+        asked.append(1)
+        return len(asked) <= 2  # turned off after two actions
+    result = sync(real, GmailClient(store, fake.http()), act_since=acting_since(store, real), still_acting=still)
+    assert result.done == 2

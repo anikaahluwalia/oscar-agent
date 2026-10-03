@@ -13,6 +13,7 @@ folder, never in the repo.
 """
 
 import threading
+from collections.abc import Callable
 from datetime import datetime, timedelta
 
 import httpx
@@ -65,18 +66,26 @@ def reader_for(history: History) -> Reader | None:
     return Reader(httpx.Client(timeout=40), cache, reads=reads)
 
 
-def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None, act: bool = False) -> SyncResult:
-    """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first. With act
-    (Stage 12), he also does what he decided to do on his own, if it's one of his undoable actions."""
+def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None,
+         act_since: datetime | None = None, still_acting: Callable[[], bool] | None = None) -> SyncResult:
+    """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first.
+
+    With act_since (Stage 12), he also does what he decided to do on his own, if it's one of his
+    undoable actions, but only for emails that arrived after acting was turned on: never the
+    backlog. still_acting is asked before each action, so turning acting off stops a check midway.
+    """
     if not _syncing.acquire(blocking=False):
         raise AlreadySyncing("I'm already checking your inbox.")
     try:
-        return _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act)
+        return _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act_since,
+                     still_acting or (lambda: True))
     finally:
         _syncing.release()
 
 
-def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None, act: bool) -> SyncResult:
+def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None, act_since: datetime | None,
+          still_acting: Callable[[], bool]) -> SyncResult:
+    act = act_since is not None
     seen = {d.email_id for d in history.decisions.values()}
     # Walk back through the inbox, so emails that arrived since the last check
     # aren't missed when there are more of them than one page.
@@ -101,7 +110,9 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
         history.add_decision(decision)
         new += 1
-        if act and decision.autonomy_level in ACTED_LEVELS and can_do(decision) and done < MAX_PER_CHECK:
+        arrived_since = info.received_at is not None and act_since is not None and info.received_at >= act_since
+        if (act and arrived_since and decision.autonomy_level in ACTED_LEVELS and can_do(decision)
+                and done < MAX_PER_CHECK and still_acting()):
             try:
                 do(history, gmail, decision, by="oscar")
                 done += 1
@@ -136,9 +147,10 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reade
                 continue
             # Re-reading never uses your answer to this same email: that's what it's graded against.
             prefs = Preferences.from_feedback(teaching(history, skip_email=old.email_id))
-            decision = decide(email, prefs, read_only=True, bulk_action=bulk_action,
+            decision = decide(email, prefs, read_only=not old.acting, bulk_action=bulk_action,
                               understanding=reader.read(email) if reader else None)
             history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
+                                                             "acting": old.acting,
                                                              "recheck_of": old.id}))
             new += 1
         return SyncResult(new=new, skipped=skipped)

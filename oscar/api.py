@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 import secrets
 import threading
 import time
@@ -266,17 +267,22 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
     if decision is None:
         raise HTTPException(404, f"I can't find decision {request.decision_id}.")
     try:
-        check_allowed(decision, request.kind, request.edited_text)
-        # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back.
-        # Gmail goes first, so the feedback is only saved if it worked.
+        # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back. Gmail
+        # goes first, and the feedback is only saved if it worked: it never says "done" (or teaches
+        # Oscar) when nothing happened.
+        done = history.action_for(decision.id) if decision.source == "gmail" else None
+        undoable = bool(done and not done.undone_at)
+        check_allowed(decision, request.kind, request.edited_text, undoable)
         if decision.source == "gmail" and decision.acting:
-            client = gmail.GmailClient(tokens, http)
-            if request.kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST \
-                    and can_do(decision) and acting_on(tokens, history):
-                do(history, client, decision, by="you")
-            elif request.kind == FeedbackKind.UNDO and history.action_for(decision.id):
-                undo(history, client, decision.id)
-        event, reply = record_feedback(history, request.decision_id, request.kind, request.edited_text)
+            if request.kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
+                if not can_do(decision):
+                    raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
+                if not acting_on(tokens, history):
+                    raise HTTPException(409, "Turn on \"Let Oscar act in Gmail\" in Settings first.")
+                do(history, gmail.GmailClient(tokens, http), decision, by="you")
+            elif request.kind == FeedbackKind.UNDO:
+                undo(history, gmail.GmailClient(tokens, http), decision.id)
+        event, reply = record_feedback(history, request.decision_id, request.kind, request.edited_text, undoable)
     except (FeedbackError, ActionError) as e:
         raise HTTPException(400, str(e))
     except gmail.GmailError as e:
@@ -289,6 +295,18 @@ def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_h
 def acting_on(tokens: gmail.TokenStore, real: History) -> bool:
     """Oscar acts in Gmail only when you've turned it on and the connection allows it."""
     return bool(real.settings.get("acting")) and gmail.can_act(tokens.load())
+
+
+def acting_since(tokens: gmail.TokenStore, real: History) -> datetime | None:
+    """When acting was turned on, if it's on. Only emails that arrived after this are acted on."""
+    since = real.settings.get("acting_since")
+    return datetime.fromisoformat(since) if since and acting_on(tokens, real) else None
+
+
+def stop_acting(real: History) -> None:
+    """Acting has to be turned on again with the switch, after any change to the connection."""
+    real.set_setting("acting", False)
+    real.set_setting("acting_since", None)
 
 
 # --- Gmail, read-only (Stage 9) ---------------------------------------------
@@ -323,7 +341,11 @@ def set_acting(request: ActingRequest, tokens: gmail.TokenStore = Depends(get_to
     """Let Oscar act in Gmail, or go back to only reading. Only new emails are acted on."""
     if request.on and not gmail.can_act(tokens.load()):
         raise HTTPException(409, "Connect Gmail again with permission to act first.")
-    real.set_setting("acting", request.on)
+    if not request.on:
+        stop_acting(real)
+    elif not real.settings.get("acting"):
+        real.set_setting("acting", True)
+        real.set_setting("acting_since", datetime.now(timezone.utc).isoformat())
     return {"acting": acting_on(tokens, real)}
 
 
@@ -385,6 +407,7 @@ def google_callback(
     tokens.save(saved)
     ACCOUNT_FILE.parent.mkdir(parents=True, exist_ok=True)
     ACCOUNT_FILE.write_text(saved["address"])
+    stop_acting(get_real_history())  # the account just connected: a new connection starts with acting off
     return _back_to_settings("connected")
 
 
@@ -412,7 +435,8 @@ def gmail_sync(
 
 def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, limit: int = 25):
     """One check for new email, by you or by the timer, and note when it happened."""
-    result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100), act=acting_on(tokens, real))
+    result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100),
+                  act_since=acting_since(tokens, real), still_acting=lambda: acting_on(tokens, real))
     saved = tokens.load()
     if saved:
         saved["last_sync"] = time.time()
@@ -438,12 +462,14 @@ def gmail_recheck(
 
 
 @app.post("/gmail/disconnect")
-def gmail_disconnect(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> dict:
+def gmail_disconnect(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
+                     real: History = Depends(get_real_history)) -> dict:
     """Forget the Gmail connection. Oscar's decisions and your reviews of them are kept."""
     saved = tokens.load()
     if saved:
         gmail.revoke(saved["refresh_token"], http)
         tokens.delete()
+    stop_acting(real)
     return {"ok": True}
 
 

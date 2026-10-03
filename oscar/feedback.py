@@ -59,7 +59,20 @@ OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
 REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
-def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None) -> None:
+TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME}  # change nothing in Gmail
+
+
+def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None, undoable: bool = False) -> None:
+    """Whether this feedback makes sense for this decision. undoable: Oscar did something in Gmail
+    for it that hasn't been undone (Stage 12), so undo is allowed whatever the level."""
+    if decision.source == "gmail" and kind in TEACHING_ONLY:
+        return  # "always do this" and "always ask me" only teach him; they're fine on any real email
+    if decision.source == "gmail" and kind == FeedbackKind.UNDO:
+        if not undoable:
+            raise FeedbackError("I didn't do anything in Gmail with that one, so there's nothing to undo.")
+        return
+    if decision.source == "gmail" and kind == FeedbackKind.EDIT_THEN_SEND:
+        raise FeedbackError("I never send email from your Gmail. Reply there yourself.")
     if decision.source == "gmail" and not decision.acting:
         # Made while Oscar only read the inbox: he didn't do anything, so there's nothing to
         # approve or undo. Reviewing is how you answer these.
@@ -93,12 +106,12 @@ def floor_reply(decision: Decision) -> str | None:
 
 
 def record_feedback(
-    history: History, decision_id: str, kind: FeedbackKind, edited_text: str | None = None
+    history: History, decision_id: str, kind: FeedbackKind, edited_text: str | None = None, undoable: bool = False
 ) -> tuple[FeedbackEvent, str]:
     decision = history.get_decision(decision_id)
     if decision is None:
         raise FeedbackError(f"I can't find decision {decision_id}.")
-    check_allowed(decision, kind, edited_text)
+    check_allowed(decision, kind, edited_text, undoable)
     reply = REPLIES[kind]
     if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY:
         reply = "Thanks! Good to know I got that one right."

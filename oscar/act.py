@@ -10,6 +10,7 @@ what the email had at the time, so undo puts it back the way it was.
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
@@ -36,6 +37,11 @@ MAX_PER_CHECK = 25  # the most Oscar does on his own in one check, so a bug can'
 
 class ActionError(RuntimeError):
     pass
+
+
+# Doing and undoing hold this, so two requests at once (two tabs, a retry) can't both act on
+# an email, or overwrite each other's record of what changed.
+_lock = threading.Lock()
 
 
 class ActionRecord(BaseModel):
@@ -65,7 +71,13 @@ def do(history: History, gmail: GmailClient, decision: Decision, by: Literal["os
     """Do the decision's action in Gmail and record exactly what changed."""
     if not can_do(decision):
         raise ActionError("That's not something Oscar does in Gmail.")
-    if history.action_for(decision.id):
+    with _lock:
+        return _do(history, gmail, decision, by)
+
+
+def _do(history: History, gmail: GmailClient, decision: Decision, by: Literal["oscar", "you"]) -> ActionRecord:
+    done = history.action_for(decision.id)
+    if done and not done.undone_at:
         raise ActionError("Oscar already did this one.")
     add, remove = CHANGES[decision.action]
     if decision.action == Action.APPLY_LABEL:
@@ -84,10 +96,11 @@ def do(history: History, gmail: GmailClient, decision: Decision, by: Literal["os
 
 def undo(history: History, gmail: GmailClient, decision_id: str) -> ActionRecord:
     """Put the email back the way it was before Oscar's action."""
-    record = history.action_for(decision_id)
-    if record is None or record.undone_at:
-        raise ActionError("There's nothing to undo here.")
-    gmail.modify_labels(record.message_id, add=record.removed, remove=record.added)
-    record = record.model_copy(update={"undone_at": now()})
-    history.save_action(record)
-    return record
+    with _lock:
+        record = history.action_for(decision_id)
+        if record is None or record.undone_at:
+            raise ActionError("There's nothing to undo here.")
+        gmail.modify_labels(record.message_id, add=record.removed, remove=record.added)
+        record = record.model_copy(update={"undone_at": now()})
+        history.save_action(record)
+        return record

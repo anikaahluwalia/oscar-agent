@@ -107,6 +107,13 @@ class History:
         self._append("actions.jsonl", record.model_dump_json())
 
     def action_for(self, decision_id: str) -> ActionRecord | None:
+        """What Oscar did in Gmail for this decision, or for an earlier read of the same email:
+        a re-read doesn't hide what was done, or stop it being undone."""
+        decision = self.decisions.get(decision_id)
+        while decision is not None:
+            if decision.id in self.actions:
+                return self.actions[decision.id]
+            decision = self.decisions.get(decision.recheck_of) if decision.recheck_of else None
         return self.actions.get(decision_id)
 
     def add_follow_up(self, follow_up: FollowUp) -> None:

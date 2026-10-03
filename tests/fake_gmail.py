@@ -1,6 +1,7 @@
 """A pretend Gmail for tests, served through httpx.MockTransport. It records every request."""
 
 import base64
+import copy
 import json
 import time
 
@@ -13,13 +14,14 @@ def b64(text: str) -> str:
     return base64.urlsafe_b64encode(text.encode()).decode().rstrip("=")
 
 
-def message(id: str, sender: str, subject: str, body: str, labels=("INBOX", "UNREAD"), thread="t1", html=False) -> dict:
+def message(id: str, sender: str, subject: str, body: str, labels=("INBOX", "UNREAD"), thread="t1", html=False,
+            received_ms: int = 1759300000000) -> dict:
     mime = "text/html" if html else "text/plain"
     return {
         "id": id,
         "threadId": thread,
         "labelIds": list(labels),
-        "internalDate": "1759300000000",
+        "internalDate": str(received_ms),
         "snippet": body[:50],
         "payload": {
             "mimeType": "multipart/alternative",
@@ -35,7 +37,7 @@ def message(id: str, sender: str, subject: str, body: str, labels=("INBOX", "UNR
 
 class FakeGmail:
     def __init__(self, messages: list[dict], sent_to: set[str] = frozenset()):
-        self.messages = {m["id"]: m for m in messages}
+        self.messages = {m["id"]: copy.deepcopy(m) for m in messages}
         self.sent_to = set(sent_to)
         self.requests: list[httpx.Request] = []
         self.labels = [{"id": "Label_9", "name": "Work"}]  # the user's own label, which Oscar must never touch

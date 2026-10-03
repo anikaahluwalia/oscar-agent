@@ -1,10 +1,10 @@
 """Reading a real Gmail inbox (Stage 9), and changing its labels (Stage 12).
 
 Connecting asks Google for read-only access (gmail.readonly). Oscar only asks for
-gmail.modify when you choose to let him act. Even then, the only write in this
-client is modify_labels, and it only adds or removes UNREAD, INBOX and labels
-Oscar made himself (under "Oscar/"): marking read, archiving and labelling, all
-undoable. There is no code here that can send, trash or delete anything;
+gmail.modify when you choose to let him act. Even then, the only writes in this
+client are modify_labels, which only adds or removes UNREAD, INBOX and labels
+Oscar made himself (under "Oscar/"), and label_id, which makes one of those labels
+from a fixed list of names: marking read, archiving and labelling, all undoable. There is no code here that can send, trash or delete anything;
 tests/test_gmail.py checks that.
 
 Google's OAuth: the user is sent to Google to say yes, Google sends them back to

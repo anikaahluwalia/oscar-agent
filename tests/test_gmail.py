@@ -116,12 +116,16 @@ def test_follow_up_notes_what_you_did_later(tmp_path):
     assert len(history.follow_ups) == 5  # unchanged ones aren't logged again
 
 
-def test_no_feedback_on_the_real_inbox(tmp_path):
+def test_no_approving_or_undoing_what_was_only_read(tmp_path):
     history = History()
     sync(history, GmailClient(connected(tmp_path), FakeGmail(INBOX).http()))
-    decision = next(iter(history.decisions.values()))
+    decision = next(d for d in history.decisions.values() if d.autonomy_level == AutonomyLevel.ASK_FIRST)
     with pytest.raises(FeedbackError, match="only reading your real inbox"):
-        record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
+        record_feedback(history, decision.id, FeedbackKind.APPROVE)
+    with pytest.raises(FeedbackError, match="nothing to undo"):
+        record_feedback(history, decision.id, FeedbackKind.UNDO)
+    # "Always do this" only teaches him, so it's fine on any real email.
+    record_feedback(history, decision.id, FeedbackKind.ALWAYS_DO_THIS)
 
 
 # --- review fixes ------------------------------------------------------------
