@@ -1586,6 +1586,11 @@ and asks you about the few clearest habits (`oscar/cold_start.py`).
   kind of email, never one sender, so a shop's password-change notice can't pick up how you treat
   its promotions. Only kinds he'd archive, mark as read or label count: he'd reply to a question
   from a person, so a habit about those would never be used.
+- **What it offers.** On a real inbox that keeps almost everything, every habit first came out as
+  "you left these in your inbox", with only Keep asking or Not useful to pick. So list mail you
+  mostly never opened is its own habit ("You never opened 1,231 of 1,279"), offered as archiving,
+  and kept emails can be labelled and left in the inbox. Each habit names a few senders, words its
+  buttons for what they do, and marks the answer that fits your history as suggested.
 - **Evidence, not permission.** Nothing changes until you answer. Just handle them, Handle + tell me
   and Keep asking become the same "for emails like this" rule the Review page and chat make
   (`ALWAYS_DO_THIS` quietly or with a heads up, `ALWAYS_ASK_ME`). Not a useful pattern saves nothing.

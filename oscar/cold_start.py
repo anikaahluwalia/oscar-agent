@@ -66,14 +66,21 @@ MAX_HABITS = 6
 
 State = Literal["not_started", "running", "ready", "complete", "skipped", "failed"]
 Phase = Literal["fetching", "understanding", "finding", "ready"]
-Choice = Literal["handle", "tell", "ask", "reject"]
+Choice = Literal["handle", "tell", "label", "ask", "reject"]
 
 # What each answer saves, as the existing "for emails like this" rule.
 ANSWERS: dict[str, tuple[FeedbackKind, AutonomyLevel | None]] = {
-    "handle": (FeedbackKind.ALWAYS_DO_THIS, AutonomyLevel.PROCEED_SILENTLY),  # Just handle them
-    "tell": (FeedbackKind.ALWAYS_DO_THIS, AutonomyLevel.PROCEED_AND_NOTIFY),  # Handle + tell me
-    "ask": (FeedbackKind.ALWAYS_ASK_ME, None),  # Keep asking
+    "handle": (FeedbackKind.ALWAYS_DO_THIS, AutonomyLevel.PROCEED_SILENTLY),  # do it for me
+    "tell": (FeedbackKind.ALWAYS_DO_THIS, AutonomyLevel.PROCEED_AND_NOTIFY),  # do it and tell me
+    "label": (FeedbackKind.ALWAYS_DO_THIS, AutonomyLevel.PROCEED_SILENTLY),  # label them, keep them in the inbox
+    "ask": (FeedbackKind.ALWAYS_ASK_ME, None),  # leave them to me / ask me first
 }
+# Kinds of list mail, where leaving it unread means you ignored it rather than kept it.
+LIST_KINDS = {"bulk_mail", "notification"}
+# Which version of the habit-finding the saved habits were made with. A scan that's ready but not
+# answered yet gets its habits made again from its saved counts when this changes, without reading
+# Gmail again.
+HABITS = 2
 # Feedback saved from your answers here has a decision id starting with this, since it isn't about
 # one email he decided on. The What Oscar knows page uses a real email like it to change the rule.
 DECISION_PREFIX = "history:"
@@ -118,7 +125,11 @@ class Store:
 def status(history: History) -> dict:
     """What the app shows: the state, how far along it is, and the habits to answer. The list of
     email ids and the raw counts stay on the server."""
-    data = Store(history).load()
+    store = Store(history)
+    data = store.load()
+    if data["state"] == "ready" and not data["answers"] and data.get("habits") != HABITS:
+        data.update(candidates=candidates(data["stats"]), habits=HABITS)
+        store.save(data)
     return {key: data[key] for key in ("state", "phase", "discovered", "processed", "skipped_emails",
                                        "candidates", "answers", "error", "started_at", "finished_at")}
 
@@ -177,7 +188,7 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
             return status(history)
         data.update(phase="finding")
         store.save(data)
-        data.update(candidates=candidates(data["stats"]), phase="ready", state="ready")
+        data.update(candidates=candidates(data["stats"]), habits=HABITS, phase="ready", state="ready")
         store.save(data)
     except GmailError as e:
         why = ("Gmail asked me to slow down" if _rate_limited(e)
@@ -297,10 +308,12 @@ def _count(stats: dict, raw: dict) -> None:
 def candidates(stats: dict) -> list[dict]:
     """The clearest habits, at most MAX_HABITS, biggest first. Each is about a kind of email (not a
     sender), so a shop's password-change notice never picks up how you treat its promotions. Only
-    for the easy-to-undo actions he can learn (preferences.HABIT_ACTIONS):
+    for the easy-to-undo actions he can learn (preferences.HABIT_ACTIONS). The first that fits:
     - archived: most of them left the inbox, so he'd archive them
+    - ignored: list mail you mostly never opened, even if it's still in the inbox, so he'd archive it
     - read: most stayed in the inbox but were read, so he'd mark them as read
-    - kept: most stayed in the inbox unread, so the only thing to say is whether he should keep asking
+    - kept: most stayed in the inbox, so he could label them and leave them there, or leave them to you
+    Each says which answer fits your history best (suggested), but nothing is chosen for you.
     """
     out = []
     for kind, row in stats.items():
@@ -310,8 +323,11 @@ def candidates(stats: dict) -> list[dict]:
         usual = Counter(row["actions"]).most_common(1)[0][0]
         if Action(usual) not in HABIT_ACTIONS:
             continue  # he'd reply to these, or ask: a rule about archiving them would never be used
+        unread = n - row["read"]
         if row["archived"] / n >= MIN_SHARE:
             habit, action, count = "archived", Action.ARCHIVE, row["archived"]
+        elif kind in LIST_KINDS and unread / n >= MIN_SHARE:
+            habit, action, count = "ignored", Action.ARCHIVE, unread
         elif row["kept_read"] / n >= MIN_SHARE:
             habit, action, count = "read", Action.MARK_READ, row["kept_read"]
         elif row["kept"] / n >= MIN_SHARE:
@@ -330,8 +346,11 @@ def candidates(stats: dict) -> list[dict]:
             "senders": senders,
             "read": row["read"],
             "share": round(count / n, 3),
-            # Keeping them in the inbox only says he shouldn't do it on his own.
-            "options": ["ask", "reject"] if habit == "kept" else ["handle", "tell", "ask", "reject"],
+            "examples": row["senders"][:3],  # a few of the senders, newest first, so it's clear which emails
+            # Keeping them in the inbox: label them and leave them there, or leave them to you.
+            "options": ["label", "ask", "reject"] if habit == "kept" else ["handle", "tell", "ask", "reject"],
+            # What fits your history best. Doing it without telling you only when it's nearly always so.
+            "suggested": "label" if habit == "kept" else "handle" if count / n >= 0.95 else "tell",
         })
     return sorted(out, key=lambda c: (-c["emails"], c["id"]))[:MAX_HABITS]
 
@@ -351,9 +370,11 @@ def answer(history: History, pattern_id: str, choice: str) -> dict:
         raise ColdStartError("That isn't one of the answers for this habit.")
     if choice in ANSWERS:
         kind, level = ANSWERS[choice]
+        # "label" is about labelling these, whatever he'd usually do with them.
+        action = Action.APPLY_LABEL if choice == "label" else Action(found["action"])
         history.add_feedback(FeedbackEvent(
             decision_id=f"{DECISION_PREFIX}{pattern_id}", kind=kind, scope="kind", desired_level=level,
-            action=Action(found["action"]), autonomy_level=AutonomyLevel.ASK_FIRST,
+            action=action, autonomy_level=AutonomyLevel.ASK_FIRST,
             sender=found["sender"], email_type=found["email_type"]))
     data["answers"][pattern_id] = choice
     if all(c["id"] in data["answers"] for c in data["candidates"]):

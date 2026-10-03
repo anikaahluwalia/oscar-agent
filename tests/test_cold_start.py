@@ -360,13 +360,38 @@ def test_7_weak_or_mixed_history_isnt_shown(tmp_path, messages):
     assert status(history)["candidates"] == []
 
 
-def test_kept_in_the_inbox_can_only_be_kept_asking(tmp_path):
+def test_kept_in_the_inbox_can_be_labelled_and_left_there(tmp_path):
     receipts = [message(f"r{i}", f"orders@store{i}.example", "Your order", RECEIPT, labels=KEPT_UNREAD) for i in range(8)]
     history, _ = scan(tmp_path, receipts)
     [habit] = status(history)["candidates"]
-    assert habit["habit"] == "kept" and habit["options"] == ["ask", "reject"]
+    assert habit["habit"] == "kept" and habit["options"] == ["label", "ask", "reject"] and habit["suggested"] == "label"
     with pytest.raises(cold_start.ColdStartError):
         answer(history, habit["id"], "handle")
+    answer(history, habit["id"], "label")
+    [event] = history.feedback
+    assert (event.kind, event.action, event.desired_level) == (FeedbackKind.ALWAYS_DO_THIS, Action.APPLY_LABEL, S)
+
+
+def test_list_mail_you_never_open_is_ignored_not_kept(tmp_path):
+    # An inbox like 38,000 emails deep: promotions stay in it, unread.
+    history, _ = scan(tmp_path, promos(40, KEPT_UNREAD) + promos(3, KEPT_READ, prefix="k"))
+    [habit] = status(history)["candidates"]
+    assert habit["habit"] == "ignored" and habit["action"] == "ARCHIVE" and habit["count"] == 40
+    assert habit["options"] == ["handle", "tell", "ask", "reject"] and habit["suggested"] == "tell", "40 of 43 is under 95%"
+    assert habit["examples"] == ["deals@shop0.example", "deals@shop1.example", "deals@shop2.example"]
+    answer(history, habit["id"], "handle")
+    assert decide_now(history, promo_email(20)).autonomy_level == S
+
+
+def test_a_ready_scan_gets_the_newer_habits_without_reading_gmail_again(tmp_path):
+    history, fake = scan(tmp_path, promos(12, KEPT_UNREAD))
+    store = Store(history)
+    old = store.load()
+    old.update(candidates=[{"id": "bulk_mail:kept"}], habits=1)  # made by the first version
+    store.save(old)
+    reads = len(fake.gmail_requests())
+    assert [c["id"] for c in status(history)["candidates"]] == ["bulk_mail:ignored"]
+    assert len(fake.gmail_requests()) == reads
 
 
 def test_questions_from_people_never_make_a_habit(tmp_path):

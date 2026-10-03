@@ -422,7 +422,7 @@ export const saveAppSettings = (changes: { companion?: Partial<AppSettings["comp
 export interface Habit {
   id: string;
   kind: string; // a family of email, like bulk_mail
-  habit: "archived" | "read" | "kept";
+  habit: "archived" | "ignored" | "read" | "kept";
   action: Action;
   emails: number; // how many emails like this he looked at
   count: number; // how many of them you handled this way
@@ -430,8 +430,11 @@ export interface Habit {
   read: number;
   share: number;
   options: HabitChoice[];
+  suggested: HabitChoice; // the answer that fits your history best; nothing is chosen for you
+  examples: string[]; // a few of the senders, newest first
+  label_name?: string; // the Gmail label "Label them" would use, as it's called in Settings
 }
-export type HabitChoice = "handle" | "tell" | "ask" | "reject";
+export type HabitChoice = "handle" | "tell" | "label" | "ask" | "reject";
 
 /** How the look back over your last six months is going (GET /cold-start). */
 export interface ColdStart {

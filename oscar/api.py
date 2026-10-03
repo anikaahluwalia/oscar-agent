@@ -28,6 +28,7 @@ from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar import app_settings
 from oscar import cold_start
+from oscar.labels import kind_role
 from oscar import categories as user_categories
 from oscar.categories import CategoryError
 from oscar.classification import EMAIL_TYPES, RISKY_TYPES, ClassificationError, ClassificationFeedback, record_classification, type_hints
@@ -254,7 +255,12 @@ def cold_start_status(tokens: gmail.TokenStore = Depends(get_tokens), http: http
         return {"state": "unavailable"}
     if cold_start.status(real)["state"] == "running" and not cold_start.is_running(real):
         cold_start.start(real, tokens, http)  # the API stopped partway: carry on where it left off
-    return {**cold_start.status(real), "new_account": not real.decisions}
+    now = cold_start.status(real)
+    # The label "Label them" would use, by its name in Settings (oscar/labels.py).
+    names = label_names()
+    for habit in now["candidates"]:
+        habit["label_name"] = names[kind_role(habit["email_type"])]
+    return {**now, "new_account": not real.decisions}
 
 
 @app.post("/cold-start/start")
@@ -274,7 +280,7 @@ def cold_start_skip(real: History = Depends(get_real_history)) -> dict:
 
 class ColdStartAnswer(BaseModel):
     pattern_id: str
-    choice: Literal["handle", "tell", "ask", "reject"]
+    choice: Literal["handle", "tell", "label", "ask", "reject"]
 
 
 @app.post("/cold-start/answer")

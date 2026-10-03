@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { CheckIcon } from "lucide-react";
+import { displayName } from "@/components/kit/sender";
 import { OscarMood } from "@/components/oscar-mood";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,33 +26,48 @@ const PHASES: Record<NonNullable<Status["phase"]>, string> = {
   ready: "Ready to review",
 };
 
-const CHOICES: { choice: HabitChoice; label: string }[] = [
-  { choice: "handle", label: "Just handle them" },
-  { choice: "tell", label: "Handle + tell me" },
-  { choice: "ask", label: "Keep asking" },
-  { choice: "reject", label: "Not a useful pattern" },
-];
+/** What each answer says, worded for the habit, so every button says what it will do. */
+function choiceLabel(h: Habit, choice: HabitChoice) {
+  const verb = h.habit === "read" ? "Mark read" : "Archive them";
+  switch (choice) {
+    case "handle":
+      return h.habit === "read" ? "Mark read for me" : "Archive them for me";
+    case "tell":
+      return `${verb} and tell me`;
+    case "label":
+      return `Label them “${h.label_name ?? "Sorted"}”, keep in inbox`;
+    case "ask":
+      return h.habit === "kept" ? "Leave them to me" : "Ask me first";
+    case "reject":
+      return "Don't use this";
+  }
+}
 
 const SAID: Record<HabitChoice, string> = {
-  handle: "I'll just handle these. Anything risky still comes to you.",
-  tell: "I'll handle these and tell you.",
-  ask: "I'll keep asking about these.",
+  handle: "I'll take care of these. Anything risky still comes to you.",
+  tell: "I'll take care of these and tell you.",
+  label: "I'll label these and leave them in your inbox.",
+  ask: "Got it, I'll leave these to you.",
   reject: "Got it, I won't use this one.",
 };
 
-/** "You archived 42 of 46 similar emails", from what he counted (never more than that). */
+/** The headline: what you did with them, from what he counted (never more than that). */
 function evidence(h: Habit) {
-  const of = `${h.count.toLocaleString()} of ${h.emails.toLocaleString()} similar emails`;
-  const did = h.habit === "archived" ? `You archived ${of}` : h.habit === "read" ? `You read and kept ${of}` : `You left ${of} in your inbox`;
-  return `${did}, from ${h.senders.toLocaleString()} senders.`;
+  const of = <b className="font-bold text-foreground">{h.count.toLocaleString()}</b>;
+  const total = h.emails.toLocaleString();
+  if (h.habit === "archived") return <>You archived {of} of {total}</>;
+  if (h.habit === "ignored") return <>You never opened {of} of {total}</>;
+  if (h.habit === "read") return <>You read and kept {of} of {total}</>;
+  return <>You kept {of} of {total} in your inbox</>;
 }
 
-/** What he'd do from now on if you say so. */
-function suggestion(h: Habit) {
-  if (h.habit === "archived") return "Archive these from now on?";
-  if (h.habit === "read") return "Mark these as read from now on, and keep them?";
-  return "Leave these in your inbox?";
-}
+/** The one question each habit asks. */
+const QUESTION: Record<Habit["habit"], string> = {
+  archived: "Archive these from now on?",
+  ignored: "Archive these from now on?",
+  read: "Mark these as read from now on, and keep them?",
+  kept: "Label these and keep them in your inbox?",
+};
 
 /** The status, every couple of seconds while he's looking, so the count moves. */
 function useColdStart() {
@@ -182,30 +199,50 @@ function Card({ pose, title, children }: { pose: "thinking" | "learning" | "repo
 }
 
 function HabitCard({ habit: h, said, busy, onAnswer }: { habit: Habit; said?: HabitChoice; busy: boolean; onAnswer: (c: HabitChoice) => void }) {
+  const pct = Math.round(h.share * 100);
+  const examples = h.examples.map(displayName);
   return (
-    <li className="flex flex-col gap-3 rounded-[20px] border bg-background/40 p-4">
-      <div className="flex flex-col gap-0.5">
+    <li className="flex flex-col gap-3.5 rounded-[20px] border bg-background/40 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
         <p className="text-[15px] font-bold">{familyName(h.kind)}</p>
-        <p className="text-sm text-muted-foreground">{evidence(h)}</p>
-        <p className="text-sm">{suggestion(h)} What should I do going forward?</p>
+        <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold tabular-nums">{pct}%</span>
       </div>
-      {said ? (
-        <p className="text-[13px] font-semibold text-muted-foreground">You said: {CHOICES.find((c) => c.choice === said)?.label}</p>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {CHOICES.filter((c) => h.options.includes(c.choice)).map((c) => (
-            <Button
-              key={c.choice}
-              variant={c.choice === "reject" ? "ghost" : "outline"}
-              className={cn("h-9 rounded-full px-3.5 text-[13px] font-semibold", c.choice === "reject" && "text-muted-foreground")}
-              disabled={busy}
-              onClick={() => onAnswer(c.choice)}
-            >
-              {c.label}
-            </Button>
-          ))}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[15px] text-muted-foreground">{evidence(h)}</p>
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+          <div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(2, pct)}%` }} />
         </div>
-      )}
+        <p className="text-[13px] text-muted-foreground">
+          {h.senders.toLocaleString()} {h.senders === 1 ? "sender" : "senders"}
+          {examples.length > 0 && ` · e.g. ${examples.join(", ")}`}
+        </p>
+      </div>
+      <div className="flex flex-col gap-2.5 border-t pt-3.5">
+        <p className="text-sm font-semibold">{QUESTION[h.habit]}</p>
+        {said ? (
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-status-handled">
+            <CheckIcon className="size-4" aria-hidden /> {choiceLabel(h, said)}
+          </p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            {h.options.map((choice) => {
+              const suggested = choice === h.suggested;
+              return (
+                <Button
+                  key={choice}
+                  variant={suggested ? "default" : choice === "reject" ? "ghost" : "outline"}
+                  className={cn("h-9 rounded-full px-3.5 text-[13px] font-semibold", choice === "reject" && "text-muted-foreground")}
+                  disabled={busy}
+                  onClick={() => onAnswer(choice)}
+                >
+                  {choiceLabel(h, choice)}
+                  {suggested && <span className="rounded-full bg-primary-foreground/15 px-1.5 text-[11px] font-medium">Suggested</span>}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </li>
   );
 }
