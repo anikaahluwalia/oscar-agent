@@ -1,4 +1,4 @@
-// Where Oscar is for one sender and action: Ask me, Tell me or Just do it.
+// Where Oscar is for one sender and action: Ask me, Tell me or Quietly.
 // It only shows the level. Feedback moves Oscar up or down, so the buttons that
 // change it live next to it and say what they do (see PreferenceControls).
 
@@ -7,11 +7,11 @@ import type { AutonomyRow, Level } from "@/lib/api";
 import { STATUS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
-const STEPS: { level: Level; label: string }[] = [
-  { level: "ASK_FIRST", label: "Ask me" },
-  { level: "PROCEED_AND_NOTIFY", label: "Tell me" },
-  { level: "PROCEED_SILENTLY", label: "Just do it" },
-];
+// From most careful to most on his own, named as everywhere else in the app (STATUS).
+const STEPS: { level: Level; label: string }[] = (["ASK_FIRST", "PROCEED_AND_NOTIFY", "PROCEED_SILENTLY"] as const).map((level) => ({
+  level,
+  label: STATUS[level].label,
+}));
 const ORDER: Level[] = ["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY", "ASK_FIRST", "ESCALATE"];
 export const stricter = (a: Level, b: Level) => ORDER.indexOf(a) > ORDER.indexOf(b);
 
@@ -29,7 +29,7 @@ export function Ladder({ row }: { row: Limits }) {
   if (row.floor === "ESCALATE") {
     return (
       <p className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-sm text-muted-foreground">
-        <LockIcon className="size-3.5" />
+        <LockIcon className="size-3.5 shrink-0" aria-hidden />
         Always comes to you. {row.floor_reason && `${row.floor_reason[0].toUpperCase()}${row.floor_reason.slice(1)}.`}
       </p>
     );
@@ -51,8 +51,9 @@ export function Ladder({ row }: { row: Limits }) {
             )}
           >
             {current && <span className={cn("size-2 rounded-full", STATUS[step.level].dot)} aria-hidden />}
-            {lock && <LockIcon className="size-3" aria-label="Locked" />}
+            {lock && <LockIcon className="size-3" aria-hidden />}
             {step.label}
+            {lock && <span className="sr-only"> ({lock})</span>}
           </li>
         );
       })}

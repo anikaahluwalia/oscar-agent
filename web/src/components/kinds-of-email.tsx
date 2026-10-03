@@ -11,13 +11,19 @@ import { useOscar } from "@/lib/use-oscar";
 const sentence = (s: string) => `${s[0].toUpperCase()}${s.slice(1)}`;
 
 /** The rules for each kind of email, straight from the API, so this never drifts from the code. */
-function usePermissions() {
+export function usePermissions() {
   const { data } = useOscar();
   const [rows, setRows] = useState<PermissionRow[] | null>(null);
   const [failed, setFailed] = useState(false);
   // Fetch again when Oscar's data refreshes, so a changed promotions setting shows up.
   useEffect(() => {
-    getPermissions().then(setRows, () => setFailed(true));
+    getPermissions().then(
+      (r) => {
+        setRows(r);
+        setFailed(false);
+      },
+      () => setFailed(true),
+    );
   }, [data]);
   return { rows, failed };
 }
@@ -25,6 +31,11 @@ function usePermissions() {
 /** What Oscar may do on his own with each kind of email, before he's learned anything about a sender. */
 export function KindsOfEmail() {
   const { rows, failed } = usePermissions();
+  return <KindsOfEmailList rows={rows} failed={failed} />;
+}
+
+/** The same list, for a page that already has the rules (so it doesn't fetch them twice). */
+export function KindsOfEmailList({ rows, failed }: { rows: PermissionRow[] | null; failed: boolean }) {
   if (failed) return <p className="text-sm text-muted-foreground">I can&apos;t reach my API, so I can&apos;t show my rules.</p>;
   if (!rows) return null;
   const open = rows.filter((r) => r.floor !== "ESCALATE");
