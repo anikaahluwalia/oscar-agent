@@ -160,6 +160,8 @@ export interface GmailStatus {
   configured: boolean;
   connected: boolean;
   address: string | null;
+  name: string | null; // from your Google account, when it was shared
+  picture: string | null; // your Google photo
   connected_at: number | null;
   last_sync: number | null;
   auto_check_minutes: number; // 0 means Oscar only checks when you ask

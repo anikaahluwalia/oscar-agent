@@ -25,7 +25,7 @@ export function SeeAll({ href, children }: { href: string; children: React.React
 /** The newest few things Oscar did, each opening the email in Activity. */
 export function RecentActivity({ items, className }: { items: DecisionWithFeedback[]; className?: string }) {
   return (
-    <Panel title="Recent activity" action={<SeeAll href="/activity">See all</SeeAll>} className={className}>
+    <Panel title="Recent activity" action={<SeeAll href="/inbox">See all</SeeAll>} className={className}>
       <ul className="-mx-2 flex flex-col">
         {items.slice(0, SHOWN).map((item) => (
           <li key={item.decision.id}>

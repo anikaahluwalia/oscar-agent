@@ -30,10 +30,10 @@ export function ActivityRow({ decision, done, feedback, selected, waiting }: Pro
   return (
     <li>
       <Link
-        href={`/activity#${decision.id}`}
+        href={`/inbox#${decision.id}`}
         aria-current={selected ? "true" : undefined}
         onClick={(e) => {
-          if (window.location.pathname === "/activity") {
+          if (window.location.pathname === "/inbox") {
             e.preventDefault();
             setHash(decision.id);
           }

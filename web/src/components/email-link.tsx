@@ -12,11 +12,11 @@ type Props = { id: string; className?: string; onClick?: () => void; children: R
 export function EmailLink({ id, className, onClick, children }: Props) {
   return (
     <Link
-      href={`/activity#${id}`}
+      href={`/inbox#${id}`}
       className={className}
       onClick={(e) => {
         onClick?.();
-        if (window.location.pathname === "/activity") {
+        if (window.location.pathname === "/inbox") {
           e.preventDefault();
           setHash(id);
         }

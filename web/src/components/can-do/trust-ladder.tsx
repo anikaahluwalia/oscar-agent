@@ -145,8 +145,8 @@ export function TrustLadder({ counts, phrase, readOnly, rules, senders }: Props)
       )}
 
       <div className="-mb-2 flex flex-col">
-        <More href="/memory">See what he&apos;s learned about each sender</More>
-        <More href="/safety">See every safety rule</More>
+        <More href="/knows">See what he&apos;s learned about each sender</More>
+        <More href="/promises">See every safety rule</More>
       </div>
     </Panel>
   );

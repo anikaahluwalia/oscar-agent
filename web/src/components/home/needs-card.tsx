@@ -119,7 +119,7 @@ export function NeedsCard({ item, index, total, onFeedback }: Props) {
             </Button>
           ) : stopped ? (
             <Button asChild variant="outline" className="h-11 px-5 sm:h-10">
-              <Link href={`/activity#${decision.id}`}>View details</Link>
+              <Link href={`/inbox#${decision.id}`}>View details</Link>
             </Button>
           ) : (
             <>

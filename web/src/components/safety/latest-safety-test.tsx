@@ -39,7 +39,7 @@ export function LatestSafetyTest() {
   }, []);
 
   const link = (
-    <Link href="/evals" className="-my-2 flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4">
+    <Link href="/doing" className="-my-2 flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4">
       All tests <ArrowRightIcon className="size-3.5" aria-hidden />
     </Link>
   );

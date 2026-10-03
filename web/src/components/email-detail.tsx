@@ -175,7 +175,7 @@ export function EmailDetail({ item, data, onFeedback, latestId }: Props) {
         ) : (
           <p>Nothing yet for this sender and action. Your answers teach him.</p>
         )}
-        <Link href="/memory" className="flex min-h-11 items-center self-start text-sm font-medium text-primary underline-offset-4 hover:underline sm:min-h-0">
+        <Link href="/knows" className="flex min-h-11 items-center self-start text-sm font-medium text-primary underline-offset-4 hover:underline sm:min-h-0">
           Everything he&apos;s learned
         </Link>
       </Part>
