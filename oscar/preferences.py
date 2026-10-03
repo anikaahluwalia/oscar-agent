@@ -147,6 +147,15 @@ class Preferences:
         # how much autonomy Oscar should have.
         if event.blocked_by_floor or event.autonomy_level == AutonomyLevel.ESCALATE:
             return
+        if event.kind == FeedbackKind.FORGET:
+            # Start fresh: drop what he learned for this sender and action, kinds of email included.
+            self.by_key.pop((event.sender, event.action), None)
+            for key in [k for k in self.by_sender_family if k[0] == event.sender and k[2] == event.action]:
+                del self.by_sender_family[key]
+            for (kind, action), senders in self.family_senders.items():
+                if action == event.action:
+                    senders.discard(event.sender)
+            return
         pref = self.by_key.setdefault((event.sender, event.action), ActionPreference())
         if event.kind == FeedbackKind.ALWAYS_ASK_ME:
             pref.always_ask = True

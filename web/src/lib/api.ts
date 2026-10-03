@@ -22,7 +22,8 @@ export type FeedbackKind =
   | "EDIT_THEN_SEND"
   | "ALWAYS_DO_THIS"
   | "ALWAYS_ASK_ME"
-  | "SEEN";
+  | "SEEN"
+  | "FORGET";
 
 /** How you score one of Oscar's decisions on a real inbox (oscar/review.py). It grades him, and teaches him (lessons()). */
 export type ReviewLabel =

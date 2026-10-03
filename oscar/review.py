@@ -371,4 +371,4 @@ def lessons(history: History, skip_email: str | None = None) -> list[FeedbackEve
 
 def teaching(history: History, skip_email: str | None = None) -> list[FeedbackEvent]:
     """Everything Oscar learns from in this history: your feedback, and what your reviews teach."""
-    return [e for e in history.feedback] + lessons(history, skip_email)
+    return sorted([*history.feedback, *lessons(history, skip_email)], key=lambda e: e.created_at)

@@ -24,6 +24,7 @@ class FeedbackKind(str, Enum):
     ALWAYS_DO_THIS = "ALWAYS_DO_THIS"
     ALWAYS_ASK_ME = "ALWAYS_ASK_ME"
     SEEN = "SEEN"  # "got it" on an email Oscar brought to you; it teaches him nothing
+    FORGET = "FORGET"  # forget what he's learned for this sender and action, and start fresh
 
 
 class FeedbackEvent(BaseModel):
@@ -53,20 +54,21 @@ REPLIES: dict[FeedbackKind, str] = {
     FeedbackKind.ALWAYS_DO_THIS: "Got it! I'll start taking care of these for you.",
     FeedbackKind.ALWAYS_ASK_ME: "You got it! I'll always check with you on these.",
     FeedbackKind.SEEN: "Okay! It's all yours.",
+    FeedbackKind.FORGET: "Okay, I've forgotten that. I'll start fresh with this sender.",
 }
 
 OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
 REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
-TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME}  # change nothing in Gmail
+TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.FORGET}  # change nothing in Gmail
 
 
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None, undoable: bool = False) -> None:
     """Whether this feedback makes sense for this decision. undoable: Oscar did something in Gmail
     for it that hasn't been undone (Stage 12), so undo is allowed whatever the level."""
-    if decision.source == "gmail" and kind in TEACHING_ONLY:
-        return  # "always do this" and "always ask me" only teach him; they're fine on any real email
+    if kind == FeedbackKind.FORGET or (decision.source == "gmail" and kind in TEACHING_ONLY):
+        return  # these only teach him (or untaught him); they're fine on any email
     if decision.source == "gmail" and kind == FeedbackKind.UNDO:
         if not undoable:
             raise FeedbackError("I didn't do anything in Gmail with that one, so there's nothing to undo.")

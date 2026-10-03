@@ -104,6 +104,7 @@ export const FEEDBACK: Record<FeedbackKind, string> = {
   ALWAYS_DO_THIS: "Always do this",
   ALWAYS_ASK_ME: "Always ask me",
   SEEN: "Reviewed",
+  FORGET: "Forgot",
 };
 
 /** Review labels for the real-inbox review (Stage 9), with what each one means. Mirrors oscar/review.py. */

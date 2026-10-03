@@ -353,3 +353,15 @@ def test_a_reread_never_learns_from_its_own_answer():
     other = promo_decision(history, "e2")
     answered(history, other, S, Action.ARCHIVE, why="preference")
     assert {e.decision_id for e in lessons(history, skip_email=d.email_id)} == {other.id}
+
+
+def test_forget_also_wipes_what_earlier_reviews_taught():
+    from oscar.feedback import record_feedback
+    history = History()
+    d = promo_decision(history, "e1")
+    review = answer(d, S, Action.ARCHIVE, why="preference")
+    review.reviewed_at = d.created_at  # reviewed before the Forget below
+    record_review(history, review)
+    assert Preferences.from_feedback(teaching(history)).by_key
+    record_feedback(history, d.id, FK.FORGET)
+    assert ("deals@shop.example", Action.ARCHIVE) not in Preferences.from_feedback(teaching(history)).by_key
