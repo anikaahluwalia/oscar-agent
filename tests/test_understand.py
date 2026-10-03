@@ -3,9 +3,10 @@
 import json
 
 import httpx
+import pytest
 
 from oscar.models import Action, Email
-from oscar.understand import KINDS, Reader, email_text, parse
+from oscar.understand import KINDS, NoSavedReading, Reader, email_text, parse
 
 
 def fake(answer: str | None = None, status: int = 200, calls: list | None = None) -> httpx.Client:
@@ -72,6 +73,20 @@ def test_answers_are_remembered_and_failures_are_not(monkeypatch, tmp_path):
     failing = Reader(fake(status=429), cache_path=tmp_path / "other.jsonl")
     assert failing.read(EMAIL) is None and not (tmp_path / "other.jsonl").exists()
     assert waits == [1, 2, 4, 8], "a rate limit is tried again, waiting longer each time"
+
+
+def test_saved_readings_work_without_a_key_and_a_missing_one_stops(monkeypatch, tmp_path):
+    # For the evals: a reviewer without a key gets the same readings, never the rules instead.
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    Reader(fake(NEWSLETTER), cache_path=tmp_path / "cache.jsonl", reads="full").read(EMAIL)
+    monkeypatch.delenv("GEMINI_API_KEY")
+    calls: list = []
+    saved = Reader(fake(NEWSLETTER, calls=calls), cache_path=tmp_path / "cache.jsonl", reads="full", saved_only=True)
+    assert saved.read(EMAIL).kind == "newsletter" and not calls
+    other = Email(id="o", sender="someone@else.example", subject="Never read", body="Hello")
+    with pytest.raises(NoSavedReading):
+        saved.read(other)
+    assert not calls, "the model is never asked"
 
 
 def test_every_kind_maps_to_an_action():

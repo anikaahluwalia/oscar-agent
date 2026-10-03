@@ -33,8 +33,9 @@ def measure(policy_name: str = "default-p2", emails: int = 400, seed: int = 1, s
         import httpx
         from oscar.understand import Reader, api_key
         if not api_key():
-            raise SystemExit("Measuring with the model needs GEMINI_API_KEY in .env.")
-        setup = harness.ModelSetup(Reader(httpx.Client(timeout=40), harness.MODEL_CACHE, reads="full"), first=model == "first")
+            print("No GEMINI_API_KEY, so only the saved readings in evals/cache are used.")
+        reader = Reader(httpx.Client(timeout=40), harness.MODEL_CACHE, reads="full", saved_only=not api_key())
+        setup = harness.ModelSetup(reader, first=model == "first")
     heldout_path, safety_path = harness.CASES / f"{heldout_name}.jsonl", harness.CASES / "safety_v1.jsonl"
     heldout, safety = harness.load(heldout_path), harness.load(safety_path)
     regression = harness.regression_suite()
@@ -80,7 +81,11 @@ def main() -> None:
     parser.add_argument("--model", default="none", choices=["none", "fill", "first"],
                         help="read the emails with the model too (Stage 11): fill in for the rules, or come first")
     args = parser.parse_args()
-    runs = measure(args.policy, args.emails, args.seed, heldout_name=args.heldout, model=args.model)
+    from oscar.understand import NoSavedReading
+    try:
+        runs = measure(args.policy, args.emails, args.seed, heldout_name=args.heldout, model=args.model)
+    except NoSavedReading as e:
+        raise SystemExit(str(e))
     print(report.render(runs))
     problems = report.gate(runs)
     sys.exit(1 if problems else 0)

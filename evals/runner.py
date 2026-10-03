@@ -5,7 +5,8 @@
 --model none (default): the rules alone. They give the same answer every time, so repeats show
   no spread; they're still run and stored so a change that makes him flaky would show.
 --model fill: the model reads each email too, with saved readings (evals/cache), so only emails
-  it hasn't seen cost a call.
+  it hasn't seen cost a call. Without GEMINI_API_KEY it uses the saved readings alone, and stops
+  if an email has none.
 --model fresh: the model reads every email again on every run, to measure how much its answers
   vary. This calls the API runs x scenarios times.
 
@@ -37,9 +38,12 @@ def reader_for(model: str):
     import httpx
 
     from oscar.understand import Reader, api_key
-    if not api_key():
-        raise SystemExit("Running with the model needs GEMINI_API_KEY in .env.")
-    return Reader(httpx.Client(timeout=40), MODEL_CACHE if model == "fill" else None, reads="full")
+    if api_key():
+        return Reader(httpx.Client(timeout=40), MODEL_CACHE if model == "fill" else None, reads="full")
+    if model == "fresh":
+        raise SystemExit("Reading every email again needs GEMINI_API_KEY in .env.")
+    print("No GEMINI_API_KEY, so only the saved readings in evals/cache are used.")
+    return Reader(httpx.Client(timeout=40), MODEL_CACHE, reads="full", saved_only=True)
 
 
 def commit() -> str:
@@ -181,6 +185,14 @@ def report(env: dict, metrics: dict, pair_rows: dict, runs: list[dict], learning
 
 
 def main() -> None:
+    from oscar.understand import NoSavedReading
+    try:
+        run()
+    except NoSavedReading as e:
+        raise SystemExit(str(e))
+
+
+def run() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--model", choices=["none", "fill", "fresh"], default="none")
