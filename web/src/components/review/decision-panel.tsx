@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowRightIcon,
   ArchiveIcon,
   CheckIcon,
   CircleDotIcon,
@@ -21,10 +22,11 @@ import { becauseOf, callLine, lower } from "@/components/review/call";
 import { DecisionControls } from "@/components/review/decision-controls";
 import { YouSaid } from "@/components/review/grade";
 import { offersLikeThis } from "@/components/kit/like-this";
+import { Button } from "@/components/ui/button";
 import type { Action, DecisionWithFeedback, FeedbackKind, Level, Review } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
 import { safetyChecks } from "@/lib/insights";
-import { HOLD_TO_CONFIRM, isOldWay } from "@/lib/labels";
+import { isOldWay } from "@/lib/labels";
 import { useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -131,17 +133,6 @@ function chosenFor(data: ReturnType<typeof useOscar>["data"], item: DecisionWith
 
 function Involve({ item, busy, onChoose }: { item: DecisionWithFeedback; busy: boolean; onChoose: (kind: FeedbackKind) => void }) {
   const { data } = useOscar();
-  const d = item.decision;
-  if (!offersLikeThis(d)) {
-    const hold = HOLD_TO_CONFIRM[d.action];
-    return (
-      <p className="rounded-xl bg-muted px-3.5 py-3 text-sm text-muted-foreground">
-        {hold
-          ? `${hold}, so I always ask first. That doesn't change with feedback.`
-          : "I only learn this for archiving, marking as read and labelling, which are easy to undo."}
-      </p>
-    );
-  }
   const chosen = chosenFor(data, item);
   return (
     <div role="group" aria-label="How much should I involve you next time" className="flex flex-col gap-2">
@@ -278,6 +269,7 @@ export function DecisionPanel({
   onChange,
   onInvolve,
   onAnswered,
+  onNext,
   footer,
 }: {
   item: DecisionWithFeedback;
@@ -294,6 +286,8 @@ export function DecisionPanel({
   onChange: () => void;
   onInvolve: (kind: FeedbackKind) => void;
   onAnswered: (kind: FeedbackKind) => void;
+  /** On to the next email, once you've said whether the action was right. */
+  onNext?: () => void;
   footer: React.ReactNode;
 }) {
   const d = item.decision;
@@ -335,6 +329,16 @@ export function DecisionPanel({
             onSameAsLast={onSameAsLast}
             onChange={onChange}
           />
+          {onNext && gradeable && !asking && item.review && (
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-dashed px-4 py-3">
+              <p className="min-w-0 flex-1 text-[13px] text-muted-foreground">
+                {offersLikeThis(d) ? "Pick how much to involve me below, or move on." : "Thanks! Ready for the next one?"}
+              </p>
+              <Button className="h-10 rounded-full px-5 font-semibold" disabled={busy} onClick={onNext}>
+                Next email <ArrowRightIcon aria-hidden />
+              </Button>
+            </div>
+          )}
           {/* Yes already approves an ask, so only Undo is left here, once it's done in Gmail. */}
           <DecisionControls item={item} canAct={canAct} feedback={feedback} onAnswered={onAnswered} undoOnly />
         </PanelSection>
@@ -347,11 +351,14 @@ export function DecisionPanel({
         </PanelSection>
       )}
 
-      {d.autonomy_level !== "ESCALATE" && (
+      {/* Only where there's something to pick: archive, mark as read and label (offersLikeThis). A
+          heading with nothing to answer under it looked like a question that got skipped. */}
+      {offersLikeThis(d) && (
         <PanelSection title="How much should I involve you next time?" text="Choose how I should handle similar emails from this sender.">
           <Involve item={item} busy={busy} onChoose={onInvolve} />
         </PanelSection>
       )}
+
 
       <PanelSection title="Why did I do this?" text="These facts mattered for my decision.">
         <WhyFactors item={item} />

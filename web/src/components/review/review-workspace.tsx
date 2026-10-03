@@ -462,6 +462,7 @@ export function ReviewWorkspace({
             onSameAsLast={() => last && void save(sameAsLast(current.decision.id, last), { pose: "learning", title: "Thanks! That helps me learn." })}
             onChange={() => setStep({ id: current.decision.id, mode: old ? "fix" : "change" })}
             onInvolve={(kind) => void involve(kind)}
+            onNext={next}
             onAnswered={(kind) => {
               // Approve, Decline, Mark as reviewed and Looks good (also an APPROVE) move on; Undo stays on the email.
               if (inQueue && (kind === "APPROVE" || kind === "REJECT" || kind === "SEEN")) next();
