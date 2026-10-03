@@ -1217,6 +1217,23 @@ written until acting is on, it needs the permission, only allowed labels change,
 undo restores exactly, approving does it and declining doesn't, re-reads never act,
 and the cap holds.
 
+### The UI from the second mock-up
+
+Eight pages from the mock-up, light with one blue for actions: Home, Review,
+Activity, What Oscar can do, Memory, Safety, Evals and Settings (with a Meet Oscar
+welcome), tabs and More on phones. Each page was built by its own agent from the
+mock-up, owning only its files, then checked by a second agent against the rules
+below and fixed.
+
+The mock-up's placeholders were replaced with real numbers or left out: "18 emails
+while you were away" and the asking-less chart come from real decisions; "4.2 min of
+interruptions avoided", "288 agent runs", "2m 14s", confidence percentages, a
+"Temporary context" tab and attachment checks had nothing behind them, so they're
+gone. "Draft reply: Looks good, I'll sign..." was dropped: Oscar doesn't write draft
+text. The baseline table compares what really exists (rules only, with the model,
+after learning), not "LLM only / + Safety". And a card only says Oscar did something
+when Gmail says he did; his note on an email he didn't act on says what he would do.
+
 ### Next
 
 - A blind held-out v3, since v2 has now been seen.
