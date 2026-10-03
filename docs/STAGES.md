@@ -1540,6 +1540,6 @@ answers behind it was being listed). All three are back, with a test for each. L
 ### Not done
 
 - The phone layout of the new pages wasn't checked; they were built desktop first.
-- Of the extension's new settings, only showing and hiding him has been tried, on real Gmail.
-  The corner, animation and card switches are only checked by reading the code. The reload fix
-  was tested on a stand-in page, where the old version threw the same error.
+- The extension's new settings (showing him, the corner, animation and the card switches) have
+  been tried on real Gmail, but they have no automated test. The reload fix was tested on a
+  stand-in page, where the old version threw the same error.
