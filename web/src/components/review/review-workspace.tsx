@@ -3,119 +3,85 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { ArrowLeftIcon } from "lucide-react";
 import { DecisionPanel } from "@/components/review/decision-panel";
-import { SenderAvatar } from "@/components/review/sender-avatar";
-import { StatusPill } from "@/components/status-pill";
+import { EmailPane } from "@/components/review/email-pane";
+import { EmailRow } from "@/components/review/email-row";
+import { filtersFor, listFor, newSenders, type FilterKey } from "@/components/review/filters";
 import { Button } from "@/components/ui/button";
 import { sendReview, type DecisionWithFeedback } from "@/lib/api";
-import { ACTIONS, isOldWay, toGrade } from "@/lib/labels";
-import { previewOf } from "@/lib/text";
-import { dayLabel, formatTime } from "@/lib/time";
+import { timeOf } from "@/lib/insights";
+import { dayLabel } from "@/lib/time";
 import { setHash, useHash } from "@/lib/use-hash";
-import { notifyChanged, oscarSays } from "@/lib/use-oscar";
+import { notifyChanged, oscarSays, type useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
-type Filter = "first" | "all" | "unsure" | "new" | "lists" | "stopped" | "finish";
+type Feedback = ReturnType<typeof useOscar>["feedback"];
 
-const LIST_TABS = new Set(["promotions", "updates", "social", "forums"]);
-const LIST_KINDS = new Set(["marketing", "newsletter", "job_alert", "social_notification", "bulk", "promotion"]);
-
-/**
- * How much reviewing this email would teach: what he couldn't read at all first, then what
- * he wasn't sure of, then senders he's never seen. Old half-answers come last, since you
- * already said he got those wrong. Ties go to the newest.
- */
-function priority(i: DecisionWithFeedback, firstSeen: Set<string>): number {
-  const d = i.decision;
-  if (isOldWay(i.review)) return 5;
-  if (d.level_source === "guess") return 0;
-  if ((d.confidence ?? 0) < 0.7) return 1;
-  if (firstSeen.has(d.id)) return 2;
-  if (d.autonomy_level === "ESCALATE") return 3;
-  return 4;
-}
-
-const when = (i: DecisionWithFeedback) => i.decision.gmail?.received_at ?? i.decision.created_at;
-
-function Row({ item, selected, onSelect }: { item: DecisionWithFeedback; selected: boolean; onSelect: () => void }) {
-  const d = item.decision;
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-current={selected ? "true" : undefined}
-        className={cn(
-          "flex w-full items-start gap-3 rounded-2xl border border-transparent px-4 py-3.5 text-left transition-colors hover:bg-surface-hover",
-          selected && "border-foreground/80 bg-card shadow-card hover:bg-card",
-        )}
-      >
-        <span className="relative">
-          <SenderAvatar sender={d.sender} size={36} />
-          {toGrade(item) && <span className="absolute -top-0.5 -left-0.5 size-2.5 rounded-full border-2 border-background bg-foreground" aria-label="To review" />}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-baseline gap-2">
-            <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{d.sender}</span>
-            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatTime(when(item))}</span>
-          </span>
-          <span className="block truncate font-medium">{d.subject}</span>
-          <span className="block truncate text-sm text-muted-foreground">{previewOf(d)}</span>
-        </span>
-        <span className="hidden w-28 shrink-0 flex-col items-end gap-1 sm:flex">
-          <StatusPill level={d.autonomy_level} />
-          <span className="text-xs text-muted-foreground">{ACTIONS[d.action]}</span>
-        </span>
-      </button>
-    </li>
-  );
+/** The tab to open on: what needs you, else his calls still to check, else everything. */
+function startOn(counts: Map<FilterKey, number>): FilterKey {
+  if (counts.get("needs")) return "needs";
+  if (counts.get("check")) return "check";
+  return "all";
 }
 
 /**
- * Checking Oscar's calls on your inbox: filters along the top, the emails on the left, the open
- * one on the right with his decision, his reasons, the safety checks and your answer.
- * Keys: J and K move, Y says he got it right.
+ * Reviewing Oscar's decisions: tabs along the top, the emails on the left, the open one in the
+ * middle and his decision on the right, with your controls. On phones the list and the open email
+ * take turns, picked by the address (#id) so the back button works.
+ * Keys: J and K move, Y says he got it right (real inbox).
  */
-export function ReviewWorkspace({ items }: { items: DecisionWithFeedback[] }) {
+export function ReviewWorkspace({
+  items,
+  real,
+  readOnly,
+  canAct,
+  feedback,
+  stats,
+}: {
+  items: DecisionWithFeedback[];
+  /** These are emails from your Gmail, not the demo inbox. */
+  real: boolean;
+  /** Oscar only reads your Gmail. */
+  readOnly: boolean;
+  /** Oscar acts in Gmail. */
+  canAct: boolean;
+  feedback: Feedback;
+  /** The stats line, shown above the tabs (not on phones while an email is open). */
+  stats?: React.ReactNode;
+}) {
   const hash = useHash();
-  const waiting = items.filter(toGrade).length;
-  const [filter, setFilter] = useState<Filter>(waiting ? "first" : "all");
+  const filters = useMemo(() => filtersFor({ real, readOnly }), [real, readOnly]);
+  const counts = useMemo(() => new Map(filters.map((f) => [f.key, items.filter(f.match).length])), [filters, items]);
+  // Picked once, so the tab doesn't jump away when you answer the last email in it.
+  const [chosen, setChosen] = useState<FilterKey>(() => startOn(counts));
+  const filter = filters.find((f) => f.key === chosen) ?? filters[0];
+  const needs = filters.find((f) => f.key === "needs");
 
-  const firstSeen = useMemo(() => {
-    const seen = new Map<string, DecisionWithFeedback>();
-    for (const i of [...items].sort((a, b) => when(a).localeCompare(when(b)))) {
-      if (!seen.has(i.decision.sender)) seen.set(i.decision.sender, i);
-    }
-    // A sender with only one email so far.
-    const counts = new Map<string, number>();
-    items.forEach((i) => counts.set(i.decision.sender, (counts.get(i.decision.sender) ?? 0) + 1));
-    return new Set([...seen.values()].filter((i) => counts.get(i.decision.sender) === 1).map((i) => i.decision.id));
-  }, [items]);
-
-  const filters: { key: Filter; label: string; match: (i: DecisionWithFeedback) => boolean }[] = [
-    { key: "first", label: "Check these first", match: (i) => toGrade(i) && !isOldWay(i.review) },
-    { key: "all", label: "All", match: () => true },
-    { key: "unsure", label: "Unsure", match: (i) => i.decision.level_source === "guess" || (i.decision.confidence ?? 0) < 0.7 },
-    { key: "new", label: "New senders", match: (i) => firstSeen.has(i.decision.id) },
-    { key: "lists", label: "Promos and lists", match: (i) => LIST_TABS.has(i.decision.gmail?.category ?? "") || LIST_KINDS.has(i.decision.email_type ?? "") },
-    { key: "stopped", label: "Stopped", match: (i) => i.decision.autonomy_level === "ESCALATE" },
-    { key: "finish", label: "Finish these", match: (i) => isOldWay(i.review) },
-  ];
-  const active = filters.find((f) => f.key === filter) ?? filters[1];
-  const list = items
-    .filter(active.match)
-    .sort((a, b) => (filter === "first" ? priority(a, firstSeen) - priority(b, firstSeen) : 0) || when(b).localeCompare(when(a)));
+  const firstSeen = useMemo(() => newSenders(items), [items]);
+  const list = useMemo(() => listFor(items, filter, firstSeen), [items, filter, firstSeen]);
   const picked = items.find((i) => i.decision.id === hash);
   const selected = picked ?? list[0];
+  const selectedId = selected?.decision.id;
+
+  // Keep the open email in view in the list as J and K move through it. On phones, where the
+  // email replaces the list, start it at the top. Only when the open email changes, not on every
+  // refresh (the data reloads in the background, which would jump you back up mid-answer).
+  const opened = !!picked;
+  useEffect(() => {
+    if (!selectedId) return;
+    if (opened && window.matchMedia("(max-width: 1023px)").matches) window.scrollTo({ top: 0 });
+    else document.getElementById(`review-row-${selectedId}`)?.scrollIntoView({ block: "nearest" });
+  }, [selectedId, opened]);
 
   // Keyboard: J / K to move through the list, Y to say Oscar got it right. Not while typing.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const target = e.target as HTMLElement;
-      if (e.metaKey || e.ctrlKey || e.altKey || target.closest("input, textarea, [contenteditable]")) return;
+      const target = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || target?.closest("input, textarea, select, [contenteditable]")) return;
       const at = selected ? list.findIndex((i) => i.decision.id === selected.decision.id) : -1;
-      if (e.key === "j" && list[at + 1]) setHash(list[at + 1].decision.id);
-      if (e.key === "k" && at > 0) setHash(list[at - 1].decision.id);
-      if (e.key === "y" && selected && !selected.review) {
+      const key = e.key.toLowerCase();
+      if (key === "j" && list[at + 1]) setHash(list[at + 1].decision.id);
+      else if (key === "k" && at > 0) setHash(list[at - 1].decision.id);
+      else if (key === "y" && selected && selected.decision.source === "gmail" && !selected.review) {
         sendReview({ decision_id: selected.decision.id, label: "CORRECT" })
           .then(() => {
             notifyChanged();
@@ -130,54 +96,85 @@ export function ReviewWorkspace({ items }: { items: DecisionWithFeedback[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Show">
+      {stats && <div className={cn(picked && "hidden lg:block")}>{stats}</div>}
+      <div role="group" aria-label="Show" className={cn("flex flex-wrap gap-2", picked && "hidden lg:flex")}>
         {filters.map((f) => {
-          const n = items.filter(f.match).length;
-          if (!n && f.key !== "all" && f.key !== filter) return null;
+          const n = counts.get(f.key) ?? 0;
+          if (f.optional && !n && f.key !== filter.key) return null;
+          const on = f.key === filter.key;
           return (
             <button
               key={f.key}
               type="button"
-              aria-pressed={filter === f.key}
-              onClick={() => setFilter(f.key)}
+              aria-pressed={on}
+              onClick={() => setChosen(f.key)}
               className={cn(
-                "flex min-h-10 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium hover:bg-surface-hover",
-                filter === f.key && "border-transparent bg-foreground text-background hover:bg-foreground",
+                "flex min-h-11 items-center gap-1.5 rounded-full border bg-card px-4 text-sm font-medium hover:bg-surface-hover sm:min-h-9 sm:px-3.5",
+                on && "border-transparent bg-primary/10 text-primary hover:bg-primary/15",
               )}
             >
               {f.label}
-              <span className={cn("tabular-nums", filter === f.key ? "text-background/70" : "text-muted-foreground")}>{n.toLocaleString()}</span>
+              <span className="tabular-nums opacity-70">{n.toLocaleString()}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)]">
-        <ul className={cn("flex min-w-0 flex-col gap-1", picked && "hidden lg:flex")} aria-label="Emails">
-          {list.map((item, n) => {
-            const day = dayLabel(when(item));
-            const heading = filter !== "first" && (n === 0 || dayLabel(when(list[n - 1])) !== day);
-            return (
-              <Fragment key={item.decision.id}>
-                {heading && <li aria-hidden className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground">{day}</li>}
-                <Row item={item} selected={item.decision.id === selected?.decision.id} onSelect={() => setHash(item.decision.id)} />
-              </Fragment>
-            );
-          })}
-          {!list.length && <li className="rounded-2xl border border-dashed p-6 text-sm text-muted-foreground">Nothing here.</li>}
-          <li className="hidden px-4 pt-2 text-xs text-muted-foreground lg:block">Keys: J and K to move, Y if Oscar got it right.</li>
-        </ul>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,23rem)]">
+        <div
+          className={cn(
+            "flex min-w-0 flex-col rounded-2xl border bg-card p-2 shadow-card lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto",
+            picked && "hidden lg:flex",
+          )}
+        >
+          {filter.ranked && list.length > 1 && (
+            <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground">Check these first: the ones he was least sure of are at the top.</p>
+          )}
+          <ul aria-label="Emails" className="flex flex-col gap-0.5">
+            {list.map((item, n) => {
+              const day = dayLabel(timeOf(item));
+              const heading = !filter.ranked && filter.key !== "needs" && (n === 0 || dayLabel(timeOf(list[n - 1])) !== day);
+              return (
+                <Fragment key={item.decision.id}>
+                  {heading && (
+                    <li aria-hidden className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground">
+                      {day}
+                    </li>
+                  )}
+                  <EmailRow
+                    id={`review-row-${item.decision.id}`}
+                    item={item}
+                    selected={item.decision.id === selectedId}
+                    waiting={!!needs?.match(item)}
+                    onSelect={() => setHash(item.decision.id)}
+                  />
+                </Fragment>
+              );
+            })}
+          </ul>
+          {!list.length && <p className="px-3 py-8 text-center text-sm text-muted-foreground">{filter.empty}</p>}
+          {list.length > 0 && (
+            <p className="hidden px-3 pt-3 pb-2 text-xs text-muted-foreground lg:block">
+              {real ? "Keys: J and K to move, Y if Oscar got it right." : "Keys: J and K to move."}
+            </p>
+          )}
+        </div>
 
-        <div className={cn("min-w-0", !picked && "hidden lg:block")}>
-          <div className="lg:sticky lg:top-6">
+        {selected ? (
+          <div className={cn("flex min-w-0 flex-col gap-4 xl:contents", !picked && "hidden lg:flex")}>
             {picked && (
-              <Button variant="ghost" size="sm" className="mb-3 lg:hidden" onClick={() => setHash("")}>
-                <ArrowLeftIcon /> All calls
+              <Button variant="ghost" className="h-11 self-start lg:hidden" onClick={() => setHash("")}>
+                <ArrowLeftIcon /> All emails
               </Button>
             )}
-            {selected && <DecisionPanel item={selected} />}
+            <EmailPane item={selected} />
+            <DecisionPanel item={selected} canAct={canAct} feedback={feedback} />
           </div>
-        </div>
+        ) : (
+          <p className="hidden rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground lg:block">
+            Pick an email to see what Oscar made of it.
+          </p>
+        )}
       </div>
     </div>
   );

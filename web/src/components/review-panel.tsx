@@ -45,6 +45,8 @@ const REASONS: { reason: Reason; label: string }[] = [
 ];
 const risky = (reasons: Reason[]) => reasons.some((r) => r !== "IMPORTANT");
 const ACTED: Level[] = ["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY"];
+// Big enough to tap on a phone.
+const TAP = "h-11 px-4 sm:h-8 sm:px-3";
 
 /**
  * Would Oscar's choice pass this answer? Mirrors expected_answer and grade_answer in oscar/review.py:
@@ -108,8 +110,8 @@ function Chip({ selected, onClick, children }: { selected: boolean; onClick: () 
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1 text-xs text-muted-foreground hover:bg-surface-hover hover:text-foreground",
-        selected && "border-transparent bg-foreground text-background hover:bg-foreground hover:text-background",
+        "min-h-11 rounded-full border px-3 text-sm text-muted-foreground hover:bg-surface-hover hover:text-foreground sm:min-h-8 sm:text-xs",
+        selected && "border-transparent bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
       )}
     >
       {children}
@@ -251,8 +253,8 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
           ? "Oscar still gets this right."
           : "Oscar gets this right now."
         : graded.earlier_error === "none"
-          ? `Oscar now: ${whatOscarDid(decision).toLowerCase()}, which is different from what you said was right.`
-          : `Oscar now: ${whatOscarDid(decision).toLowerCase()}, still not right.`;
+          ? `Oscar now: ${whatOscarDid(decision, item.done).toLowerCase()}, which is different from what you said was right.`
+          : `Oscar now: ${whatOscarDid(decision, item.done).toLowerCase()}, still not right.`;
     const plainYes = review.label === "CORRECT" && !review.complete;
     const said = review.label === "SKIP" ? "Not sure" : plainYes ? "Yes, that's right" : describeReview(review);
     const prefix = graded?.from_earlier ? "About an earlier read, you said" : "You said";
@@ -269,7 +271,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
               setEditing(true);
               if (isOldWay(review)) startFixing();
             }}
-            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            className="-my-2 min-h-11 font-medium text-primary underline-offset-4 hover:underline"
           >
             {isOldWay(review) ? "Finish it" : "Change"}
           </button>
@@ -284,17 +286,17 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
       <div className="flex flex-col gap-3 rounded-xl border border-dashed p-4">
         <p className="text-sm font-medium">Did Oscar get this right?</p>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" disabled={busy} onClick={() => save({ decision_id: decision.id, label: "CORRECT" })}>
+          <Button size="sm" className={TAP} disabled={busy} onClick={() => save({ decision_id: decision.id, label: "CORRECT" })}>
             Yes, that&apos;s right
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={startFixing}>
+          <Button size="sm" className={TAP} variant="outline" disabled={busy} onClick={startFixing}>
             No
           </Button>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => save({ decision_id: decision.id, label: "SKIP" })}>
+          <Button size="sm" className={TAP} variant="ghost" disabled={busy} onClick={() => save({ decision_id: decision.id, label: "SKIP" })}>
             Not sure
           </Button>
           {review && (
-            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            <Button size="sm" className={TAP} variant="ghost" onClick={() => setEditing(false)}>
               Back
             </Button>
           )}
@@ -315,7 +317,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
                 note: null,
               })
             }
-            className="self-start text-left text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            className="min-h-11 self-start text-left text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             No, same as the last one: {describeAnswer(lastAnswer.should_be_level, lastAnswer.should_be_action, lastAnswer.reasons).toLowerCase()}
             {lastAnswer.why === "misread" && lastAnswer.actual_type && <>, he misread it (it&apos;s {lastAnswer.actual_type.toLowerCase()})</>}
@@ -328,7 +330,7 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-dashed p-4">
       <p className="text-xs text-muted-foreground">
-        Oscar picked: <span className="text-foreground">{whatOscarDid(decision)}</span>
+        Oscar picked: <span className="text-foreground">{whatOscarDid(decision, item.done)}</span>
         {isOldWay(review) && review && <> · You said before: {describeReview(review)}</>}
       </p>
 
@@ -341,8 +343,8 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
               aria-pressed={level === l.level}
               onClick={() => pickLevel(l.level)}
               className={cn(
-                "rounded-lg border px-3 py-2 text-left text-sm hover:bg-surface-hover",
-                level === l.level && "border-transparent bg-foreground text-background hover:bg-foreground",
+                "min-h-11 rounded-lg border px-3 py-2 text-left text-sm hover:bg-surface-hover",
+                level === l.level && "border-primary bg-primary/10 font-medium text-primary hover:bg-primary/15",
               )}
             >
               {l.label}
@@ -388,7 +390,8 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
               value={labelName}
               onChange={(e) => setLabelName(e.target.value)}
               placeholder="Which label? (optional)"
-              className="rounded-md border bg-background px-2 py-1 text-sm"
+              aria-label="Which label (optional)"
+              className="min-h-11 rounded-lg border bg-background px-3 text-sm sm:min-h-9"
             />
           )}
         </Question>
@@ -416,7 +419,8 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
                 value={TYPES.includes(type) ? "" : type}
                 onChange={(e) => setType(e.target.value)}
                 placeholder="Something else? Type it"
-                className="rounded-md border bg-background px-2 py-1 text-sm"
+                aria-label="What kind of email it is"
+                className="min-h-11 rounded-lg border bg-background px-3 text-sm sm:min-h-9"
               />
             </div>
           )}
@@ -428,16 +432,18 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={choice === "OTHER" ? "What should he have done? (needed)" : "Anything else? (optional)"}
+          aria-label={choice === "OTHER" ? "What should he have done" : "Anything else (optional)"}
           className="min-h-14"
         />
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" disabled={busy || !!problem} onClick={() => save(input())}>
+        <Button size="sm" className={TAP} disabled={busy || !!problem} onClick={() => save(input())}>
           Save
         </Button>
         <Button
           size="sm"
+          className={TAP}
           variant="ghost"
           onClick={() => {
             reset();
