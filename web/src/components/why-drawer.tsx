@@ -18,6 +18,14 @@ function limitFor(row: AutonomyRow | undefined, decision: Decision) {
   return "Can handle it on his own";
 }
 
+const SCOPES = { sender: "This sender", domain: "Senders at this domain", kind: "Emails like this" } as const;
+const FLOOR_WORDS: Record<string, string> = {
+  ESCALATE: "Never acts on his own",
+  ASK_FIRST: "Always asks first",
+  PROCEED_AND_NOTIFY: "Always tells you",
+  PROCEED_SILENTLY: "Can handle it on his own",
+};
+
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
@@ -56,6 +64,17 @@ export function WhyDrawer() {
             <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} className="mt-1 self-start" />
           </div>
 
+          {!!decision.factors?.length && (
+            <ul aria-label="What mattered" className="flex flex-col gap-1.5 text-sm">
+              {decision.factors.map((f) => (
+                <li key={f} className="flex gap-2">
+                  <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-muted-foreground" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          )}
+
           <dl className="divide-y rounded-xl border px-4">
             <Fact label="Action">{ACTIONS[decision.action]}</Fact>
             <Fact label="Risk">{risk}</Fact>
@@ -66,7 +85,14 @@ export function WhyDrawer() {
             {anyAnswers && learned && !learned.always_ask && (
               <Fact label="Oscar's estimate">{Math.round(learned.mean * 100)}% you&apos;re fine with it</Fact>
             )}
-            <Fact label="Safety limit">{limitFor(limit, decision)}</Fact>
+            {decision.preference && (
+              <Fact label="Learned from">
+                {SCOPES[decision.preference.scope]}, {decision.preference.evidence} of your answers,{" "}
+                {Math.round(decision.preference.confidence * 100)}% sure
+              </Fact>
+            )}
+            <Fact label="Safety limit">{decision.safety_floor ? FLOOR_WORDS[decision.safety_floor] : limitFor(limit, decision)}</Fact>
+            {decision.safety_rule && <Fact label="Safety rule">{decision.safety_rule}</Fact>}
           </dl>
 
           {checks.length > 0 && (

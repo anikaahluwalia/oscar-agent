@@ -63,6 +63,10 @@ export interface Decision {
   policy_version: string | null;
   email_type?: string; // what kind of email Oscar thinks it is
   confidence?: number; // how sure he is that the level is right
+  factors?: string[]; // a few plain words on what mattered for this call
+  safety_floor?: Level | null; // the least involvement the safety rules allow here
+  safety_rule?: string | null; // the safety rule or check that set the level, if one did
+  preference?: { scope: "sender" | "domain" | "kind"; evidence: number; confidence: number } | null; // what he learned from you that he used
 }
 
 export interface GmailInfo {
