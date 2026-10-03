@@ -1,8 +1,11 @@
-"""Reading a real Gmail inbox (Stage 9).
+"""Reading a real Gmail inbox (Stage 9), and changing its labels (Stage 12).
 
-Oscar only asks Google for read-only access (gmail.readonly), and this client
-only ever sends GET requests to Gmail. There is no code here that can label,
-archive, send or delete anything; tests/test_gmail.py checks that.
+Connecting asks Google for read-only access (gmail.readonly). Oscar only asks for
+gmail.modify when you choose to let him act. Even then, the only write in this
+client is modify_labels, and it only adds or removes UNREAD, INBOX and labels
+Oscar made himself (under "Oscar/"): marking read, archiving and labelling, all
+undoable. There is no code here that can send, trash or delete anything;
+tests/test_gmail.py checks that.
 
 Google's OAuth: the user is sent to Google to say yes, Google sends them back to
 /auth/google/callback with a code, and the code is swapped for tokens. The
@@ -28,6 +31,9 @@ from oscar.config import API_URL, setting
 from oscar.models import Email, GmailInfo
 
 SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+ACT_SCOPE = "https://www.googleapis.com/auth/gmail.modify"  # only asked for when you let Oscar act
+LABEL_PREFIX = "Oscar/"
+SYSTEM_LABELS = frozenset({"UNREAD", "INBOX"})  # the only Gmail labels Oscar may add or remove
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
@@ -55,13 +61,13 @@ def redirect_uri() -> str:
     return API_URL + REDIRECT_PATH
 
 
-def auth_url(state: str) -> str:
-    """Where to send the user to connect Gmail."""
+def auth_url(state: str, act: bool = False) -> str:
+    """Where to send the user to connect Gmail: read-only, or (act) with permission to change labels."""
     return AUTH_URL + "?" + urlencode({
         "client_id": client_id(),
         "redirect_uri": redirect_uri(),
         "response_type": "code",
-        "scope": SCOPE,
+        "scope": ACT_SCOPE if act else SCOPE,
         "access_type": "offline",  # so Google gives a refresh token
         "prompt": "consent",
         "include_granted_scopes": "false",
@@ -81,9 +87,14 @@ def exchange_code(code: str, http: httpx.Client) -> dict:
     if response.status_code != 200:
         raise GmailError(f"Google didn't accept the sign-in ({response.status_code}).")
     tokens = response.json()
-    if SCOPE not in tokens.get("scope", "").split():
+    if not {SCOPE, ACT_SCOPE} & set(tokens.get("scope", "").split()):
         raise GmailError("Gmail access wasn't granted. Tick the Gmail box on Google's screen and try again.")
     return tokens
+
+
+def can_act(saved: dict | None) -> bool:
+    """Whether the saved connection lets Oscar change labels (it was made with gmail.modify)."""
+    return bool(saved) and ACT_SCOPE in saved.get("scope", "").split()
 
 
 def revoke(token: str, http: httpx.Client) -> None:
@@ -115,11 +126,12 @@ class TokenStore:
 
 
 class GmailClient:
-    """Read-only access to one Gmail account. Every Gmail call goes through _get."""
+    """Access to one Gmail account. Reads go through _get. The one write is modify_labels."""
 
     def __init__(self, tokens: TokenStore, http: httpx.Client | None = None) -> None:
         self.tokens = tokens
         self.http = http or httpx.Client(timeout=20)
+        self._oscar_labels: dict[str, str] | None = None  # Oscar's label ids by name
 
     def _access_token(self) -> str:
         saved = self.tokens.load()
@@ -169,6 +181,35 @@ class GmailClient:
 
     def emailed_before(self, address: str) -> bool:
         return bool(self._get("/messages", q=f"in:sent to:{address}", maxResults=1).get("messages"))
+
+    # --- Stage 12: the only writes ------------------------------------------------
+
+    def _post(self, path: str, body: dict) -> dict:
+        response = self.http.post(GMAIL_URL + path, json=body, headers={"Authorization": f"Bearer {self._access_token()}"})
+        if response.status_code != 200:
+            raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code)
+        return response.json()
+
+    def label_id(self, name: str) -> str:
+        """The id of Oscar's label "Oscar/<name>", made the first time it's needed."""
+        full = LABEL_PREFIX + name
+        if self._oscar_labels is None:
+            self._oscar_labels = {l["name"]: l["id"] for l in self._get("/labels").get("labels", [])
+                                  if l.get("name", "").startswith(LABEL_PREFIX)}
+        if full not in self._oscar_labels:
+            made = self._post("/labels", {"name": full, "labelListVisibility": "labelShow", "messageListVisibility": "show"})
+            self._oscar_labels[full] = made["id"]
+        return self._oscar_labels[full]
+
+    def modify_labels(self, message_id: str, add: list[str], remove: list[str]) -> None:
+        """Add and remove labels on one email. Only UNREAD, INBOX and Oscar's own labels: anything
+        else is refused here, before Gmail is asked."""
+        mine = set((self._oscar_labels or {}).values())
+        for label in add + remove:
+            if label not in SYSTEM_LABELS and label not in mine:
+                raise GmailError(f"Oscar isn't allowed to change the label {label!r}.")
+        if add or remove:
+            self._post(f"/messages/{message_id}/modify", {"addLabelIds": add, "removeLabelIds": remove})
 
 
 # Gmail's tabs, from its category labels.

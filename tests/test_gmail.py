@@ -32,9 +32,37 @@ def test_never_changes_anything_in_gmail(tmp_path):
     assert {r.method for r in fake.gmail_requests()} == {"GET"}
 
 
-def test_client_has_no_way_to_write():
-    writes = {"modify", "send", "trash", "delete", "archive", "insert", "batch", "draft", "label_add"}
+def test_client_has_no_way_to_send_trash_or_delete():
+    # Stage 12: the only write is changing labels. Nothing can send, trash, delete or draft.
+    writes = {"send", "trash", "delete", "insert", "batch", "draft", "import", "spam"}
     assert not {name for name in dir(GmailClient) if any(w in name.lower() for w in writes)}
+
+
+def test_connecting_is_read_only_and_acting_is_asked_for_separately():
+    from oscar.gmail import ACT_SCOPE
+    assert parse_qs(urlparse(auth_url("s", act=True)).query)["scope"][0].split() == [ACT_SCOPE]
+
+
+@pytest.mark.parametrize("label", ["Label_9", "SPAM", "TRASH", "SENT", "DRAFT", "IMPORTANT", "STARRED"])
+def test_only_unread_inbox_and_oscars_own_labels_can_change(tmp_path, label):
+    from oscar.gmail import GmailError
+    fake = FakeGmail(INBOX)
+    client = GmailClient(connected(tmp_path), fake.http())
+    with pytest.raises(GmailError, match="isn't allowed"):
+        client.modify_labels("m1", add=[label], remove=[])
+    with pytest.raises(GmailError, match="isn't allowed"):
+        client.modify_labels("m1", add=[], remove=[label])
+    assert not [r for r in fake.gmail_requests() if r.method == "POST"], "refused before Gmail was asked"
+
+
+def test_oscar_makes_his_own_labels_and_can_use_them(tmp_path):
+    fake = FakeGmail(INBOX)
+    client = GmailClient(connected(tmp_path), fake.http())
+    receipts = client.label_id("Receipts")
+    assert receipts == client.label_id("Receipts"), "made once"
+    client.modify_labels("m1", add=[receipts], remove=["UNREAD"])
+    assert fake.messages["m1"]["labelIds"] == ["INBOX", receipts]
+    assert any(l["name"] == "Oscar/Receipts" for l in fake.labels)
 
 
 def test_parses_a_message():

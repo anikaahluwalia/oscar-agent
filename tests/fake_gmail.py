@@ -38,6 +38,7 @@ class FakeGmail:
         self.messages = {m["id"]: m for m in messages}
         self.sent_to = set(sent_to)
         self.requests: list[httpx.Request] = []
+        self.labels = [{"id": "Label_9", "name": "Work"}]  # the user's own label, which Oscar must never touch
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
@@ -47,6 +48,18 @@ class FakeGmail:
         path = request.url.path.removeprefix("/gmail/v1/users/me")
         if path == "/profile":
             return httpx.Response(200, json={"emailAddress": "me@example.com"})
+        if path == "/labels" and request.method == "GET":
+            return httpx.Response(200, json={"labels": self.labels})
+        if path == "/labels" and request.method == "POST":
+            made = {"id": f"Label_{len(self.labels) + 100}", "name": json_body(request)["name"]}
+            self.labels.append(made)
+            return httpx.Response(200, json=made)
+        if path.endswith("/modify") and request.method == "POST":
+            m = self.messages[path.split("/")[2]]
+            body = json_body(request)
+            m["labelIds"] = [l for l in m["labelIds"] if l not in body["removeLabelIds"]] + [
+                l for l in body["addLabelIds"] if l not in m["labelIds"]]
+            return httpx.Response(200, json={"id": m["id"], "labelIds": m["labelIds"]})
         if path == "/messages":
             q = request.url.params.get("q")
             if q:
