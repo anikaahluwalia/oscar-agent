@@ -28,6 +28,8 @@ from oscar.review import answer_for, grade_answer
 
 WINDOW = 20  # how many graded decisions "recent" and "earlier" each look at
 MIN_GRADED = 5  # fewer answers than this say too little for a percentage
+DAYS = 14  # up to two weeks of email is shown per day, longer per week
+WEEKS = 26  # the trend goes back at most this many points
 WRONG_ACTION = "OTHER"  # a decline: whatever the right action was, it wasn't this one
 
 
@@ -108,7 +110,7 @@ def _trend(history: History) -> dict:
     if not first:
         return {"unit": None, "points": []}
     span = first[-1].created_at - first[0].created_at
-    unit = "day" if span <= timedelta(days=21) else "week"
+    unit = "day" if span <= timedelta(days=DAYS) else "week"
 
     def bucket(t: datetime) -> str:
         day = t.date()
@@ -127,7 +129,7 @@ def _trend(history: History) -> dict:
                "action": e.action.value, "level": e.desired_level.value if e.desired_level else None}
               for e in sorted(history.feedback, key=lambda e: e.created_at)
               if e.scope == "kind" and e.kind in (FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.FORGET)]
-    return {"unit": unit, "points": points[-12:], "rules": taught}
+    return {"unit": unit, "points": points[-WEEKS:], "rules": taught}
 
 
 def _learned_most(history: History) -> list[dict]:

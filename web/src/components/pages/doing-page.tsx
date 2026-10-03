@@ -1,31 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AskRate } from "@/components/doing/ask-rate";
 import { DifferenceTable } from "@/components/doing/difference-table";
 import { Disclosure } from "@/components/doing/disclosure";
 import { Headline } from "@/components/doing/headline";
 import { HowToRun } from "@/components/doing/how-to-run";
-import { Impact } from "@/components/doing/impact";
 import { RealInboxResults } from "@/components/doing/real-results";
 import { leadRun } from "@/components/doing/runs";
 import { Tests } from "@/components/doing/tests";
-import { YourEmail } from "@/components/doing/your-email";
 import { MoodHeader } from "@/components/kit/mood-header";
 import { Panel } from "@/components/kit/panel";
 import { Loading, Page } from "@/components/page";
+import { LearnedMost, MatchHeadline, NeedYouTrend, ProblemCards, useProgress } from "@/components/progress/overview";
 import { getEvalRuns, type EvalRun } from "@/lib/api";
-import { isReadOnly, useOscar } from "@/lib/use-oscar";
-
-/** The time now, updated every minute, so "last 24 hours" stays right. */
-function useNow() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(t);
-  }, []);
-  return now;
-}
+import { useOscar } from "@/lib/use-oscar";
 
 /**
  * How Oscar is doing: tested on emails he never saw (saved runs under evals/results), and checked
@@ -35,7 +23,7 @@ export function DoingPage() {
   const { data, error } = useOscar();
   const [runs, setRuns] = useState<EvalRun[] | null>(null);
   const [problem, setProblem] = useState(false);
-  const now = useNow();
+  const { progress, failed } = useProgress();
 
   useEffect(() => {
     getEvalRuns().then(setRuns, () => setProblem(true));
@@ -45,28 +33,32 @@ export function DoingPage() {
   // Proud only when the latest test acted on no risky email.
   const proud = lead ? (lead.held.metrics.critical_violations ?? 0) === 0 : false;
 
-  const graded = data?.reviews.graded;
-  const real = data?.gmail.connected && graded && "passed" in graded && graded.n > 0 ? graded : null;
-  // On your email: proud once most of my calls are right and none went too far; until then, learning.
-  const pose = real
-    ? real.passed / real.n >= 0.8 && real.acted_when_you_would_stop === 0 ? "proud" : "learning"
+  // Proud once most of my recent calls matched and none went too far; until then, learning.
+  const recent = progress?.recent;
+  const pose = recent
+    ? (recent.match_rate ?? 0) >= 0.8 && recent.unsafe === 0 ? "proud" : "learning"
     : proud ? "proud" : "thinking";
 
   return (
     <Page className="sm:pt-12">
-      <div className="mx-auto flex w-full max-w-[760px] flex-col gap-9">
-        <MoodHeader pose={pose} title="My progress" text="How I'm doing on your Gmail, from the calls you've checked." />
+      <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-9">
+        <MoodHeader pose={pose} title="My progress" text="How my calls match what you want, from the ones you've told me about." />
 
-        {!data ? (
+        {!data || (!progress && !failed) ? (
           <Loading error={error} />
         ) : (
           <>
-            <YourEmail reviews={data.reviews} items={data.items} connected={data.gmail.connected} />
-            {data.items.length > 0 && (
-              <div className="grid items-start gap-4 sm:grid-cols-2">
-                <AskRate items={data.items} readOnly={isReadOnly(data)} />
-                <Impact items={data.items} readOnly={isReadOnly(data)} now={now} />
-              </div>
+            {failed || !progress ? (
+              <p className="text-sm text-muted-foreground">I can&apos;t reach my API, so I can&apos;t show my progress right now.</p>
+            ) : (
+              <>
+                <MatchHeadline progress={progress} />
+                <ProblemCards progress={progress} />
+                <div className="grid items-start gap-4 lg:grid-cols-2">
+                  <NeedYouTrend progress={progress} />
+                  <LearnedMost progress={progress} />
+                </div>
+              </>
             )}
             {data.reviews.reviewed > 0 && (
               <Disclosure label="How you graded me" className="-mt-3">

@@ -373,6 +373,36 @@ export interface PermissionRow {
 export const getPermissions = () => call<PermissionRow[]>("/permissions");
 export const getPatterns = () => call<PatternRow[]>("/patterns");
 
+/** One stretch of the decisions you answered (oscar/progress.py _window). */
+export interface ProgressWindow {
+  n: number;
+  from: string | null;
+  to: string | null;
+  matched: number;
+  match_rate: number | null;
+  unsafe: number;
+  unnecessary_asks: number;
+  asked: number;
+  too_permissive: number;
+  acted: number;
+}
+
+/** How well Oscar's calls matched what you said, from your own answers only (GET /progress). */
+export interface Progress {
+  graded: number;
+  enough: boolean;
+  recent: ProgressWindow | null;
+  earlier: ProgressWindow | null; // only when recent and earlier don't overlap
+  all: ProgressWindow;
+  trend: {
+    unit: "day" | "week" | null;
+    points: { start: string; n: number; ask_rate: number; stopped_rate: number; handled_rate: number }[];
+    rules?: { at: string; kind: FeedbackKind; family: string | null; action: Action; level: Level | null }[];
+  };
+  learned_most: { kind: string; action: Action; earlier: Level; now: Level; emails: number; since: string; latest: string }[];
+}
+export const getProgress = () => call<Progress>("/progress");
+
 /** Every kind of email you can say one is (oscar/classification.py EMAIL_TYPES). */
 export const getEmailTypes = () => call<{ type: string; risky: boolean }[]>("/email-types");
 export const sendClassification = (decisionId: string, emailType: string) =>
