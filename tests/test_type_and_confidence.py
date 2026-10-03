@@ -28,7 +28,7 @@ def test_confidence_follows_what_decided_the_level():
 def test_learned_confidence_grows_with_evidence():
     assert confidence_for("learned", 0) < confidence_for("learned", 5) < confidence_for("learned", 10) == confidence_for("learned", 50)
     first = decide(email("View in browser | Unsubscribe", sender="n@x.example"))
-    events = [FeedbackEvent(decision_id=first.id, kind=FeedbackKind.APPROVE, action=Action.ARCHIVE,
+    events = [FeedbackEvent(decision_id=first.id, kind=FeedbackKind.REVIEW, action=Action.ARCHIVE, desired_level=AutonomyLevel.PROCEED_SILENTLY,
                             autonomy_level=AutonomyLevel.ASK_FIRST, sender="n@x.example") for _ in range(4)]
     learned = decide(email("View in browser | Unsubscribe", sender="n@x.example"), Preferences.from_feedback(events))
     assert learned.level_source == "learned" and learned.confidence == confidence_for("learned", 4)

@@ -3,10 +3,15 @@
 Only your feedback counts: the buttons in the app, your Review answers, and rules you
 confirm in the chat. Email text never becomes feedback.
 
-Each piece of feedback is evidence for one of the four levels (see feedback.normalize):
-an okay says doing it on his own was fine, a no or an undo says he should have asked,
-and a Review answer says the level outright. For each scope Oscar keeps a count per
-level, starting at 1 each (a Dirichlet prior), so
+Two things are learned, and kept apart:
+
+- Which action you want (archive, mark as read, label). Approve and "Right" say the action
+  was right, Decline says it wasn't. That never changes how much he asks.
+- How much he should do on his own. Only an answer that says so counts: Just handle them,
+  Handle and tell me, Keep asking, a Review answer that picks a level, and a no or an undo
+  (he'd have been wrong to do it alone). Each is evidence for one of the four levels (see
+  feedback.normalize). For each scope Oscar keeps a count per level, starting at 1 each (a
+  Dirichlet prior), so
 
     desired level = the level with the most evidence
     confidence    = its share of all the counts
@@ -15,18 +20,23 @@ Scopes, most specific first. The most specific one with something to say wins:
 
     sender + kind of email + action
     sender + action                  (any email from them)
-    domain + kind of email + action  (needs 2 senders at that domain)
-    kind of email + action           (needs 3 senders)
+    domain + kind of email + action  (2 senders at that domain; never past "tell me")
+    kind of email + action           (3 senders; can reach "quietly")
 
-He only does more on his own with at least MIN_EVIDENCE answers and MIN_CONFIDENCE
-confidence: 4 okays to do it and tell you, 8 to do it quietly. The broad scopes (domain,
-kind) never go past "do it and tell you", and only for actions that are easy to undo, so
-what you taught him about some senders never makes a new one quiet.
+For one sender: "for emails like this" choices and "always do this" / "always ask me" are
+rules from you, used straight away, and the newer one wins. Other evidence needs at least
+MIN_EVIDENCE answers and MIN_CONFIDENCE confidence.
 
-Making him more careful needs less: one no or undo stops quiet, two undos go back to asking.
-"Always ask me" and "always do this" are rules from you, not evidence, and the newer one
-wins. This only suggests a level: the safety floor and the email checks run after it, so
-learning can't make a risky action less safe.
+Across senders (domain, kind), only for actions that are easy to undo: the explicit
+evidence from every sender adds up, with no sender having to earn it alone first. A kind of
+email needs 6 answers from at least 3 different senders: then "do it and tell you" when 75%
+say he can act, and "quietly" when 80% say quietly and none of the last few said no. You can
+also set a rule for every email of a kind ("always do this for emails like this"), used
+straight away. What you said about one sender always beats what's true across senders, and a
+no or an undo from a sender limits what the kind can give them.
+
+This only suggests a level: the safety floor, the email checks and the caution backstop run
+after it, so learning can't make a risky action or a risky email less safe.
 """
 
 from collections import Counter
@@ -34,7 +44,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import NamedTuple
 
-from oscar.feedback import FeedbackEvent, FeedbackKind, Learned, normalize
+from oscar.feedback import CHOICES, FeedbackEvent, FeedbackKind, Learned, action_verdict, normalize
 from oscar.models import Action, AutonomyLevel
 from oscar.policy import autonomy_for
 from oscar.safety import is_stricter
@@ -54,24 +64,30 @@ class Policy:
     different thresholds can be compared, and recorded with every eval run."""
 
     name: str
-    min_evidence: float = 3  # answers before learning can give him more autonomy
+    min_evidence: float = 3  # answers about one sender before learning can give him more autonomy
     min_confidence: float = 0.75
     ask_at_or_below: float = 0.25  # after a no or an undo: back to asking when okays are this share or less
-    broad: bool = True  # learn across senders (domain, then kind of email), never past notify
-    domain_senders: int = 2  # senders at a domain before the domain counts
-    kind_senders: int = 3  # senders of a kind of email before the kind counts
+    broad: bool = True  # learn across senders (domain, then kind of email)
+    broad_min_evidence: float = 6  # answers across senders before a domain or kind counts
+    domain_senders: int = 2  # different senders at a domain before the domain counts
+    kind_senders: int = 3  # different senders of a kind of email before the kind counts
+    quiet_confidence: float = 0.80  # share saying "quietly" before a kind of email is handled quietly
+    recent: int = 5  # a no among the last this-many answers for a kind keeps it from going quiet
 
     def describe(self) -> dict:
         return {"name": self.name, "min_evidence": self.min_evidence, "min_confidence": self.min_confidence,
-                "ask_at_or_below": self.ask_at_or_below, "broad": self.broad, "domain_senders": self.domain_senders, "kind_senders": self.kind_senders}
+                "ask_at_or_below": self.ask_at_or_below, "broad": self.broad,
+                "broad_min_evidence": self.broad_min_evidence, "domain_senders": self.domain_senders,
+                "kind_senders": self.kind_senders, "quiet_confidence": self.quiet_confidence, "recent": self.recent}
 
 
-DEFAULT_POLICY = Policy("default-p2")
+DEFAULT_POLICY = Policy("default-p3")
 POLICIES: dict[str, Policy] = {
     p.name: p for p in (
         DEFAULT_POLICY,
-        Policy("careful-p2", min_evidence=5, min_confidence=0.85, ask_at_or_below=0.35, domain_senders=3, kind_senders=5),
-        Policy("per-sender-p2", broad=False),  # learning one sender at a time only, for comparison
+        Policy("careful-p3", min_evidence=5, min_confidence=0.85, ask_at_or_below=0.35, broad_min_evidence=10,
+               domain_senders=3, kind_senders=5, quiet_confidence=0.9),
+        Policy("per-sender-p3", broad=False),  # learning one sender at a time only, for comparison
     )
 }
 
@@ -115,12 +131,19 @@ class Record:
     scope: tuple  # ("sender", sender, kind, action), ("sender", sender, action), ("domain", ...), ("kind", ...)
     counts: dict[AutonomyLevel, float] = field(default_factory=lambda: {lvl: PRIOR for lvl in (S, N, A, E)})
     kinds: Counter = field(default_factory=Counter)  # how many of each feedback kind
-    senders: set[str] = field(default_factory=set)  # who the evidence is about
+    senders: set[str] = field(default_factory=set)  # who the evidence about the level is from
+    votes: list[AutonomyLevel] = field(default_factory=list)  # the levels you said, oldest first
+    approved: float = 0  # the action was right (Approve, Right)
+    declined: float = 0  # the action was wrong (Decline, or a Review answer with another action)
     always_ask: bool = False
-    always_do: bool = False
+    told: AutonomyLevel | None = None  # a level you set as a rule (quietly, or with a heads up)
     created_at: datetime | None = None
     updated_at: datetime | None = None
     provenance: str = "USER_FEEDBACK"
+
+    @property
+    def always_do(self) -> bool:
+        return self.told is not None
 
     @property
     def evidence(self) -> float:
@@ -133,6 +156,9 @@ class Record:
     @property
     def confidence(self) -> float:
         return self.counts[self.desired] / sum(self.counts.values())
+
+    def share(self, level: AutonomyLevel) -> float:
+        return self.counts[level] / sum(self.counts.values())
 
     @property
     def acting_share(self) -> float:
@@ -147,27 +173,35 @@ class Record:
     def negative(self) -> float:
         return self.counts[A] + self.counts[E] - 2 * PRIOR
 
-    def add(self, event: FeedbackEvent, sender: str) -> None:
+    def said_no_lately(self, last: int) -> bool:
+        return any(level in (A, E) for level in self.votes[-last:])
+
+    def touch(self, event: FeedbackEvent) -> None:
         self.created_at = self.created_at or event.created_at
         self.updated_at = event.created_at
-        self.senders.add(sender)
         self.kinds[event.kind] += 1
+
+    def add(self, event: FeedbackEvent, sender: str) -> None:
+        self.touch(event)
+        verdict = action_verdict(event)
+        self.approved += verdict == "CORRECT"
+        self.declined += verdict == "INCORRECT"
         if event.kind in (FeedbackKind.REJECT, FeedbackKind.UNDO):
-            self.always_do = False  # a newer no outranks an older "always do this"
+            self.told = None  # a newer no outranks an older "always do this"
         level = EVIDENCE_FOR.get(normalize(event))
-        if event.kind == FeedbackKind.REVIEW and normalize(event) == Learned.CORRECT and event.desired_level:
-            level = event.desired_level  # "Right": the level he used was the one you wanted
         if level:
             self.counts[level] += WEIGHT.get(event.kind, 1.0)
+            self.votes.append(level)
+            self.senders.add(sender)
 
     def reason(self) -> str:
-        okays = self.kinds[FeedbackKind.APPROVE] + self.kinds[FeedbackKind.EDIT_THEN_SEND]
-        if self.kinds[FeedbackKind.REVIEW] and not okays:
-            n = self.kinds[FeedbackKind.REVIEW]
-            return f"you told me so in {n} review{'s' if n != 1 else ''}"
-        if self.always_do and not okays:
-            return "you told me you're fine with this"
-        return f"you've okayed this {okays} times"
+        said = self.kinds[FeedbackKind.REVIEW] + sum(self.kinds[k] for k in CHOICES)
+        if self.told == S:
+            return "you told me to just handle these"
+        if self.told == N:
+            return ("you told me you're fine with this" if self.kinds[FeedbackKind.ALWAYS_DO_THIS]
+                    and not any(self.kinds[k] for k in CHOICES) else "you told me to handle these and tell you")
+        return f"you told me so {said} time{'s' if said != 1 else ''}"
 
     def careful_reason(self) -> str:
         undos = self.kinds[FeedbackKind.UNDO]
@@ -175,6 +209,8 @@ class Record:
             return "you undid this last time"
         if undos > 1:
             return f"you undid this {undos} times"
+        if self.kinds[FeedbackKind.KEEP_ASKING]:
+            return "you asked me to keep checking with you on these"
         return "you said no to this before"
 
 
@@ -195,11 +231,15 @@ class Preferences:
 
     @classmethod
     def from_feedback(cls, events: list[FeedbackEvent], policy: Policy = DEFAULT_POLICY) -> "Preferences":
-        # Forget drops everything learned before it for that sender and action.
+        # Forget drops everything learned before it for that sender and action, or (for a rule about
+        # a kind of email) that rule.
         kept: list[FeedbackEvent] = []
         for event in events:
-            if event.kind == FeedbackKind.FORGET:
-                kept = [e for e in kept if not (e.sender == event.sender and e.action == event.action)]
+            if event.kind == FeedbackKind.FORGET and event.scope == "kind":
+                kind = family(event.email_type)
+                kept = [e for e in kept if not (e.scope == "kind" and e.action == event.action and family(e.email_type) == kind)]
+            elif event.kind == FeedbackKind.FORGET:
+                kept = [e for e in kept if not (e.sender == event.sender and e.action == event.action and e.scope == "sender")]
             else:
                 kept.append(event)
         preferences = cls(policy)
@@ -218,24 +258,47 @@ class Preferences:
         if normalize(event) == Learned.SKIP:
             return
         kind = family(event.email_type)
-        mine = [("sender", event.sender, event.action)] + ([("sender", event.sender, kind, event.action)] if kind else [])
+        broad_ok = bool(kind) and event.action in HABIT_ACTIONS
+
         if event.kind in (FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.ALWAYS_DO_THIS):
-            for scope in mine:  # a rule from you, about this sender: the newer one wins
-                record = self._record(scope)
-                record.always_ask = event.kind == FeedbackKind.ALWAYS_ASK_ME
-                record.always_do = event.kind == FeedbackKind.ALWAYS_DO_THIS
-                record.kinds[event.kind] += 1
-                record.created_at = record.created_at or event.created_at
-                record.updated_at = event.created_at
+            if event.scope == "kind":
+                if broad_ok:  # a rule from you about every email of this kind: the newer one wins
+                    self._rule(("kind", kind, event.action), event)
+                return
+            for scope in self._mine(event, kind):  # a rule from you about this sender
+                self._rule(scope, event)
             return
-        scopes = list(mine)
-        domain = domain_of(event.sender)
-        if kind and event.action in HABIT_ACTIONS:
-            scopes.append(("kind", kind, event.action))
+
+        scopes = self._mine(event, kind)
+        if event.kind in CHOICES:
+            # "For emails like this": a rule for this sender straight away, and one answer
+            # towards what's true across senders.
+            for scope in scopes:
+                self._rule(scope, event)
+        if broad_ok:
+            scopes = scopes + [("kind", kind, event.action)]
+            domain = domain_of(event.sender)
             if domain:
                 scopes.append(("domain", domain, kind, event.action))
         for scope in scopes:
             self._record(scope).add(event, event.sender)
+
+    @staticmethod
+    def _mine(event: FeedbackEvent, kind: str | None) -> list[tuple]:
+        return [("sender", event.sender, event.action)] + ([("sender", event.sender, kind, event.action)] if kind else [])
+
+    def _rule(self, scope: tuple, event: FeedbackEvent) -> None:
+        record = self._record(scope)
+        asks = event.kind in (FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.KEEP_ASKING)
+        record.always_ask = asks
+        if asks:
+            record.told = None
+        elif event.kind in CHOICES:
+            record.told = CHOICES[event.kind]
+        else:  # always do this: with a heads up for a sender; for a kind, the level you picked
+            record.told = event.desired_level or N
+        if scope[0] != "sender" or event.kind not in CHOICES:
+            record.touch(event)
 
     # --- what he'd do --------------------------------------------------------------
 
@@ -243,58 +306,61 @@ class Preferences:
         """What one scope says, or None if it has nothing to say."""
         scope = record.scope[0]
         info = (scope, round(record.evidence, 2), round(record.confidence, 3))
-        if record.always_ask and not broad:
+        if record.always_ask:
+            if broad:
+                return Suggestion(A, "you asked me to check with you on emails like this", *info) if is_stricter(A, level) else None
             return None if level == E else Suggestion(A, "you asked me to always check with you on these", *info)
-        p = self.policy
+        if record.told:
+            told = N if (action in CEILINGS or (broad and scope == "domain")) and record.told == S else record.told
+            reason = record.reason() if not broad else "you told me to handle emails like this"
+            return Suggestion(told, reason, scope, round(record.evidence, 2), 1.0)
+        return self._broad_evidence(record, action, level) if broad else self._sender_evidence(record, action, level)
+
+    def _sender_evidence(self, record: Record, action: Action, level: AutonomyLevel) -> Suggestion | None:
+        p, scope = self.policy, record.scope[0]
+        info = (scope, round(record.evidence, 2), round(record.confidence, 3))
         enough = record.evidence >= p.min_evidence
         desired = record.desired if enough and record.confidence >= p.min_confidence else None
         if desired is None and enough and record.acting_share >= p.min_confidence:
             desired = N  # sure you're fine with him doing it, not yet that you don't want to hear
             info = (scope, info[1], round(record.acting_share, 3))  # and that's how sure he is
         if desired in (S, N):
-            if broad or action in CEILINGS:
-                desired = N
-            reason = record.reason() if not broad else self._broad_reason(record)
-            return Suggestion(desired, reason, *info)
-        if record.always_do and not broad:
-            return Suggestion(N, "you told me you're fine with this", *info)
+            return Suggestion(N if action in CEILINGS else desired, record.reason(), *info)
         if desired in (A, E):
             return Suggestion(desired, record.careful_reason(), *info) if is_stricter(desired, level) else None
-        if record.negative > 0 and not broad:
-            # A no or an undo he hasn't earned back: never quietly, and back to asking once
-            # okays are a small share (two undos do it).
-            careful = A if record.acting_share <= p.ask_at_or_below else N
-            if is_stricter(careful, level):
-                return Suggestion(careful, record.careful_reason(), *info)
-        return None
+        return self._careful(record, level)
 
-    def _broad_reason(self, record: Record) -> str:
-        n = len(record.senders)
-        if record.scope[0] == "domain":
-            return f"you've okayed this for {n} senders at {record.scope[1]}"
-        return f"you've okayed this for emails like it from {n} senders"
-
-    def _trusted(self, sender: str, action: Action) -> bool | None:
-        """Whether you've taught Oscar this action for this sender on its own: True (earned), False
-        (you turned it down), None (not enough to say)."""
-        record = self.records.get(("sender", sender, action))
-        if record is None:
+    def _careful(self, record: Record, level: AutonomyLevel) -> Suggestion | None:
+        """A no or an undo he hasn't earned back: never quietly, and back to asking once okays
+        are a small share (two undos do it)."""
+        if record.negative <= 0:
             return None
-        if record.always_ask or (record.negative > 0 and record.acting_share <= 0.5):
-            return False
-        if record.evidence >= self.policy.min_evidence and record.acting_share >= self.policy.min_confidence:
-            return True
+        careful = A if record.acting_share <= self.policy.ask_at_or_below else N
+        if is_stricter(careful, level):
+            return Suggestion(careful, record.careful_reason(), record.scope[0], round(record.evidence, 2),
+                              round(record.acting_share, 3))
         return None
 
-    def _broad_ok(self, record: Record) -> bool:
-        """A domain or a kind of email only counts once enough senders have each earned it on their
-        own, and they outnumber the senders where you turned it down. One okay each from many
-        senders isn't enough: a habit for some senders never makes a new one quiet, or even busy."""
-        need = self.policy.domain_senders if record.scope[0] == "domain" else self.policy.kind_senders
-        action = record.scope[-1]
-        verdicts = [self._trusted(s, action) for s in record.senders]
-        trusted, refused = verdicts.count(True), verdicts.count(False)
-        return trusted >= need and trusted > refused
+    def _broad_evidence(self, record: Record, action: Action, level: AutonomyLevel) -> Suggestion | None:
+        """What many senders' answers say together. Every sender's answers count, but only once
+        enough different senders have answered."""
+        p, scope = self.policy, record.scope[0]
+        need = p.domain_senders if scope == "domain" else p.kind_senders
+        if record.evidence < p.broad_min_evidence or len(record.senders) < need:
+            return None
+        n = len(record.senders)
+        reason = (f"you told me so for {n} senders at {record.scope[1]}" if scope == "domain"
+                  else f"you told me so for emails like it from {n} senders")
+        quiet_ok = (scope == "kind" and action not in CEILINGS and record.share(S) >= p.quiet_confidence
+                    and not record.said_no_lately(p.recent))
+        if quiet_ok:
+            return Suggestion(S, reason, scope, round(record.evidence, 2), round(record.share(S), 3))
+        if record.acting_share >= p.min_confidence:
+            return Suggestion(N, reason, scope, round(record.evidence, 2), round(record.acting_share, 3))
+        if record.desired in (A, E) and record.confidence >= p.min_confidence and is_stricter(record.desired, level):
+            return Suggestion(record.desired, "you've said to check with you on emails like this",
+                              scope, round(record.evidence, 2), round(record.confidence, 3))
+        return None
 
     def suggest(self, action: Action, level: AutonomyLevel, sender: str, email_type: str | None = None,
                 broad: bool = True) -> Suggestion | None:
@@ -309,26 +375,47 @@ class Preferences:
                 return found
         if not (broad and self.policy.broad and kind and action in HABIT_ACTIONS):
             return None
-        if any(self.records.get(s) and self.records[s].always_ask for s in specific):
-            return None
+        mine = [self.records[s] for s in specific if s in self.records]
+        if any(r.always_ask for r in mine):
+            return None  # what you said about this sender beats what's true across senders
         domain = domain_of(sender)
         for scope in ([("domain", domain, kind, action)] if domain else []) + [("kind", kind, action)]:
             record = self.records.get(scope)
-            if record and self._broad_ok(record):
-                found = self._judge(record, action, level, broad=True)
-                if found:
-                    return found
+            found = self._judge(record, action, level, broad=True) if record else None
+            if found:
+                return self._capped(found, mine)
         return None
 
+    def _capped(self, found: Suggestion, mine: list[Record]) -> Suggestion:
+        """A no or an undo from this sender limits what emails like it can give them: back to
+        asking while the no's outweigh the yeses, and never quietly until they're earned back."""
+        for record in mine:
+            if record.negative > 0:
+                careful = A if record.negative >= record.positive else N
+                if is_stricter(careful, found.level):
+                    return Suggestion(careful, record.careful_reason(), "sender", round(record.evidence, 2),
+                                      round(record.acting_share, 3))
+        return found
+
     def habit(self, sender: str, email_type: str | None = None) -> Action | None:
-        """The easy-to-undo action you've clearly taught Oscar for this sender's email (or, with a
-        kind of email, for emails like it from senders like it), if there is one. "Clearly" means
-        it would be trusted at least to do and tell you. The one with the most evidence wins."""
+        """The easy-to-undo action you've clearly shown you want for this sender's email (or, with a
+        kind of email, for emails like it), if there is one: approved at least twice and never
+        turned down, or one you told him to handle. The one with the most behind it wins."""
+        kind = family(email_type)
         best: tuple[Action, float] | None = None
         for action in HABIT_ACTIONS:
+            weight = 0.0
+            for scope in ([("sender", sender, kind, action)] if kind else []) + [("sender", sender, action)]:
+                record = self.records.get(scope)
+                if record is None or record.always_ask or record.declined:
+                    continue
+                if record.told or record.approved >= 2:
+                    weight = max(weight, record.approved + (10 if record.told else 0))
             found = self.suggest(action, A, sender, email_type)
-            if found and found.level in (S, N) and (best is None or found.evidence > best[1]):
-                best = (action, found.evidence)
+            if found and found.level in (S, N):
+                weight = max(weight, found.evidence + (10 if found.confidence == 1.0 else 0))
+            if weight and (best is None or weight > best[1]):
+                best = (action, weight)
         return best[0] if best else None
 
     def has(self, sender: str, action: Action) -> bool:
@@ -349,10 +436,12 @@ class Preferences:
             rows.append({
                 "sender": sender,
                 "action": action,
-                "yes": record.positive,
-                "no": record.negative,
+                "yes": record.approved + record.positive,
+                "no": record.declined + record.negative,
+                "approved": record.approved,
                 "mean": round(record.acting_share, 2),
                 "always_ask": record.always_ask,
+                "told": record.told,
                 "level": suggestion.level if suggestion else None,
                 "reason": suggestion.reason if suggestion else "not enough feedback yet",
                 "evidence": record.evidence,
@@ -364,12 +453,17 @@ class Preferences:
         return rows
 
     def broad_summary(self) -> list[dict]:
-        """What carries across senders: per domain and per kind of email, once enough senders back it."""
+        """What carries across senders: per domain and per kind of email, and your rules for kinds."""
         rows = []
         for scope, record in self.records.items():
-            if scope[0] not in ("domain", "kind") or not self._broad_ok(record):
+            if scope[0] not in ("domain", "kind"):
+                continue
+            found = self._judge(record, scope[-1], autonomy_for(scope[-1])[0], broad=True)
+            if not found and not record.always_ask:
                 continue
             rows.append({"scope": scope[0], "name": scope[1], "kind": scope[-2], "action": scope[-1],
                          "senders": len(record.senders), "evidence": record.evidence,
-                         "confidence": round(record.confidence, 3), "desired": record.desired})
+                         "confidence": round(record.confidence, 3), "desired": record.desired,
+                         "rule": "ask" if record.always_ask else record.told,
+                         "level": found.level if found else A, "reason": found.reason if found else ""})
         return rows

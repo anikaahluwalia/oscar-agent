@@ -52,8 +52,9 @@ def test_trend_shows_when_oscar_asks_less():
         d = add(history, NEWSLETTER, f"n{i}")
         if d.autonomy_level == AutonomyLevel.ASK_FIRST:
             record_feedback(history, d.id, FeedbackKind.APPROVE)
+            record_feedback(history, d.id, FeedbackKind.JUST_HANDLE_IT)
     b = brief(history)
-    # First 12: asked 3 times. Last 12: no asks.
+    # First 12: asked once, then you said to just handle these. Last 12: no asks.
     assert b["trend"] == "I haven't needed to ask you anything lately!"
     assert b["learned"] == "I've picked up one of your habits so far!"
 
@@ -88,8 +89,11 @@ def test_autonomy_follows_learning():
     for i in range(4):
         record_feedback(history, add(history, NEWSLETTER, f"n{i}").id, FeedbackKind.APPROVE)
     [row] = autonomy(history)
+    assert row["level"] == AutonomyLevel.ASK_FIRST, "okays say the action was right, not to stop asking"
+    record_feedback(history, add(history, NEWSLETTER, "n9").id, FeedbackKind.HANDLE_AND_TELL_ME)
+    [row] = autonomy(history)
     assert row["level"] == AutonomyLevel.PROCEED_AND_NOTIFY
-    assert row["reason"] == "you've okayed this 4 times"
+    assert row["reason"] == "you told me to handle these and tell you"
 
 
 def test_safety_checked_emails_are_left_out():

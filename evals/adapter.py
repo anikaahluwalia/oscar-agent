@@ -54,10 +54,11 @@ class ScenarioEmail(BaseModel):
 
 
 class Taught(BaseModel):
-    """Feedback the user already gave before this email arrived."""
+    """Feedback the user already gave before this email arrived. By default, that they told Oscar
+    to just handle emails like this: approving alone only says the action was right."""
 
     action: Action
-    feedback: FeedbackKind = FeedbackKind.APPROVE
+    feedback: FeedbackKind = FeedbackKind.JUST_HANDLE_IT
     times: int = 1
     email_type: str = "unknown"
     sender: str | None = None  # defaults to the scenario's sender

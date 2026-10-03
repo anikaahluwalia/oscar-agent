@@ -21,8 +21,9 @@ def email(body, sender="someone@work.example", subject="Hi", category=None) -> E
 
 
 def taught(sender, action, times=10, email_type=None) -> list[FeedbackEvent]:
+    """You saying he could have done it quietly, `times` times (approving alone wouldn't teach that)."""
     typed = {"email_type": email_type} if email_type else {}
-    return [FeedbackEvent(decision_id=f"d{i}", kind=FeedbackKind.APPROVE, action=action,
+    return [FeedbackEvent(decision_id=f"d{i}", kind=FeedbackKind.REVIEW, action=action, desired_level=AutonomyLevel.PROCEED_SILENTLY,
                           autonomy_level=AutonomyLevel.ASK_FIRST, sender=sender, **typed)
             for i in range(times)]
 
@@ -152,9 +153,10 @@ def test_kind_habits_dont_cover_mail_he_couldnt_read():
     alert = email("We noticed a problem with your account. Click below to resolve.",
                   sender="no-reply@newbank.example", subject="Action required", category="updates")
     assert decide(alert, prefs).autonomy_level == A
-    # A newsletter he recognises, from a new sender, still gets the kind habit.
+    # A newsletter he recognises, from a new sender, still gets the kind habit: quietly, since
+    # three senders' answers all said so.
     newsletter = email("Our top stories this week. View in browser.", sender="c@news3.example")
-    assert decide(newsletter, prefs).autonomy_level == N
+    assert decide(newsletter, prefs).autonomy_level == S
 
 
 def test_kind_habits_count_only_answers_about_that_kind():
@@ -164,7 +166,7 @@ def test_kind_habits_count_only_answers_about_that_kind():
         events += taught(sender, Action.ARCHIVE, 5, "fyi") + taught(sender, Action.ARCHIVE, 1, "newsletter")
     prefs = Preferences.from_feedback(events)
     assert prefs.suggest(Action.ARCHIVE, A, "new@w.example", "newsletter") is None
-    assert prefs.suggest(Action.ARCHIVE, A, "new@w.example", "fyi").level == N
+    assert prefs.suggest(Action.ARCHIVE, A, "new@w.example", "fyi").level == S
 
 
 def test_mark_as_read_setting_doesnt_skip_asking_new_senders():

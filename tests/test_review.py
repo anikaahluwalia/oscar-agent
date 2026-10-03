@@ -336,11 +336,16 @@ def test_a_missed_risk_only_makes_him_stricter():
     assert not any(e.kind == FK.ALWAYS_DO_THIS for e in lessons(history))
 
 
-def test_a_yes_approves_what_he_did():
+def test_a_yes_says_the_action_was_right_and_nothing_about_asking():
+    # "Right" on something he asked about means "yes, archive it", not "keep asking me".
     history = History()
     d = promo_decision(history, "e1")
+    assert d.autonomy_level == A
     record_review(history, Review(decision_id=d.id, label=ReviewLabel.CORRECT, reviewed_at=d.created_at + timedelta(seconds=1)))
-    assert [(e.kind, e.action, e.desired_level) for e in lessons(history)] == [(FK.REVIEW, d.action, d.autonomy_level)]
+    assert [(e.kind, e.action, e.desired_level, e.action_feedback) for e in lessons(history)] == [
+        (FK.REVIEW, d.action, None, "CORRECT")]
+    prefs = Preferences.from_feedback(lessons(history))
+    assert all(r.evidence == 0 for r in prefs.records.values()), "no vote for any level"
 
 
 def test_old_half_answers_teach_nothing():

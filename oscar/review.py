@@ -331,27 +331,31 @@ def summary(history: History) -> dict:
 
 
 def _lesson(decision: Decision, review: Review, right: Answer) -> list[FeedbackEvent]:
-    """What one full answer teaches, as evidence for the level you said (FeedbackKind.REVIEW).
+    """What one full answer teaches (FeedbackKind.REVIEW).
 
-    Right: one more answer for the level he used. Should have been quietly or with a heads up,
-    with an action: one answer for that level and action. Acting when you'd have done something
-    else: one answer that he should have asked about what he did. One answer is never enough on
-    its own (preferences.MIN_EVIDENCE). A missed risk: always ask about it, which can only make
-    him stricter, so it's a rule straight away.
+    Right: the action was right, and nothing more. It isn't a vote for the level he used: "Right"
+    on something he asked about means "yes, archive it", not "keep asking me". How much he should
+    ask is said with Just handle them / Handle and tell me / Keep asking, or a Review answer that
+    picks a level. Should have been quietly or with a heads up, with an action: one answer for
+    that level and action. Acting when you'd have done something else: one answer that he should
+    have asked about what he did. One answer is never enough on its own (preferences.MIN_EVIDENCE).
+    A missed risk: always ask about it, which can only make him stricter, so it's a rule straight away.
     """
-    def event(kind: FeedbackKind, action: Action, desired: AutonomyLevel | None = None) -> FeedbackEvent:
+    def event(kind: FeedbackKind, action: Action, desired: AutonomyLevel | None = None,
+              verdict: str | None = None) -> FeedbackEvent:
         return FeedbackEvent(decision_id=decision.id, kind=kind, action=action, autonomy_level=decision.autonomy_level,
                              sender=decision.sender, email_type=decision.email_type, created_at=review.reviewed_at,
-                             desired_level=desired)
+                             desired_level=desired, action_feedback=verdict)
 
     error, _ = grade_answer(right, decision.autonomy_level, decision.action)
     if error == "none":
-        return [event(FeedbackKind.REVIEW, decision.action, decision.autonomy_level)] if decision.autonomy_level != E else []
+        return [event(FeedbackKind.REVIEW, decision.action, verdict="CORRECT")] if decision.autonomy_level != E else []
     out = []
     if right.level in ACTED and isinstance(right.action, Action):
-        out.append(event(FeedbackKind.REVIEW, right.action, right.level))
+        out.append(event(FeedbackKind.REVIEW, right.action, right.level, "CORRECT"))
     if decision.autonomy_level in ACTED and (right.level not in ACTED or right.action != decision.action):
-        out.append(event(FeedbackKind.REVIEW, decision.action, right.level if right.level not in ACTED else A))
+        out.append(event(FeedbackKind.REVIEW, decision.action, right.level if right.level not in ACTED else A,
+                         "INCORRECT" if right.action != decision.action else None))
     if review.why == "risk" or (right.level == E and not right.escalate_ok):
         out.append(event(FeedbackKind.ALWAYS_ASK_ME, decision.action))
     return out

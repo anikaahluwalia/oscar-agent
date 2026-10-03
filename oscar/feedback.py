@@ -7,6 +7,7 @@ risky decision is saved but marked blocked_by_floor, and Oscar says so.
 
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -28,12 +29,18 @@ class FeedbackKind(str, Enum):
     # What one of your Review answers teaches (oscar/review.py lessons). Made from your reviews
     # only, never sent to the API: desired_level says what the level should have been.
     REVIEW = "REVIEW"
+    # How much you want him to do on his own with emails like this one, said outright. Approving
+    # only says the action was right; these are the only buttons that say how much to ask.
+    JUST_HANDLE_IT = "JUST_HANDLE_IT"
+    HANDLE_AND_TELL_ME = "HANDLE_AND_TELL_ME"
+    KEEP_ASKING = "KEEP_ASKING"
 
 
 class Learned(str, Enum):
     """Every kind of feedback, as what it says about Oscar's call (normalize below)."""
 
     CORRECT = "CORRECT"
+    ACTION_ONLY = "ACTION_ONLY"  # the action was right (or wrong); nothing about how much to ask
     SHOULD_BE_SILENT = "SHOULD_BE_SILENT"
     SHOULD_NOTIFY = "SHOULD_NOTIFY"
     SHOULD_ASK = "SHOULD_ASK"
@@ -56,9 +63,25 @@ class FeedbackEvent(BaseModel):
     edited_text: str | None = None
     # True when the user asked for more autonomy than the safety floor allows.
     blocked_by_floor: bool = False
-    desired_level: AutonomyLevel | None = None  # REVIEW only: what you said the level should have been
+    # How much you said he should ask (a Review answer, or Just handle them / Handle and tell me /
+    # Keep asking), or for an "emails like this" rule, the level it sets. None: you didn't say.
+    desired_level: AutonomyLevel | None = None
+    # Whether the action was the right one for this email: Approve and Right say yes, Decline says
+    # no. Kept apart from desired_level, so approving never counts as "you can stop asking".
+    action_feedback: Literal["CORRECT", "INCORRECT"] | None = None
+    # Who a rule ("always do this", "always ask me", forget) is about: this sender, or every email
+    # of this kind (only for archive, mark as read and label). Everything else is about the sender.
+    scope: Literal["sender", "kind"] = "sender"
     # Where it came from. Only you can teach Oscar: email text never becomes feedback.
     provenance: str = "USER_FEEDBACK"
+
+
+# Your answer to "for emails like this", and the level it asks for.
+CHOICES: dict[FeedbackKind, AutonomyLevel] = {
+    FeedbackKind.JUST_HANDLE_IT: AutonomyLevel.PROCEED_SILENTLY,
+    FeedbackKind.HANDLE_AND_TELL_ME: AutonomyLevel.PROCEED_AND_NOTIFY,
+    FeedbackKind.KEEP_ASKING: AutonomyLevel.ASK_FIRST,
+}
 
 
 SHOULD = {
@@ -70,21 +93,37 @@ SHOULD = {
 
 
 def normalize(event: FeedbackEvent) -> Learned:
-    """What a piece of feedback says, whichever button or answer it came from.
+    """What a piece of feedback says about how much Oscar should ask, whichever button or answer
+    it came from.
 
-    An okay on something he asked about says doing it was fine; a no or an undo says he
-    should have asked. A Review answer says the level outright. "Always" rules, Forget and
-    "got it" are handled as rules or not at all, so they read as CORRECT or SKIP here.
+    Only an answer that says the level counts: Just handle them, Handle and tell me, Keep asking,
+    or a Review answer with a level. Approving, and "Right" in Review, only say the action was
+    right (ACTION_ONLY): they never mean "stop asking", and never "keep asking". A no or an undo
+    says he'd have been wrong to do it alone, so he should have asked. "Always" rules, Forget and
+    "got it" are rules or nothing, so they read as CORRECT or SKIP here.
     """
+    if event.kind in CHOICES:
+        return SHOULD[CHOICES[event.kind]]
     if event.kind in (FeedbackKind.APPROVE, FeedbackKind.EDIT_THEN_SEND):
-        return Learned.SHOULD_BE_SILENT if event.autonomy_level != AutonomyLevel.PROCEED_SILENTLY else Learned.CORRECT
+        return Learned.ACTION_ONLY
     if event.kind in (FeedbackKind.REJECT, FeedbackKind.UNDO):
         return Learned.SHOULD_ASK
-    if event.kind == FeedbackKind.REVIEW and event.desired_level:
-        return Learned.CORRECT if event.desired_level == event.autonomy_level else SHOULD[event.desired_level]
+    if event.kind == FeedbackKind.REVIEW:
+        return SHOULD[event.desired_level] if event.desired_level else Learned.ACTION_ONLY
     if event.kind == FeedbackKind.SEEN:
         return Learned.SKIP
     return Learned.CORRECT
+
+
+def action_verdict(event: FeedbackEvent) -> Literal["CORRECT", "INCORRECT"] | None:
+    """Whether this feedback said the action was right, for lines saved before it was recorded."""
+    if event.action_feedback:
+        return event.action_feedback
+    if event.kind in (FeedbackKind.APPROVE, FeedbackKind.EDIT_THEN_SEND):
+        return "CORRECT"
+    if event.kind == FeedbackKind.REJECT:
+        return "INCORRECT"
+    return None
 
 
 class FeedbackError(ValueError):
@@ -101,13 +140,25 @@ REPLIES: dict[FeedbackKind, str] = {
     FeedbackKind.SEEN: "Okay! It's all yours.",
     FeedbackKind.FORGET: "Okay, I've forgotten that. I'll start fresh with this sender.",
     FeedbackKind.REVIEW: "Thanks! I'll remember that.",
+    FeedbackKind.JUST_HANDLE_IT: "Got it! I'll just handle these from now on.",
+    FeedbackKind.HANDLE_AND_TELL_ME: "Got it! I'll handle these and let you know.",
+    FeedbackKind.KEEP_ASKING: "You got it! I'll keep checking with you on these.",
+}
+
+# The same, for a rule about every email of this kind.
+KIND_REPLIES: dict[FeedbackKind, str] = {
+    FeedbackKind.ALWAYS_DO_THIS: "Got it! I'll just handle emails like this. Anything risky still comes to you.",
+    FeedbackKind.ALWAYS_ASK_ME: "You got it! I'll check with you on emails like this.",
+    FeedbackKind.FORGET: "Okay, I've forgotten that rule for emails like this.",
 }
 
 OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
 REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
-TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.FORGET}  # change nothing in Gmail
+# Change nothing in Gmail: they only teach him (or untaught him).
+TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.FORGET, *CHOICES}
+ASKS_FOR_MORE = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.JUST_HANDLE_IT, FeedbackKind.HANDLE_AND_TELL_ME}
 
 
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None, undoable: bool = False) -> None:
@@ -115,7 +166,9 @@ def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | Non
     for it that hasn't been undone (Stage 12), so undo is allowed whatever the level."""
     if kind == FeedbackKind.REVIEW:
         raise FeedbackError("Answer on the Review page instead.")  # lessons come from your reviews only
-    if kind == FeedbackKind.FORGET or (decision.source == "gmail" and kind in TEACHING_ONLY):
+    if kind in CHOICES and decision.autonomy_level == AutonomyLevel.ESCALATE:
+        raise FeedbackError("I bring these straight to you, so there's nothing to teach me here.")
+    if kind == FeedbackKind.FORGET or (decision.source == "gmail" and kind in TEACHING_ONLY) or kind in CHOICES:
         return  # these only teach him (or untaught him); they're fine on any email
     if decision.source == "gmail" and kind == FeedbackKind.UNDO:
         if not undoable:
@@ -155,21 +208,49 @@ def floor_reply(decision: Decision) -> str | None:
     return None
 
 
+def check_kind_rule(decision: Decision, kind: FeedbackKind, desired: AutonomyLevel | None) -> None:
+    """A rule for every email of this kind: only for the easy-to-undo actions, only for a kind of
+    email Oscar recognised, and "always do this" only as quietly or with a heads up."""
+    from oscar.preferences import HABIT_ACTIONS, family  # here: preferences imports this module
+
+    if kind not in KIND_REPLIES:
+        raise FeedbackError("Only always do this, always ask me and forget can be about every email like this.")
+    if decision.action not in HABIT_ACTIONS or not family(decision.email_type):
+        raise FeedbackError("I can only learn that for archiving, marking as read or labelling an email I recognised.")
+    if decision.autonomy_level == AutonomyLevel.ESCALATE or decision.safety_flags:
+        raise FeedbackError("I bring these straight to you, so there's no rule to set here.")
+    if kind == FeedbackKind.ALWAYS_DO_THIS and desired not in (None, AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY):
+        raise FeedbackError("A rule to handle emails like this is either quietly or with a heads up.")
+
+
 def record_feedback(
-    history: History, decision_id: str, kind: FeedbackKind, edited_text: str | None = None, undoable: bool = False
+    history: History, decision_id: str, kind: FeedbackKind, edited_text: str | None = None, undoable: bool = False,
+    *, scope: Literal["sender", "kind"] = "sender", desired_level: AutonomyLevel | None = None,
 ) -> tuple[FeedbackEvent, str]:
+    """Save one piece of feedback. scope "kind" makes a rule about every email like this one;
+    desired_level is the level that rule sets (quietly unless you say so)."""
     decision = history.get_decision(decision_id)
     if decision is None:
         raise FeedbackError(f"I can't find decision {decision_id}.")
     check_allowed(decision, kind, edited_text, undoable)
-    reply = REPLIES[kind]
+    if scope == "kind":
+        check_kind_rule(decision, kind, desired_level)
+    reply = KIND_REPLIES[kind] if scope == "kind" else REPLIES[kind]
     if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY:
         reply = "Thanks! Good to know I got that one right."
     blocked = False
-    if kind == FeedbackKind.ALWAYS_DO_THIS:
+    if kind in ASKS_FOR_MORE:
         blocked_reply = floor_reply(decision)
         if blocked_reply:
             reply, blocked = blocked_reply, True
+    if kind in CHOICES:
+        desired = CHOICES[kind]
+    elif scope == "kind" and kind == FeedbackKind.ALWAYS_DO_THIS:
+        desired = desired_level or AutonomyLevel.PROCEED_SILENTLY
+    else:
+        desired = None
+    verdict = ("CORRECT" if kind in (FeedbackKind.APPROVE, FeedbackKind.EDIT_THEN_SEND)
+               else "INCORRECT" if kind == FeedbackKind.REJECT else None)
     event = FeedbackEvent(
         decision_id=decision.id,
         kind=kind,
@@ -179,6 +260,9 @@ def record_feedback(
         email_type=decision.email_type,
         edited_text=edited_text,
         blocked_by_floor=blocked,
+        desired_level=desired,
+        action_feedback=verdict,
+        scope=scope,
     )
     history.add_feedback(event)
     return event, reply
