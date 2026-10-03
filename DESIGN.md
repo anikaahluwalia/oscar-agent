@@ -740,9 +740,12 @@ tone; Oscar is warm and calm.
   the promotions setting, what he's learned (was What Oscar Knows), and what
   always comes to you. You only change these now and then, so they don't need
   their own pages. The autonomy preference was removed: it never did anything.
-- **Corner companion.** Oscar peeks in from the right edge with a count of what
-  needs you. It's off unless you turn it on, sits still for risky email and when
-  motion is reduced, and isn't shown on phones.
+- **Fewer words.** Each card says what Oscar would do once, in one line with its
+  pill and Why?; his reasons are behind Why?. "Read-only" is said once, in the
+  headline, not on every card, and the review note is said once per page.
+- **Corner companion: in Gmail, not here.** A first version peeked in from the edge
+  of the web app. It belongs in the Gmail extension instead, peeking from the edge
+  of your inbox, so it was taken out of the web app and waits for that stage.
 
 What the mock-up showed but the app doesn't, on purpose: "time saved", trend
 arrows and a "helpfulness" score, which nothing measures yet, and an "auto-reply"

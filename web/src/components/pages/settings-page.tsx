@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { useCompanion } from "@/components/corner-companion";
 import { AlwaysComesToYou, KindsOfEmail } from "@/components/kinds-of-email";
 import { LearnedHabits } from "@/components/learned-habits";
 import { Page, PageHeader } from "@/components/page";
@@ -83,18 +82,6 @@ const GMAIL_RESULTS: Record<string, string> = {
   no_lasting_access: "Google didn't give lasting access. Remove Oscar from your Google account's connections and connect again.",
   google_error: "Google didn't accept the sign-in. Try again.",
 };
-
-function CompanionSetting() {
-  const [setting, set] = useCompanion();
-  return (
-    <Switch
-      label="Oscar in the corner"
-      text="He peeks in from the edge of the screen with a count of what needs you. Click him for a note. Not on phones."
-      on={setting === "on"}
-      onChange={(on) => set(on ? "on" : "off")}
-    />
-  );
-}
 
 function useGmailResult() {
   useEffect(() => {
@@ -293,10 +280,6 @@ export function SettingsPage() {
           <AlwaysComesToYou />
         </Group>
       </section>
-
-      <Group title="Corner companion" note="Saved on this device">
-        <CompanionSetting />
-      </Group>
 
       <Group title="Notifications" note="Saved on this device · coming soon">
         <Toggle id="in-app" label="In-app" text="Heads-ups while you have Oscar open." />

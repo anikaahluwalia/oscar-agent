@@ -260,9 +260,8 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
       <div className="flex flex-col gap-1 rounded-xl border border-dashed px-4 py-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p>
-            {plainYes || review.label === "SKIP" ? `${prefix}: ` : `${prefix} he should: `}
+            {plainYes || review.label === "SKIP" || isOldWay(review) ? `${prefix}: ` : `${prefix} he should: `}
             <span className="font-medium">{said}</span>
-            {isOldWay(review) && <span className="text-muted-foreground"> (half an answer, from the old review screen)</span>}
           </p>
           <button
             type="button"
@@ -322,7 +321,6 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
             {lastAnswer.why === "misread" && lastAnswer.actual_type && <>, he misread it (it&apos;s {lastAnswer.actual_type.toLowerCase()})</>}
           </button>
         )}
-        <p className="text-xs text-muted-foreground">This checks Oscar&apos;s work. He doesn&apos;t learn from it.</p>
       </div>
     );
   }
@@ -450,7 +448,6 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
         </Button>
         {problem && level && <p className="text-xs text-muted-foreground">{problem}</p>}
       </div>
-      <p className="text-xs text-muted-foreground">This checks Oscar&apos;s work. He doesn&apos;t learn from it.</p>
     </div>
   );
 }

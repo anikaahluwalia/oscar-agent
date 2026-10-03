@@ -54,11 +54,6 @@ function WaitingOnYou({ data, feedback }: { data: OscarData; feedback: Feedback 
   }
   return (
     <div className="flex flex-col gap-8">
-      {readOnly && (
-        <p className="text-sm text-muted-foreground">
-          What Oscar would bring to you. He only reads your inbox for now, so check his calls instead of answering them.
-        </p>
-      )}
       {stopped.length > 0 && (
         <Section title={readOnly ? "He'd stop these" : "Oscar stopped these"}>
           <Cards items={stopped} feedback={feedback} />
@@ -97,9 +92,7 @@ function CheckHisCalls({ data, feedback }: { data: OscarData; feedback: Feedback
   }
   return (
     <div className="flex flex-col gap-8">
-      <p className="text-sm text-muted-foreground">
-        Say how he would have done. It measures him; he doesn&apos;t learn from it. Results are in How he&apos;s doing.
-      </p>
+      <p className="text-sm text-muted-foreground">This grades Oscar. He doesn&apos;t learn from it.</p>
       {toReview.length > 0 ? (
         <Section title={`To review (${toReview.length})`}>
           <Cards items={toReview} feedback={feedback} />
@@ -109,10 +102,7 @@ function CheckHisCalls({ data, feedback }: { data: OscarData; feedback: Feedback
       )}
       {oldWay.length > 0 && (
         <Folded title={`Finish these (${oldWay.length})`} show="Show them">
-          <p className="text-sm text-muted-foreground">
-            You said Oscar got these wrong, but the old review screen only saved half of what he should have done. Each one
-            starts from what you said.
-          </p>
+          <p className="text-sm text-muted-foreground">The old review screen only saved half of your answer.</p>
           <Cards items={oldWay} feedback={feedback} />
         </Folded>
       )}
@@ -139,7 +129,7 @@ export function ReviewPage() {
   const real = data.gmail.connected;
   return (
     <Page className="max-w-3xl">
-      <PageHeader title="Review" text={real ? "What Oscar would bring to you, and checking his calls." : "Everything waiting on you."}>
+      <PageHeader title="Review">
         {real && (
           <Button size="sm" variant="outline" onClick={checkGmail}>
             Check now

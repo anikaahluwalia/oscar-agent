@@ -93,10 +93,7 @@ export function HomePage() {
           </div>
 
           <aside className="flex flex-col gap-3 self-start rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-8">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">Ask Oscar</h2>
-              <p className="text-sm text-muted-foreground">Ask me what needs you, what I&apos;d do with something, or teach me a rule!</p>
-            </div>
+            <h2 className="text-lg font-semibold">Ask Oscar</h2>
             <ChatPanel variant="compact" />
           </aside>
         </div>

@@ -25,7 +25,7 @@ export function statusCopy(items: DecisionWithFeedback[], realInbox = false): He
         lead: "",
         accent: plural(waiting, "call", "calls"),
         rest: " for you to check.",
-        sentence: "I'm only reading your inbox for now, so nothing in Gmail changed.",
+        sentence: "Read-only for now. Nothing in Gmail changed.",
         mood: "curious",
       };
     }

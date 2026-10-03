@@ -24,9 +24,9 @@ type Props = {
   compact?: boolean;
 };
 
-function Why({ id }: { id: string }) {
+function Why({ id, className }: { id: string; className?: string }) {
   return (
-    <Button variant="ghost" size="sm" className="ml-auto text-muted-foreground" onClick={() => openWhy(id)}>
+    <Button variant="ghost" size="sm" className={cn("ml-auto text-muted-foreground", className)} onClick={() => openWhy(id)}>
       Why?
     </Button>
   );
@@ -65,20 +65,19 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
     </div>
   );
 
-  // The real inbox is read-only for now: show what Oscar would have done, and let you review it.
+  // The real inbox is read-only for now: what Oscar would do, in one line, and your review.
+  // His reasons are behind Why?, so the card stays short. Away from lists, his note shows too.
   if (decision.source === "gmail") {
     return (
       <div className="flex flex-col gap-4 rounded-2xl border bg-card shadow-card p-5">
         {from}
         <div className="flex items-center gap-3">
-          <OscarAvatar size={32} mood={level === "ESCALATE" ? "alert" : level === "ASK_FIRST" ? "curious" : "calm"} />
-          <div className="min-w-0">
-            <p className="font-medium">{whatOscarDid(decision)}</p>
-            <p className="text-xs text-muted-foreground">Read-only: nothing was changed in Gmail.</p>
-          </div>
-          <StatusPill level={level} readOnly className="ml-auto" />
+          <OscarAvatar size={28} mood={level === "ASK_FIRST" ? "curious" : "calm"} />
+          <p className="min-w-0 font-medium">{ACTIONS[decision.action]}</p>
+          <StatusPill level={level} readOnly />
+          <Why id={decision.id} className="-my-1" />
         </div>
-        <p className="text-sm text-muted-foreground">{decision.message}</p>
+        {!compact && <p className="text-sm text-muted-foreground">{decision.message}</p>}
         {decision.safety_flags.length > 0 && (
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             {decision.safety_flags.map((f) => (
@@ -90,9 +89,6 @@ export function DecisionCard({ item, onFeedback, compact }: Props) {
           </ul>
         )}
         <ReviewPanel item={item} />
-        <div className="flex">
-          <Why id={decision.id} />
-        </div>
       </div>
     );
   }
