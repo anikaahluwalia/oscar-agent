@@ -51,6 +51,24 @@ function Question({ title, children }: { title: string; children: React.ReactNod
 
 const field = "min-h-11 rounded-xl border bg-card px-3.5 text-sm";
 
+const DO: Partial<Record<Action, string>> = { ARCHIVE: "archive it", MARK_READ: "mark it as read", APPLY_LABEL: "label it" };
+const DID: Partial<Record<Action, string>> = { ARCHIVE: "archived", MARK_READ: "marked as read", APPLY_LABEL: "labelled" };
+
+/**
+ * What saving will do in Gmail when he already did something there (api.correct_from_review): put it
+ * back, and do the easy-to-undo action you picked instead if you said he should just do it. Null when
+ * nothing in Gmail changes (he did what you wanted, or he didn't act on it).
+ */
+function inGmail(item: DecisionWithFeedback, level: Level | null, action: Action | null) {
+  const { decision: d, done } = item;
+  if (!done || done.undone_at || !d.acting || !level) return null;
+  const acts = level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY";
+  if (acts && action === d.action) return null;
+  const did = DID[d.action] ?? "changed";
+  const instead = acts && action ? DO[action] : undefined;
+  return instead ? `I ${did} this in Gmail. Saving puts it back and I'll ${instead} instead.` : `I ${did} this in Gmail. Saving puts it back the way it was.`;
+}
+
 /**
  * After a "No": what he should have done. How much on his own, then what, then whether he
  * understood the email. That's the same answer the evals use. It grades him, and it teaches him
@@ -116,6 +134,7 @@ export function FollowUp({ item, onSaved, onBack }: { item: DecisionWithFeedback
   const typeMissing = finalWhy === "misread" && !type.trim() ? "Say what kind of email it is." : null;
   const sameHint = same && finalWhy !== "misread" && !note.trim() ? "That's what I picked. Change something, or go back and press Yes." : null;
   const problem = missing ?? whyMissing ?? typeMissing ?? sameHint;
+  const gmailNote = problem ? null : inGmail(item, level, action);
 
   async function save() {
     if (busy || problem) return;
@@ -249,6 +268,7 @@ export function FollowUp({ item, onSaved, onBack }: { item: DecisionWithFeedback
       )}
 
       <div className="flex flex-col gap-2 pt-1">
+        {gmailNote && <p className="text-sm text-muted-foreground">{gmailNote}</p>}
         <div className="flex flex-wrap items-center gap-2.5">
           <Button className="h-13 px-7 text-base font-bold" disabled={busy || !!problem} onClick={save}>
             Save and next

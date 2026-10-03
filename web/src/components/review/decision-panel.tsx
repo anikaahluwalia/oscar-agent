@@ -307,6 +307,13 @@ export function DecisionPanel({
           <div className="flex min-w-0 flex-col gap-0.5">
             <p className="text-[17px] leading-snug font-bold">{callLine(item)}</p>
             {because && <p className="text-[13px] text-muted-foreground">Because {lower(because)}</p>}
+            {/* He already did it in Gmail: one tap to say what you'd rather, which also fixes the email. */}
+            {gradeable && d.acting && item.done && !item.done.undone_at && (
+              <button type="button" disabled={busy} onClick={onNo}
+                className="mt-1 self-start text-[13px] font-semibold underline underline-offset-4 hover:no-underline disabled:opacity-60">
+                Not what you wanted? Do something else
+              </button>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-muted/60 px-3.5 py-2.5">

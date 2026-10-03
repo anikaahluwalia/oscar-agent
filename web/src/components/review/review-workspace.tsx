@@ -254,13 +254,32 @@ export function ReviewWorkspace({
     seen.current = at;
   }, [at]);
 
+  // The emails you've been through on this visit, newest last, so Back can return to one you just
+  // answered: answered emails leave the queue, so "previous in the queue" isn't where you were.
+  const [trail, setTrail] = useState<string[]>([]);
+  const leave = useCallback(() => {
+    if (id) setTrail((t) => (t.at(-1) === id ? t : [...t, id]));
+  }, [id]);
+
   const go = useCallback(
     (by: 1 | -1) => {
       const at = current ? nav.findIndex((i) => i.decision.id === current.decision.id) : -1;
+      if (by === -1 && at <= 0) {
+        // Nothing before this one in the list: back to the email you were on before it.
+        const before = trail.at(-1);
+        if (before) {
+          setTrail((t) => t.slice(0, -1));
+          setHash(before);
+        }
+        return;
+      }
       const next = at === -1 ? (by === 1 ? nav.find((i) => i.decision.id !== id) : undefined) : nav[at + by];
-      if (next) setHash(next.decision.id);
+      if (next) {
+        if (by === 1) leave();
+        setHash(next.decision.id);
+      }
     },
-    [current, nav, id],
+    [current, nav, id, trail, leave],
   );
 
   /** On to the next one, leaving this one behind. */
@@ -271,8 +290,9 @@ export function ReviewWorkspace({
     setAnswered((s) => new Set(s).add(current.decision.id));
     setStep(null);
     setHeld(null);
+    leave();
     setHash(after?.decision.id ?? "");
-  }, [current, nav, inQueue, queue]);
+  }, [current, nav, inQueue, queue, leave]);
 
   const save = useCallback(
     async (input: ReviewInput, reaction?: { pose: OscarPose; title: string }, stay = false) => {
@@ -409,7 +429,7 @@ export function ReviewWorkspace({
           <button
             type="button"
             aria-label="Previous email"
-            disabled={position <= 0}
+            disabled={position <= 0 && !trail.length}
             onClick={() => go(-1)}
             className="flex size-10 items-center justify-center rounded-full hover:bg-surface-hover disabled:opacity-40"
           >
