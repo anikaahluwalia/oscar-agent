@@ -121,7 +121,7 @@ class Decision(BaseModel):
     # what he would have done.
     acting: bool = False
     summary: str = ""
-    # Stage 13: the kind of email came from what you said this sender's emails are
+    # Stage 15: the kind of email came from what you said this sender's emails are
     # (oscar/classification.py), not from reading it.
     type_from_you: bool = False
     confidence: float = 0.5  # how sure Oscar is that the level is right (see agent.confidence_for)

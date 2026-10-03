@@ -177,7 +177,7 @@ class DecisionWithFeedback(BaseModel):
     review: Review | None = None  # real inbox only: your latest review
     answer: dict | None = None  # real inbox only: what you said he should have done, and how this decision does
     done: ActionRecord | None = None  # Stage 12: what Oscar did in Gmail for it, and whether it was undone
-    # Stage 13: your latest word on what kind of email it is, and your answer if a safety rule stopped it.
+    # Stage 15: your latest word on what kind of email it is, and your answer if a safety rule stopped it.
     classification: ClassificationFeedback | None = None
     safety_review: SafetyReview | None = None
 
@@ -831,7 +831,7 @@ def eval_run(run_id: str) -> dict:
     return run
 
 
-# --- What kind of email it is, and your own categories (Stage 13) ------------------------------
+# --- What kind of email it is, and your own categories (Stage 15) ------------------------------
 
 @app.get("/email-types")
 def email_types() -> list[dict]:

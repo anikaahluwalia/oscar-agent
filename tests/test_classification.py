@@ -1,4 +1,4 @@
-"""Stage 13: what kind of email it is, your own categories, and reviewing what a safety rule stopped.
+"""Stage 15: what kind of email it is, your own categories, and reviewing what a safety rule stopped.
 
 Kept apart from each other and from what Oscar learns about autonomy:
 - correcting the kind of email never changes a preference, a level or a safety rule;

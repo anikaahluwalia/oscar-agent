@@ -45,7 +45,7 @@ class History:
         self.settings: dict = {}  # this inbox's settings, e.g. {"acting": true}
         self.actions: dict[str, ActionRecord] = {}  # Stage 12: what Oscar did in Gmail, by decision id
         self.tags: dict[str, Tag] = {}  # the status label Oscar last put on each email, by email id
-        # Stage 13: what kind of email you said each one is, your answers about emails a safety rule
+        # Stage 15: what kind of email you said each one is, your answers about emails a safety rule
         # stopped, and your own categories for senders (by address). None of these are feedback he
         # learns his autonomy from.
         self.classifications: list[ClassificationFeedback] = []
