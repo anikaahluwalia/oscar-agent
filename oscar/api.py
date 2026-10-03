@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
-from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, status_label, undo
+from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, label_role, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar import app_settings
@@ -141,6 +141,15 @@ def get_app_settings_path() -> Path:
     return default_data_dir() / "app_settings.json"
 
 
+def gmail_client(tokens: gmail.TokenStore, http: httpx.Client) -> gmail.GmailClient:
+    """The Gmail client, with your names for Oscar's labels from Settings."""
+    return gmail.GmailClient(tokens, http, names=app_settings.load(get_app_settings_path()).labels)
+
+
+def label_names() -> dict[str, str]:
+    return app_settings.load(get_app_settings_path()).labels
+
+
 def get_http() -> httpx.Client:
     return httpx.Client(timeout=20)
 
@@ -180,17 +189,28 @@ class DecisionWithFeedback(BaseModel):
     # Stage 15: your latest word on what kind of email it is, and your answer if a safety rule stopped it.
     classification: ClassificationFeedback | None = None
     safety_review: SafetyReview | None = None
+    # For "Label it": the name of the Gmail label he used (or would use), as it's called in Settings now.
+    label: str | None = None
+
+
+def label_for(history: History, d: Decision, names: dict[str, str]) -> str | None:
+    """The name of the label "Label it" put on this email, or would put on it."""
+    if d.action != Action.APPLY_LABEL:
+        return None
+    done = history.action_for(d.id)
+    return names.get(done.label if done and done.label else label_role(d))
 
 
 @app.get("/decisions", response_model=list[DecisionWithFeedback])
 def list_decisions(history: History = Depends(get_history)) -> list[DecisionWithFeedback]:
     """Every decision, newest first, with the feedback given on it."""
     decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
+    names = label_names()
     return [
         DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id),
                              answer=graded(history, d) if d.source == "gmail" else None,
                              done=history.action_for(d.id), classification=history.classification_for(d.email_id),
-                             safety_review=history.safety_review_for(d.id))
+                             safety_review=history.safety_review_for(d.id), label=label_for(history, d, names))
         for d in decisions
     ]
 
@@ -221,6 +241,37 @@ def update_app_settings(changes: dict, path: Path = Depends(get_app_settings_pat
         return app_settings.update(path, changes)
     except app_settings.AppSettingsError as e:
         raise HTTPException(400, str(e))
+
+
+class RenameLabel(BaseModel):
+    role: str
+    name: str
+
+
+@app.post("/labels/rename")
+def rename_oscar_label(request: RenameLabel, tokens: gmail.TokenStore = Depends(get_tokens),
+                 http: httpx.Client = Depends(get_http), path: Path = Depends(get_app_settings_path)) -> dict:
+    """Rename one of Oscar's Gmail labels. If he can change labels in your Gmail, the label is
+    renamed there first, so the emails he already labelled show the new name too. The new name
+    is only saved once Gmail has taken it."""
+    try:
+        settings, old = app_settings.rename_label(path, request.role, request.name)
+    except app_settings.AppSettingsError as e:
+        raise HTTPException(400, str(e))
+    new = settings.labels[request.role]
+    result = "none"
+    if new != old and gmail.can_act(tokens.load()):
+        try:
+            result = gmail.GmailClient(tokens, http, names=app_settings.load(path).labels).rename_label(old, new)
+        except (gmail.GmailError, httpx.HTTPError):
+            raise HTTPException(502, f"I couldn't rename it in Gmail, so it's still called {old}. Try again in a bit.")
+    app_settings.save(path, settings)
+    reply = {
+        "renamed": f"Done! {old} is called {new} now, in Gmail too.",
+        "taken": f"You already have a label called {new}, so I'll use that one from now on. Emails I labelled before keep {old}.",
+        "none": f"Done! I'll call it {new}.",
+    }[result]
+    return {"settings": settings.model_dump(), "reply": reply}
 
 
 # --- Clearing what Oscar learned, without deleting anything ---------------------------------
@@ -262,6 +313,7 @@ def _extension_item(history: History, d: Decision, waiting: set[str] | None = No
         "id": d.id, "subject": d.subject, "sender": d.sender, "level": d.autonomy_level.value, "action": d.action.value,
         "message": d.message, "factors": d.factors, "acting": d.acting,
         "summary": d.summary or d.snippet, "status": status_label(history, d, waiting),
+        "label": label_for(history, d, label_names()),
         "safety_rule": d.safety_rule, "learned_from": d.preference.scope if d.preference else None,
         "received_at": d.gmail.received_at.isoformat() if d.gmail and d.gmail.received_at else None,
         "thread_id": d.gmail.thread_id if d.gmail else None, "message_id": d.gmail.message_id if d.gmail else None,
@@ -460,9 +512,9 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
                 raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
             if not acting_on(tokens, history):
                 raise HTTPException(409, "Turn on \"Let Oscar act in Gmail\" in Settings first.")
-            do(history, gmail.GmailClient(tokens, http), decision, by="you")
+            do(history, gmail_client(tokens, http), decision, by="you")
         elif kind == FeedbackKind.UNDO:
-            undo(history, gmail.GmailClient(tokens, http), decision.id)
+            undo(history, gmail_client(tokens, http), decision.id)
     return record_feedback(history, decision.id, kind, edited_text, undoable, scope=scope, desired_level=desired_level)
 
 
@@ -641,7 +693,7 @@ def gmail_sync(
 
 def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, limit: int = 25):
     """One check for new email, by you or by the timer, and note when it happened."""
-    result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100),
+    result = sync(real, gmail_client(tokens, http), limit=min(max(limit, 1), 100),
                   act_since=acting_since(tokens, real), still_acting=lambda: acting_on(tokens, real),
                   label=acting_on(tokens, real))
     if acting_on(tokens, real):
@@ -669,7 +721,7 @@ def gmail_recheck(
     if not tokens.load():
         raise HTTPException(409, "Gmail isn't connected.")
     try:
-        return recheck(real, gmail.GmailClient(tokens, http)).model_dump()
+        return recheck(real, gmail_client(tokens, http)).model_dump()
     except AlreadySyncing as e:
         raise HTTPException(409, str(e))
     except (gmail.GmailError, httpx.HTTPError):

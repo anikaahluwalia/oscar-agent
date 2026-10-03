@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 import httpx
 from pydantic import BaseModel, Field
 
-from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, TAGS_PER_CHECK, ActionError, can_do, do, gone, status_label, tag
+from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, TAGS_PER_CHECK, ActionError, can_do, do, gmail_label, gone, tag
 from oscar.agent import decide
 from oscar.classification import type_hints
 from oscar.review import teaching
@@ -164,7 +164,8 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
 def label_inbox(history: History, gmail: GmailClient, still_acting: Callable[[], bool],
                 limit: int = TAGS_PER_CHECK) -> int:
     """Bring the status labels in Gmail up to date with Oscar's latest call on each email, newest
-    first, a few at a time. Only emails whose label is missing or out of date are touched."""
+    first, a few at a time. Only emails whose label is missing, out of date, or should come off
+    (he handled it, or you answered) are touched."""
     waiting = {d.id for d in needs_you(history)[AutonomyLevel.ASK_FIRST]}
     changed = 0
     for decision in latest_per_email(history):
@@ -173,9 +174,11 @@ def label_inbox(history: History, gmail: GmailClient, still_acting: Callable[[],
         if decision.source != "gmail" or decision.gmail is None:
             continue
         before = history.tags.get(decision.email_id)
-        want = status_label(history, decision, waiting)
-        if before and (before.label is None or before.label == want):
+        want = gmail_label(history, decision, waiting)
+        if before and (before.gone or before.label == want):
             continue  # gone from Gmail, or already right
+        if not before and want is None:
+            continue  # never labelled, and doesn't need one
         try:
             tag(history, gmail, decision, want)
             changed += 1

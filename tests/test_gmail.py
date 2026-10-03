@@ -58,8 +58,8 @@ def test_only_unread_inbox_and_oscars_own_labels_can_change(tmp_path, label):
 def test_oscar_makes_his_own_labels_and_can_use_them(tmp_path):
     fake = FakeGmail(INBOX)
     client = GmailClient(connected(tmp_path), fake.http())
-    receipts = client.label_id("Receipts")
-    assert receipts == client.label_id("Receipts"), "made once"
+    receipts = client.label_id("receipts")
+    assert receipts == client.label_id("receipts"), "made once"
     client.modify_labels("m1", add=[receipts], remove=["UNREAD"])
     assert fake.messages["m1"]["labelIds"] == ["INBOX", receipts]
     assert any(l["name"] == "Receipts" for l in fake.labels)

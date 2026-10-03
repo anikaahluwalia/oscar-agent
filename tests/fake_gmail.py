@@ -62,6 +62,10 @@ class FakeGmail:
             made = {"id": f"Label_{len(self.labels) + 100}", "name": json_body(request)["name"]}
             self.labels.append(made)
             return httpx.Response(200, json=made)
+        if path.startswith("/labels/") and request.method == "PATCH":  # renaming one of his labels
+            label = next(l for l in self.labels if l["id"] == path.split("/")[2])
+            label["name"] = json_body(request)["name"]
+            return httpx.Response(200, json=label)
         if path.endswith("/modify") and request.method == "POST":
             m = self.messages[path.split("/")[2]]
             body = json_body(request)
