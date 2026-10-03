@@ -1,5 +1,5 @@
-import { HomePage } from "@/components/pages/home-page";
+import { TodayPage } from "@/components/pages/today-page";
 
 export default function Page() {
-  return <HomePage />;
+  return <TodayPage />;
 }
