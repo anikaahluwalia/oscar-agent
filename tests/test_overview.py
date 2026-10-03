@@ -143,6 +143,3 @@ def test_permissions_come_from_the_rules():
     assert rows[Action.MOVE_MONEY]["floor"] == AutonomyLevel.ESCALATE
     assert rows[Action.DRAFT_REPLY]["ceiling"] == AutonomyLevel.PROCEED_AND_NOTIFY
     assert rows[Action.APPLY_LABEL]["level"] == AutonomyLevel.PROCEED_SILENTLY
-    assert rows[Action.ARCHIVE]["instead"] is None
-    history.set_setting("bulk_action", "MARK_READ")
-    assert {r["action"]: r for r in permissions(history)}[Action.ARCHIVE]["instead"] == Action.MARK_READ

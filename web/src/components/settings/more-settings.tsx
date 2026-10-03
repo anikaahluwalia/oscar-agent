@@ -6,7 +6,6 @@ import {
   BellIcon,
   FolderLockIcon,
   InboxIcon,
-  MegaphoneIcon,
   MessageCircleIcon,
   MessageSquareIcon,
   NewspaperIcon,
@@ -16,10 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Segmented, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
-import { getChatStatus, getInboxSettings, setInboxSettings, type BulkAction } from "@/lib/api";
+import { getChatStatus } from "@/lib/api";
 import { bringInDemo, startOver } from "@/lib/demo";
 import { useLocalSetting } from "@/lib/local-setting";
-import { notifyChanged, oscarSays } from "@/lib/use-oscar";
 
 /** Your first name, kept in this browser. Home uses it to say hello. */
 export function NameRow() {
@@ -46,56 +44,6 @@ export function NameRow() {
         onBlur={() => setDraft(null)}
         className="h-11 w-full max-w-xs rounded-xl border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-10"
       />
-    </SettingsRow>
-  );
-}
-
-type PromoChoice = "MARK_READ" | "ARCHIVE" | "default";
-
-/** What Oscar does with promos and newsletters on this inbox. Applies to emails he reads from now on. */
-export function PromoRow() {
-  // undefined while loading, "failed" if the API can't be reached.
-  const [value, setValue] = useState<BulkAction | undefined | "failed">(undefined);
-  useEffect(() => {
-    getInboxSettings().then(
-      (s) => setValue(s.bulk_action),
-      () => setValue("failed"),
-    );
-  }, []);
-  async function choose(next: BulkAction) {
-    try {
-      const saved = await setInboxSettings(next);
-      setValue(saved.bulk_action);
-      notifyChanged();
-      oscarSays(
-        next === "MARK_READ"
-          ? "Got it! I'll mark promos and newsletters as read."
-          : next === "ARCHIVE"
-            ? "Got it! I'll archive promos and newsletters."
-            : "Okay! I'll go back to my default.",
-      );
-    } catch {
-      oscarSays("I can't reach my API right now.");
-    }
-  }
-  const selected: PromoChoice | undefined = value === undefined || value === "failed" ? undefined : (value ?? "default");
-  return (
-    <SettingsRow
-      icon={MegaphoneIcon}
-      title="Promotions and newsletters"
-      text="For mail sent to a list: promos, newsletters, job alerts. Oscar still asks first until you've okayed a sender, and anything risky is still stopped. Applies to emails he reads from now on."
-    >
-      <Segmented<PromoChoice>
-        label="Promotions and newsletters"
-        value={selected}
-        onChange={(v) => choose(v === "default" ? null : v)}
-        options={[
-          { value: "MARK_READ", label: "Mark as read" },
-          { value: "ARCHIVE", label: "Archive" },
-          { value: "default", label: "Oscar's default" },
-        ]}
-      />
-      {value === "failed" && <p className="text-sm text-muted-foreground">I can&apos;t reach my API right now, so I can&apos;t show what&apos;s picked.</p>}
     </SettingsRow>
   );
 }

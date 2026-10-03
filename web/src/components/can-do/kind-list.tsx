@@ -38,8 +38,7 @@ function RuleLine({ rule, usual }: { rule: PermissionRow | null; usual: KindRow[
     if (rule.floor === "ESCALATE" || rule.level === "ESCALATE") {
       return <Line text="Always brings it to you" level="ESCALATE" />;
     }
-    const action = rule.instead ?? rule.action;
-    return <Line text={`${ACTIONS[action]}${rule.instead ? " (your setting)" : ""}, starts at`} level={rule.level} />;
+    return <Line text={`${ACTIONS[rule.action]}, starts at`} level={rule.level} />;
   }
   if (!usual) return null;
   if (usual.level === "ESCALATE") return <Line text="Usually brings it to you" level="ESCALATE" />;

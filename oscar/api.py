@@ -10,7 +10,6 @@ from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
 import httpx
-from typing import Literal
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -223,8 +222,7 @@ def reset(history: History = Depends(get_demo_history)) -> dict:
 
 @app.post("/decide", response_model=Decision)
 def decide_endpoint(email: Email, history: History = Depends(get_demo_history)) -> Decision:
-    bulk = history.settings.get("bulk_action")
-    decision = decide(email, Preferences.from_feedback(teaching(history)), bulk_action=Action(bulk) if bulk else None)
+    decision = decide(email, Preferences.from_feedback(teaching(history)))
     history.add_decision(decision)
     return decision
 
@@ -235,23 +233,6 @@ def get_decision(decision_id: str, history: History = Depends(get_history)) -> D
     if decision is None:
         raise HTTPException(404, f"I can't find decision {decision_id}.")
     return decision
-
-
-class InboxSettings(BaseModel):
-    # What to do with promos and newsletters: mark them read, or archive them. None: Oscar's default.
-    bulk_action: Literal["MARK_READ", "ARCHIVE"] | None = None
-
-
-@app.get("/inbox-settings", response_model=InboxSettings)
-def get_inbox_settings(history: History = Depends(get_history)) -> InboxSettings:
-    return InboxSettings(**{k: v for k, v in history.settings.items() if k in InboxSettings.model_fields})
-
-
-@app.post("/inbox-settings", response_model=InboxSettings)
-def set_inbox_settings(settings: InboxSettings, history: History = Depends(get_history)) -> InboxSettings:
-    """Applies to emails Oscar reads from now on; decisions already made stay as they were."""
-    history.set_setting("bulk_action", settings.bulk_action)
-    return settings
 
 
 @app.get("/learned")

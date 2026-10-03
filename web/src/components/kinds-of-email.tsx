@@ -46,7 +46,7 @@ export function KindsOfEmailList({ rows, failed }: { rows: PermissionRow[] | nul
           <div className="min-w-0 sm:w-64 sm:shrink-0">
             <p className="font-medium">{KIND_NAMES[r.email_type] ?? r.email_type}</p>
             <p className="text-sm text-muted-foreground">
-              {r.instead ? `${ACTIONS[r.instead]} (your setting)` : ACTIONS[r.action]} · {r.reason}
+              {ACTIONS[r.action]} · {r.reason}
             </p>
           </div>
           <div className="min-w-0 flex-1">

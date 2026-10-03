@@ -39,7 +39,7 @@ class History:
         # which he learns from), and what you later did with each email in Gmail.
         self.reviews: list[Review] = []
         self.follow_ups: list[FollowUp] = []
-        self.settings: dict = {}  # this inbox's preferences, e.g. {"bulk_action": "MARK_READ"}
+        self.settings: dict = {}  # this inbox's settings, e.g. {"acting": true}
         self.actions: dict[str, ActionRecord] = {}  # Stage 12: what Oscar did in Gmail, by decision id
         self.data_dir = data_dir
         if data_dir is not None:

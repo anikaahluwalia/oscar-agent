@@ -24,7 +24,7 @@ from oscar.agent import decide
 from oscar.review import teaching
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
-from oscar.models import Action, Decision, new_id, now
+from oscar.models import Decision, new_id, now
 from oscar.preferences import Preferences
 from oscar.understand import Reader, reads_real_email
 from oscar.version import policy_version
@@ -96,7 +96,6 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         if len(unseen) >= limit or not page:
             break
     version = policy_version()
-    bulk_action = Action(history.settings["bulk_action"]) if history.settings.get("bulk_action") else None
     new = skipped = done = 0
     for ref in reversed(unseen[:limit]):
         try:
@@ -106,7 +105,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             continue
         understanding = reader.read(email) if reader else None
         prefs = Preferences.from_feedback(teaching(history))
-        decision = decide(email, prefs, read_only=not act, bulk_action=bulk_action, understanding=understanding)
+        decision = decide(email, prefs, read_only=not act, understanding=understanding)
         decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
         arrived_since = info.received_at is not None and act_since is not None and info.received_at >= act_since
         did = False
@@ -121,7 +120,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         if act and decision.autonomy_level in ACTED_LEVELS and not did:
             # He didn't do it in Gmail (an old email, the cap, an action he doesn't do there, or Gmail
             # said no), so his note says what he would do, never "I archived this".
-            would = decide(email, prefs, read_only=True, bulk_action=bulk_action, understanding=understanding)
+            would = decide(email, prefs, read_only=True, understanding=understanding)
             decision = decision.model_copy(update={"explanation": would.explanation, "message": would.message, "steps": would.steps})
         history.add_decision(decision)
         new += 1
@@ -141,7 +140,6 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reade
                 latest[d.email_id] = d
         recent = sorted(latest.values(), key=lambda d: d.created_at, reverse=True)[:limit]
         version = policy_version()
-        bulk_action = Action(history.settings["bulk_action"]) if history.settings.get("bulk_action") else None
         reader = reader if reader is not None else reader_for(history)
         new = skipped = 0
         for old in reversed(recent):
@@ -154,7 +152,7 @@ def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reade
                 continue
             # Re-reading never uses your answer to this same email: that's what it's graded against.
             prefs = Preferences.from_feedback(teaching(history, skip_email=old.email_id))
-            decision = decide(email, prefs, read_only=not old.acting, bulk_action=bulk_action,
+            decision = decide(email, prefs, read_only=not old.acting,
                               understanding=reader.read(email) if reader else None)
             history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version,
                                                              "acting": old.acting,

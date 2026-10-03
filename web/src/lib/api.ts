@@ -284,7 +284,6 @@ export interface PermissionRow {
   reason: string;
   floor: Level | null;
   ceiling: Level | null;
-  instead: Action | null; // your promotions setting swaps archiving for this
 }
 export const getPermissions = () => call<PermissionRow[]>("/permissions");
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
@@ -344,10 +343,6 @@ export const sendChat = (message: string, history: ChatTurn[], decisionId?: stri
     method: "POST",
     body: JSON.stringify({ message, history, decision_id: decisionId ?? null }),
   });
-export type BulkAction = "MARK_READ" | "ARCHIVE" | null;
-export const getInboxSettings = () => call<{ bulk_action: BulkAction }>("/inbox-settings");
-export const setInboxSettings = (bulk_action: BulkAction) =>
-  call<{ bulk_action: BulkAction }>("/inbox-settings", { method: "POST", body: JSON.stringify({ bulk_action }) });
 export const getChatStatus = () => call<{ model: string | null }>("/chat/status");
 
 export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string) =>

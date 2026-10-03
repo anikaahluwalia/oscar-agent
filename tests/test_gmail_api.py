@@ -145,15 +145,15 @@ def test_eval_runs_come_from_saved_files(setup):
     assert "email" in full["cases"][0] and "rationale" in full["cases"][0]
 
 
-def test_promo_setting_applies_to_new_emails(setup):
+def test_no_promotions_setting(setup):
+    # How promos are handled is learned from each person's answers, not set ahead of time.
     client, state, real, demo, tmp_path = setup
     state["tokens"] = connected(tmp_path)
-    assert client.get("/inbox-settings").json() == {"bulk_action": None}
-    assert client.post("/inbox-settings", json={"bulk_action": "ARCHIVE"}).json() == {"bulk_action": "ARCHIVE"}
+    assert client.get("/inbox-settings").status_code == 404
+    real.set_setting("bulk_action", "ARCHIVE")  # saved by an older version: ignored now
     client.post("/gmail/sync")
     decision = next(iter(real.decisions.values()))
-    assert decision.action.value == "ARCHIVE"  # the newsletter is list mail
-    assert client.post("/inbox-settings", json={"bulk_action": "DELETE"}).status_code == 422
+    assert decision.action.value == "MARK_READ"  # the newsletter, with nothing learned yet
 
 
 def test_recheck_makes_new_decisions_and_keeps_the_old(setup, monkeypatch):

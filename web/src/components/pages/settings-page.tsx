@@ -8,7 +8,6 @@ import {
   DataSettings,
   NameRow,
   NotificationSettings,
-  PromoRow,
 } from "@/components/settings/more-settings";
 import { SettingsGroup } from "@/components/settings/rows";
 import { useOscar } from "@/lib/use-oscar";
@@ -31,7 +30,6 @@ export function SettingsPage() {
       </SettingsGroup>
 
       <SettingsGroup title="How Oscar sorts">
-        <PromoRow />
         <ChatRow />
       </SettingsGroup>
 
