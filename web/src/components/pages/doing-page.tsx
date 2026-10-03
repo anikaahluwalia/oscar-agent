@@ -49,7 +49,7 @@ export function DoingPage() {
       <div className="mx-auto flex w-full max-w-[760px] flex-col gap-9">
         <MoodHeader
           pose={proud ? "proud" : "thinking"}
-          title="How I'm doing"
+          title="My progress"
           text="Tested on emails I'd never seen, and checked against your answers."
         />
 

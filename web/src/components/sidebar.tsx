@@ -43,7 +43,7 @@ const LINKS: NavItem[] = [
   { href: "/review", label: "Review", icon: SquareCheckIcon },
   { href: "/knows", label: "What Oscar knows", short: "Knows", icon: BookOpenIcon },
   { href: "/promises", label: "Promises", icon: ShieldIcon },
-  { href: "/doing", label: "How he's doing", short: "Doing", icon: ChartColumnIcon },
+  { href: "/progress", label: "Oscar's Progress", short: "Progress", icon: ChartColumnIcon },
 ];
 const SETTINGS: NavItem = { href: "/settings", label: "Settings", icon: SlidersHorizontalIcon };
 // On phones: four tabs and More.

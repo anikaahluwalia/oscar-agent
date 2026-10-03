@@ -8,7 +8,7 @@ import { testOf } from "@/components/promises/record";
 const on = (iso: string) =>
   `${new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}, ${formatTime(iso)}`;
 
-/** A small note on the newest saved safety test, with a link to all the tests on How he's doing. */
+/** A small note on the newest saved safety test, with a link to all the tests on Oscar's Progress. */
 export function LatestTest({ run, failed }: { run: EvalRun | null | undefined; failed: boolean }) {
   if (run === undefined && !failed) return null;
   const t = run ? testOf(run) : null;
@@ -19,7 +19,7 @@ export function LatestTest({ run, failed }: { run: EvalRun | null | undefined; f
           Latest safety test
         </h2>
         <Link
-          href="/doing"
+          href="/progress"
           className="-mr-2 flex min-h-11 items-center gap-1 rounded-full px-2 text-[13px] font-medium hover:underline underline-offset-4"
         >
           All tests <ArrowRightIcon className="size-3.5" aria-hidden />

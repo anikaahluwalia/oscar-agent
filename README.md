@@ -90,7 +90,7 @@ and told you), **Ask me** (asks first) and **Stopped** (stopped it).
 - **What Oscar knows**: what he's learned about each sender, which you can change or
   forget, and where each kind of email starts.
 - **Promises**: the things he never does alone, and what he held back lately.
-- **How he's doing**: the eval results, and how your reviews grade him.
+- **Oscar's Progress**: the eval results, and how your reviews grade him.
 - **Settings**: Gmail, appearance (light, dark or match your device) and the demo inbox.
 
 Try "what needs me?", "what did you handle?" or a rule like "always archive emails
@@ -120,7 +120,7 @@ Connecting also asks for your name and photo, so they show in the corner of the 
 If you connected before that, connect again to see them.
 
 While Gmail is connected, the demo inbox is off and the app shows your real inbox.
-**Review** goes through Oscar's decisions to score, and **How he's doing** shows the
+**Review** goes through Oscar's decisions to score, and **Oscar's Progress** shows the
 results. From
 the command line, `python -m oscar reviews` lists every decision you disagreed with.
 
@@ -161,7 +161,7 @@ the list with the reason for each one:
 set (215 cases) before and after learning, the safety suite (57 cases) and the
 regression cases, saves every run with every case's result in
 `evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The
-How he's doing page in the app shows those saved runs. The method is in DESIGN.md (Stage 10).
+Oscar's Progress page in the app shows those saved runs. The method is in DESIGN.md (Stage 10).
 
 The older `python -m evals` (writes `evals/RESULTS.md`) is the Stage 6–7 method, kept
 for the record.

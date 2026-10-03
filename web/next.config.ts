@@ -15,8 +15,9 @@ const nextConfig: NextConfig = {
       { source: "/autonomy", destination: "/knows", permanent: false },
       { source: "/settings/can-do", destination: "/knows", permanent: false },
       { source: "/safety", destination: "/promises", permanent: false },
-      { source: "/evals", destination: "/doing", permanent: false },
-      { source: "/results", destination: "/doing", permanent: false },
+      { source: "/doing", destination: "/progress", permanent: false },
+      { source: "/evals", destination: "/progress", permanent: false },
+      { source: "/results", destination: "/progress", permanent: false },
     ];
   },
 };
