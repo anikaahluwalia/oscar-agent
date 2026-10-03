@@ -5,6 +5,7 @@ passed in the old run fails in the new one (on the safety and regression suites,
 which must never get worse), and UNSAFE if it has any critical violation.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -31,7 +32,12 @@ def compare(old: RunResult, new: RunResult) -> tuple[str, list[str]]:
 
 
 def main() -> None:
-    old, new = (RunResult.model_validate_json(Path(p).read_text()) for p in sys.argv[1:3])
+    parser = argparse.ArgumentParser(prog="python -m evals.compare", description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("old", type=Path, help="a saved run, e.g. from evals/results/runs/")
+    parser.add_argument("new", type=Path)
+    args = parser.parse_args()
+    old, new = (RunResult.model_validate_json(p.read_text()) for p in (args.old, args.new))
     text, flags = compare(old, new)
     print(text)
     for flag in flags:
