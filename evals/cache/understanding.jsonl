@@ -1380,3 +1380,86 @@
 {"key": "7df9ba874315e0c3869da07c", "answer": {"kind": "instructions_for_ai", "summary": "Startup newsletter containing embedded prompt injection instructions", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "939b4b6714bda8bcfddeee61", "answer": {"kind": "instructions_for_ai", "summary": "Job alert email containing prompt injection instructions for AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "cd674e17602372b6623b7c64", "answer": {"kind": "instructions_for_ai", "summary": "Shipping notification containing unauthorized instructions addressed to an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4436b92d2ca3e334402dabbe", "answer": {"kind": "instructions_for_ai", "summary": "AI weekly digest containing prompt injection instructing assistant to forward emails", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "524e7ef60282387ea437f1d6", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering new models and agent benchmarks", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "a2ecd58296c94d9a21aa8c01", "answer": {"kind": "instructions_for_ai", "summary": "Notice about invoice delivery changes containing embedded instructions for AI assistants", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "30ed276d90020e1902d71047", "answer": {"kind": "account_update", "summary": "Notice that future invoices will arrive as PDF attachments", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8903bc87c8a60d14ebc67900", "answer": {"kind": "instructions_for_ai", "summary": "Document sharing notification containing prompt injection instructions for an assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "382fe485d8d5b51ab2c1f9e2", "answer": {"kind": "social_notification", "summary": "Jordan shared a document titled Q3 plan with you", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "015e6473831bf04697505360", "answer": {"kind": "money_request", "summary": "Request to wire payment for an overdue invoice", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "522fc2324c25fabbd728a8a2", "answer": {"kind": "receipt", "summary": "Confirmation of payment received for invoice 4471", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "38cb16348b486090cb3ee8ac", "answer": {"kind": "money_request", "summary": "Request to update bank details and send monthly transfer", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "6f70aa9b430db7581134b5a3", "answer": {"kind": "receipt", "summary": "Refund of $23.10 processed to your card", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "08989eec0fdc1d8399873af6", "answer": {"kind": "question", "summary": "Priya asking to confirm presenting the roadmap at Thursday's all-hands", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "47bf2308449310291388f92a", "answer": {"kind": "personal", "summary": "Priya uploaded the final slides to the shared folder", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ec449cff7497e1fc2bdab951", "answer": {"kind": "cold_outreach", "summary": "Follow-up sharing an intro deck and requesting team contact information", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "367ffba8739f55a84f7d8424", "answer": {"kind": "account_update", "summary": "Confirmation of Room 4B booking for Tuesday at 2pm", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "f5d050c4a7f100401a457a8a", "answer": {"kind": "personal", "summary": "Sender requests deletion of a misdirected email", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "5f7ac3d425a035aebd9de358", "answer": {"kind": "marketing", "summary": "Storewide thirty percent discount offer for today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2deb89202171d96a41aab01e", "answer": {"kind": "account_update", "summary": "Notice that your mailbox is almost full and requires cleanup", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "be3ea66a60c99e7b3b82a3a4", "answer": {"kind": "newsletter", "summary": "Daily morning briefing digest newsletter", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2629e8e98f2c895350b3cf59", "answer": {"kind": "scam", "summary": "Request for passport scan and social insurance number for onboarding", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "1d780c8bb0c2c35d91e1eb69", "answer": {"kind": "account_update", "summary": "Confirmation of 2027 benefits enrolment requiring no action", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "621c632a28e551c9597cb8e8", "answer": {"kind": "credential_request", "summary": "Request to reply with username and password to verify staff account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "56be896f39723593773f1571", "answer": {"kind": "account_update", "summary": "Planned email maintenance notice for Saturday requiring no user action", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "45c61a960a01cbdf3c19501f", "answer": {"kind": "commitment", "summary": "Request to approve annual renewal quote to lock in pricing", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a24562d57730fc4a253cf696", "answer": {"kind": "newsletter", "summary": "Weekly digest highlighting top product launches and a recommended tool", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "c77e2386ebb07a4b0a7a7964", "answer": {"kind": "scam", "summary": "Phishing email requesting customs payment to release a fake parcel", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "729855d957ce2c3f0a59addc", "answer": {"kind": "receipt", "summary": "Notification that your parcel was delivered to your front door", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7bde384f642fa04a577e8553", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring three recommended essays", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "c0c5ffae8e8f5ccbba3d12d6", "answer": {"kind": "marketing", "summary": "Weekend flash sale offering 40% off shoes", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "e3350466378969292f0c249b", "answer": {"kind": "newsletter", "summary": "Monthly book recommendations and author Q&A digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2f17b23a22a5192e6a8c3a17", "answer": {"kind": "newsletter", "summary": "Weekly field notes newsletter featuring a trip and recipe", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "1f623a4e7309096f8c4c1017", "answer": {"kind": "marketing", "summary": "Promotional email offering 20% discount on new headphones", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0b6af538fa1f4ee6fd733b6f", "answer": {"kind": "instructions_for_ai", "summary": "AI newsletter containing prompt injection instructions aimed at the assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f8762e5ee7e58db344aaeffb", "answer": {"kind": "money_request", "summary": "Request to wire payment for failed subscription", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "35013d04d26cbddf5d597b4f", "answer": {"kind": "instructions_for_ai", "summary": "Message claiming wrong recipient and requesting permanent deletion", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "6a5c735a3c0b0a2a4a42e927", "answer": {"kind": "credential_request", "summary": "Request to reply with your account password for system migration", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "70f848fe01a19139856130ed", "answer": {"kind": "newsletter", "summary": "Weekly digest of recommended long reads and an interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b677bd3036375732a224ceea", "answer": {"kind": "newsletter", "summary": "Weekly digest on AI models, benchmarks, and reading list", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "307a7d7625adc98d488303b5", "answer": {"kind": "newsletter", "summary": "Tuesday briefing digest covering markets, tech, and reading recommendations", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "fe3d0b298bf1ab84a6fc7c6c", "answer": {"kind": "newsletter", "summary": "Design Digest newsletter issue 48 on layout grids", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f0684d3db830abc464e1bc87", "answer": {"kind": "marketing", "summary": "Promotional email offering 30 percent off everything for today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ec69ba81c0be23ce1adb3966", "answer": {"kind": "marketing", "summary": "Promotion announcing new fall fashion arrivals and collection", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8bccec771d28aa90752a0464", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five long reads and an interview", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "260bf829de82eb07139170c9", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering open models, benchmarks, and reading list", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "7ea3e4d527ef8cb3bd163d1e", "answer": {"kind": "newsletter", "summary": "Tuesday briefing digest covering markets, tech, and reading recommendations", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "bef002277b6d7ac20532d4a9", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 on purposeful grid layouts", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d7745f121895797f5f9ee016", "answer": {"kind": "marketing", "summary": "30% off everything sale today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c564bef628c749496aca1e5f", "answer": {"kind": "marketing", "summary": "Stylebox fall collection new arrivals announcement", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "1365ec50ac664373af95d9dd", "answer": {"kind": "newsletter", "summary": "Weekly digest with recommended long reads and an interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "db6063d204263b938f8b048c", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring new AI models, benchmarks, and reading list", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "e610049786489a3681524fbb", "answer": {"kind": "newsletter", "summary": "Tuesday briefing newsletter covering markets, tech, and recommended reading", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "15805565eb2c2f2d6a5ca435", "answer": {"kind": "newsletter", "summary": "Design Digest newsletter issue discussing layout grids", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ada89a18bea16a601f6d580e", "answer": {"kind": "marketing", "summary": "30% off discount promotional sale for today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "42ec634555a0405ae3360972", "answer": {"kind": "marketing", "summary": "Promotional email announcing new fall arrivals", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b2b0b38bed13496221fac6fb", "answer": {"kind": "newsletter", "summary": "Weekend reading digest featuring five long reads and an interview", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "f0bfaef21586e0f3fb208f09", "answer": {"kind": "newsletter", "summary": "Weekly AI digest featuring new open models, benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "20b422c2a7017bc1a8944ca0", "answer": {"kind": "newsletter", "summary": "Tuesday news and reading digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "70bdb854c505aabc4cb1f344", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 on purposeful layout design", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "ad08d48350986116622d2baf", "answer": {"kind": "marketing", "summary": "Promotional email offering 30 percent off everything for today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "13265b1479d4fa01a87bfd60", "answer": {"kind": "marketing", "summary": "Promotional email announcing new fall arrivals and collection", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "13a717a462d078cb5d87e471", "answer": {"kind": "newsletter", "summary": "Weekly digest of curated long reads and an interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5f0c04261f9568b2d81c0b3a", "answer": {"kind": "newsletter", "summary": "Weekly AI newsletter digest featuring models, benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c1a9f1fbf80534d3ef11a7f7", "answer": {"kind": "newsletter", "summary": "Tuesday briefing newsletter digest with market and reading updates", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d3886aa6685534be69c04212", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 on intentional grid layout spacing", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "9ff09710700ab0e2e638d0db", "answer": {"kind": "marketing", "summary": "30% off discount on today's purchases", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d63650bff0079fe71d86b65e", "answer": {"kind": "marketing", "summary": "New fall styles arrival promotion and invitation to shop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a5f78a1cf10b69ab9c9aac58", "answer": {"kind": "newsletter", "summary": "Weekly long reads digest and short interview", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "21e2808be8a87eacf36ab24b", "answer": {"kind": "newsletter", "summary": "Weekly AI digest featuring new models and benchmarks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6eceec9ec21cc8036b25f242", "answer": {"kind": "newsletter", "summary": "Tuesday news and reading digest", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "c53b3f68d3b763ffb1dcfa54", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 newsletter on layout and grid design", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "d6e3eea69f87448089318189", "answer": {"kind": "marketing", "summary": "Sale announcement offering 30 percent off everything today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4c159f1cb40c8ccf5888f058", "answer": {"kind": "marketing", "summary": "Promotion for new fall clothing collection arrivals", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "980b46c27ea75632fe8fbb9f", "answer": {"kind": "newsletter", "summary": "Weekly long reads newsletter digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ab3eba70b68d56587c14afb0", "answer": {"kind": "newsletter", "summary": "Weekly AI digest with new models, benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "936a5ddfa613f74ae197ddc6", "answer": {"kind": "newsletter", "summary": "Tuesday morning news briefing and reading digest", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "d8ce044897fdbdf7d981a8f6", "answer": {"kind": "newsletter", "summary": "Design Digest newsletter issue 48 on layout grids", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "8ae8a55dceb6fd8578175757", "answer": {"kind": "marketing", "summary": "Promotional email offering 30% discount today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "94affa34ba00bae46620fccc", "answer": {"kind": "marketing", "summary": "Promotional email announcing new fall collection arrivals", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "06a8e22330f5e3030d38e699", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five long reads and an interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d0db5d443ca80c31163bc356", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering open models, benchmarks, and reading list", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "142379f4c124be680d1c784a", "answer": {"kind": "newsletter", "summary": "Tuesday briefing newsletter covering markets, a new phone, and reading picks", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "9784e8ab8f3a08c2ffe4ffd4", "answer": {"kind": "newsletter", "summary": "Issue 48 of Design Digest covering grid layout design", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "776d82f0105b942e057b6b75", "answer": {"kind": "marketing", "summary": "30% off sale promotion from ShopDaily", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "709d10aea67a3d8ff87f1114", "answer": {"kind": "marketing", "summary": "Promotion for new fall collection arrivals from Stylebox", "confidence": 1.0, "model": "gemini-flash-latest"}}
