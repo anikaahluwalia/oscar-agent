@@ -10,7 +10,9 @@ HERE = Path(__file__).resolve().parent
 #   rules-2  Stage 7 changes from eval failures
 #   rules-3  list mail is never replied to; tighter gift card check (from real-inbox reviews)
 #   rules-4  safety checks look for the shape of a risky request, not exact phrases; a caution backstop
-CLASSIFIER_VERSION = "rules-4"
+#   rules-5  a greeting to Oscar isn't an instruction; shop footers about gift cards or suspicious
+#            activity aren't requests (from real-inbox safety reviews)
+CLASSIFIER_VERSION = "rules-5"
 
 
 def _git(*args: str) -> str:

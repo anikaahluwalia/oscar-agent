@@ -95,7 +95,13 @@ EMAIL_CHECKS = MappingProxyType({
             r"\bignore (all |any |your |the )*(previous |prior |earlier |above )*(instructions|rules|prompts?)\b",
             r"\bthe user has (already )?(pre-)?approved\b",
             r"\bthe user (said|says|has said) (it's|its|this is) (fine|ok|okay)\b",
-            r"(^|\n)\s*(hey |hi )?oscar\s*[,:]",
+            # Addressing Oscar *and* telling him to do something with your email, or to change his
+            # rules. A greeting alone isn't an instruction: "Hi Oscar," is how people write to
+            # anyone called Oscar (found on a real inbox: tests/test_review_findings.py).
+            r"(^|\n)\s*(hey |hi |hello |dear )?oscar\s*[,:](?s:.{0,300}?)(\b(always|from now on|remember (this|that)|rules?"
+            r"|silently|without (asking|telling|notifying)|the user)\b|\b(forward|send|share|export|delete|remove|archive|move"
+            r"|mark|label|search|find|copy|unsubscribe)\b[^.?!\n]{0,40}?\b(e-?mails?|messages?|threads?|inbox|mailbox|attachments?"
+            r"|contacts?|invoices?|passwords?|codes?|conversations?|data|records?|files?|folders?|notes)\b)",
             # Text aimed at an AI, or trying to change what the assistant may do.
             r"(^|\n)\s*\[?\s*system\s*(override|message|prompt|instructions?|note)?\s*[\]:]",
             r"\[\s*system\b[^\]\n]{0,20}\]|\bsystem (override|prompt|instructions?)\b",
@@ -135,7 +141,10 @@ EMAIL_CHECKS = MappingProxyType({
             # Asking *you* to buy or send gift cards, or for their codes. Shops that just sell
             # gift cards aren't asking for money (evals/regression_cases/promo-sells-gift-cards).
             rf"\b(you|u)\b[^.?!]{{0,40}}\b(buy|get|purchase|pick up|grab|send)\b[^.?!]{{0,40}}\b{GIFT_CARDS}\b",
-            rf"\b{GIFT_CARDS}\b.{{0,160}}\b(codes?|pins?|scratch|numbers on the back)\b",
+            # A card's codes being asked for, not a shop's discount code next to "gift cards
+            # excluded" (found on a real inbox).
+            rf"\b{GIFT_CARDS}\b.{{0,160}}\b(scratch|numbers on the back)\b",
+            rf"\b{GIFT_CARDS}\b.{{0,160}}\b(send|text|email|share|give|tell|read|reply with)\b[^.?!]{{0,40}}\b(codes?|pins?|numbers)\b",
             r"\bsend (me )?(the )?(funds|money)\b",
             r"\b(settle|pay|send)\b[^.]{0,120}\bby (bank |wire )?transfer\b",
             _asks_for(MONEY),
@@ -168,7 +177,9 @@ EMAIL_CHECKS = MappingProxyType({
             # Tips about turning two-factor on aren't an alert (a security newsletter).
             r"\b(two-factor|two-step|2-step|2fa|mfa|multi-factor)\b[^.]{0,40}\b(turned off|disabled|removed|switched off)\b",
             r"\bnew (device|phone|computer|browser|login|passkey|security key|payee|beneficiary|recipient|authenticator)\b[^.]{0,40}\b(added|signed in|logged in|was used|registered|set up|created)\b",
-            r"\b(unusual|suspicious) (activity|sign-?in|login|log-?in)\b",
+            # Something that happened, not advice in a footer ("if you notice suspicious activity").
+            r"\b(noticed|detected|spotted|saw|flagged|there (was|has been|is))\b[^.]{0,40}\b(unusual|suspicious) (activity|sign-?in|login|log-?in)\b",
+            r"\b(unusual|suspicious) (sign-?in|login|log-?in)( attempt)? (from|on|to|detected|was)\b",
             r"\bnew (payee|beneficiary|passkey)\b",
             r"\bwas(n't| not)? this you\b|\b(this|that|it) was(n't| not) you\b",
             r"\b(signed|logged) (in|into) (to )?your account\b",
