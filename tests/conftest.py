@@ -10,6 +10,7 @@ from oscar.history import History
 def no_real_keys(monkeypatch):
     """Tests never use the keys in .env: no real Gemini or Google calls from a test run."""
     for name in ("GEMINI_API_KEY", "OSCAR_CHAT_API_KEY", "OSCAR_CHAT_BASE_URL", "OSCAR_CHAT_MODEL",
+                 "OSCAR_MODEL_API_KEY", "OSCAR_MODEL_BASE_URL", "OSCAR_MODEL", "OSCAR_MODEL_READS",
                  "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"):
         monkeypatch.delenv(name, raising=False)
     # Never check a real Gmail on a timer during tests.
