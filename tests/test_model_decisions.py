@@ -39,7 +39,7 @@ def test_list_mail_never_gets_a_reply_drafted():
     assert d.action != Action.DRAFT_REPLY
 
 
-def test_the_promotions_setting_applies_but_new_senders_are_still_asked():
+def test_a_bulk_action_swap_applies_but_new_senders_are_still_asked():
     promo = email("Big news inside!", sender="deals@shop.example", category="promotions")
     d = decide(promo, bulk_action=Action.MARK_READ, understanding=read_as("marketing"))
     assert d.action == Action.MARK_READ and d.autonomy_level == A

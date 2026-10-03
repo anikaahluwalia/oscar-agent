@@ -169,7 +169,7 @@ def test_kind_habits_count_only_answers_about_that_kind():
     assert prefs.suggest(Action.ARCHIVE, A, "new@w.example", "fyi").level == S
 
 
-def test_mark_as_read_setting_doesnt_skip_asking_new_senders():
+def test_bulk_mark_as_read_doesnt_skip_asking_new_senders():
     alert = email("We locked your account after suspicious activity. Call us at 555. Manage your preferences.",
                   sender="alerts@bank.example", subject="Your account has been locked", category="updates")
     assert decide(alert, bulk_action=Action.MARK_READ).autonomy_level in (A, E)
