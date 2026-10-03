@@ -1107,3 +1107,86 @@ because his rules don't know it, and learning can't help with what he can't read
 That's the next piece of work (understanding the email better, with the safety
 checks still having the last word), not more learning.
 
+
+## Stage 11 — Understanding emails, learning from reviews, and the review workspace
+
+### A model reads the email
+
+The last eval said Oscar recognises too little: when no keyword rule matched, he
+guessed, and a guess always asks. Now Gemini reads the email and picks one kind
+from a fixed list (`oscar/understand.py`), with a one-line summary of what it is.
+How it's kept safe:
+
+- **The model never picks the action.** Each kind maps to an action in code.
+- **It fills in, it doesn't overrule.** Its reading is used when the rules found
+  nothing. It never replaces a rule action that has a safety floor (money, codes,
+  sending, forwarding, deleting, invites), and readings under 60% confidence are
+  ignored.
+- **Risky kinds only make him stricter.** A scam, a request for money or a code, a
+  security alert, a commitment, or text aimed at an AI stops the email. Outages
+  ("checkout is broken") come straight to you too, without counting as a safety stop.
+- **The checks still have the last word.** The safety checks and the caution
+  backstop run on the raw email after the model.
+- **The email is data.** It goes in JSON-encoded and labelled as data, and any
+  answer outside the format is thrown away. On any failure Oscar uses the rules alone.
+- **Your real emails are only read if you turn it on.** `OSCAR_MODEL_READS` is
+  `off` by default; `preview` sends the sender, subject and first lines, `full` the
+  whole email (only with a paid key). Answers are cached in the account's own data
+  folder, so nothing is read twice and no real email goes in the repo.
+
+Measured with `python -m evals.measure --model fill`. Only the made-up test emails
+go to the model, and its answers are saved in `evals/cache/understanding.jsonl`, so
+a rerun gives the same numbers without calling it. Held-out v2, after learning:
+
+| | Rules only | With the model |
+|---|---|---|
+| Right level | 53.6% | 78.2% |
+| Right action | 52.2% | 83.7% |
+| Asked when he didn't need to | 54.5% | 24.1% |
+| Acted when he should have waited | 12.0% | 8.0% |
+| Safe autonomous resolution | 33.8% | 52.4% |
+| Calibration error | 0.21 | 0.05 |
+| Critical safety violations | 0 | 0 |
+
+The safety suite still catches every case (0 critical, 8.3% false alarms on
+look-alikes) and all 9 regression cases pass.
+
+The first run with the model **failed the gate**: one critical miss in held-out v1
+("replying to this email confirms your acceptance of the terms", read as a
+question), three regression cases, and more "acted when he should have waited"
+(16%, from cold sales pitches and outages read as questions). The fix was to give
+the model names for those: cold outreach, urgent issue and commitment, plus the
+commitment wording the check missed. The three regression failures were a harness
+bug the model exposed: it dropped each case's own promotions setting.
+
+**v2 isn't a blind test any more.** Those new kinds came from looking at v2's
+failures, so v2 has now been seen twice. The honest next step is a fresh held-out
+v3, written and labelled blind the same way v2 was.
+
+### Reviews teach Oscar
+
+Your reviews used to only grade him. Now each full answer is also a lesson for that
+sender (`review.lessons`): a yes for what he did when he was right, a yes for the
+action you said (a strong one for "quietly", so one answer goes a long way), a no
+when he acted and you'd have done otherwise, and "always ask" for a missed risk,
+which can only make him stricter. It stays honest without a cut-off date, because
+every decision is logged before you review it: a first read only ever used what
+earlier reviews taught. A re-read never learns from your answer to that same email,
+since that's what it's graded against. Old half-answers teach nothing.
+
+### The review workspace
+
+Review is now the two-pane workspace from the mock-up, in Oscar's own colours
+(charcoal, white and grey, no brand colour): a stats strip (reviewed, how often you
+said he was right, habits learned, acted when you'd have stopped it), filter chips
+with counts, the emails on the left and the open one on the right with his
+decision, what the email is, his reasoning, the safety checks he ran and your
+answer. "Check these first" puts the reviews that teach him most at the top: what
+he couldn't read, then what he wasn't sure of, then new senders. J and K move, Y says
+he got it right. Senders get a letter, not a logo, so no sender's address goes to a
+logo service.
+
+### Next
+
+Stage 12 moves Oscar off read-only: reversible actions in Gmail (labels first, then
+mark as read and archive), each one undoable. It needs Gmail's modify permission.
