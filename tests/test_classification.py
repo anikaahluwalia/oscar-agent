@@ -216,3 +216,15 @@ def test_patterns_say_what_they_rest_on(client):
     [rule] = [r for r in rows if r["scope"] == "kind" and r["action"] == "ARCHIVE"]
     assert rule["status"] == "rule" and rule["decision_id"] == newsletter["id"]
     assert json.dumps(rows)  # plain JSON for the app
+
+
+def test_a_domain_with_one_sender_is_not_a_pattern():
+    from oscar.feedback import FeedbackKind, record_feedback
+    from oscar.overview import patterns
+
+    history = History()
+    for n, sender in enumerate(["deals@one-shop.example", "news@one-shop.example", "hi@other-shop.example"]):
+        d = decide_in(history, email("newsletter", id=f"n{n}", sender=sender))
+        record_feedback(history, d.id, FeedbackKind.JUST_HANDLE_IT)
+    domains = {r["name"] for r in patterns(history) if r["scope"] == "domain"}
+    assert domains == {"one-shop.example"}, "two senders there is a start; one is only that sender"

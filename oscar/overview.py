@@ -231,6 +231,9 @@ def patterns(history: History) -> list[dict]:
             examples[key] = d.id
     rows = []
     for row in prefs.broad_summary(include_learning=True):
+        # One sender at a domain is only what you said about that sender, which is shown with them.
+        if row["scope"] == "domain" and row["level"] is None and row["senders"] < prefs.policy.domain_senders:
+            continue
         level = apply_floor(row["action"], row["level"], "")[0] if row["level"] else None
         key = (row["kind"], row["action"])
         rows.append({**row, "level": level, "status": evidence_label(row, prefs),
