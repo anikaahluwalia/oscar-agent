@@ -60,9 +60,9 @@ REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None) -> None:
-    if decision.source == "gmail":
-        # Stage 9 is read-only: Oscar didn't do anything, so there's nothing to approve or undo,
-        # and feedback would make him learn from emails that are being used to score him.
+    if decision.source == "gmail" and not decision.acting:
+        # Made while Oscar only read the inbox: he didn't do anything, so there's nothing to
+        # approve or undo. Reviewing is how you answer these.
         raise FeedbackError("I'm only reading your real inbox for now, so there's nothing to approve or undo. Review it instead.")
     level = decision.autonomy_level
     if kind == FeedbackKind.APPROVE and level not in (AutonomyLevel.ASK_FIRST, AutonomyLevel.PROCEED_AND_NOTIFY):

@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 import httpx
 from pydantic import BaseModel, Field
 
+from oscar.act import ACTED_LEVELS, MAX_PER_CHECK, ActionError, can_do, do
 from oscar.agent import decide
 from oscar.review import teaching
 from oscar.gmail import GmailClient, GmailError, parse_message
@@ -52,6 +53,7 @@ class FollowUp(BaseModel):
 class SyncResult(BaseModel):
     new: int
     skipped: int  # emails Oscar couldn't read this time; they're tried again next check
+    done: int = 0  # Stage 12: actions Oscar took in Gmail on his own
 
 
 def reader_for(history: History) -> Reader | None:
@@ -63,17 +65,18 @@ def reader_for(history: History) -> Reader | None:
     return Reader(httpx.Client(timeout=40), cache, reads=reads)
 
 
-def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None) -> SyncResult:
-    """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first."""
+def sync(history: History, gmail: GmailClient, limit: int = 25, reader: Reader | None = None, act: bool = False) -> SyncResult:
+    """Decide on up to `limit` inbox emails Oscar hasn't seen, oldest of them first. With act
+    (Stage 12), he also does what he decided to do on his own, if it's one of his undoable actions."""
     if not _syncing.acquire(blocking=False):
         raise AlreadySyncing("I'm already checking your inbox.")
     try:
-        return _sync(history, gmail, limit, reader if reader is not None else reader_for(history))
+        return _sync(history, gmail, limit, reader if reader is not None else reader_for(history), act)
     finally:
         _syncing.release()
 
 
-def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None) -> SyncResult:
+def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | None, act: bool) -> SyncResult:
     seen = {d.email_id for d in history.decisions.values()}
     # Walk back through the inbox, so emails that arrived since the last check
     # aren't missed when there are more of them than one page.
@@ -85,7 +88,7 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             break
     version = policy_version()
     bulk_action = Action(history.settings["bulk_action"]) if history.settings.get("bulk_action") else None
-    new = skipped = 0
+    new = skipped = done = 0
     for ref in reversed(unseen[:limit]):
         try:
             email, info = _read(gmail, ref["id"])
@@ -93,12 +96,19 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
             skipped += 1
             continue
         understanding = reader.read(email) if reader else None
-        decision = decide(email, Preferences.from_feedback(teaching(history)), read_only=True, bulk_action=bulk_action,
+        decision = decide(email, Preferences.from_feedback(teaching(history)), read_only=not act, bulk_action=bulk_action,
                           understanding=understanding)
-        history.add_decision(decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version}))
+        decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
+        history.add_decision(decision)
         new += 1
+        if act and decision.autonomy_level in ACTED_LEVELS and can_do(decision) and done < MAX_PER_CHECK:
+            try:
+                do(history, gmail, decision, by="oscar")
+                done += 1
+            except (ActionError, GmailError, httpx.HTTPError):
+                pass  # the decision stays logged; the app shows it wasn't done
     follow_up(history, gmail)
-    return SyncResult(new=new, skipped=skipped)
+    return SyncResult(new=new, skipped=skipped, done=done)
 
 
 def recheck(history: History, gmail: GmailClient, limit: int = 50, reader: Reader | None = None) -> SyncResult:

@@ -19,9 +19,10 @@ from pydantic import BaseModel
 from oscar import gmail
 from oscar.config import API_URL, WEB_URL, setting
 
+from oscar.act import ActionError, ActionRecord, can_do, do, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
-from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, record_feedback
+from oscar.feedback import FeedbackError, FeedbackEvent, FeedbackKind, check_allowed, record_feedback
 from oscar.history import History, default_data_dir, real_inbox_dir
 from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
@@ -152,6 +153,7 @@ class DecisionWithFeedback(BaseModel):
     feedback: list[FeedbackEvent]
     review: Review | None = None  # real inbox only: your latest review
     answer: dict | None = None  # real inbox only: what you said he should have done, and how this decision does
+    done: ActionRecord | None = None  # Stage 12: what Oscar did in Gmail for it, and whether it was undone
 
 
 @app.get("/decisions", response_model=list[DecisionWithFeedback])
@@ -160,7 +162,8 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
     return [
         DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id),
-                             answer=graded(history, d) if d.source == "gmail" else None)
+                             answer=graded(history, d) if d.source == "gmail" else None,
+                             done=history.action_for(d.id))
         for d in decisions
     ]
 
@@ -257,14 +260,35 @@ def learned(history: History = Depends(get_history)) -> list[dict]:
 
 
 @app.post("/feedback", response_model=FeedbackResponse)
-def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_history)) -> FeedbackResponse:
-    if history.get_decision(request.decision_id) is None:
+def feedback_endpoint(request: FeedbackRequest, history: History = Depends(get_history),
+                      tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> FeedbackResponse:
+    decision = history.get_decision(request.decision_id)
+    if decision is None:
         raise HTTPException(404, f"I can't find decision {request.decision_id}.")
     try:
+        check_allowed(decision, request.kind, request.edited_text)
+        # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back.
+        # Gmail goes first, so the feedback is only saved if it worked.
+        if decision.source == "gmail" and decision.acting:
+            client = gmail.GmailClient(tokens, http)
+            if request.kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST \
+                    and can_do(decision) and acting_on(tokens, history):
+                do(history, client, decision, by="you")
+            elif request.kind == FeedbackKind.UNDO and history.action_for(decision.id):
+                undo(history, client, decision.id)
         event, reply = record_feedback(history, request.decision_id, request.kind, request.edited_text)
-    except FeedbackError as e:
+    except (FeedbackError, ActionError) as e:
         raise HTTPException(400, str(e))
+    except gmail.GmailError as e:
+        raise HTTPException(502, f"Gmail didn't let me do that: {e}")
+    except httpx.HTTPError:
+        raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
     return FeedbackResponse(event=event, reply=reply)
+
+
+def acting_on(tokens: gmail.TokenStore, real: History) -> bool:
+    """Oscar acts in Gmail only when you've turned it on and the connection allows it."""
+    return bool(real.settings.get("acting")) and gmail.can_act(tokens.load())
 
 
 # --- Gmail, read-only (Stage 9) ---------------------------------------------
@@ -273,8 +297,9 @@ _states: dict[str, float] = {}  # sign-in attempts in progress, so a callback ca
 
 
 @app.get("/gmail")
-def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens)) -> dict:
+def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens), real: History = Depends(get_real_history)) -> dict:
     saved = tokens.load() or {}
+    acting = acting_on(tokens, real)
     return {
         "configured": gmail.configured(),
         "connected": bool(saved),
@@ -282,8 +307,24 @@ def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens)) -> dict:
         "connected_at": saved.get("connected_at"),
         "last_sync": saved.get("last_sync"),
         "auto_check_minutes": auto_check_minutes(),
-        "read_only": True,
+        "can_act": gmail.can_act(saved),  # the connection allows changing labels
+        "acting": acting,  # Oscar acts in Gmail (Stage 12)
+        "read_only": not acting,
     }
+
+
+class ActingRequest(BaseModel):
+    on: bool
+
+
+@app.post("/gmail/acting")
+def set_acting(request: ActingRequest, tokens: gmail.TokenStore = Depends(get_tokens),
+               real: History = Depends(get_real_history)) -> dict:
+    """Let Oscar act in Gmail, or go back to only reading. Only new emails are acted on."""
+    if request.on and not gmail.can_act(tokens.load()):
+        raise HTTPException(409, "Connect Gmail again with permission to act first.")
+    real.set_setting("acting", request.on)
+    return {"acting": acting_on(tokens, real)}
 
 
 def _back_to_settings(gmail_result: str) -> RedirectResponse:
@@ -293,8 +334,9 @@ def _back_to_settings(gmail_result: str) -> RedirectResponse:
 
 
 @app.get("/auth/google/start")
-def google_start() -> RedirectResponse:
-    """Send the user to Google to give Oscar read-only access to Gmail."""
+def google_start(act: bool = False) -> RedirectResponse:
+    """Send the user to Google to give Oscar access to Gmail: read-only, or with act, permission to
+    change labels (Stage 12)."""
     if not gmail.configured():
         return _back_to_settings("not_configured")
     now = time.time()
@@ -303,7 +345,7 @@ def google_start() -> RedirectResponse:
             del _states[state]
     state = secrets.token_urlsafe(24)
     _states[state] = now + 600
-    return RedirectResponse(gmail.auth_url(state))
+    return RedirectResponse(gmail.auth_url(state, act=act))
 
 
 @app.get("/auth/google/callback")
@@ -329,6 +371,7 @@ def google_callback(
             "access_token": granted["access_token"],
             "expires_at": time.time() + granted.get("expires_in", 3600),
             "connected_at": time.time(),
+            "scope": granted.get("scope", ""),
         })
         saved = trial.load()
         saved["address"] = gmail.GmailClient(trial, http).address()
@@ -369,7 +412,7 @@ def gmail_sync(
 
 def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, limit: int = 25):
     """One check for new email, by you or by the timer, and note when it happened."""
-    result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100))
+    result = sync(real, gmail.GmailClient(tokens, http), limit=min(max(limit, 1), 100), act=acting_on(tokens, real))
     saved = tokens.load()
     if saved:
         saved["last_sync"] = time.time()

@@ -99,6 +99,9 @@ class Decision(BaseModel):
     # Stage 11: who worked out what the email is (the keyword rules, the model, or nobody: a guess),
     # and the model's one-line summary of it.
     understood_by: Literal["rules", "model"] | None = None
+    # Stage 12: made while Oscar could act in Gmail. Before that, decisions on a real inbox are only
+    # what he would have done.
+    acting: bool = False
     summary: str = ""
     confidence: float = 0.5  # how sure Oscar is that the level is right (see agent.confidence_for)
     # "gmail" decisions are on a real inbox. Oscar only reads it (Stage 9), so he

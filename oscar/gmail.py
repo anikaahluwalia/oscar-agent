@@ -190,13 +190,17 @@ class GmailClient:
             raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code)
         return response.json()
 
-    def label_id(self, name: str) -> str:
-        """The id of Oscar's label "Oscar/<name>", made the first time it's needed."""
-        full = LABEL_PREFIX + name
+    def _mine(self) -> dict[str, str]:
+        """Oscar's own labels (named "Oscar/..."), by name, looked up once per client."""
         if self._oscar_labels is None:
             self._oscar_labels = {l["name"]: l["id"] for l in self._get("/labels").get("labels", [])
                                   if l.get("name", "").startswith(LABEL_PREFIX)}
-        if full not in self._oscar_labels:
+        return self._oscar_labels
+
+    def label_id(self, name: str) -> str:
+        """The id of Oscar's label "Oscar/<name>", made the first time it's needed."""
+        full = LABEL_PREFIX + name
+        if full not in self._mine():
             made = self._post("/labels", {"name": full, "labelListVisibility": "labelShow", "messageListVisibility": "show"})
             self._oscar_labels[full] = made["id"]
         return self._oscar_labels[full]
@@ -204,7 +208,8 @@ class GmailClient:
     def modify_labels(self, message_id: str, add: list[str], remove: list[str]) -> None:
         """Add and remove labels on one email. Only UNREAD, INBOX and Oscar's own labels: anything
         else is refused here, before Gmail is asked."""
-        mine = set((self._oscar_labels or {}).values())
+        changing = [label for label in add + remove if label not in SYSTEM_LABELS]
+        mine = set(self._mine().values()) if changing else set()
         for label in add + remove:
             if label not in SYSTEM_LABELS and label not in mine:
                 raise GmailError(f"Oscar isn't allowed to change the label {label!r}.")
