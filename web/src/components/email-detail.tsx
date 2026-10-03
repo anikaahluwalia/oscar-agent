@@ -1,95 +1,213 @@
-import { DecisionCard } from "@/components/decision-card";
-import { EmailBody } from "@/components/email-body";
-import { Highlight } from "@/components/highlight";
-import { StatusPill } from "@/components/status-pill";
-import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
-import { ExternalLinkIcon } from "lucide-react";
-import { gmailLink, previewOf } from "@/lib/text";
-import { dayLabel, formatTime } from "@/lib/time";
+"use client";
 
-type Props = { item: DecisionWithFeedback; onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean> };
+import { useState } from "react";
+import Link from "next/link";
+import { ChevronDownIcon, ExternalLinkIcon } from "lucide-react";
+import { notesOverclaim, outcomeOf, understoodBy, labelName, when } from "@/components/activity/outcome";
+import { DecisionActions } from "@/components/activity/decision-actions";
+import { TechnicalDetails } from "@/components/activity/technical-details";
+import { EmailBody } from "@/components/email-body";
+import { EmailLink } from "@/components/email-link";
+import { Highlight } from "@/components/highlight";
+import { Checklist } from "@/components/kit/checklist";
+import { answerLine } from "@/components/preference-card";
+import { SenderAvatar } from "@/components/review/sender-avatar";
+import { Button } from "@/components/ui/button";
+import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
+import { safetyChecks, whatItIs } from "@/lib/insights";
+import { ACTIONS, FEEDBACK, LEVEL_SOURCES, REPLIES, REVIEW_LABELS, STATUS, wouldOnly } from "@/lib/labels";
+import { gmailLink, previewOf } from "@/lib/text";
+import { answersFor, type OscarData } from "@/lib/use-oscar";
+import { cn } from "@/lib/utils";
+
+type Props = {
+  item: DecisionWithFeedback;
+  data: OscarData;
+  onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean>;
+  /** Set when this is an earlier decision and Oscar has decided on the email again since. */
+  latestId?: string;
+};
 
 /**
- * The start of the email, with what Oscar noticed marked. Oscar only keeps the start
- * of each email, so for a real one there's a link to the whole thing in Gmail.
+ * The start of a demo email, with what Oscar noticed marked. The demo only keeps the
+ * start of each email.
  */
 function EmailPreview({ decision }: { decision: DecisionWithFeedback["decision"] }) {
   const preview = previewOf(decision);
   const noticed = decision.noticed;
-  const shown = noticed && preview.toLowerCase().includes(noticed.toLowerCase());
-  const link = gmailLink(decision);
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-muted/40 p-4">
+    <div className="rounded-xl bg-muted/50 p-4">
       {preview ? (
-        <p className="leading-relaxed">
+        <p className="text-sm leading-relaxed">
           <Highlight text={preview} phrase={noticed} className="bg-status-needs/15" />
         </p>
       ) : (
         <p className="text-sm italic text-muted-foreground">No preview. This email is mostly images or links.</p>
       )}
-      {noticed && !shown && (
-        <p className="text-sm text-muted-foreground">
-          Oscar noticed <mark className="rounded-sm bg-status-needs/15 px-0.5 text-foreground">&ldquo;{noticed}&rdquo;</mark>
-        </p>
-      )}
-      {link && (
-        <a
-          href={link}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1.5 self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          Open in Gmail <ExternalLinkIcon className="size-3.5" />
-        </a>
-      )}
     </div>
   );
 }
 
-/** Under a real email: what Oscar noticed, and the email in Gmail. */
-function EmailLinks({ decision }: { decision: DecisionWithFeedback["decision"] }) {
-  const link = gmailLink(decision);
+function Part({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-      {decision.noticed ? (
-        <span>
-          Oscar noticed <mark className="rounded-sm bg-status-needs/15 px-0.5 text-foreground">&ldquo;{decision.noticed}&rdquo;</mark>
-        </span>
-      ) : (
-        <span />
-      )}
-      {link && (
-        <a href={link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 underline-offset-4 hover:text-foreground hover:underline">
-          Open in Gmail <ExternalLinkIcon className="size-3.5" />
-        </a>
-      )}
-    </div>
+    <section className="flex flex-col gap-1.5">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">{children}</div>
+    </section>
   );
 }
 
-/** The selected email, and Oscar's decision underneath it. */
-export function EmailDetail({ item, onFeedback }: Props) {
-  const { decision } = item;
+const TONE = {
+  done: "border-status-handled",
+  undone: "border-border",
+  waiting: "border-status-needs",
+  stopped: "border-status-blocked",
+  nothing: "border-border",
+} as const;
+
+/** One of Oscar's decisions, laid out for checking: the email, what he made of it, and what came of it. */
+export function EmailDetail({ item, data, onFeedback, latestId }: Props) {
+  const { decision: d, feedback, review } = item;
+  const [showEmail, setShowEmail] = useState(false);
+  const real = d.source === "gmail";
+  const would = wouldOnly(d);
+  const kind = whatItIs(d);
+  const learned = data.learned.find((r) => r.sender === d.sender && r.action === d.action);
+  const answers = answersFor(data.all, d.sender, d.action);
+  const anyAnswers = answers.approved + answers.declined + answers.undone > 0;
+  const outcome = outcomeOf(item);
+  const link = gmailLink(d);
+  const arrived = d.gmail?.received_at;
+
   return (
-    <article className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-2xl font-semibold tracking-tight">{decision.subject}</h2>
-          <StatusPill level={decision.autonomy_level} readOnly={decision.source === "gmail"} className="mt-1.5" />
+    <article className="flex flex-col gap-5 rounded-2xl border bg-card p-5 shadow-card sm:p-6" aria-labelledby="decision-title">
+      <header>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 id="decision-title" className="text-lg font-semibold">
+            {would ? "What Oscar would do" : "Oscar's decision"}
+          </h2>
+          <p className="text-xs text-muted-foreground">Decided {when(d.created_at)}</p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {decision.sender} · {dayLabel(decision.created_at)}, {formatTime(decision.created_at)}
-        </p>
       </header>
-      {decision.source === "gmail" ? (
-        <div className="flex flex-col gap-2">
-          <EmailBody decisionId={decision.id} />
-          <EmailLinks decision={decision} />
-        </div>
-      ) : (
-        <EmailPreview decision={decision} />
+
+      {latestId && (
+        <p className="rounded-xl bg-muted/50 px-4 py-3 text-sm">
+          This is an earlier decision. Oscar read this email again later.{" "}
+          <EmailLink id={latestId} className="font-medium text-primary underline-offset-4 hover:underline">
+            See his latest
+          </EmailLink>
+        </p>
       )}
-      <DecisionCard key={decision.id} item={item} onFeedback={onFeedback} />
+
+      <Part title="Email">
+        <div className="flex items-center gap-3">
+          <SenderAvatar sender={d.sender} size={36} />
+          <div className="min-w-0">
+            <p className="truncate font-medium text-foreground">{d.sender}</p>
+            <p className="truncate">{d.subject}</p>
+          </div>
+        </div>
+        {arrived && <p className="text-xs">Arrived {when(arrived)}</p>}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button variant="outline" className="min-h-11 sm:min-h-9" aria-expanded={showEmail} onClick={() => setShowEmail((s) => !s)}>
+            <ChevronDownIcon aria-hidden className={cn("transition-transform", showEmail && "rotate-180")} />
+            {showEmail ? "Hide the email" : real ? "Show the whole email" : "Show the email"}
+          </Button>
+          {link && (
+            <a
+              href={link}
+              target="_blank"
+              rel="noreferrer"
+              className="flex min-h-11 items-center gap-1.5 px-2 text-sm underline-offset-4 hover:text-foreground hover:underline sm:min-h-9"
+            >
+              Open in Gmail <ExternalLinkIcon aria-hidden className="size-3.5" />
+            </a>
+          )}
+        </div>
+        {showEmail && (real ? <EmailBody decisionId={d.id} /> : <EmailPreview decision={d} />)}
+      </Part>
+
+      <Part title="What it is">
+        <p className="text-foreground">{kind ?? "He couldn't tell what kind of email this is."}</p>
+        <p>{understoodBy(d)}.</p>
+        {d.noticed && (
+          <p>
+            He noticed <mark className="rounded-sm bg-status-needs/15 px-0.5 text-foreground">&ldquo;{d.noticed}&rdquo;</mark>
+          </p>
+        )}
+      </Part>
+
+      <Part title={would ? "What he would do" : "Proposed action"}>
+        <p className="text-foreground">
+          {ACTIONS[d.action]}
+          {d.action === "APPLY_LABEL" && real && <> &rarr; &ldquo;{labelName(d)}&rdquo;</>}
+        </p>
+        {REPLIES.has(d.action) && <p>He doesn&apos;t write or send replies. Replying is up to you.</p>}
+      </Part>
+
+      <Part title="Decision">
+        <span className={cn("inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-sm font-medium", STATUS[d.autonomy_level].pill)}>
+          <span className="size-1.5 rounded-full bg-current" aria-hidden />
+          {STATUS[d.autonomy_level].label}
+        </span>
+        <p>Why: {LEVEL_SOURCES[d.level_source]}.</p>
+        {/* His note is written as he decides, before Gmail. When it says he did something that
+            didn't happen (or a reply he never writes), leave it out: Outcome says what happened. */}
+        {d.message && !notesOverclaim(d, item.done, feedback) && <p>&ldquo;{d.message}&rdquo;</p>}
+      </Part>
+
+      <Part title="What he's learned about this sender">
+        {learned || anyAnswers ? (
+          <div className="flex flex-col gap-1 border-l-2 border-primary/40 pl-3">
+            {learned?.always_ask ? (
+              <p className="text-foreground">You told him to always ask about this.</p>
+            ) : learned?.level ? (
+              <p className="text-foreground">
+                He now picks {STATUS[learned.level].label} for this, because {learned.reason.replace(/\bme\b/g, "him")}.
+              </p>
+            ) : learned ? (
+              <p className="text-foreground">Not enough answers yet to change what he does.</p>
+            ) : null}
+            <p>
+              Your answers on &ldquo;{ACTIONS[d.action]}&rdquo; from this sender: {answerLine(answers).toLowerCase()}.
+            </p>
+          </div>
+        ) : (
+          <p>Nothing yet for this sender and action. Your answers teach him.</p>
+        )}
+        <Link href="/memory" className="flex min-h-11 items-center self-start text-sm font-medium text-primary underline-offset-4 hover:underline sm:min-h-0">
+          Everything he&apos;s learned
+        </Link>
+      </Part>
+
+      <Part title="Safety checks">
+        <Checklist items={safetyChecks(d)} />
+      </Part>
+
+      <Part title="Outcome">
+        <p className={cn("border-l-2 pl-3 text-foreground", TONE[outcome.tone])}>{outcome.text}</p>
+        {feedback.length > 0 && (
+          <ul className="flex flex-col gap-0.5">
+            {feedback.map((f) => (
+              <li key={f.id}>
+                You: {FEEDBACK[f.kind]}, {when(f.created_at)}
+              </li>
+            ))}
+          </ul>
+        )}
+        {review && review.label !== "SKIP" && (
+          <p>
+            You graded it: {REVIEW_LABELS[review.label].label}, {when(review.reviewed_at)}
+          </p>
+        )}
+      </Part>
+
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold">What you can do</h3>
+        <DecisionActions item={item} onFeedback={onFeedback} />
+      </section>
+
+      <TechnicalDetails item={item} />
     </article>
   );
 }
