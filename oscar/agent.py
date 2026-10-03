@@ -84,11 +84,13 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         understood_by = "model"
     action = classification.action
     guess = classification.matched_pattern is None
-    # What you've taught Oscar for this sender's routine email carries over, even when the rules
-    # picked a different low-risk action. Only for email he recognised: a habit for a sender's
-    # newsletters says nothing about a notice from them he couldn't read. Safety runs after this.
-    habit = preferences.habit(email.sender) if preferences and action in HABIT_ACTIONS and not guess else None
-    if habit and habit != action and not preferences.by_key.get((email.sender, action)):
+    # What you've taught Oscar for this sender's routine email (or for emails like it) carries over,
+    # even when the rules picked a different low-risk action. Only for email he recognised: a habit
+    # for a sender's newsletters says nothing about a notice from them he couldn't read. Safety runs after this.
+    habit = (preferences.habit(email.sender, classification.email_type)
+             if preferences and action in HABIT_ACTIONS and not guess else None)
+    if habit and habit != action and not preferences.suggest(action, AutonomyLevel.ASK_FIRST, email.sender,
+                                                             classification.email_type):
         action = habit
     level, reason = autonomy_for(action)
     if classification.rule_action:
@@ -104,29 +106,20 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         source = "guess"
 
     learned = careful = False
-    suggestion = preferences.suggest(action, level, email.sender) if preferences else None
-    if suggestion and guess and is_stricter(AutonomyLevel.PROCEED_AND_NOTIFY, suggestion[0]):
+    # What you've taught him: this sender first, then (for easy-to-undo actions on email he
+    # recognised) senders at the same domain, then emails like it. Never past notify for those.
+    suggestion = (preferences.suggest(action, level, email.sender, classification.email_type, broad=not guess)
+                  if preferences else None)
+    if suggestion and guess and is_stricter(AutonomyLevel.PROCEED_AND_NOTIFY, suggestion.level):
         # You've okayed this for the sender, but he still couldn't tell what this email is,
         # so he does it and tells you rather than doing it quietly.
-        suggestion = AutonomyLevel.PROCEED_AND_NOTIFY, suggestion[1]
+        suggestion = suggestion._replace(level=AutonomyLevel.PROCEED_AND_NOTIFY)
     if suggestion:
-        careful = is_stricter(suggestion[0], level)
-        level, reason = suggestion
+        careful = is_stricter(suggestion.level, level)
+        level, reason = suggestion.level, suggestion.reason
         learned = True
         source = "learned"
-
-    # A kind-of-email habit, for a sender Oscar hasn't learned anything about: if you've okayed
-    # the same low-risk action for newsletters (say) from several senders, he does it for a new
-    # one too, but tells you, since it's a new sender. Never quietly, and safety still runs after.
-    kind_habit = None
-    if (preferences and preferences.policy.kind_habits and not suggestion and not guess
-            and not preferences.knows(email.sender) and action in HABIT_ACTIONS):
-        kind_habit = preferences.kind_habit(classification.email_type)
-    if kind_habit and is_stricter(level, AutonomyLevel.PROCEED_AND_NOTIFY):
-        action, senders = kind_habit
-        level, reason = AutonomyLevel.PROCEED_AND_NOTIFY, f"you've okayed this for emails like it from {senders} senders"
-        learned, source = True, "learned"
-    learned_level = level  # what learning (by sender or kind of email) chose, before the floor
+    learned_level = level  # what learning chose, before the floor
 
     before_floor = level
     level, reason = apply_floor(action, level, reason)
@@ -180,7 +173,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
 
     email_type = (FLAG_TYPES[flags[0].category] if flags else risky if source == "model_check"
                   else classification.email_type)
-    evidence = preferences.get(action, email.sender).evidence if preferences and source == "learned" else 0.0
+    evidence = suggestion.evidence if suggestion and source == "learned" else 0.0
 
     return Decision(
         email_id=email.id,

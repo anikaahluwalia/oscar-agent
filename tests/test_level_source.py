@@ -36,7 +36,7 @@ def test_safety_check():
 def test_learned():
     email = load("newsletter.json")
     events = [FeedbackEvent(decision_id="d", kind=FeedbackKind.APPROVE, action=Action.ARCHIVE,
-                            autonomy_level=AutonomyLevel.ASK_FIRST, sender=email.sender) for _ in range(3)]
+                            autonomy_level=AutonomyLevel.ASK_FIRST, sender=email.sender) for _ in range(4)]
     decision = decide(email, Preferences.from_feedback(events))
     assert decision.level_source == "learned"
     assert decision.learned
@@ -63,6 +63,6 @@ def test_working_notes_for_a_guess():
 def test_working_notes_mention_learning():
     email = load("newsletter.json")
     events = [FeedbackEvent(decision_id="d", kind=FeedbackKind.APPROVE, action=Action.ARCHIVE,
-                            autonomy_level=AutonomyLevel.ASK_FIRST, sender=email.sender) for _ in range(3)]
+                            autonomy_level=AutonomyLevel.ASK_FIRST, sender=email.sender) for _ in range(4)]
     steps = decide(email, Preferences.from_feedback(events)).steps
-    assert "Checked what you've taught me: you've okayed this 3 times" in steps
+    assert "Checked what you've taught me: you've okayed this 4 times" in steps

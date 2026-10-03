@@ -85,11 +85,11 @@ def test_autonomy_rows_have_floors_and_ceilings():
 
 def test_autonomy_follows_learning():
     history = History()
-    for i in range(3):
+    for i in range(4):
         record_feedback(history, add(history, NEWSLETTER, f"n{i}").id, FeedbackKind.APPROVE)
     [row] = autonomy(history)
     assert row["level"] == AutonomyLevel.PROCEED_AND_NOTIFY
-    assert row["reason"] == "you've okayed this 3 times"
+    assert row["reason"] == "you've okayed this 4 times"
 
 
 def test_safety_checked_emails_are_left_out():

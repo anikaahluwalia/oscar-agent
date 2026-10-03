@@ -9,7 +9,7 @@ import pytest
 from oscar.agent import decide
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import Action, AutonomyLevel, Email
-from oscar.preferences import POLICIES, Preferences
+from oscar.preferences import Preferences
 from oscar.safety import check_email
 
 S, N, A, E = (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY, AutonomyLevel.ASK_FIRST,
@@ -146,8 +146,9 @@ def test_learning_never_makes_a_guess_silent():
 
 def test_kind_habits_dont_cover_mail_he_couldnt_read():
     events = (taught("a@news1.example", Action.ARCHIVE, 5, "newsletter")
-              + taught("b@news2.example", Action.ARCHIVE, 5, "newsletter"))
-    prefs = Preferences.from_feedback(events, POLICIES["independent-p1"])
+              + taught("b@news2.example", Action.ARCHIVE, 5, "newsletter")
+              + taught("d@news4.example", Action.ARCHIVE, 5, "newsletter"))
+    prefs = Preferences.from_feedback(events)
     alert = email("We noticed a problem with your account. Click below to resolve.",
                   sender="no-reply@newbank.example", subject="Action required", category="updates")
     assert decide(alert, prefs).autonomy_level == A
@@ -159,10 +160,11 @@ def test_kind_habits_dont_cover_mail_he_couldnt_read():
 def test_kind_habits_count_only_answers_about_that_kind():
     # Each sender was okayed for archiving FYIs many times, but only one newsletter each.
     events = []
-    for sender in ("a@x.example", "b@y.example"):
+    for sender in ("a@x.example", "b@y.example", "c@z.example"):
         events += taught(sender, Action.ARCHIVE, 5, "fyi") + taught(sender, Action.ARCHIVE, 1, "newsletter")
-    prefs = Preferences.from_feedback(events, POLICIES["independent-p1"])
-    assert prefs.kind_habit("newsletter") is None
+    prefs = Preferences.from_feedback(events)
+    assert prefs.suggest(Action.ARCHIVE, A, "new@w.example", "newsletter") is None
+    assert prefs.suggest(Action.ARCHIVE, A, "new@w.example", "fyi").level == N
 
 
 def test_mark_as_read_setting_doesnt_skip_asking_new_senders():

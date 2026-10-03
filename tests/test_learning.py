@@ -31,8 +31,9 @@ def test_newsletter_archive_asks_then_notifies_then_goes_silent():
         if decision.autonomy_level != AutonomyLevel.PROCEED_SILENTLY:
             record_feedback(history, decision.id, FeedbackKind.APPROVE)
 
-    assert levels[:3] == [AutonomyLevel.ASK_FIRST] * 3
-    assert levels[3:8] == [AutonomyLevel.PROCEED_AND_NOTIFY] * 5
+    # 4 okays to do it and tell you (75% sure, from at least 3 answers), 8 to do it quietly.
+    assert levels[:4] == [AutonomyLevel.ASK_FIRST] * 4
+    assert levels[4:8] == [AutonomyLevel.PROCEED_AND_NOTIFY] * 4
     assert levels[8:] == [AutonomyLevel.PROCEED_SILENTLY] * 2
 
 
@@ -49,11 +50,11 @@ def test_undo_makes_oscar_tell_you_next_time():
 
 
 def test_oscar_can_earn_it_back_after_an_undo():
-    # An undo counts as two no's, so it takes 26 okays to get the mean back to 0.9.
+    # An undo counts double, so it takes 14 okays before quiet is 75% of the evidence again.
     history = History()
     email = load("fyi_update.json")
     record_feedback(history, decide_with(history, email).id, FeedbackKind.UNDO)
-    for _ in range(26):
+    for _ in range(14):
         decision = decide_with(history, email)
         assert decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY
         record_feedback(history, decision.id, FeedbackKind.APPROVE)
@@ -63,7 +64,7 @@ def test_oscar_can_earn_it_back_after_an_undo():
 def test_undo_after_a_notification_goes_back_to_asking():
     history = History()
     email = load("newsletter.json")
-    for _ in range(3):
+    for _ in range(4):
         record_feedback(history, decide_with(history, email).id, FeedbackKind.APPROVE)
     notified = decide_with(history, email)
     assert notified.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY
@@ -105,13 +106,16 @@ def test_always_ask_me_on_a_silent_action():
 
 def test_learned_summary_through_the_api(client):
     email = load("newsletter.json").model_dump()
-    for _ in range(3):
+    for _ in range(4):
         decision = client.post("/decide", json=email).json()
         client.post("/feedback", json={"decision_id": decision["id"], "kind": "APPROVE"})
-    rows = client.get("/learned").json()
-    assert rows == [{"sender": "digest@morningbrew-weekly.example", "action": "ARCHIVE", "yes": 3.0, "no": 0.0, "mean": 0.8, "always_ask": False,
-                     "level": "PROCEED_AND_NOTIFY", "reason": "you've okayed this 3 times",
-                     "sentence": "archive from digest@morningbrew-weekly.example: you've okayed this 3 times, so I do it and let you know."}]
+    [row] = client.get("/learned").json()
+    assert {k: row[k] for k in ("sender", "action", "yes", "no", "mean", "always_ask", "level", "reason", "sentence")} == {
+        "sender": "digest@morningbrew-weekly.example", "action": "ARCHIVE", "yes": 4.0, "no": 0.0, "mean": 0.75,
+        "always_ask": False, "level": "PROCEED_AND_NOTIFY", "reason": "you've okayed this 4 times",
+        "sentence": "archive from digest@morningbrew-weekly.example: you've okayed this 4 times, so I do it and let you know."}
+    # What the record is built from, for the UI: evidence, confidence, and that it came from you.
+    assert row["evidence"] == 4.0 and row["provenance"] == "USER_FEEDBACK" and row["desired"] == "PROCEED_SILENTLY"
 
 
 def test_learned_summary_shows_careful_actions():

@@ -331,25 +331,27 @@ def summary(history: History) -> dict:
 
 
 def _lesson(decision: Decision, review: Review, right: Answer) -> list[FeedbackEvent]:
-    """What one full answer teaches, as ordinary feedback on that sender's emails.
+    """What one full answer teaches, as evidence for the level you said (FeedbackKind.REVIEW).
 
-    Right: a yes for what he did. Quietly or with a heads up, with an action: a yes for that
-    action ("quietly" counts as a strong yes, so one answer goes a long way). Acting when you'd
-    have done something else: a no for what he did. A missed risk: always ask about it, which
-    can only make him stricter.
+    Right: one more answer for the level he used. Should have been quietly or with a heads up,
+    with an action: one answer for that level and action. Acting when you'd have done something
+    else: one answer that he should have asked about what he did. One answer is never enough on
+    its own (preferences.MIN_EVIDENCE). A missed risk: always ask about it, which can only make
+    him stricter, so it's a rule straight away.
     """
-    def event(kind: FeedbackKind, action: Action) -> FeedbackEvent:
+    def event(kind: FeedbackKind, action: Action, desired: AutonomyLevel | None = None) -> FeedbackEvent:
         return FeedbackEvent(decision_id=decision.id, kind=kind, action=action, autonomy_level=decision.autonomy_level,
-                             sender=decision.sender, email_type=decision.email_type, created_at=review.reviewed_at)
+                             sender=decision.sender, email_type=decision.email_type, created_at=review.reviewed_at,
+                             desired_level=desired)
 
     error, _ = grade_answer(right, decision.autonomy_level, decision.action)
     if error == "none":
-        return [event(FeedbackKind.APPROVE, decision.action)] if decision.autonomy_level != E else []
+        return [event(FeedbackKind.REVIEW, decision.action, decision.autonomy_level)] if decision.autonomy_level != E else []
     out = []
     if right.level in ACTED and isinstance(right.action, Action):
-        out.append(event(FeedbackKind.ALWAYS_DO_THIS if right.level == S else FeedbackKind.APPROVE, right.action))
+        out.append(event(FeedbackKind.REVIEW, right.action, right.level))
     if decision.autonomy_level in ACTED and (right.level not in ACTED or right.action != decision.action):
-        out.append(event(FeedbackKind.REJECT, decision.action))
+        out.append(event(FeedbackKind.REVIEW, decision.action, right.level if right.level not in ACTED else A))
     if review.why == "risk" or (right.level == E and not right.escalate_ok):
         out.append(event(FeedbackKind.ALWAYS_ASK_ME, decision.action))
     return out

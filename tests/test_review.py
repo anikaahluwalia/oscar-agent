@@ -310,15 +310,19 @@ def answered(history, d, level, action=None, **kw):
     record_review(history, review)
 
 
-def test_a_quiet_answer_teaches_the_sender_and_one_answer_goes_a_long_way():
+def test_quiet_answers_teach_the_sender_once_there_are_enough():
     history = History()
     first = promo_decision(history, "e1")
     assert first.autonomy_level == A
     answered(history, first, S, Action.ARCHIVE, why="preference")
-    assert [e.kind for e in lessons(history)] == [FK.ALWAYS_DO_THIS]
-    later = decide(Email(id="e2", sender="deals@shop.example", subject="Sale", body=PROMO, category="promotions"),
-                   Preferences.from_feedback(teaching(history)))
-    assert later.autonomy_level in (S, N) and later.level_source == "learned"
+    assert [(e.kind, e.desired_level) for e in lessons(history)] == [(FK.REVIEW, S)]
+    sale = Email(id="e9", sender="deals@shop.example", subject="Sale", body=PROMO, category="promotions")
+    # One answer is one piece of evidence, not a rule: he still asks.
+    assert decide(sale, Preferences.from_feedback(teaching(history))).autonomy_level == A
+    for i in range(2, 5):
+        answered(history, promo_decision(history, f"e{i}"), S, Action.ARCHIVE, why="preference")
+    later = decide(sale, Preferences.from_feedback(teaching(history)))
+    assert later.autonomy_level == N and later.level_source == "learned"
 
 
 def test_a_missed_risk_only_makes_him_stricter():
@@ -326,15 +330,17 @@ def test_a_missed_risk_only_makes_him_stricter():
     d = promo_decision(history, "e1")
     history.decisions[d.id] = d = d.model_copy(update={"autonomy_level": N, "action": Action.DRAFT_REPLY})
     answered(history, d, A, Action.MARK_READ, why="risk")
-    kinds = {e.kind for e in lessons(history)}
-    assert FK.ALWAYS_ASK_ME in kinds and FK.REJECT in kinds and FK.ALWAYS_DO_THIS not in kinds
+    taught = {(e.kind, e.action, e.desired_level) for e in lessons(history)}
+    assert (FK.ALWAYS_ASK_ME, Action.DRAFT_REPLY, None) in taught
+    assert (FK.REVIEW, Action.DRAFT_REPLY, A) in taught, "what he did gets an answer saying he should have asked"
+    assert not any(e.kind == FK.ALWAYS_DO_THIS for e in lessons(history))
 
 
 def test_a_yes_approves_what_he_did():
     history = History()
     d = promo_decision(history, "e1")
     record_review(history, Review(decision_id=d.id, label=ReviewLabel.CORRECT, reviewed_at=d.created_at + timedelta(seconds=1)))
-    assert [(e.kind, e.action) for e in lessons(history)] == [(FK.APPROVE, d.action)]
+    assert [(e.kind, e.action, e.desired_level) for e in lessons(history)] == [(FK.REVIEW, d.action, d.autonomy_level)]
 
 
 def test_old_half_answers_teach_nothing():
@@ -362,6 +368,6 @@ def test_forget_also_wipes_what_earlier_reviews_taught():
     review = answer(d, S, Action.ARCHIVE, why="preference")
     review.reviewed_at = d.created_at  # reviewed before the Forget below
     record_review(history, review)
-    assert Preferences.from_feedback(teaching(history)).by_key
+    assert Preferences.from_feedback(teaching(history)).has("deals@shop.example", Action.ARCHIVE)
     record_feedback(history, d.id, FK.FORGET)
-    assert ("deals@shop.example", Action.ARCHIVE) not in Preferences.from_feedback(teaching(history)).by_key
+    assert not Preferences.from_feedback(teaching(history)).has("deals@shop.example", Action.ARCHIVE)

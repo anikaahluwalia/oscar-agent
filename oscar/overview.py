@@ -123,9 +123,9 @@ def autonomy(history: History) -> list[dict]:
     rows = []
     for (sender, action), decision in latest.items():
         level, reason = autonomy_for(action)
-        suggestion = prefs.suggest(action, level, sender)
+        suggestion = prefs.suggest(action, level, sender, decision.email_type)
         if suggestion:
-            level, reason = suggestion
+            level, reason = suggestion.level, suggestion.reason
         level, reason = apply_floor(action, level, reason)
         floor = ACTION_FLOORS.get(action)
         rows.append({
