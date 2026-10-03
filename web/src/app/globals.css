@@ -60,101 +60,101 @@
 }
 
 :root {
-  /* Light and airy, from the mock-up: a faintly blue-grey page, white cards with a soft
-     shadow, one blue for actions. Greys read at 4.5:1 or more on white. */
-  --background: #f5f7fb;
-  --foreground: #111827;
+  /* Neutral, from the mock-up: a light grey page, white cards, charcoal for text and
+     buttons. Greys read at 4.5:1 or more on white. Colour is kept for status only. */
+  --background: #f6f6f7;
+  --foreground: #16171a;
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #16171a;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #2563eb;
+  --popover-foreground: #16171a;
+  --primary: #16171a;
   --primary-foreground: #ffffff;
-  --secondary: #eef2f7;
-  --secondary-foreground: #111827;
-  --muted: #eef2f7;
-  --muted-foreground: #5b6474;
-  --accent: #eef2f7;
-  --accent-foreground: #111827;
+  --secondary: #f2f2f4;
+  --secondary-foreground: #16171a;
+  --muted: #f2f2f4;
+  --muted-foreground: #5c5f68;
+  --accent: #f2f2f4;
+  --accent-foreground: #16171a;
   --destructive: #b42318;
-  --border: #e5e9f0;
-  --input: #d6dce6;
-  --ring: #2563eb;
-  --chart-1: #bfd3fb;
-  --chart-2: #8ab0f7;
-  --chart-3: #5b8def;
-  --chart-4: #2563eb;
-  --chart-5: #1e3a8a;
+  --border: #e6e6e9;
+  --input: #dadade;
+  --ring: #16171a;
+  --chart-1: #dadade;
+  --chart-2: #b8bac0;
+  --chart-3: #8a8c93;
+  --chart-4: #5c5f68;
+  --chart-5: #16171a;
   --radius: 0.75rem;
-  /* Status colours, dark enough for text on their own tint. "Tell me" is teal so it never
-     looks like the blue of a button. */
+  /* Status colours, dark enough for text on white or their own tint. */
   --status-handled: #11613f;
   --status-fyi: #0e6276;
   --status-needs: #8a4b00;
   --status-blocked: #a11f15;
-  --surface-hover: #f0f3f8;
-  --brand: #2563eb;
-  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.04), 0 6px 20px rgb(17 24 39 / 0.05);
-  /* One colour per autonomy level */
-  --level-silent: #22a06b;
-  --level-notify: #0e9bb5;
+  --surface-hover: #ededef;
+  --brand: #16171a;
+  --shadow-card: 0 1px 2px rgb(22 23 26 / 0.04), 0 12px 32px rgb(22 23 26 / 0.06);
+  /* The dot for each of Oscar's levels: Quietly, Tell me, Ask me, Stopped */
+  --level-silent: #2fb67a;
+  --level-notify: #4a7cf0;
   --level-ask: #e09a2b;
   --level-escalate: #e05545;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #2563eb;
+  --sidebar: #fbfbfc;
+  --sidebar-foreground: #16171a;
+  --sidebar-primary: #16171a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaf1ff;
-  --sidebar-accent-foreground: #1d4ed8;
-  --sidebar-border: #e5e9f0;
-  --sidebar-ring: #2563eb;
+  --sidebar-accent: #16171a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e6e6e9;
+  --sidebar-ring: #16171a;
 }
 
 .dark {
-  /* Near-black page, a slightly lighter sidebar, and cards a step lighter again,
-     so there's a clear order: page, sidebar, card, hover. */
-  --background: #0a0a0a;
-  --foreground: #f5f5f5;
-  --card: #141414;
-  --card-foreground: #f5f5f5;
-  --popover: #141414;
-  --popover-foreground: #f5f5f5;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #1a1a1a;
-  --secondary-foreground: #f5f5f5;
-  --muted: #1f1f1f;
-  --muted-foreground: #a1a1aa;
-  --accent: #1a1a1a;
-  --accent-foreground: #f5f5f5;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: #262626;
-  --input: #262626;
-  --ring: #3b82f6;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --surface-hover: #1a1a1a;
-  --status-handled: oklch(0.78 0.09 155);
-  --status-fyi: oklch(0.8 0.08 210);
-  --status-needs: oklch(0.82 0.11 75);
-  --status-blocked: oklch(0.75 0.12 20);
-  --brand: #6b9bff;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
-  --sidebar: #0d0d0d;
-  --sidebar-foreground: #f5f5f5;
-  --sidebar-primary: #f5f5f5;
-  --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #172554;
-  --sidebar-accent-foreground: #bfdbfe;
-  --sidebar-border: #1f1f1f;
-  --level-silent: oklch(0.72 0.19 150);
-  --level-notify: oklch(0.72 0.14 260);
-  --level-ask: oklch(0.72 0.18 50);
-  --level-escalate: oklch(0.65 0.22 15);
-  --sidebar-ring: #52525b;
+  /* The same, turned around: a near-black page, the sidebar a step darker, cards a step
+     lighter, and light buttons with dark text. Status colours are lighter so they still
+     read at 4.5:1 on the cards. */
+  --background: #121316;
+  --foreground: #f2f2f3;
+  --card: #1a1b1f;
+  --card-foreground: #f2f2f3;
+  --popover: #1e1f23;
+  --popover-foreground: #f2f2f3;
+  --primary: #f2f2f3;
+  --primary-foreground: #16171a;
+  --secondary: #222328;
+  --secondary-foreground: #f2f2f3;
+  --muted: #222328;
+  --muted-foreground: #a3a6ae;
+  --accent: #222328;
+  --accent-foreground: #f2f2f3;
+  --destructive: #f28b80;
+  --border: #2a2b30;
+  --input: #3a3b41;
+  --ring: #f2f2f3;
+  --chart-1: #3a3b41;
+  --chart-2: #5c5f68;
+  --chart-3: #8a8c93;
+  --chart-4: #b8bac0;
+  --chart-5: #f2f2f3;
+  --status-handled: #6fd3a1;
+  --status-fyi: #7cc8db;
+  --status-needs: #f2b65c;
+  --status-blocked: #f28b80;
+  --surface-hover: #26272c;
+  --brand: #f2f2f3;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --level-silent: #3cc98a;
+  --level-notify: #6e96f5;
+  --level-ask: #eda94a;
+  --level-escalate: #ee6a5b;
+  --sidebar: #0e0f11;
+  --sidebar-foreground: #f2f2f3;
+  --sidebar-primary: #f2f2f3;
+  --sidebar-primary-foreground: #16171a;
+  --sidebar-accent: #f2f2f3;
+  --sidebar-accent-foreground: #16171a;
+  --sidebar-border: #222328;
+  --sidebar-ring: #a3a6ae;
 }
 
 @layer base {
