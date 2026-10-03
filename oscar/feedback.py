@@ -25,6 +25,22 @@ class FeedbackKind(str, Enum):
     ALWAYS_ASK_ME = "ALWAYS_ASK_ME"
     SEEN = "SEEN"  # "got it" on an email Oscar brought to you; it teaches him nothing
     FORGET = "FORGET"  # forget what he's learned for this sender and action, and start fresh
+    # What one of your Review answers teaches (oscar/review.py lessons). Made from your reviews
+    # only, never sent to the API: desired_level says what the level should have been.
+    REVIEW = "REVIEW"
+
+
+class Learned(str, Enum):
+    """Every kind of feedback, as what it says about Oscar's call (normalize below)."""
+
+    CORRECT = "CORRECT"
+    SHOULD_BE_SILENT = "SHOULD_BE_SILENT"
+    SHOULD_NOTIFY = "SHOULD_NOTIFY"
+    SHOULD_ASK = "SHOULD_ASK"
+    SHOULD_ESCALATE = "SHOULD_ESCALATE"
+    WRONG_ACTION = "WRONG_ACTION"  # kept apart from the level: it doesn't move his autonomy
+    WRONG_CLASSIFICATION = "WRONG_CLASSIFICATION"  # the kind of email was wrong; nothing to learn about autonomy
+    SKIP = "SKIP"  # teaches nothing
 
 
 class FeedbackEvent(BaseModel):
@@ -40,6 +56,35 @@ class FeedbackEvent(BaseModel):
     edited_text: str | None = None
     # True when the user asked for more autonomy than the safety floor allows.
     blocked_by_floor: bool = False
+    desired_level: AutonomyLevel | None = None  # REVIEW only: what you said the level should have been
+    # Where it came from. Only you can teach Oscar: email text never becomes feedback.
+    provenance: str = "USER_FEEDBACK"
+
+
+SHOULD = {
+    AutonomyLevel.PROCEED_SILENTLY: Learned.SHOULD_BE_SILENT,
+    AutonomyLevel.PROCEED_AND_NOTIFY: Learned.SHOULD_NOTIFY,
+    AutonomyLevel.ASK_FIRST: Learned.SHOULD_ASK,
+    AutonomyLevel.ESCALATE: Learned.SHOULD_ESCALATE,
+}
+
+
+def normalize(event: FeedbackEvent) -> Learned:
+    """What a piece of feedback says, whichever button or answer it came from.
+
+    An okay on something he asked about says doing it was fine; a no or an undo says he
+    should have asked. A Review answer says the level outright. "Always" rules, Forget and
+    "got it" are handled as rules or not at all, so they read as CORRECT or SKIP here.
+    """
+    if event.kind in (FeedbackKind.APPROVE, FeedbackKind.EDIT_THEN_SEND):
+        return Learned.SHOULD_BE_SILENT if event.autonomy_level != AutonomyLevel.PROCEED_SILENTLY else Learned.CORRECT
+    if event.kind in (FeedbackKind.REJECT, FeedbackKind.UNDO):
+        return Learned.SHOULD_ASK
+    if event.kind == FeedbackKind.REVIEW and event.desired_level:
+        return Learned.CORRECT if event.desired_level == event.autonomy_level else SHOULD[event.desired_level]
+    if event.kind == FeedbackKind.SEEN:
+        return Learned.SKIP
+    return Learned.CORRECT
 
 
 class FeedbackError(ValueError):
@@ -55,6 +100,7 @@ REPLIES: dict[FeedbackKind, str] = {
     FeedbackKind.ALWAYS_ASK_ME: "You got it! I'll always check with you on these.",
     FeedbackKind.SEEN: "Okay! It's all yours.",
     FeedbackKind.FORGET: "Okay, I've forgotten that. I'll start fresh with this sender.",
+    FeedbackKind.REVIEW: "Thanks! I'll remember that.",
 }
 
 OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
@@ -67,6 +113,8 @@ TEACHING_ONLY = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, Feedba
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None, undoable: bool = False) -> None:
     """Whether this feedback makes sense for this decision. undoable: Oscar did something in Gmail
     for it that hasn't been undone (Stage 12), so undo is allowed whatever the level."""
+    if kind == FeedbackKind.REVIEW:
+        raise FeedbackError("Answer on the Review page instead.")  # lessons come from your reviews only
     if kind == FeedbackKind.FORGET or (decision.source == "gmail" and kind in TEACHING_ONLY):
         return  # these only teach him (or untaught him); they're fine on any email
     if decision.source == "gmail" and kind == FeedbackKind.UNDO:
