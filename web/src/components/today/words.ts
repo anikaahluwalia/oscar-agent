@@ -6,11 +6,6 @@ import { plural } from "@/lib/counts";
 import { reallyDone, timeOf } from "@/lib/insights";
 import { ACTIONS, KIND_NAMES, wouldOnly } from "@/lib/labels";
 
-const SMALL = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
-
-/** "Two things", "One thing", "12 things": small numbers in words, the way Oscar says them. */
-export const say = (n: number, one: string, many: string) => `${n < 10 ? SMALL[n] : n.toLocaleString()} ${n === 1 ? one : many}`;
-
 const ON_OWN = new Set(["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY"]);
 
 /** Midnight this morning, by this device's clock. */
