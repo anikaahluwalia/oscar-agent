@@ -155,9 +155,13 @@ class GmailClient:
     """Access to one Gmail account. Reads go through _get. The only writes change labels: modify_labels,
     label_id (making one of his labels) and rename_label."""
 
-    def __init__(self, tokens: TokenStore, http: httpx.Client | None = None, names: dict[str, str] | None = None) -> None:
+    def __init__(self, tokens: TokenStore, http: httpx.Client | None = None, names: dict[str, str] | None = None,
+                 read_only: bool = False) -> None:
         self.tokens = tokens
         self.http = http or httpx.Client(timeout=20)
+        # read_only: every write is refused here, before Gmail is asked. The six-month look back at
+        # your inbox (oscar/cold_start.py) always uses a client like this, so it can't change anything.
+        self.read_only = read_only
         self.names = {**DEFAULT_NAMES, **(names or {})}  # what each of his labels is called, from Settings
         self._oscar_labels: dict[str, str] | None = None  # Oscar's label ids, by role
 
@@ -204,6 +208,18 @@ class GmailClient:
     def labels(self, message_id: str) -> list[str]:
         return self._get(f"/messages/{message_id}", format="minimal").get("labelIds", [])
 
+    def search(self, query: str, page: str | None = None, limit: int = 500) -> tuple[list[dict], str | None]:
+        """A page of messages matching a Gmail search (like "newer_than:6m"), newest first, as
+        {id, threadId}, and the token for the next page. Spam and trash are left out, as in Gmail."""
+        found = self._get("/messages", q=query, maxResults=limit, pageToken=page)
+        return found.get("messages", []), found.get("nextPageToken")
+
+    def metadata(self, message_id: str) -> dict:
+        """One email's labels, headers and Gmail's short preview, without the body. Cheaper than
+        message(), and enough for the rules to tell what kind of email it is."""
+        return self._get(f"/messages/{message_id}", format="metadata",
+                         metadataHeaders=["From", "To", "Subject", "List-Unsubscribe", "Precedence"])
+
     def thread_length(self, thread_id: str) -> int:
         return len(self._get(f"/threads/{thread_id}", format="minimal").get("messages", [])) or 1
 
@@ -212,7 +228,12 @@ class GmailClient:
 
     # --- The only writes: labels (Stage 12), and renaming his labels (Stage 15) ---
 
+    def _refuse_if_read_only(self) -> None:
+        if self.read_only:
+            raise GmailError("This Gmail connection is read-only, so Oscar can't change anything with it.")
+
     def _post(self, path: str, body: dict) -> dict:
+        self._refuse_if_read_only()
         response = self.http.post(GMAIL_URL + path, json=body, headers={"Authorization": f"Bearer {self._access_token()}"})
         if response.status_code != 200:
             raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code)
@@ -261,6 +282,7 @@ class GmailClient:
         labelled keep it, since it's the same label. "taken": you already have a label with the
         new name, so he'll use that one from now on and leaves both alone. "none": he hasn't
         made this label yet, so there's nothing to rename."""
+        self._refuse_if_read_only()
         labels = self._get("/labels").get("labels", [])
         found = next((label for label in labels if label.get("name", "").lower() == old.lower()), None)
         if any(label.get("name", "").lower() == new.lower() for label in labels if label is not found):
@@ -276,7 +298,8 @@ class GmailClient:
 
     def modify_labels(self, message_id: str, add: list[str], remove: list[str]) -> None:
         """Add and remove labels on one email. Only UNREAD, INBOX and Oscar's own labels: anything
-        else is refused here, before Gmail is asked."""
+        else is refused here, before Gmail is asked. So is anything at all on a read-only client."""
+        self._refuse_if_read_only()
         changing = [label for label in add + remove if label not in SYSTEM_LABELS]
         mine = set(self._mine().values()) if changing else set()
         for label in add + remove:
