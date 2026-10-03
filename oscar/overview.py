@@ -14,8 +14,14 @@ TREND_WINDOW = 12  # compare the first and the latest this many decisions
 
 
 def is_read_only(history: History) -> bool:
-    """True for the real inbox in Stage 9: Oscar only read it, so nothing was done."""
-    return any(d.source == "gmail" for d in history.decisions.values())
+    """True for the real inbox while Oscar only reads it (acting is off), so nothing was done."""
+    return not history.settings.get("acting") and any(d.source == "gmail" for d in history.decisions.values())
+
+
+def done_in_gmail(history: History, d: Decision) -> bool:
+    """Whether Oscar really did this in Gmail (and it wasn't undone). Emails read before acting was on never were."""
+    record = history.action_for(d.id)
+    return record is not None and record.undone_at is None
 
 
 def latest_per_email(history: History) -> list[Decision]:
@@ -37,6 +43,9 @@ def needs_you(history: History) -> dict[AutonomyLevel, list[Decision]]:
     current = latest_per_email(history)
     # A re-read that decided the same as before keeps the review you gave the first read.
     answered |= {d.id for d in current if d.recheck_of and history.review_carried_over(d.id)}
+    # Once Oscar acts, emails he only read before are calls to check on the Review page, not things waiting on you.
+    if history.settings.get("acting"):
+        current = [d for d in current if d.source != "gmail" or d.acting]
     return {level: [d for d in current if d.autonomy_level == level and d.id not in answered] for level in levels}
 
 
@@ -47,9 +56,12 @@ def ask_rate(decisions: list[Decision]) -> float:
 def brief(history: History) -> dict:
     current = latest_per_email(history)
     count = lambda level: sum(d.autonomy_level == level for d in current)  # noqa: E731
+    # Once Oscar acts, handled means he really did it; while he only reads, it's what he would have done.
+    did = lambda level: sum(d.autonomy_level == level and (d.source != "gmail" or is_read_only(history)  # noqa: E731
+                                                          or done_in_gmail(history, d)) for d in current)
     open_ = needs_you(history)
     waiting, for_you = len(open_[AutonomyLevel.ASK_FIRST]), len(open_[AutonomyLevel.ESCALATE])
-    handled, told = count(AutonomyLevel.PROCEED_SILENTLY), count(AutonomyLevel.PROCEED_AND_NOTIFY)
+    handled, told = did(AutonomyLevel.PROCEED_SILENTLY), did(AutonomyLevel.PROCEED_AND_NOTIFY)
 
     # Things Oscar did and told you about wait for a "looks good" or an undo, so they're on your list too.
     told_unchecked = len(open_[AutonomyLevel.PROCEED_AND_NOTIFY])

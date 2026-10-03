@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision
-from oscar.overview import brief, is_read_only, latest_per_email, needs_you
+from oscar.overview import brief, done_in_gmail, is_read_only, latest_per_email, needs_you
 from oscar.preferences import Preferences
 from oscar.review import teaching
 from oscar.safety import ACTION_FLOORS
@@ -64,6 +64,12 @@ def _needs_you(history: History) -> ChatReply:
     for_you, waiting, told = (open_[level] for level in (AutonomyLevel.ESCALATE, AutonomyLevel.ASK_FIRST,
                                                          AutonomyLevel.PROCEED_AND_NOTIFY))
     if not for_you and not waiting and not told:
+        # Emails read before acting was on are still calls to check.
+        unchecked = [d for d in latest_per_email(history)
+                     if d.source == "gmail" and not d.acting and history.review_carried_over(d.id) is None]
+        if unchecked and not is_read_only(history):
+            return ChatReply(reply=f"Nothing's waiting on you! You still have {len(unchecked)} of my earlier calls "
+                                   "to check on the Review page.")
         return ChatReply(reply="All quiet! I'll come get you if anything shows up.")
     if is_read_only(history):
         parts = [f"I'd bring you {_subjects(for_you)}." if for_you else "",
@@ -94,6 +100,8 @@ def _handled(history: History) -> ChatReply:
         if told:
             parts.append(f"I'd have done {len(told)} and given you a heads up: {_subjects(told)}.")
         return ChatReply(reply=" ".join(parts), decisions=[d.id for d in quiet + told])
+    quiet = [d for d in quiet if d.source != "gmail" or done_in_gmail(history, d)]
+    told = [d for d in told if d.source != "gmail" or done_in_gmail(history, d)]
     if not quiet and not told:
         return ChatReply(reply="I haven't done anything on my own yet. So far I've been checking with you!")
     parts = []

@@ -120,3 +120,31 @@ def test_read_only_inbox_gets_told_so(tmp_path):
     assert "only READ" in model.sent[0]["messages"][0]["content"]
     result, proposal = run_tool(history, "propose_rule", {"sender": "a@b.example", "kind": "always_do_this"})
     assert proposal is None and "read" in result["error"]
+
+
+def test_once_acting_is_on_the_chat_isnt_read_only(tmp_path):
+    # From a real inbox: acting was switched on, but the chat still said rules were off because
+    # it only read Gmail. Emails read before acting stay "would", and the chat mustn't say they were done.
+    from oscar.gmail import GmailClient
+    from oscar.history import History
+    from oscar.inbox import sync
+    from oscar.overview import is_read_only, needs_you
+    from tests.fake_gmail import FakeGmail, connected, message
+
+    history = History()
+    sync(history, GmailClient(connected(tmp_path), FakeGmail([message("m", "digest@letters.example", "This week",
+         "Top stories. View in browser. Manage your preferences. Unsubscribe")]).http()))
+    history.set_setting("acting", True)
+    assert not is_read_only(history)
+    model = FakeModel(say("Sure."))
+    talk(history, "archive the newsletter", [], model.http())
+    assert "only READ" not in model.sent[0]["messages"][0]["content"]
+    result, proposal = run_tool(history, "propose_rule", {"sender": "digest@letters.example", "kind": "always_do_this",
+                                                          "action": "ARCHIVE"})
+    assert proposal is not None, result
+    # Read before acting was on: what he'd have done, not something he did, and not waiting on you.
+    row = run_tool(history, "search_emails", {})[0]["emails"][0]
+    assert row["done_in_gmail"] is False
+    assert not any(needs_you(history).values())
+    from oscar.chat import answer
+    assert "1 of my earlier calls" in answer(history, "what needs me?").reply
