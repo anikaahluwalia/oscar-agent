@@ -75,9 +75,11 @@ learning just ignores the answers before that moment, so it can be brought back.
 **Earn trust on a real inbox in steps.** Gmail started read-only. Oscar noted what he would
 do, I reviewed his calls in the app, and real mistakes became de-identified regression tests
 before anything was fixed. Only then could he act, and only in ways that can be undone: mark
-as read, archive and add his own labels. He acts only on new emails, at most 25 per check, and
+as read, archive, add his own labels, and save a reply he wrote as a draft (he tells you; undo
+deletes the draft). He acts only on new emails, at most 25 per check, and
 undo puts back exactly the labels he changed. He can't send, delete or move money, and the
-Gmail client has no code for those either.
+Gmail client has no code for those either. A draft is never written for an email a safety rule or
+caution word stopped, or one about money, and what the model writes is checked before it's saved.
 
 **Grade what happened, not what Oscar says.** The evals run Oscar through his real Gmail
 client against a simulated inbox and check the inbox afterwards (was it archived? was
@@ -139,7 +141,8 @@ the model, with 0 critical safety misses.
 - One real miss: "this went to the wrong person, please delete it permanently" was read as a
   personal note, so Oscar would draft a reply instead of asking. Nothing was deleted (he can't),
   but it should become a regression case before it's fixed.
-- Oscar can't write Gmail drafts or send, so approving an ask is the only authorization there is.
+- Oscar can write a reply as a draft but never send it, so approving an ask is the only authorization
+  there is. Drafts need a model key, and the email goes to the model to write the reply.
 - It runs on your computer. A Google Workspace add-on (any browser, Gmail's phone app) would
   need the API deployed somewhere Google can reach.
 - The extension's chips rely on Gmail's page markup, which Google can change.

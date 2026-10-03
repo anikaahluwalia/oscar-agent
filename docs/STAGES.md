@@ -1624,3 +1624,26 @@ calls your own rules made and says how many.
   the same action, which is what this shouldn't do, so only kinds of email are offered.
 - Replies. Gmail's labels don't say reliably whether you replied, so it isn't counted.
 - Kinds the rules can't name (a recruiter's email, say) can't become a habit without the model.
+
+## Stage 17 — Drafting replies
+
+"Draft a reply" used to be only a name for "this needs your reply": the Gmail client had no way to
+make a draft, on purpose. Now, when Oscar decides a new email needs a reply and acting is on, he
+writes one and saves it as a draft in that email's thread, then tells you (it's "Tell me", so the
+email gets the FYI label, a card in Gmail and a line in the app). He never sends it.
+
+- **Only the draft.** The Gmail client gained `create_draft` and `delete_draft` (for undo) and
+  still has nothing that can send an email or a draft, or trash or delete a message. The test that
+  used to say it has nothing named "draft" now checks that the only writes are labels and drafts,
+  that Gmail's send and trash addresses never appear, and that the only HTTP delete is of a draft.
+- **Who writes it.** The model, given the email as data, asked for 2 to 5 sentences, no promises,
+  no links, and blanks like [day and time] instead of made-up facts (`oscar/drafting.py`). What comes
+  back is thrown away if it isn't the expected format, is too long, has a link or an amount of money,
+  or would trip a safety check. Then there's simply no draft, and it's yours to answer.
+- **Never for risky email.** Not for anything a safety rule or caution word stopped, and, stricter
+  than deciding, not for an email that mentions an amount of money: a reply about a payment can read
+  as agreeing to it.
+- **You stay in charge.** An ask he's waiting on writes the draft when you approve it. Undo deletes
+  the draft. The app and the Gmail panel show the draft, with a link to Gmail's Drafts.
+- **Needs a model key.** Without `GEMINI_API_KEY` there are no drafts, and he says it's yours to
+  answer. The evals never pass a drafter, so their results are the same as before.
