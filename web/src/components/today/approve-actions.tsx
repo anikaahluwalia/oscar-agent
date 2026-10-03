@@ -1,4 +1,4 @@
-import { SenderAvatar, displayName } from "@/components/kit/sender";
+import { SenderAvatar, addressOf } from "@/components/kit/sender";
 import { Button } from "@/components/ui/button";
 import type { Action, DecisionWithFeedback, FeedbackKind, LearnedRow } from "@/lib/api";
 
@@ -38,7 +38,7 @@ export function ApproveActions({ learned, items, onAnswer }: {
         <div key={`${row.sender}|${row.action}`} className="flex flex-wrap items-center gap-3.5 rounded-[20px] border bg-card px-4 py-4 sm:px-5">
           <SenderAvatar sender={row.sender} size={40} />
           <div className="min-w-[13rem] flex-1">
-            <div>{ASKS[row.action]!(displayName(row.sender))}</div>
+            <div className="break-words">{ASKS[row.action]!(addressOf(row.sender) || row.sender)}</div>
             <div className="text-[13px] text-muted-foreground">You&apos;ve said yes to this {row.yes.toLocaleString()} times.</div>
           </div>
           <div className="flex gap-2">
