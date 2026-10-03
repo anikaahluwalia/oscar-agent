@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
-from oscar.act import MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, label_role, status_label, undo
+from oscar.act import CHANGES, MAX_PER_CHECK, ActionError, ActionRecord, can_do, do, label_role, status_label, undo
 from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar import app_settings
@@ -39,7 +39,8 @@ from oscar.inbox import AlreadySyncing, recheck, sync
 from oscar.models import Action, AutonomyLevel, Decision, Email
 from oscar.overview import ANSWERS, autonomy, brief, latest_per_email, needs_you, patterns, permissions, waiting_for_rule
 from oscar.progress import progress
-from oscar.review import Reason, Review, ReviewError, ReviewLabel, Why, answer, graded, record_review, summary
+from oscar.review import (Reason, Review, ReviewError, ReviewLabel, Why, answer, expected_answer, graded, record_review,
+                          summary)
 from oscar.preferences import Preferences, family
 from oscar.review import teaching
 from oscar.safety_review import SafetyReview, SafetyReviewError, Verdict, record_safety_review
@@ -910,6 +911,7 @@ def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_his
     except ReviewError as e:
         raise HTTPException(400, str(e))
     approve_from_review(real, saved, tokens, http)
+    correct_from_review(real, saved, tokens, http)
     if saved.label != ReviewLabel.SKIP:
         _rethink_after_teaching(real, tokens, http)  # a review teaches him about that sender
     return saved
@@ -936,6 +938,33 @@ def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore,
         return True
     except (HTTPException, FeedbackError, ActionError, gmail.GmailError, httpx.HTTPError):
         return False  # the review is saved either way; it just stays on your list
+
+
+def correct_from_review(real: History, review: Review, tokens: gmail.TokenStore, http: httpx.Client) -> str | None:
+    """You said "No" about something Oscar already did in Gmail, so it isn't left that way: he puts
+    it back exactly as it was (undo), and if you said he should have done a different easy-to-undo
+    action on his own (mark as read instead of archive, say), he does that instead. If you said he
+    should have asked or stopped, it just goes back. Only while acting is on, as with Approve and
+    Undo. Your review is what teaches him; this only fixes the email. Returns what changed, if anything."""
+    if review.label in (ReviewLabel.CORRECT, ReviewLabel.SKIP) or not review.complete:
+        return None  # only a "No" with what he should have done changes anything
+    decision = real.get_decision(review.decision_id)
+    record = real.action_for(decision.id) if decision else None
+    right = expected_answer(review, decision)
+    if record is None or record.undone_at or right is None or not decision.acting or not acting_on(tokens, real):
+        return None
+    if right.level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY) and right.action == decision.action:
+        return None  # he did what you wanted; only how much to ask was off
+    client = gmail_client(tokens, http)
+    try:
+        undo(real, client, decision.id)
+        instead = right.action if right.level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY) else None
+        if isinstance(instead, Action) and instead in CHANGES:
+            do(real, client, decision.model_copy(update={"action": instead}), by="you")
+            return f"put it back and {DONE_WORDS[instead]} it instead"
+        return "put it back"
+    except (ActionError, gmail.GmailError, httpx.HTTPError):
+        return None  # the review is saved either way; Undo is still there
 
 
 @app.get("/reviews/summary")
