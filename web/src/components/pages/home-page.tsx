@@ -87,7 +87,7 @@ export function HomePage() {
               </Section>
             )}
 
-            <Section title="Since yesterday" link={<More href="/email">All email</More>}>
+            <Section title="Since yesterday" link={<More href="/activity">All email</More>}>
               <SinceYesterday items={data.items} readOnly={readOnly} />
             </Section>
           </div>

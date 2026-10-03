@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 const FILTERS: (Level | "ALL")[] = ["ALL", "ASK_FIRST", "ESCALATE", "PROCEED_AND_NOTIFY", "PROCEED_SILENTLY"];
 
 /** Every email and what Oscar did with it, newest first, by day, with search. */
-export function AllEmailPage() {
+export function ActivityPage() {
   const { data, error, feedback } = useOscar();
   const hash = useHash();
   const [filter, setFilter] = useState<Level | "ALL">("ALL");

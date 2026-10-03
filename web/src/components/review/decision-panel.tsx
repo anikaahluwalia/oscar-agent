@@ -1,38 +1,16 @@
 "use client";
 
-import { CheckIcon, ExternalLinkIcon, XIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { ReviewPanel } from "@/components/review-panel";
 import { SenderAvatar } from "@/components/review/sender-avatar";
 import { StatusPill } from "@/components/status-pill";
-import type { Decision, DecisionWithFeedback } from "@/lib/api";
+import type { DecisionWithFeedback } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
-import { ACTIONS, KIND_NAMES, riskOf } from "@/lib/labels";
+import { ACTIONS } from "@/lib/labels";
+import { safetyChecks, whatItIs } from "@/lib/insights";
+import { Checklist } from "@/components/kit/checklist";
 import { gmailLink, previewOf } from "@/lib/text";
 import { dayLabel, formatTime } from "@/lib/time";
-import { cn } from "@/lib/utils";
-
-/** The safety checks Oscar ran on this email, from the checks themselves: what was found, and what wasn't. */
-function safetyChecks(d: Decision): { label: string; ok: boolean }[] {
-  const flagged = new Set(d.safety_flags);
-  const out = [
-    { label: "No request for money", ok: !flagged.has("MONEY") && d.action !== "MOVE_MONEY" },
-    { label: "No request for a password or code", ok: !flagged.has("CREDENTIALS") && d.action !== "SEND_CREDENTIALS" },
-    { label: "No instructions aimed at Oscar", ok: !flagged.has("PROMPT_INJECTION") },
-    { label: "No request for personal info", ok: !flagged.has("SENSITIVE_DATA") },
-    { label: "Doesn't commit you to anything", ok: !flagged.has("COMMITMENT") },
-    { label: "Easy to undo", ok: riskOf(d).reversible },
-  ];
-  if (d.level_source === "model_check") out.unshift({ label: "Read closely, it looked risky", ok: false });
-  return out;
-}
-
-/** What kind of email Oscar thinks it is, in a few words. */
-function whatItIs(d: Decision): string | null {
-  if (d.summary) return d.summary;
-  const kind = d.email_type ?? "unknown";
-  if (kind === "unknown" || kind === "bulk") return null;
-  return KIND_NAMES[kind] ?? kind.replace(/_/g, " ");
-}
 
 function Label({ children }: { children: React.ReactNode }) {
   return <h3 className="text-sm font-semibold">{children}</h3>;
@@ -104,18 +82,7 @@ export function DecisionPanel({ item }: { item: DecisionWithFeedback }) {
         </section>
         <section className="flex flex-col gap-2" aria-label="Safety checks">
           <Label>Safety checks</Label>
-          <ul className="flex flex-col gap-1.5 text-sm">
-            {safetyChecks(decision).map((c) => (
-              <li key={c.label} className={cn("flex items-center gap-2", c.ok ? "text-muted-foreground" : "font-medium text-status-blocked")}>
-                {c.ok ? (
-                  <CheckIcon className="size-4 shrink-0 text-status-handled" aria-label="Passed" />
-                ) : (
-                  <XIcon className="size-4 shrink-0" aria-label="Found" />
-                )}
-                {c.label}
-              </li>
-            ))}
-          </ul>
+          <Checklist items={safetyChecks(decision)} />
         </section>
       </div>
 

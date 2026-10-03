@@ -84,7 +84,7 @@ function GroupRow({ group, readOnly }: { group: Group; readOnly: boolean }) {
           ))}
           {n > SHOWN && (
             <li className="px-4 py-2 text-sm">
-              <Link href="/email" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">
+              <Link href="/activity" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">
                 {(n - SHOWN).toLocaleString()} more in All email
               </Link>
             </li>

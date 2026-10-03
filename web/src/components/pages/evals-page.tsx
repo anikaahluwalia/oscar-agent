@@ -73,7 +73,7 @@ function CaseRow({ c }: { c: EvalCaseResult }) {
 }
 
 /** How Oscar is doing: your reviews of his calls on your inbox, then the tests he's measured on. */
-export function ResultsPage() {
+export function EvalsPage() {
   const { data } = useOscar();
   const [runs, setRuns] = useState<Record<string, EvalRun> | null>(null);
   const [problem, setProblem] = useState<string | null>(null);

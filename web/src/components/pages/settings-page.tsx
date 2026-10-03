@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { AlwaysComesToYou, KindsOfEmail } from "@/components/kinds-of-email";
-import { LearnedHabits } from "@/components/learned-habits";
 import { Page, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { getChatStatus, getGmailStatus, getInboxSettings, gmailActUrl, gmailConnectUrl, setActing, setInboxSettings, type BulkAction } from "@/lib/api";
@@ -316,27 +314,10 @@ export function SettingsPage() {
         </Group>
       )}
 
-      <section id="can-do" className="flex scroll-mt-8 flex-col gap-4">
-        <div className="flex flex-col gap-1 pt-2">
-          <h2 className="text-xl font-semibold tracking-tight">What Oscar can do</h2>
-          <p className="text-sm text-muted-foreground">
-            How much I do on my own. I earn more as you okay what I do, one sender at a time. Changing these yourself comes in a later stage.
-          </p>
-        </div>
-        <Group title="By kind of email">
-          <KindsOfEmail />
-          <div className="border-t pt-4">
-            <PromoSetting />
-          </div>
-        </Group>
-        <Group title="What I've learned">
-          <LearnedHabits />
-        </Group>
-        <Group title="Always comes to you" note="Protected">
-          <p className="-mt-2 text-sm text-muted-foreground">I stop these and bring them to you. Nothing you teach me changes this.</p>
-          <AlwaysComesToYou />
-        </Group>
-      </section>
+
+      <Group title="Promotions and newsletters">
+        <PromoSetting />
+      </Group>
 
       <Group title="Notifications" note="Saved on this device · coming soon">
         <Toggle id="in-app" label="In-app" text="Heads-ups while you have Oscar open." />

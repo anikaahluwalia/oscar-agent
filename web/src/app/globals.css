@@ -60,54 +60,54 @@
 }
 
 :root {
-  /* Oscar's own colours: charcoal, white and soft grey, like his coat. There's no brand colour;
-     colour only ever means something (the four statuses). Greys read at 4.5:1 or more. */
-  --background: #f6f6f7;
-  --foreground: #16171a;
+  /* Light and airy, from the mock-up: a faintly blue-grey page, white cards with a soft
+     shadow, one blue for actions. Greys read at 4.5:1 or more on white. */
+  --background: #f5f7fb;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-foreground: #16171a;
+  --card-foreground: #111827;
   --popover: #ffffff;
-  --popover-foreground: #16171a;
-  --primary: #16171a;
+  --popover-foreground: #111827;
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --secondary: #efeff1;
-  --secondary-foreground: #16171a;
-  --muted: #efeff1;
-  --muted-foreground: #5c5f68;
-  --accent: #efeff1;
-  --accent-foreground: #16171a;
+  --secondary: #eef2f7;
+  --secondary-foreground: #111827;
+  --muted: #eef2f7;
+  --muted-foreground: #5b6474;
+  --accent: #eef2f7;
+  --accent-foreground: #111827;
   --destructive: #b42318;
-  --border: #e6e6e9;
-  --input: #dadade;
-  --ring: #16171a;
-  --chart-1: #d4d4d8;
-  --chart-2: #a1a1aa;
-  --chart-3: #71717a;
-  --chart-4: #3f3f46;
-  --chart-5: #18181b;
+  --border: #e5e9f0;
+  --input: #d6dce6;
+  --ring: #2563eb;
+  --chart-1: #bfd3fb;
+  --chart-2: #8ab0f7;
+  --chart-3: #5b8def;
+  --chart-4: #2563eb;
+  --chart-5: #1e3a8a;
   --radius: 0.75rem;
-  /* Status colours: dark enough for text on their own tint. */
+  /* Status colours, dark enough for text on their own tint. "Tell me" is teal so it never
+     looks like the blue of a button. */
   --status-handled: #11613f;
-  --status-fyi: #2449b0;
-  --status-needs: #7a4a00;
+  --status-fyi: #0e6276;
+  --status-needs: #8a4b00;
   --status-blocked: #a11f15;
-  --surface-hover: #efeff1;
-  /* The accent is ink, so selected things are solid black (white in dark mode). */
-  --brand: #16171a;
-  --shadow-card: 0 1px 2px rgb(22 23 26 / 0.04), 0 8px 24px rgb(22 23 26 / 0.05);
+  --surface-hover: #f0f3f8;
+  --brand: #2563eb;
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.04), 0 6px 20px rgb(17 24 39 / 0.05);
   /* One colour per autonomy level */
-  --level-silent: #2fb67a;
-  --level-notify: #4a7cf0;
+  --level-silent: #22a06b;
+  --level-notify: #0e9bb5;
   --level-ask: #e09a2b;
   --level-escalate: #e05545;
-  --sidebar: #fbfbfc;
-  --sidebar-foreground: #16171a;
-  --sidebar-primary: #16171a;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ececef;
-  --sidebar-accent-foreground: #16171a;
-  --sidebar-border: #e6e6e9;
-  --sidebar-ring: #16171a;
+  --sidebar-accent: #eaf1ff;
+  --sidebar-accent-foreground: #1d4ed8;
+  --sidebar-border: #e5e9f0;
+  --sidebar-ring: #2563eb;
 }
 
 .dark {
@@ -119,8 +119,8 @@
   --card-foreground: #f5f5f5;
   --popover: #141414;
   --popover-foreground: #f5f5f5;
-  --primary: #f5f5f5;
-  --primary-foreground: #0a0a0a;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
   --secondary: #1a1a1a;
   --secondary-foreground: #f5f5f5;
   --muted: #1f1f1f;
@@ -130,7 +130,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: #262626;
   --input: #262626;
-  --ring: #52525b;
+  --ring: #3b82f6;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -138,17 +138,17 @@
   --chart-5: oklch(0.269 0 0);
   --surface-hover: #1a1a1a;
   --status-handled: oklch(0.78 0.09 155);
-  --status-fyi: oklch(0.78 0.05 240);
+  --status-fyi: oklch(0.8 0.08 210);
   --status-needs: oklch(0.82 0.11 75);
   --status-blocked: oklch(0.75 0.12 20);
-  --brand: #f5f5f5;
+  --brand: #6b9bff;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
   --sidebar: #0d0d0d;
   --sidebar-foreground: #f5f5f5;
   --sidebar-primary: #f5f5f5;
   --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #1a1a1a;
-  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-accent: #172554;
+  --sidebar-accent-foreground: #bfdbfe;
   --sidebar-border: #1f1f1f;
   --level-silent: oklch(0.72 0.19 150);
   --level-notify: oklch(0.72 0.14 260);
