@@ -34,6 +34,23 @@ You can review his decisions in the web app or use the Chrome extension inside G
 
 The extension shows what Oscar decided, why, and the controls to approve, decline, undo, or give feedback. Little Oscar also sits in the corner to get your attention when something needs you.
 
+## What it looks like
+
+**Today:** what needs you, and what he took care of.
+![Today](assets/today.png)
+
+**Chat:** ask what's waiting on you, why he made a call, or teach him a rule.
+![Chat](assets/chat.png)
+
+**Review:** check his calls one email at a time, and choose how much he should involve you next time.
+![Review](assets/review.png)
+
+**What Oscar knows:** the rules you taught him and the patterns he's learned, which you can change or forget.
+![What Oscar knows](assets/knows.png)
+
+**Promises:** the things he never does alone, whatever you teach him.
+![Promises](assets/promises.png)
+
 # How he learns
 Instead of simply approving an action, you can choose from:
 - Handle quietly

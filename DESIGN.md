@@ -46,6 +46,8 @@ straight away. Otherwise your answers need to mostly agree: for one sender, 4 in
 and 8 for Quietly. A no or an undo says he should have asked, and an undo counts double. Email text
 never becomes feedback: only you can teach him.
 
+![What Oscar knows: rules you taught him and patterns he's learned](assets/knows.png)
+
 ## Safety floor
 
 The safety checks run after learning and can only make him stricter. They're in `oscar/safety.py`,
@@ -61,6 +63,8 @@ below). On a real Gmail he starts read-only, then can only do undoable things (m
 his own labels, save a draft he tells you about, and move an email to the Trash when it asked to be
 deleted and you held to approve). The Gmail client has no code to send email, delete anything for
 good or move money.
+
+![Promises: what he always stops and what always needs you](assets/promises.png)
 
 ## Cold start
 
