@@ -2,9 +2,9 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { STEPS, live, type Side, type TourAction, type TourCtx } from "@/components/demo/tour-steps";
+import { CLOSING, STEPS, live, type Side, type TourAction, type TourCtx } from "@/components/demo/tour-steps";
 import { LevelDot } from "@/components/kit/status";
-import { OscarMood } from "@/components/oscar-mood";
+import { OscarMood, type OscarPose } from "@/components/oscar-mood";
 import { Button } from "@/components/ui/button";
 import type { Level } from "@/lib/api";
 import { STATUS } from "@/lib/labels";
@@ -18,6 +18,9 @@ import { cn } from "@/lib/utils";
  * demo starts with the offer again.
  */
 const TOUR_KEY = "demo-tour";
+
+/** The closing card, between how Oscar learns and the rest of the app. */
+const END = STEPS.findIndex((s) => s.id === CLOSING);
 
 /** The banner's Tour button: back to the first step. */
 export const startTour = (session: string) => writeSetting(TOUR_KEY, `${session}:${STEPS[0].id}`);
@@ -56,9 +59,10 @@ function useMedia(query: string) {
 }
 
 /**
- * The demo tour: Oscar walks you through every part of the app, moving to each thing he talks about
- * and pointing at it. Only in demo mode. A fresh demo starts with an offer in the middle of the
- * screen; after that it's one step at a time, and it can be skipped at any point. It never blocks
+ * The demo tour: Oscar shows you how he learns, on three emails, moving to each thing the tour
+ * talks about and pointing at it. Then a closing card, where "Show me around" goes on through the
+ * rest of the app. Only in demo mode. A fresh demo starts with an offer in the middle of the
+ * screen; after that it's one step at a time, and you can leave it at any point. It never blocks
  * the app: the dimmed screen lets every click through.
  */
 export function DemoTour() {
@@ -72,45 +76,86 @@ export function DemoTour() {
   const state = id === session ? place : "offer";
   const go = (next: string) => setSaved(`${session}:${next}`);
   if (state === "off") return null;
-  if (state === "offer") return <Offer onYes={() => go(STEPS[0].id)} onNo={() => go("off")} />;
+  const close = () => go("off");
+  if (state === "offer")
+    return (
+      <Card
+        pose="asking"
+        title="Want to see how Oscar learns?"
+        text="See it in about a minute."
+        main="Start demo"
+        other="Explore on my own"
+        onMain={() => go(STEPS[0].id)}
+        onOther={close}
+        onClose={close}
+      />
+    );
 
   const index = Math.max(0, STEPS.findIndex((s) => s.id === state));
+  if (index === END)
+    return (
+      <Card
+        pose="proud"
+        title={STEPS[END].title}
+        main="Explore Oscar →"
+        other="Show me around"
+        onMain={close}
+        onOther={() => go(STEPS[END + 1].id)}
+        onClose={close}
+      />
+    );
   return <Tour index={index} data={data} go={go} />;
 }
 
-/** "Want me to show you around?", in the middle of the screen. */
-function Offer({ onYes, onNo }: { onYes: () => void; onNo: () => void }) {
-  const yes = useRef<HTMLButtonElement>(null);
-  const title = useId();
+/**
+ * A card in the middle of the screen with two choices: the offer when a demo starts, and the
+ * closing card after the learning part. Esc closes the tour.
+ */
+function Card(props: {
+  pose: OscarPose;
+  title: string;
+  text?: string;
+  main: string;
+  other: string;
+  onMain: () => void;
+  onOther: () => void;
+  onClose: () => void;
+}) {
+  const { pose, title, text, main, other, onMain, onOther, onClose } = props;
+  const first = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
   useEffect(() => {
-    yes.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector(OTHER_DIALOG) && onNo();
+    first.current?.focus({ preventScroll: true });
+  }, [title]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector(OTHER_DIALOG) && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onNo]);
+  }, [onClose]);
   return (
     <>
       <div aria-hidden className="pointer-events-none fixed inset-0 z-[60] bg-black/30 animate-in fade-in-0 dark:bg-black/55" />
       <div className="pointer-events-none fixed inset-0 z-[62] flex items-center justify-center p-4">
         <div
+          key={title}
           role="dialog"
           aria-modal="false"
-          aria-labelledby={title}
+          aria-labelledby={titleId}
           className="pointer-events-auto flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border bg-card px-6 py-7 text-center shadow-card animate-in fade-in-0 zoom-in-95 motion-reduce:animate-none"
         >
-          <OscarMood pose="asking" size={128} className="size-28 sm:size-32" />
+          <OscarMood pose={pose} size={128} className="size-28 sm:size-32" />
           <div className="flex flex-col gap-1.5">
-            <h2 id={title} className="text-2xl font-extrabold tracking-[-0.02em]">
-              Hi, I&apos;m Oscar.
+            <h2 id={titleId} className={cn("font-extrabold tracking-[-0.02em] text-balance", text ? "text-2xl" : "text-xl leading-snug")}>
+              {title}
             </h2>
-            <p className="text-[15px] leading-snug text-muted-foreground">Want me to show you around? It takes about two minutes.</p>
+            {text && <p className="text-[15px] leading-snug text-muted-foreground">{text}</p>}
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button ref={yes} className="h-11 rounded-full px-5 font-semibold" onClick={onYes}>
-              Show me around
+            <Button ref={first} className="h-11 rounded-full px-5 font-semibold" onClick={onMain}>
+              {main}
             </Button>
-            <Button variant="ghost" className="h-11 rounded-full px-5" onClick={onNo}>
-              I&apos;ll explore on my own
+            <Button variant="ghost" className="h-11 rounded-full px-5" onClick={onOther}>
+              {other}
             </Button>
           </div>
         </div>
@@ -254,6 +299,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
   const [busy, setBusy] = useState(false);
   const titleId = useId();
   const textId = useId();
+  const outcomeId = useId();
 
   const move = (to: number) => to >= 0 && to < STEPS.length && go(STEPS[to].id);
   const close = () => go("off");
@@ -397,11 +443,13 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
   // Oscar on the side nearest the target; in the middle, he stands above what he says.
   const layout = phone ? "row" : !target ? "centre" : spot?.side === "left" ? "reverse" : "row";
   const text = live(step.text, c);
-  // Focus reads a step's words when it starts. Words that change while you're on it (Teach me, once
-  // you've answered) are read out here instead.
-  const [opening, setOpening] = useState({ index, text });
-  if (opening.index !== index) setOpening({ index, text });
-  const changed = opening.index === index && opening.text !== text ? text : "";
+  const outcome = live(step.outcome, c);
+  // Focus reads a step's words when it starts. Words that change while you're on it (what came of
+  // your answer, or of the new email) are read out here instead.
+  const said = outcome ? `${text} ${outcome}` : text;
+  const [opening, setOpening] = useState({ index, said });
+  if (opening.index !== index) setOpening({ index, said });
+  const changed = opening.index === index && opening.said !== said ? (outcome ?? text) : "";
   const motion = "transition-[transform,opacity,width,height] duration-500 ease-out motion-reduce:transition-none";
 
   return (
@@ -473,7 +521,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
           role="dialog"
           aria-modal="false"
           aria-labelledby={titleId}
-          aria-describedby={textId}
+          aria-describedby={outcome ? `${textId} ${outcomeId}` : textId}
           tabIndex={-1}
           className={cn(
             "pointer-events-auto relative flex flex-col gap-2.5 rounded-2xl border bg-card p-4 shadow-card outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -482,15 +530,18 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-              {index + 1} of {STEPS.length}
+              {/* The learning part and the rest of the app each count on their own. */}
+              {index < END ? `${index + 1} of ${END}` : `${index - END} of ${STEPS.length - 1 - END}`}
             </span>
-            <button
-              type="button"
-              onClick={close}
-              className="-my-2 -mr-2 min-h-9 rounded-full px-2.5 text-xs font-semibold text-muted-foreground hover:bg-surface-hover hover:text-foreground"
-            >
-              Skip tour
-            </button>
+            {!last && (
+              <button
+                type="button"
+                onClick={close}
+                className="-my-2 -mr-2 min-h-9 rounded-full px-2.5 text-xs font-semibold text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+              >
+                Explore on my own
+              </button>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <h2 id={titleId} className="text-[15px] font-bold">
@@ -500,6 +551,11 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
               {text}
             </p>
           </div>
+          {outcome && (
+            <p id={outcomeId} className="text-sm leading-snug font-semibold">
+              {outcome}
+            </p>
+          )}
           {step.levels && (
             <ul className="flex flex-col gap-1.5 text-[13px] leading-snug">
               {(Object.keys(MEANS) as Level[]).map((level) => (

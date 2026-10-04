@@ -1,7 +1,8 @@
 // The demo tour, one step at a time. Each step says which page it's on, what Oscar points at (a
-// data-tour="..." on the real element), and what he says. Steps that wait for you read what really
-// happened from the data: what Oscar does with each email is his own call, made the same way as on
-// a real inbox. The tour only finds those emails to point at them.
+// data-tour="..." on the real element), and what it says. First how Oscar learns, on three emails,
+// then a closing card; its "Show me around" goes on through the rest of the app. Steps that wait
+// for you read what really happened from the data: what Oscar does with each email is his own
+// call, made the same way as on a real inbox. The tour only finds those emails to point at them.
 
 import type { OscarPose } from "@/components/oscar-mood";
 import type { DecisionWithFeedback, FeedbackEvent } from "@/lib/api";
@@ -34,6 +35,8 @@ export type TourStep = {
   title: string;
   pose: Live<OscarPose>;
   text: Live<string>;
+  /** What really happened, under what he says: a check mark when it went the way the step is about. */
+  outcome?: Live<string | undefined>;
   /** In the middle of the screen, pointing at nothing. */
   centre?: boolean;
   where?: Live<Where | undefined>;
@@ -48,28 +51,38 @@ export type TourStep = {
   levels?: boolean;
 };
 
-// The demo emails the tour points to (emails/demo).
-const SALE = "demo-denim-sale";
-const OTHER_SHOP = "demo-trailhead-sale";
-const TRICKY = "demo-cedar-sale";
+// The demo emails the tour points to (emails/demo). Evergreen is there from the start; Trailhead
+// and Sunday Home come in later (Check now), so Oscar decides on them after you've taught him.
+const EVERGREEN = "demo_promo_evergreen";
+const TRAILHEAD = "demo_promo_trailhead";
+const SUNDAY = "demo_promo_injection";
 
 const find = (c: TourCtx, emailId: string): DecisionWithFeedback | undefined => c.data.items.find((i) => i.decision.email_id === emailId);
 /** Every answer you gave on one email, on any of his decisions about it. */
 const answersOn = (c: TourCtx, emailId: string) => c.data.all.filter((i) => i.decision.email_id === emailId).flatMap((i) => i.feedback);
+/** One email is open in the Inbox (any of his decisions on it). */
+const isOpen = (c: TourCtx, emailId: string) => !!c.hash && c.data.all.some((i) => i.decision.id === c.hash && i.decision.email_id === emailId);
 
 /** "Handle all emails like this": a rule about every email of this kind, from any sender. */
 const isKindRule = (f: FeedbackEvent) => f.kind === "ALWAYS_DO_THIS" && f.scope === "kind" && !f.blocked_by_floor;
 /** One of the other answers to "for emails like this", about this sender only. */
 const isSenderAnswer = (f: FeedbackEvent) => f.kind === "JUST_HANDLE_IT" || f.kind === "HANDLE_AND_TELL_ME" || f.kind === "KEEP_ASKING";
 
-const ruleOf = (c: TourCtx) => answersOn(c, SALE).find(isKindRule);
-/** You answered the sale email another way (Decline, or about just this shop), so Approve and "Handle all emails like this" won't show again. */
-const answeredOtherwise = (c: TourCtx) => !ruleOf(c) && answersOn(c, SALE).some((f) => isSenderAnswer(f) || f.kind === "REJECT");
-/** The sale email is open in the Inbox (any of his decisions on it). */
-const saleOpen = (c: TourCtx) => !!c.hash && c.data.all.some((i) => i.decision.id === c.hash && i.decision.email_id === SALE);
+/** The rule you made on the Evergreen email, if you did. */
+const ruleOf = (c: TourCtx) => answersOn(c, EVERGREEN).find(isKindRule);
+const approved = (c: TourCtx) => answersOn(c, EVERGREEN).some((f) => f.kind === "APPROVE");
+/** You answered Evergreen another way (Decline, or about just this sender), so Approve and "Handle all emails like this" won't show again. */
+const answeredOtherwise = (c: TourCtx) => !ruleOf(c) && answersOn(c, EVERGREEN).some((f) => isSenderAnswer(f) || f.kind === "REJECT");
+/** He decided on this email after you made the rule, so the rule could count. */
+const afterRule = (c: TourCtx, item: DecisionWithFeedback) => {
+  const rule = ruleOf(c);
+  return !!rule && Date.parse(item.decision.created_at) >= Date.parse(rule.created_at);
+};
 
 /** Opens one email: on the Inbox when it's there, otherwise the page it's on. */
 const openEmail = (item: DecisionWithFeedback | undefined): Where => (item ? { path: "/inbox", hash: item.decision.id } : { path: "/inbox" });
+/** The Inbox, showing the list. On a narrow screen that means closing the open email, unless it's this one. */
+const listOr = (c: TourCtx, emailId: string): Where => ({ path: "/inbox", hash: c.narrow && !isOpen(c, emailId) ? "" : undefined });
 
 const bringIn: TourAction = {
   label: "Bring in new email",
@@ -77,20 +90,108 @@ const bringIn: TourAction = {
     await checkGmail();
   },
 };
-/** Starting the demo again brings the first emails back, so the tour picks up at the sale email. */
+/** Starting the demo again brings the first emails back, so the tour picks up at Evergreen. */
 const startAgain: TourAction = {
   label: "Reset demo",
-  run: async () => ((await resetDemoInbox()) ? "open-sale" : undefined),
+  run: async () => ((await resetDemoInbox()) ? "evergreen" : undefined),
 };
+const openIt = (item: DecisionWithFeedback): TourAction => ({
+  label: "Open it for me",
+  run: async () => {
+    setHash(item.decision.id);
+  },
+});
+
+/** The step after the learning part: the closing card. Its "Show me around" goes on to the rest. */
+export const CLOSING = "idea";
 
 export const STEPS: TourStep[] = [
   {
-    id: "begin",
-    title: "How to begin",
-    pose: "reporting",
-    centre: true,
-    text: "I sort every email into one of four levels, and I learn from your answers. Follow me and I'll show you each part. You can wander off any time; the Tour button at the top brings me back.",
+    id: "evergreen",
+    side: "right",
+    title: "Evergreen Clothing",
+    pose: (c) => (ruleOf(c) ? "learning" : "asking"),
+    where: (c) => listOr(c, EVERGREEN),
+    target: (c) => {
+      if (!isOpen(c, EVERGREEN)) return [`email-${EVERGREEN}`];
+      if (ruleOf(c)) return ["email-note"];
+      return approved(c) ? ["like-this", "email-note"] : ["approve", "email-note"];
+    },
+    text: "Oscar hasn't learned how you like these handled yet.",
+    outcome: (c) => {
+      if (!find(c, EVERGREEN)) return "Oscar can't find this email. Reset demo brings it back.";
+      if (ruleOf(c)) return "✓ Got it. Oscar will handle emails like this on his own now, from any sender.";
+      if (answersOn(c, EVERGREEN).some(isSenderAnswer)) return "You picked an answer about just this sender, which is fine. To see Oscar learn, reset the demo and choose Handle all emails like this.";
+      if (answeredOtherwise(c)) return "You said no to this one, which is fine. To see Oscar learn, reset the demo and approve it this time.";
+      return undefined;
+    },
+    waitFor: {
+      done: (c) => !!ruleOf(c),
+      hint: (c) => {
+        if (answeredOtherwise(c) || !find(c, EVERGREEN)) return "Reset demo to try it again.";
+        if (!isOpen(c, EVERGREEN)) return "Open the Evergreen Clothing email.";
+        if (approved(c)) return "Now choose Handle all emails like this.";
+        return "Approve it. Then choose how to handle emails like this next time.";
+      },
+    },
+    action: (c) => {
+      const item = find(c, EVERGREEN);
+      if (!item || answeredOtherwise(c)) return startAgain;
+      return isOpen(c, EVERGREEN) ? undefined : openIt(item);
+    },
   },
+  {
+    id: "trailhead",
+    side: "left",
+    title: "Trailhead Running",
+    pose: (c) => (find(c, TRAILHEAD)?.decision.autonomy_level === "PROCEED_SILENTLY" ? "done" : find(c, TRAILHEAD) ? "thinking" : "checking"),
+    // Once it's in, it opens, so you see what he did with it.
+    where: (c) => openEmail(find(c, TRAILHEAD)),
+    target: (c) => (find(c, TRAILHEAD) ? ["email-note"] : ["check-now"]),
+    text: "Different sender. Same kind of email.",
+    outcome: (c) => {
+      const item = find(c, TRAILHEAD);
+      if (!item) return undefined;
+      const silent = item.decision.autonomy_level === "PROCEED_SILENTLY";
+      if (silent && item.decision.level_source === "learned") return "✓ Oscar generalized your preference to a similar safe email.";
+      if (silent) return "Oscar handled this one on his own.";
+      if (ruleOf(c) && !afterRule(c, item)) return "This one came in before you taught Oscar, so he asked. Reset demo to see it in order.";
+      if (!ruleOf(c)) return "Oscar asked about this one, since he hasn't learned your preference yet. Reset demo to teach him first.";
+      return "Oscar still asked about this one. Reset demo to try it again.";
+    },
+    waitFor: { done: (c) => !!find(c, TRAILHEAD), hint: "Press Check now to bring it in." },
+    action: (c) => {
+      const item = find(c, TRAILHEAD);
+      if (!item) return bringIn;
+      return item.decision.autonomy_level === "PROCEED_SILENTLY" ? undefined : startAgain;
+    },
+  },
+  {
+    id: "sunday-home",
+    side: "left",
+    title: "Sunday Home",
+    pose: (c) => (find(c, SUNDAY)?.decision.autonomy_level === "ESCALATE" ? "guarding" : find(c, SUNDAY) ? "thinking" : "checking"),
+    where: (c) => openEmail(find(c, SUNDAY)),
+    target: (c) => (find(c, SUNDAY) ? ["email-note"] : ["check-now"]),
+    text: "This one looks similar.",
+    outcome: (c) => {
+      const item = find(c, SUNDAY);
+      if (!item) return undefined;
+      if (item.decision.autonomy_level !== "ESCALATE") return "Oscar didn't stop this one. Why? shows everything he noticed.";
+      if (afterRule(c, item)) return "✓ Your preference said Oscar could handle promotions. His safety policy still overrode it.";
+      return "✓ Oscar stopped this one. His safety policy always comes first.";
+    },
+    waitFor: { done: (c) => !!find(c, SUNDAY), hint: "Press Check now to bring it in." },
+    action: (c) => (find(c, SUNDAY) ? undefined : bringIn),
+  },
+  {
+    id: CLOSING,
+    title: "That's the idea: fewer interruptions without learning past the safety boundary.",
+    pose: "proud",
+    centre: true,
+    text: "",
+  },
+  // "Show me around": the rest of the app, for people who want it.
   {
     id: "today",
     side: "right",
@@ -140,111 +241,12 @@ export const STEPS: TourStep[] = [
     text: "These narrow the list: what I took care of, what's waiting on you, and what I held back. The search box finds any sender or subject.",
   },
   {
-    id: "open-sale",
-    side: "right",
-    title: "A new kind of email",
-    pose: "asking",
-    where: (c) => ({ path: "/inbox", hash: c.narrow ? "" : undefined }),
-    target: [`email-${SALE}`],
-    text: (c) => {
-      if (!find(c, SALE)) return "I can't find the sale email I wanted to show you. Reset demo brings it back.";
-      const open = saleOpen(c) ? " It's open now." : " Open it.";
-      if (ruleOf(c)) return `This is the sale email you taught me about.${saleOpen(c) ? open : " Open it to see what I did."}`;
-      if (answersOn(c, SALE).length) return `This is the sale email from Denim Co you've already answered.${open}`;
-      return `This sale email from Denim Co is new to me, so I'm asking first.${open}`;
-    },
-    waitFor: { done: saleOpen, hint: "Open the Denim Co email to go on.", advance: true },
-    action: (c) => {
-      const sale = find(c, SALE);
-      if (!sale) return startAgain;
-      if (saleOpen(c)) return undefined;
-      return {
-        label: "Open it for me",
-        run: async () => {
-          setHash(sale.decision.id);
-        },
-      };
-    },
-  },
-  {
-    id: "note",
-    side: "left",
-    title: "My note",
-    pose: "thinking",
-    where: (c) => openEmail(find(c, SALE)),
-    target: ["email-note"],
-    text: "Here's what I'd do with it, and why. Why? shows everything I noticed along the way.",
-  },
-  {
-    id: "teach",
-    side: "below",
-    title: "Teach me",
-    pose: (c) => (ruleOf(c) ? "learning" : "asking"),
-    where: (c) => openEmail(find(c, SALE)),
-    target: (c) => (answersOn(c, SALE).some((f) => f.kind === "APPROVE") ? ["like-this", "email-note"] : ["approve", "email-note"]),
-    text: (c) => {
-      const answers = answersOn(c, SALE);
-      if (ruleOf(c)) return "Got it. From now on I'll handle emails like this on my own, from any shop.";
-      if (answers.some(isSenderAnswer))
-        return "You picked an answer about just this shop, which is fine. To see the rest, reset the demo and choose Handle all emails like this.";
-      if (answeredOtherwise(c)) return "You said no to this one, which is fine. To see me learn, reset the demo and say yes this time.";
-      if (answers.some((f) => f.kind === "APPROVE")) return "Thanks. Now choose Handle all emails like this, so I know what to do next time.";
-      return "Say yes with Approve. Then I'll ask how to handle emails like this next time.";
-    },
-    waitFor: {
-      done: (c) => !!ruleOf(c),
-      hint: (c) => (answeredOtherwise(c) ? "Reset demo to try it again." : "Approve, then choose Handle all emails like this."),
-    },
-    action: (c) => (answeredOtherwise(c) ? startAgain : undefined),
-  },
-  {
     id: "check",
     side: "below",
     title: "New mail",
     pose: "checking",
-    where: { path: "/inbox" },
     target: ["check-now"],
-    text: (c) =>
-      find(c, OTHER_SHOP)
-        ? "New mail came in. Check now brings in more, from any page. Next to it, Reset demo starts over, and Leave takes you back to the start."
-        : "More mail is waiting. Check now brings it in, from any page. Next to it, Reset demo starts over, and Leave takes you back to the start.",
-    waitFor: { done: (c) => !!find(c, OTHER_SHOP), hint: "Press Check now to bring it in.", advance: true },
-    action: (c) => (find(c, OTHER_SHOP) ? undefined : bringIn),
-  },
-  {
-    id: "other-shop",
-    side: "left",
-    title: "A different shop",
-    pose: (c) => (find(c, OTHER_SHOP)?.decision.autonomy_level === "PROCEED_SILENTLY" ? "done" : "thinking"),
-    where: (c) => openEmail(find(c, OTHER_SHOP)),
-    target: (c) => (find(c, OTHER_SHOP) ? ["email-note"] : ["check-now"]),
-    text: (c) => {
-      const other = find(c, OTHER_SHOP);
-      if (!other) return "This one hasn't come in yet. Bring in new email first.";
-      if (other.decision.autonomy_level === "PROCEED_SILENTLY") return "✓ A different shop, and I handled it on my own: you taught me emails like this.";
-      return "I asked about this one. Try Reset demo to start fresh.";
-    },
-    action: (c) => {
-      const other = find(c, OTHER_SHOP);
-      if (!other) return bringIn;
-      return other.decision.autonomy_level === "PROCEED_SILENTLY" ? undefined : startAgain;
-    },
-  },
-  {
-    id: "tricky",
-    side: "left",
-    title: "Safety first",
-    pose: "guarding",
-    where: (c) => openEmail(find(c, TRICKY)),
-    target: (c) => (find(c, TRICKY) ? ["email-note"] : ["check-now"]),
-    text: (c) => {
-      const tricky = find(c, TRICKY);
-      if (!tricky) return "One more sale is on its way.";
-      return tricky.decision.autonomy_level === "ESCALATE"
-        ? "✓ This looks like a sale too, but it hides instructions for me. My safety rules always win over what I've learned."
-        : "Here's one more sale, from another shop.";
-    },
-    action: (c) => (find(c, TRICKY) ? undefined : bringIn),
+    text: "Check now brings in new email, from any page. Next to it, Reset demo starts over, and Leave takes you back to the start.",
   },
   {
     id: "review",
@@ -263,7 +265,7 @@ export const STEPS: TourStep[] = [
     target: ["knows-rule", "knows-rules"],
     text: (c) =>
       ruleOf(c)
-        ? "Here's the rule you just taught me. Everything I've learned lives on this page, and you can change or forget any of it."
+        ? "Here's the rule you taught me. Everything I've learned lives on this page, and you can change or forget any of it."
         : "Everything I've learned lives on this page: your rules, patterns and senders. You can change or forget any of it.",
   },
   {

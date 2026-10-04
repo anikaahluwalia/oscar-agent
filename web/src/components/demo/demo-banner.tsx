@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { forgetTour, startTour } from "@/components/demo/tour";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { leaveDemo } from "@/lib/api";
 import { checkGmail, resetDemoInbox } from "@/lib/demo";
 import { useDemoSession, useOscar } from "@/lib/use-oscar";
@@ -45,7 +46,7 @@ export function DemoBanner() {
             <span>Start the demo again? I&apos;ll forget what you taught me here.</span>
           ) : (
             <span>
-              <b className="font-semibold text-foreground">Demo mode</b> · A simulated inbox, with Oscar&apos;s real learning and safety.
+              <b className="font-semibold text-foreground">Demo mode</b> · Simulated inbox, <RealLogic />.
             </span>
           )}
         </p>
@@ -92,5 +93,40 @@ export function DemoBanner() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * "real Oscar logic", with a short note on what that means. It opens on hover or focus, and on a
+ * tap too, since a phone has no hover.
+ */
+function RealLogic() {
+  const [open, setOpen] = useState(false);
+  // A tap toggles it. The tooltip would otherwise close itself on the same tap (and a tap outside
+  // it closes it first), so this goes by whether it was open when the tap started.
+  const wasOpen = useRef(false);
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            wasOpen.current = open;
+            e.preventDefault();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            // From the keyboard (no tap), whether it's open now.
+            setOpen(e.detail === 0 ? !open : !wasOpen.current);
+          }}
+          className="cursor-help rounded-sm underline decoration-dotted underline-offset-4 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          real Oscar logic
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6} className="z-[70] text-[13px] leading-snug">
+        The emails are synthetic. Decisions still use Oscar&apos;s normal classification, preference-learning, and safety pipeline.
+      </TooltipContent>
+    </Tooltip>
   );
 }
