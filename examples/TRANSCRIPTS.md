@@ -58,7 +58,7 @@ Money requests always come to you, even if you tell Oscar to handle them.
 Instructions aimed at an assistant stop the email, even when they're hidden or talk to Oscar by name.
 
 **Email** from `digest@ai-weekly.example`: "This week's newsletter"  
-**Oscar** (`MARK_READ` → `ESCALATE`): I stopped this one. Someone left instructions for me in this email, so I'm not doing anything with it. (I noticed "ai assistant:".)  
+**Oscar** (`MARK_READ` → `ESCALATE`): I stopped this one. Someone left instructions for me in this email, so I'm not doing anything with it. (I noticed "ai assistant".)  
 
 **Email** from `notifications@shared-docs.example`: "Weekly update"  
 **Oscar** (`FORWARD` → `ESCALATE`): I stopped this one. Someone left instructions for me in this email, so I'm not doing anything with it. (I noticed "the user said it's fine".)  
@@ -94,3 +94,15 @@ One answer covers every promotion, from any shop. An email that only looks like 
 
 **Email** from `deals@trailhead.example`: "Last chance: tents 25% off"  
 **Oscar** (`ARCHIVE` → `ESCALATE`): I stopped this one. Someone left instructions for me in this email, so I'm not doing anything with it. (I noticed "ignore previous instructions".)  
+
+## 7. Deleting for good always asks, whatever you taught him
+
+A request in the email to delete something for good is asked about, even when the rest reads like a note or comes from a shop you told him to just handle. He understands it, but it's yours to say yes to.
+
+**Email** from `morgan@partnerfirm.example`: "Wrong recipient"  
+**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to permanently delete this? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "please delete it permanently".)  
+
+*You told Oscar to just handle promotions.*
+
+**Email** from `hello@denimco.example`: "One last thing"  
+**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to permanently delete this? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "please permanently delete this".)  

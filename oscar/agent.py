@@ -179,7 +179,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
             level, source = required, "safety_check"
             message = (f"I stopped this one. {lead.reason}." if level == AutonomyLevel.ESCALATE
                        else explain(action, level, lead.reason[0].lower() + lead.reason[1:], False, read_only))
-            noticed = lead.matched
+            noticed = lead.matched.strip(" .,;:!?-•*(\n")  # without the punctuation that started the clause
 
     # The model read it as risky and no check caught it: stop it. This can only ever be stricter.
     risky = (understanding.kind if safety and understanding and understanding.risky and understanding.confidence >= 0.5
