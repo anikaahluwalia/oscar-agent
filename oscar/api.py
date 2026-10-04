@@ -50,6 +50,12 @@ from oscar.review import teaching
 from oscar.safety_review import SafetyReview, SafetyReviewError, Verdict, record_safety_review
 from oscar.voice import describe_learning
 
+def demo_only() -> bool:
+    """OSCAR_DEMO_ONLY: a copy of Oscar that only runs the demo, for hosting it where anyone can try it.
+    There's no sign-in, so without this a visitor would see the one real inbox and could connect Gmail."""
+    return setting("OSCAR_DEMO_ONLY").strip().lower() in ("1", "true", "yes", "on")
+
+
 def auto_check_minutes() -> float:
     """How often Oscar checks Gmail on his own. 0 turns it off (the tests do)."""
     try:
@@ -78,17 +84,30 @@ def _auto_check(stop: threading.Event, every: float) -> None:
 async def lifespan(_: FastAPI):
     stop = threading.Event()
     minutes = auto_check_minutes()
-    if minutes:
+    if minutes and not demo_only():
         threading.Thread(target=_auto_check, args=(stop, minutes * 60), daemon=True, name="oscar-auto-check").start()
     yield
     stop.set()
 
 
-app = FastAPI(title="Oscar", version="0.1.0", lifespan=lifespan)
+def only_the_demo(request: Request, x_oscar_demo: str | None = Header(None)) -> None:
+    """In demo-only mode, every call must come from a browser's own demo. The one exception is the
+    status the front page asks for before a demo has started."""
+    if not demo_only() or (x_oscar_demo and demo.SESSION_ID.match(x_oscar_demo)):
+        return
+    if request.method == "GET" and request.url.path == "/gmail":
+        return
+    raise HTTPException(403, "This copy of Oscar only runs the demo.")
+
+
+# In demo-only mode there's nothing to browse in the API docs either.
+_docs = {} if not demo_only() else {"docs_url": None, "redoc_url": None, "openapi_url": None}
+app = FastAPI(title="Oscar", version="0.1.0", lifespan=lifespan, dependencies=[Depends(only_the_demo)], **_docs)
 
 # The web app runs on its own port in development. OSCAR_WEB_ORIGINS (comma
 # separated) overrides the default, e.g. when running a second copy on another port.
-WEB_ORIGINS = os.environ.get("OSCAR_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+WEB_ORIGINS = [o.strip().rstrip("/") for o in
+               os.environ.get("OSCAR_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=WEB_ORIGINS,
@@ -99,7 +118,9 @@ app.add_middleware(
 # can't get at it through a DNS trick.
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "testserver", urlparse(API_URL).hostname or "localhost"],
+    # RENDER_EXTERNAL_HOSTNAME is set by Render, so the hosted demo answers at its own address.
+    allowed_hosts=["localhost", "127.0.0.1", "testserver", urlparse(API_URL).hostname or "localhost",
+                   *filter(None, [setting("RENDER_EXTERNAL_HOSTNAME")])],
 )
 
 
@@ -767,8 +788,9 @@ _states: dict[str, float] = {}  # sign-in attempts in progress, so a callback ca
 
 @app.get("/gmail")
 def gmail_status(request: Request, session: str | None = Depends(demo_session)) -> dict:
-    if session:  # the demo never looks at your Gmail connection
-        return {"configured": gmail.configured(), "connected": False, "demo": True, "address": None, "name": None,
+    if session or demo_only():  # the demo never looks at your Gmail connection
+        return {"configured": gmail.configured() and not demo_only(), "connected": False, "demo": bool(session),
+                "only_demo": demo_only(), "address": None, "name": None,
                 "picture": None, "connected_at": None, "last_sync": None, "auto_check_minutes": 0,
                 "rethinking": False, "can_draft": False, "can_act": False, "acting": False, "read_only": False}
     tokens, real = _when_needed(request, get_tokens), _when_needed(request, get_real_history)
@@ -778,6 +800,7 @@ def gmail_status(request: Request, session: str | None = Depends(demo_session)) 
         "configured": gmail.configured(),
         "connected": bool(saved),
         "demo": False,
+        "only_demo": False,
         "address": saved.get("address"),
         "name": saved.get("name"),  # from your Google account, when it was shared
         "picture": saved.get("picture"),

@@ -86,7 +86,7 @@ def test_the_demo_still_works_with_gmail_connected(setup):
     demo_client = in_demo()
     assert demo_client.post("/demo/start").status_code == 200
     assert demo_client.get("/gmail").json() | {"configured": None} == {
-        "configured": None, "connected": False, "demo": True, "address": None, "name": None, "picture": None,
+        "configured": None, "connected": False, "demo": True, "only_demo": False, "address": None, "name": None, "picture": None,
         "connected_at": None, "last_sync": None, "auto_check_minutes": 0, "rethinking": False, "can_draft": False,
         "can_act": False, "acting": False, "read_only": False}
     # Without the header it's the real connection, as before.

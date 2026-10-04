@@ -196,6 +196,7 @@ export interface GmailStatus {
   acting: boolean; // Oscar acts in Gmail
   read_only: boolean;
   demo?: boolean; // this browser is in demo mode: a simulated inbox, and Gmail isn't used at all
+  only_demo?: boolean; // this copy of Oscar only runs the demo (OSCAR_DEMO_ONLY), e.g. the hosted one
 }
 
 /** Something Oscar did in Gmail (Stage 12): the labels it added and removed, and whether it was undone. */

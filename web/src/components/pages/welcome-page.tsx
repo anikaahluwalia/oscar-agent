@@ -57,7 +57,7 @@ export function WelcomePage() {
   const note =
     gmail === null
       ? "I can't reach my API right now."
-      : gmail && !gmail.configured
+      : gmail && !gmail.configured && !gmail.only_demo
         ? "Connecting Gmail isn't set up on this server yet."
         : null;
 
@@ -76,7 +76,7 @@ export function WelcomePage() {
         </div>
 
         <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:justify-center">
-          {gmail?.connected ? (
+          {gmail?.only_demo ? null : gmail?.connected ? (
             // Already connected on this computer: no need to go through Google again.
             <Button
               variant="outline"

@@ -12,14 +12,14 @@ import { leaveDemo } from "@/lib/api";
 import { useDemoSession, useOscar } from "@/lib/use-oscar";
 
 /** In the demo, Gmail and everything kept with a real inbox isn't there to change; this says so. */
-function DemoSettings() {
+function DemoSettings({ demoOnly }: { demoOnly: boolean }) {
   const router = useRouter();
   return (
     <SettingsGroup title="Demo">
       <SettingsRow
         icon={FlaskConicalIcon}
         title="You're trying Oscar on a simulated inbox"
-        text="Gmail and his Gmail labels are for a real inbox, so they're not here. Leave the demo to connect Gmail."
+        text={`Gmail and his Gmail labels are for a real inbox, so they're not here.${demoOnly ? "" : " Leave the demo to connect Gmail."}`}
         control={
           <Button
             variant="outline"
@@ -51,7 +51,7 @@ export function SettingsPage() {
         <p className="text-base text-muted-foreground">Your Gmail, and how Oscar works for you.</p>
       </header>
 
-      {demo ? <DemoSettings /> : <GmailSettings gmail={gmail} />}
+      {demo ? <DemoSettings demoOnly={!!gmail?.only_demo} /> : <GmailSettings gmail={gmail} />}
 
       {!demo && <GmailCompanionSettings />}
 
