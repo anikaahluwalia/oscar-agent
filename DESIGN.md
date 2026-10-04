@@ -256,4 +256,4 @@ A receipt that mentions a payment is routine. Asking him to delete an email for 
 **Oscar** (`APPLY_LABEL` → `PROCEED_SILENTLY`): All sorted! I labelled this, since labels are easy to change. (I noticed "invoice".)  
 
 **Email** from `Elliot Morgan <elliot@partner-demo.example>`: "Re: spreadsheet I sent earlier"  
-**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to move this to the Trash? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "could you permanently delete that".)
+Oscar (PERMANENTLY_DELETE → ASK_FIRST): Want me to move this to the Trash? I'm checking with you first because the email is asking for permanent deletion. I won't delete it for good, so even if you approve, I'll only move it to Trash.
