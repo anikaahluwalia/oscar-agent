@@ -14,10 +14,12 @@ from oscar.feedback import FeedbackError, FeedbackKind, record_feedback
 from oscar.history import History
 from oscar.preferences import Preferences
 from oscar.review import teaching
+from oscar.understand import Reader
 from oscar.voice import describe_learning
 
 OUT = Path(__file__).resolve().parent.parent / "examples" / "TRANSCRIPTS.md"
-READ = demo.reader(httpx.Client(timeout=40))
+# Only the demo's saved readings, never the model: the transcripts come out the same with or without a key.
+READ = Reader(httpx.Client(timeout=40), demo.READINGS, reads="full", saved_only=True)
 
 
 def sentence(text: str) -> str:
