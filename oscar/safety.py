@@ -76,15 +76,26 @@ DEAL = r"\b(?:renewal|contract|billing|subscription|terms|quote|agreement|sow|lo
 
 # Warnings against sharing something ("never share your code with anyone") aren't requests.
 # They're removed before checking, up to where the sentence turns ("..., but send it to me").
+# For the deletion check: someone asking (please, can you, or a sentence that starts with the
+# verb), deleting, the mailbox (this, it, the email, all messages...), and that it's for good.
+DELETE_ASK = (r"(?:(?:^|[.!?:\n]\s*)|\b(?:please|kindly|can you|could you|would you|will you|i need you to|need you to"
+              r"|make sure (?:to|you)|be sure to|you (?:must|should|need to))\s+)(?:(?:just|also|then|now|go ahead and)\s+)?")
+DELETE = r"(?:delete|erase|remove|wipe|purge|destroy|shred|trash)"
+MAIL = (r"(?:it|this|that|them|these|those|everything|(?:this|that|the|my|our|your|all|any|every|each)(?: \w+){0,2}? "
+        r"(?:e-?mails?|messages?|threads?|attachments?|conversations?|chains?|copies|copy|files?|mail|inbox))")
+FOR_GOOD = (r"(?:\bpermanently\b|\bfor good\b|\bforever\b|\birreversibly\b|\bbeyond recovery\b|\bfrom (?:the |your )?(?:trash|bin)\b"
+            r"|\b(?:and|,)\s*(?:do not|don't|never)\s+(?:keep|retain|save|store|hold on to)\b[^.?!\n]{0,20}\bcop(?:y|ies)\b"
+            r"|\bwithout (?:keeping|saving|retaining) (?:a |any )?cop(?:y|ies)\b)")
+
 NEGATED = re.compile(
     r"\b(?:never|don't|do not|please don't|please do not)\s+(?:\w+\s+){0,2}?(?:share|give|disclose|reveal|tell|send)\b"
     r"[^.?!\n,;]{0,60}?\b(?:with|to) (?:anyone|anybody|others|other people|someone else)\b(?:,? (?:not )?even (?:us|our staff))?"
     r"|\bwe(?:'ll| will)? never (?:ask|call|email|text) (?:you )?(?:for|to (?:share|give|send))\b[^.?!\n,;]{0,60}")
 
-# Patterns in the email text that should escalate no matter which action the
-# classifier picked. These look for requests, not just mentions. Injection is
-# first so its explanation is the one the user sees. Every scan is bounded, so a
-# long email can't make them slow.
+# Patterns in the email text that hold Oscar back no matter which action the
+# classifier picked (how far: FLAG_LEVELS below). These look for requests, not just
+# mentions. Injection is first so its explanation is the one the user sees. Every
+# scan is bounded, so a long email can't make them slow.
 AI = r"(?:ai|llms?|language models?|bots?|chatbots?|automated (?:\w+ )?(?:assistants?|agents?|helpers?|systems?)|virtual assistants?|email assistants?)"
 EMAIL_CHECKS = MappingProxyType({
     SafetyCategory.PROMPT_INJECTION: (
@@ -221,6 +232,35 @@ EMAIL_CHECKS = MappingProxyType({
             r"\breply (confirming|to confirm) (that )?(you )?(accept|agree)\b",
         ],
     ),
+    # Asking for email to be deleted for good: "please delete it permanently and don't keep a copy",
+    # "remove this message for good", "permanently delete all messages older than 30 days". The
+    # floor on PERMANENTLY_DELETE only works if the classifier proposed it, so this reads the email
+    # itself. It needs a request (please, can you, or a sentence that starts with the verb), the
+    # mailbox as the thing deleted, and that it's for good. "We deleted the duplicate", "you can
+    # delete this draft" and "delete your account at any time in settings" aren't requests to
+    # delete email for good.
+    SafetyCategory.IRREVERSIBLE_DELETE: (
+        "It asks to delete email for good, and that can't be undone",
+        [
+            rf"{DELETE_ASK}{DELETE}\b[^.?!\n]{{0,20}}?\b{MAIL}[^.?!\n]{{0,60}}?{FOR_GOOD}",
+            rf"{DELETE_ASK}(?:permanently|irreversibly|completely) {DELETE}\b[^.?!\n]{{0,20}}?\b{MAIL}",
+            rf"{DELETE_ASK}empty (?:the|your) (?:trash|bin|deleted (?:items|folder))\b",
+        ],
+    ),
+})
+
+# How far each check moves the level, whatever was learned. Most are a stop: Oscar doesn't do
+# these at all, or the email is trying to trick him. Deleting for good is something he could do
+# with your say-so, so it's an ask: he understands it, but it's yours to authorize. The final
+# level is always the stricter of this and what policy and learning chose.
+FLAG_LEVELS = MappingProxyType({
+    SafetyCategory.PROMPT_INJECTION: AutonomyLevel.ESCALATE,
+    SafetyCategory.MONEY: AutonomyLevel.ESCALATE,
+    SafetyCategory.CREDENTIALS: AutonomyLevel.ESCALATE,
+    SafetyCategory.ACCOUNT_SECURITY: AutonomyLevel.ESCALATE,
+    SafetyCategory.SENSITIVE_DATA: AutonomyLevel.ESCALATE,
+    SafetyCategory.COMMITMENT: AutonomyLevel.ESCALATE,
+    SafetyCategory.IRREVERSIBLE_DELETE: AutonomyLevel.ASK_FIRST,
 })
 
 
@@ -256,6 +296,7 @@ def caution(email: Email) -> str | None:
 FLAG_ACTIONS = MappingProxyType({
     SafetyCategory.MONEY: Action.MOVE_MONEY,
     SafetyCategory.CREDENTIALS: Action.SEND_CREDENTIALS,
+    SafetyCategory.IRREVERSIBLE_DELETE: Action.PERMANENTLY_DELETE,
 })
 
 
@@ -275,6 +316,11 @@ def check_email(email: Email) -> list[SafetyFlag]:
                 flags.append(SafetyFlag(category=category, reason=reason, matched=match.group(0)))
                 break
     return flags
+
+
+def required_level(flags: list[SafetyFlag]) -> AutonomyLevel | None:
+    """The least involvement the checks on the email allow: the strictest of their levels."""
+    return max((FLAG_LEVELS[f.category] for f in flags), key=LEVEL_ORDER.index, default=None)
 
 
 def is_stricter(a: AutonomyLevel, b: AutonomyLevel) -> bool:

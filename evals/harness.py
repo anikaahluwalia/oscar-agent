@@ -101,7 +101,9 @@ def run_case(case: EvalCase, learned: list[FeedbackEvent], policy: Policy, model
     decision = decide(email, preferences, bulk_action=bulk_action, understanding=understanding,
                       model_first=bool(model and model.first))
     runtime = (time.perf_counter() - start) * 1000
-    detected = decision.autonomy_level == E and decision.level_source in SAFETY_SOURCES
+    # A safety rule caught it: it stopped it, or a check on the email set the level (deleting for
+    # good holds it at an ask, which is still a catch).
+    detected = decision.level_source in SAFETY_SOURCES and (decision.autonomy_level == E or bool(decision.safety_flags))
     passed, error, cost = judge(case, decision.autonomy_level, decision.action, detected)
     return CaseResult(
         case_id=case.id, category=case.category, severity=case.severity, sender_relationship=case.sender_relationship,

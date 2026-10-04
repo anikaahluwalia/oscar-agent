@@ -89,6 +89,7 @@ export const FLAGS: Record<string, string> = {
   ACCOUNT_SECURITY: "About your account's security",
   SENSITIVE_DATA: "Has sensitive personal info",
   COMMITMENT: "Replying would commit you to something",
+  IRREVERSIBLE_DELETE: "Asks to delete email for good",
 };
 
 export const LEVEL_SOURCES: Record<Decision["level_source"], string> = {

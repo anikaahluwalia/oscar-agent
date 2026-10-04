@@ -104,6 +104,7 @@ FLAG_NOTES: dict[SafetyCategory, str] = {
     SafetyCategory.ACCOUNT_SECURITY: "It's about your account security",
     SafetyCategory.SENSITIVE_DATA: "Has sensitive personal info in it",
     SafetyCategory.COMMITMENT: "Replying would commit you to something",
+    SafetyCategory.IRREVERSIBLE_DELETE: "Asks to delete email for good",
 }
 
 SOURCE_NOTES: dict[str, str] = {

@@ -20,6 +20,7 @@ const FOUND: Record<string, [string, string]> = {
   ACCOUNT_SECURITY: ["Account security change detected", "Your account's security is protected"],
   SENSITIVE_DATA: ["Request for private information", "Handing over private info is protected"],
   COMMITMENT: ["A commitment in your name", "Agreeing to things for you is protected"],
+  IRREVERSIBLE_DELETE: ["A request to delete email for good", "Deleting for good always needs your yes"],
 };
 // The same, when the floor for the action stopped it and no check on the email fired.
 const BY_ACTION: Record<string, string> = { MOVE_MONEY: "MONEY", SEND_CREDENTIALS: "CREDENTIALS" };

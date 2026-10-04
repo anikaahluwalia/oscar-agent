@@ -12,7 +12,8 @@ from oscar.classifier import APP_ACCESS, classify, is_bulk
 from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
-from oscar.safety import ACTION_FLOORS, FLAG_ACTIONS, apply_floor, caution, check_email, is_stricter
+from oscar.safety import (ACTION_FLOORS, FLAG_ACTIONS, FLAG_LEVELS, apply_floor, caution, check_email, is_stricter,
+                          required_level)
 from oscar.understand import URGENT, Understanding
 from oscar.voice import CONFUSED, READ_ONLY_CONFUSED, explain, with_evidence, working_notes
 
@@ -24,6 +25,7 @@ FLAG_TYPES: dict[SafetyCategory, str] = {
     SafetyCategory.ACCOUNT_SECURITY: "security_alert",
     SafetyCategory.SENSITIVE_DATA: "sensitive_request",
     SafetyCategory.COMMITMENT: "commitment",
+    SafetyCategory.IRREVERSIBLE_DELETE: "deletion_request",
 }
 
 # How sure Oscar is that the level is right, by what decided it. Set by hand, not measured: the
@@ -153,26 +155,30 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     message = explain(action, level, reason, careful, read_only)
     noticed = classification.matched_pattern
 
-    # A risky request in the email escalates, whatever the action is.
+    # A risky request in the email holds him back, whatever the action is and whatever he learned:
+    # the level becomes the stricter of what he chose and what the check requires (FLAG_LEVELS).
     flags = check_email(email) if safety else []
+    required = required_level(flags)
+    lead = next((f for f in flags if FLAG_LEVELS[f.category] == required), None)  # the check that sets the level
     # When the protected rule for this action already stopped it (money, credentials), the
-    # check only agrees: keep the rule as the reason. Otherwise the check is what stops it.
+    # check only agrees: keep the rule as the reason. Otherwise the check is what holds it back.
     already_floored = source == "floor" and level == AutonomyLevel.ESCALATE and all(
         FLAG_ACTIONS.get(f.category) == action for f in flags if f.category in FLAG_ACTIONS)
     if flags and not already_floored:
-        for flag in flags:
-            if flag.category in FLAG_ACTIONS:
-                action = FLAG_ACTIONS[flag.category]
-                break
-        level = AutonomyLevel.ESCALATE
-        source = "safety_check"
-        message = f"I stopped this one. {flags[0].reason}."
-        noticed = flags[0].matched
+        # What was really asked for (paying, a password, deleting for good), so the decision says it.
+        named = next((f for f in flags if f.category in FLAG_ACTIONS), None)
+        if named:
+            action = FLAG_ACTIONS[named.category]
+        if not is_stricter(level, required):  # it sets the level, or agrees with it: it's the reason
+            level, source = required, "safety_check"
+            message = (f"I stopped this one. {lead.reason}." if level == AutonomyLevel.ESCALATE
+                       else explain(action, level, lead.reason[0].lower() + lead.reason[1:], False, read_only))
+            noticed = lead.matched
 
     # The model read it as risky and no check caught it: stop it. This can only ever be stricter.
     risky = (understanding.kind if safety and understanding and understanding.risky and understanding.confidence >= 0.5
              else None)
-    if risky and not flags and level != AutonomyLevel.ESCALATE:
+    if risky and level != AutonomyLevel.ESCALATE:  # a check that only asks can't hide a risky reading
         stop_action, why = MODEL_RISK[risky]
         action = stop_action or action
         level, source = AutonomyLevel.ESCALATE, "model_check"
@@ -201,13 +207,13 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
 
     # The least involvement the safety rules allow here, and the rule that set the level, if one did.
     floor = ACTION_FLOORS.get(action)
-    stopped = bool(flags) or source == "model_check"
-    safety_floor = AutonomyLevel.ESCALATE if stopped else floor[0] if floor else None
-    safety_rule = (flags[0].reason if flags else message.removeprefix("I stopped this one. ").rstrip(".")
-                   if source == "model_check" else floor[1] if source == "floor" and floor
+    safety_floor = (AutonomyLevel.ESCALATE if source == "model_check" else required if flags
+                    else floor[0] if floor else None)
+    safety_rule = (message.removeprefix("I stopped this one. ").rstrip(".") if source == "model_check"
+                   else lead.reason if flags else floor[1] if source == "floor" and floor
                    else reason if source == "caution" else None)
 
-    email_type = (FLAG_TYPES[flags[0].category] if flags else risky if source == "model_check"
+    email_type = (risky if source == "model_check" else FLAG_TYPES[lead.category] if flags
                   else classification.email_type)
     evidence = suggestion.evidence if suggestion and source == "learned" else 0.0
     used = (PreferenceUsed(scope=suggestion.scope, evidence=suggestion.evidence, confidence=suggestion.confidence)

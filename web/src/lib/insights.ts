@@ -67,6 +67,7 @@ export function safetyChecks(d: Decision): { label: string; ok: boolean }[] {
     { label: "No instructions aimed at Oscar", ok: !flagged.has("PROMPT_INJECTION") },
     { label: "No request for personal info", ok: !flagged.has("SENSITIVE_DATA") },
     { label: "Doesn't commit you to anything", ok: !flagged.has("COMMITMENT") },
+    { label: "Doesn't ask to delete anything for good", ok: !flagged.has("IRREVERSIBLE_DELETE") },
     { label: "Easy to undo", ok: riskOf(d).reversible },
   ];
   if (d.level_source === "model_check") out.unshift({ label: "Read closely, it looked risky", ok: false });
