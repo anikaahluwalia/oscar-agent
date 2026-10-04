@@ -1,15 +1,19 @@
 import { Button } from "@/components/ui/button";
-import type { Action, Decision, FeedbackKind } from "@/lib/api";
+import type { Action, Decision, FeedbackKind, Level, RuleScope } from "@/lib/api";
 
 /** The actions "for emails like this" is offered for: easy to undo, and they never leave the mailbox. */
 const LIKE_THIS_ACTIONS = new Set<Action>(["ARCHIVE", "MARK_READ", "APPLY_LABEL"]);
 
 export const offersLikeThis = (d: Decision) => LIKE_THIS_ACTIONS.has(d.action) && d.autonomy_level !== "ESCALATE";
 
-export const LIKE_THIS: { kind: FeedbackKind; label: string }[] = [
+export type LikeThisChoice = { kind: FeedbackKind; label: string; scope?: RuleScope; level?: Level };
+
+export const LIKE_THIS: LikeThisChoice[] = [
   { kind: "JUST_HANDLE_IT", label: "Just handle them" },
   { kind: "HANDLE_AND_TELL_ME", label: "Handle + tell me" },
   { kind: "KEEP_ASKING", label: "Keep asking" },
+  // Not just this sender: every email of this kind, from anyone. The same rule What Oscar knows sets.
+  { kind: "ALWAYS_DO_THIS", label: "Handle all emails like this", scope: "kind", level: "PROCEED_SILENTLY" },
 ];
 
 /**
@@ -23,7 +27,7 @@ export function LikeThis({
   big = false,
 }: {
   busy: boolean;
-  onChoose: (kind: FeedbackKind) => void;
+  onChoose: (choice: LikeThisChoice) => void;
   onSkip?: () => void;
   big?: boolean;
 }) {
@@ -33,7 +37,7 @@ export function LikeThis({
       <p className="text-sm font-medium">For emails like this:</p>
       <div className="flex flex-wrap gap-2">
         {LIKE_THIS.map((c, i) => (
-          <Button key={c.kind} variant={i === 0 ? "default" : "outline"} className={size} disabled={busy} onClick={() => onChoose(c.kind)}>
+          <Button key={c.kind} variant={i === 0 ? "default" : "outline"} className={size} disabled={busy} onClick={() => onChoose(c)}>
             {c.label}
           </Button>
         ))}

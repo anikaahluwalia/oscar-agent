@@ -267,7 +267,7 @@ export function InboxPage() {
                     </InboxLink>
                   </p>
                 )}
-                <OscarNote item={selected} canExplain={selected !== earlier} onFeedback={(kind, text) => feedback(selected.decision.id, kind, text)} />
+                <OscarNote item={selected} canExplain={selected !== earlier} onFeedback={(kind, text, scope, level) => feedback(selected.decision.id, kind, text, scope, level)} />
                 <EmailPreview
                   decision={selected.decision}
                   aside={

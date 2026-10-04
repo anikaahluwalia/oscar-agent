@@ -10,14 +10,14 @@ import { OscarAvatar } from "@/components/oscar-avatar";
 import { OscarMood, type OscarPose } from "@/components/oscar-mood";
 import { ReviewPanel } from "@/components/review-panel";
 import { Button } from "@/components/ui/button";
-import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
+import type { DecisionWithFeedback, FeedbackKind, Level, RuleScope } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
 import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, isSafetyStop, REPLIES, REVIEW_LABELS, toGrade, wouldOnly } from "@/lib/labels";
 import { isAnswered, isOpen } from "@/lib/use-oscar";
 
 type Props = {
   item: DecisionWithFeedback;
-  onFeedback: (kind: FeedbackKind, editedText?: string) => Promise<boolean>;
+  onFeedback: (kind: FeedbackKind, editedText?: string, scope?: RuleScope, level?: Level) => Promise<boolean>;
   /** False for an earlier decision, which the Why drawer doesn't know about. */
   canExplain: boolean;
 };
@@ -65,9 +65,9 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
   const saidHowMuch = feedback.some((f) => LIKE_THIS.some((c) => c.kind === f.kind) || f.kind === "ALWAYS_DO_THIS" || f.kind === "ALWAYS_ASK_ME");
   const askHowMuch = saidRight && !saidHowMuch && offersLikeThis(d);
 
-  async function give(kind: FeedbackKind) {
+  async function give(kind: FeedbackKind, scope?: RuleScope, level?: Level) {
     setBusy(true);
-    await onFeedback(kind);
+    await onFeedback(kind, undefined, scope, level);
     setBusy(false);
   }
 
@@ -165,7 +165,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
       )}
       {askHowMuch && (
         <div className="border-t pt-3">
-          <LikeThis busy={busy} onChoose={(kind) => void give(kind)} />
+          <LikeThis busy={busy} onChoose={(c) => void give(c.kind, c.scope, c.level)} />
         </div>
       )}
       {would && <ReviewPanel item={item} />}
