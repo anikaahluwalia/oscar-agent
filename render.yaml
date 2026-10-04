@@ -1,5 +1,5 @@
-# The hosted demo's API on Render (New -> Blueprint). Only the demo runs: no Gmail, no keys.
-# After the web app is on Vercel, set OSCAR_WEB_ORIGINS to its address in Render's dashboard.
+# The hosted demo on Render (New -> Blueprint): the API and the web app. Only the demo runs: no Gmail, no keys.
+# After the first deploy, paste each service's address into the other (README, Deploy the demo).
 services:
   - type: web
     name: oscar-demo-api
@@ -16,5 +16,18 @@ services:
         value: "1"
       - key: OSCAR_AUTO_CHECK_MINUTES
         value: "0"
-      - key: OSCAR_WEB_ORIGINS
+      - key: OSCAR_WEB_ORIGINS  # the web app's address
+        sync: false
+
+  - type: web
+    name: oscar-demo
+    runtime: node
+    plan: free
+    rootDir: web
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_PUBLIC_OSCAR_API  # the API's address, built into the web app
         sync: false

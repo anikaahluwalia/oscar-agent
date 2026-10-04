@@ -352,7 +352,7 @@ export interface AutonomyRow {
   decision_id: string;
 }
 
-const API = process.env.NEXT_PUBLIC_OSCAR_API ?? "http://localhost:8000";
+const API = (process.env.NEXT_PUBLIC_OSCAR_API ?? "http://localhost:8000").replace(/\/+$/, "");
 
 // --- Demo mode ----------------------------------------------------------------
 // Trying Oscar without Gmail. Each browser gets its own simulated inbox on the API, kept in memory

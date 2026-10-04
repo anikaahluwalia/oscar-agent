@@ -65,21 +65,23 @@ In the app:
 
 ## Deploy the demo
 
-You can put the demo online for free, so people can try Oscar without installing anything. Only the
-demo goes online: with `OSCAR_DEMO_ONLY=1`, the API answers nothing but a browser's own demo, so no
-visitor can reach a real inbox or connect Gmail. Never host Oscar without it, since there's no sign-in.
+You can put the demo online for free on [Render](https://render.com), so people can try Oscar without
+installing anything. Only the demo goes online: with `OSCAR_DEMO_ONLY=1`, the API answers nothing but
+a browser's own demo, so no visitor can reach a real inbox or connect Gmail. Never host Oscar without
+it, since there's no sign-in.
 
-1. **API on [Render](https://render.com):** New → Blueprint, and pick this repo. `render.yaml` sets
-   everything up. Copy the address it gives you (like `https://oscar-demo-api.onrender.com`).
-2. **Web app on [Vercel](https://vercel.com):** Add New → Project, pick this repo, set Root Directory
-   to `web`, and add the environment variable `NEXT_PUBLIC_OSCAR_API` with the Render address. Deploy.
-3. **Back on Render:** in the service's Environment, set `OSCAR_WEB_ORIGINS` to the Vercel address
-   (like `https://oscar.vercel.app`, no slash at the end). Save, and it restarts.
+1. On Render, New → Blueprint, and pick this repo. `render.yaml` sets up two services: the API
+   (`oscar-demo-api`) and the web app (`oscar-demo`). When it asks for `OSCAR_WEB_ORIGINS` and
+   `NEXT_PUBLIC_OSCAR_API`, leave them empty for now and press Apply.
+2. When both are deployed, copy each one's address from its page (like `https://oscar-demo.onrender.com`).
+3. In `oscar-demo` → Environment, set `NEXT_PUBLIC_OSCAR_API` to the API's address and save. It builds again.
+4. In `oscar-demo-api` → Environment, set `OSCAR_WEB_ORIGINS` to the web app's address and save.
 
-Don't add Google or Gemini keys on Render: the demo doesn't need them. The free server sleeps after
-15 minutes with no visitors and takes about a minute to wake up, so open the link yourself first
-before you share it. The Chrome extension only works with Oscar on your own computer; the
-**See it in Gmail** button in the app shows a short video of it.
+Then open the web app's address and press **Try Oscar**. Don't add Google or Gemini keys on Render:
+the demo doesn't need them. Free services sleep after 15 minutes with no visitors and take about a
+minute to wake up, so open the link yourself first before you share it. The Chrome extension only
+works with Oscar on your own computer; the **See it in Gmail** button in the app shows a short video
+of it.
 
 ## Connect your Gmail
 
