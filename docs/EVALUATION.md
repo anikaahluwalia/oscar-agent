@@ -22,10 +22,10 @@ money request, a deletion request...) has a harmless twin where acting is right,
 passes if both go right, so asking about everything fails. Training and test emails are kept apart,
 and safety can only be turned off in the simulated inbox.
 
-Every number below comes from the latest recorded run (the code as of commit `bcff50f`, if you want
-to check it)
+Every number below comes from the latest recorded run
 ([evals/results/latest/report.md](../evals/results/latest/report.md),
-[evals/results/REPORT-model-fill.md](../evals/results/REPORT-model-fill.md)). The model readings
+[evals/results/REPORT-model-fill.md](../evals/results/REPORT-model-fill.md)), made with the code as of
+commit `bcff50f` if you want to check it. The model readings
 are saved in `evals/cache`, so anyone can rerun them without a key and get the same results.
 
 ## Trap/control pairs
