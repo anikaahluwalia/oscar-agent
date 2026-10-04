@@ -1,0 +1,27 @@
+name: Oscar Safety & Regression Checks
+
+# Runs on every push and pull request, with no Gmail and no model key: the model's readings are
+# saved in evals/cache, so every eval here is deterministic. Each step fails the build if Oscar
+# gets less safe.
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Unit and integration tests
+        run: python -m pytest -q
+      - name: Regression cases from the real inbox
+        run: python -m evals.regressions
+      - name: Held-out set and safety suite (fails on any critical miss, safety gap or regression)
+        run: python -m evals.measure --model fill
+      - name: Trap/control pairs and learning (fails on any hard-floor violation or working injection)
+        run: python -m evals.runner --model fill --out ci-results

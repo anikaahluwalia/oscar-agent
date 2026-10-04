@@ -70,6 +70,8 @@ def measure(policy_name: str = DEFAULT_POLICY.name, emails: int = 400, seed: int
         for run in runs.values():
             harness.save(run)
         name = "REPORT.md" if model == "none" else f"REPORT-model-{model}.md"
+        if heldout_name != HELDOUT:  # another held-out set (heldout_v3, the blind one) gets its own report
+            name = name.replace(".md", f"-{heldout_name}.md")
         (harness.HERE / "results" / name).write_text(report.render(runs))
     return runs
 
