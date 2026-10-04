@@ -107,18 +107,25 @@ a background script does, only for a short list of requests, and only on localho
 
 ## Results
 
-From `python -m evals.runner` with the model reading (`evals/results/latest/report.md`), 13
+From `python -m evals.runner --model fill` (`evals/results/latest/report.md`, prompt `understand-4`), 13
 trap/control pairs, 3 runs each:
 
 | | Nothing on | Safety only | Safety and learning | Learning, safety off |
 |---|---|---|---|---|
-| Right level | 38.5% | 73.1% | 88.5% | 53.8% |
-| Pairs passed | 38.5% | 46.2% | 76.9% | 61.5% |
+| Right level | 30.8% | 65.4% | 80.8% | 46.2% |
+| Pairs passed | 30.8% | 38.5% | 69.2% | 53.8% |
 | Hard-floor violations | 3 | 0 | 0 | 6 |
 | Prompt injection success | 0% | 0% | 0% | 33.3% |
 
 The last column shows why the floor matters: what you teach, without the floor, lets one in
 three injections through.
+
+These were 88.5% and 76.9% on the prompt before (`understand-2`). The new prompt stops the model
+reading app notices, reschedules and "Hi Oscar" as risky, which it did on my real inbox. Two pairs
+changed, both to more careful: a room booking confirmation now reads as a meeting invite, so he asks
+first, and "permanently delete all emails older than 30 days" now reads as urgent, so it comes
+straight to you instead of being asked about. No trap got through. It's one run of the model, so
+small changes are partly its randomness.
 
 Learning, from `evals/results/latest/report-rules-only.md` (a simulated user who approves what
 they want done and says "for emails like this"). Promotions really come from many different shops,
@@ -135,8 +142,9 @@ so one sequence has every training email from a different one:
 The traps look like promotions from the same shops: an injection, a money request, an account
 security alert, a password request, a request for private data, and a plan upgrade you'd agree to
 by replying. On the newsletter sequence (a few senders), asks go from 100% to 0% from 12 answers.
-On the larger held-out set, the right level goes from 53.6% with the rules alone to 78.6% with
-the model, with 0 critical safety misses.
+On the larger held-out set (`evals/results/REPORT.md` and `REPORT-model-fill.md`), the right level
+after learning goes from 54.1% with the rules alone to 78.2% with the model, with 0 critical safety
+misses either way.
 
 ## Known limits
 

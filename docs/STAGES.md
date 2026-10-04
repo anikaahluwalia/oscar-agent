@@ -1681,3 +1681,32 @@ safety tests didn't change, and the trap and control results are the same with a
 Not fixed here: 8 stops came from the model's reading, not the rules (Google's "you shared account
 data with ..." notices read as security alerts, a delivery reschedule read as a commitment). And a
 real "new sign-in" or "password was reset" notice is still stopped on purpose, even when it was you.
+
+### The model's misreadings, and what the evals caught
+
+The 8 stops from the model's reading were fixed in the instructions it gets (`oscar/understand.py`).
+A greeting by name isn't text written to an AI. Connecting an app, or signing in to one with your
+Google account, is a routine notice. Moving a delivery or a meeting isn't agreeing to anything. Each
+became a regression case with a twin that must still be stopped (`evals/regression_cases/`).
+
+The first model run (`understand-3`) failed the gate. "A new card was added to your wallet. If you
+don't recognise this, remove it" read as a routine notice and went through quietly: I'd narrowed
+security alerts to sign-ins, passwords and codes. `understand-4` puts back any change to how you sign
+in or pay (a new device, password, recovery email or phone, two-factor setting, payment card).
+
+Two other things came out of it:
+
+- **App-access notices are marked read, and he tells you.** Not stopped, but not quiet either, so
+  you'd spot an app you didn't connect (`classifier.APP_ACCESS`). What you teach him can make them quiet.
+- **A case can have a different right answer with the model.** A welcome email the rules can't
+  place gets asked about; the model reads it as a routine notice, which he marks read. Both are fine,
+  so a case can say `with_model`, which `evals.measure --model fill` uses.
+
+Running the rules-only held-out set showed the footer fix above went too far: "buy a gift card and
+enter its code" and "we blocked a suspicious sign-in attempt" weren't stopped by the rules any more
+(the model still caught them). Both are stopped again (`rules-7`), with fresh rewordings in
+`tests/test_review_findings.py`. That held-out set has now been looked at for those two.
+
+After: 0 critical safety misses with and without the model, every safety case caught, and 15/15
+regression cases. With the model, the right level after learning is 78.2% (78.6% before). On the
+trap/control pairs, two changed, both to more careful (in DESIGN.md's results).
