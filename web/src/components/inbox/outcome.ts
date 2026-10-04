@@ -119,14 +119,6 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
   return { tone: "done", text: `Done in the demo inbox, ${when(d.created_at)}.` };
 }
 
-/** Who worked out what the email is. Older decisions don't say, so fall back to whether a rule matched. */
-export function understoodBy(d: Decision): string {
-  const by = d.understood_by ?? (d.matched_pattern ? "rules" : null);
-  if (by === "rules") return "His rules recognised it";
-  if (by === "model") return "The language model read it";
-  return "Nothing recognised it, so this is a guess";
-}
-
 // Mirrors ACTION_PHRASES and ACTION_DONE in oscar/voice.py, so his note sounds like him.
 const PHRASE: Record<Action, string> = {
   MARK_READ: "mark this as read",

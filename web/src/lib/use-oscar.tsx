@@ -38,7 +38,7 @@ export const API_DOWN = "I can't reach my API. Start it from the repo root with:
 export const isReadOnly = (data: OscarData) => data.gmail.connected && data.gmail.read_only;
 
 export type OscarData = {
-  items: DecisionWithFeedback[]; // Oscar's latest decision on each email
+  items: DecisionWithFeedback[]; // Oscar's latest decision on each email you haven't deleted in Gmail
   all: DecisionWithFeedback[]; // every decision, for counting your answers
   brief: Brief;
   autonomy: AutonomyRow[];
@@ -58,22 +58,6 @@ export const isOpen = (i: DecisionWithFeedback) =>
 
 /** Something Oscar did and told you about that you haven't checked yet. Worth a look, but not blocking. */
 export const isUnchecked = (i: DecisionWithFeedback) => i.decision.autonomy_level === "PROCEED_AND_NOTIFY" && !isAnswered(i);
-
-export type Answers = { approved: number; declined: number; undone: number };
-
-/** How you've actually answered Oscar for one sender and action: real counts, not weighted evidence. */
-export function answersFor(all: DecisionWithFeedback[], sender: string, action: string): Answers {
-  const out: Answers = { approved: 0, declined: 0, undone: 0 };
-  for (const { decision, feedback } of all) {
-    if (decision.sender !== sender || decision.action !== action) continue;
-    for (const f of feedback) {
-      if (f.kind === "APPROVE" || f.kind === "EDIT_THEN_SEND") out.approved++;
-      if (f.kind === "REJECT") out.declined++;
-      if (f.kind === "UNDO") out.undone++;
-    }
-  }
-  return out;
-}
 
 export type Counts = Record<Level, number>;
 
@@ -106,7 +90,8 @@ async function fetchAll(): Promise<OscarData> {
     getReviewSummary(),
     getCategories(),
   ]);
-  return { items: latestPerEmail(items), all: items, brief, autonomy, learned, gmail, reviews, categories };
+  // An email you deleted in Gmail leaves the lists. `all` keeps it, so your answers on it still count.
+  return { items: latestPerEmail(items).filter((i) => !i.gone), all: items, brief, autonomy, learned, gmail, reviews, categories };
 }
 
 export function oscarSays(text: string) {

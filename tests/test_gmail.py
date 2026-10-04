@@ -130,6 +130,22 @@ def test_follow_up_notes_what_you_did_later(tmp_path):
     assert len(history.follow_ups) == 5  # unchanged ones aren't logged again
 
 
+def test_an_email_in_the_bin_counts_as_deleted(tmp_path):
+    from oscar.inbox import deleted_in_gmail
+    fake = FakeGmail(INBOX)
+    history = History()
+    sync(history, GmailClient(connected(tmp_path), fake.http()))
+    assert deleted_in_gmail(history) == set()
+    fake.messages["m1"]["labelIds"] = ["TRASH"]  # you deleted it in Gmail: it goes to the Bin first
+    del fake.messages["m2"]  # and this one is gone for good
+    sync(history, GmailClient(connected(tmp_path), fake.http()))
+    assert deleted_in_gmail(history) == {"m1", "m2"}
+    fake.messages["m1"]["labelIds"] = ["INBOX"]  # you took it back out of the Bin
+    sync(history, GmailClient(connected(tmp_path), fake.http()))
+    assert deleted_in_gmail(history) == {"m2"}
+    assert len(history.decisions) == 3, "his history keeps them"
+
+
 def test_no_approving_or_undoing_what_was_only_read(tmp_path):
     history = History()
     sync(history, GmailClient(connected(tmp_path), FakeGmail(INBOX).http()))

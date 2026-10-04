@@ -198,6 +198,7 @@ class DecisionWithFeedback(BaseModel):
     safety_review: SafetyReview | None = None
     # For "Label it": the name of the Gmail label he used (or would use), as it's called in Settings now.
     label: str | None = None
+    gone: bool = False  # you deleted the email in Gmail, so the app's lists leave it out
 
 
 def label_for(history: History, d: Decision, names: dict[str, str]) -> str | None:
@@ -213,11 +214,13 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     """Every decision, newest first, with the feedback given on it."""
     decisions = sorted(history.decisions.values(), key=lambda d: d.created_at, reverse=True)
     names = label_names()
+    deleted = inbox.deleted_in_gmail(history)
     return [
         DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id),
                              answer=graded(history, d) if d.source == "gmail" else None,
                              done=history.action_for(d.id), classification=history.classification_for(d.email_id),
-                             safety_review=history.safety_review_for(d.id), label=label_for(history, d, names))
+                             safety_review=history.safety_review_for(d.id), label=label_for(history, d, names),
+                             gone=d.email_id in deleted)
         for d in decisions
     ]
 

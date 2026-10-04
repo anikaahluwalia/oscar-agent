@@ -60,7 +60,7 @@ class FollowUp(BaseModel):
     decision_id: str
     in_inbox: bool
     unread: bool
-    gone: bool = False  # deleted: Gmail no longer has it
+    gone: bool = False  # deleted: in Gmail's Bin, or gone from Gmail for good
 
 
 class SyncResult(BaseModel):
@@ -366,7 +366,8 @@ def follow_up(history: History, gmail: GmailClient) -> None:
             continue
         try:
             labels = gmail.labels(decision.gmail.message_id)
-            state = dict(in_inbox="INBOX" in labels, unread="UNREAD" in labels, gone=False)
+            # Deleting an email in Gmail moves it to the Bin first, so that counts as deleted too.
+            state = dict(in_inbox="INBOX" in labels, unread="UNREAD" in labels, gone="TRASH" in labels)
         except GmailError as e:
             if e.status != 404:
                 continue  # a hiccup (rate limit, outage) says nothing about what you did
@@ -376,3 +377,14 @@ def follow_up(history: History, gmail: GmailClient) -> None:
         before = last.get(decision.id)
         if before is None or (before.in_inbox, before.unread, before.gone) != tuple(state.values()):
             history.add_follow_up(FollowUp(decision_id=decision.id, **state))
+
+
+def deleted_in_gmail(history: History) -> set[str]:
+    """The emails you've deleted in Gmail since Oscar read them, by email id, from his latest look at
+    each one. The app leaves them out of its lists; his history keeps them."""
+    email_of = {d.id: d.email_id for d in history.decisions.values()}
+    latest: dict[str, bool] = {}
+    for f in history.follow_ups:  # oldest first, so the latest look wins (you can take one back out of the Bin)
+        if f.decision_id in email_of:
+            latest[email_of[f.decision_id]] = f.gone
+    return {email for email, gone in latest.items() if gone} | {email for email, t in history.tags.items() if t.gone}

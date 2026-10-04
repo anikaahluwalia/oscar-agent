@@ -9,7 +9,7 @@ import { InboxLink } from "@/components/inbox/inbox-link";
 import { InboxRow } from "@/components/inbox/inbox-row";
 import { OscarNote } from "@/components/inbox/oscar-note";
 import { didIt } from "@/components/inbox/outcome";
-import { TechnicalDetails } from "@/components/inbox/technical-details";
+import { WhatItIs } from "@/components/inbox/what-it-is";
 import { EmailPreview } from "@/components/kit/email-preview";
 import { OscarMood } from "@/components/oscar-mood";
 import { Loading, Page } from "@/components/page";
@@ -106,7 +106,7 @@ export function InboxPage() {
 
   // The email in the address (/inbox#<id>): his latest decision on it, or an earlier one.
   const latest = data.items.find((i) => i.decision.id === hash);
-  const earlier = !latest && hash ? data.all.find((i) => i.decision.id === hash) : undefined;
+  const earlier = !latest && hash ? data.all.find((i) => i.decision.id === hash && !i.gone) : undefined;
   const picked = latest ?? earlier;
   const latestId = earlier ? data.items.find((i) => i.decision.email_id === earlier.decision.email_id)?.decision.id : undefined;
   // On a wide screen something is always open; on a phone the list shows until you pick one.
@@ -277,12 +277,12 @@ export function InboxPage() {
                     </>
                   }
                 />
-                <TechnicalDetails item={selected} />
+                <WhatItIs item={selected} />
               </article>
             ) : hash ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed px-6 py-12 text-center">
                 <p className="font-semibold">I can&apos;t find that email.</p>
-                <p className="max-w-sm text-sm text-muted-foreground">It may have been cleared from my history. Pick another one from the list.</p>
+                <p className="max-w-sm text-sm text-muted-foreground">It may have been deleted in Gmail, or cleared from my history. Pick another one from the list.</p>
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">Pick an email to see what I made of it.</p>

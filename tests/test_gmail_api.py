@@ -97,6 +97,18 @@ def test_sync_review_and_summary(setup):
     assert client.post("/feedback", json={"decision_id": item["decision"]["id"], "kind": "APPROVE"}).status_code == 400
 
 
+def test_an_email_deleted_in_gmail_is_marked_gone(setup):
+    client, state, real, demo, tmp_path = setup
+    state["tokens"] = connected(tmp_path)
+    client.post("/gmail/sync")
+    assert client.get("/decisions").json()[0]["gone"] is False
+    state["fake"].messages["m1"]["labelIds"] = ["TRASH"]
+    client.post("/gmail/sync")
+    [item] = client.get("/decisions").json()
+    assert item["gone"] is True, "the app leaves it out of its lists"
+    assert real.decisions, "and his history keeps it"
+
+
 def test_demo_inbox_is_off_while_gmail_is_connected(setup):
     client, state, real, demo, tmp_path = setup
     state["tokens"] = connected(tmp_path)

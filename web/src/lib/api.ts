@@ -245,6 +245,7 @@ export interface DecisionWithFeedback {
   classification?: ClassificationFeedback | null; // your latest word on what kind of email it is
   label?: string | null; // for "Label it": the Gmail label he used or would use, by its name in Settings
   safety_review?: SafetyReview | null; // your answer, when a safety rule stopped it
+  gone?: boolean; // you deleted the email in Gmail, so the lists leave it out
   // Real inbox: what you said he should have done, and how this decision does against it.
   answer: {
     level: Level;
