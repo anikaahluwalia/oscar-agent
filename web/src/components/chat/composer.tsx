@@ -43,6 +43,7 @@ export function Composer({ busy }: { busy: boolean }) {
         ))}
       </div>
       <form
+        data-tour="chat-input"
         onSubmit={(e) => {
           e.preventDefault();
           send(draft, true);

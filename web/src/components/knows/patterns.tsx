@@ -55,7 +55,7 @@ function Empty({ title, text }: { title: string; text: string }) {
 
 function Section({ id, title, text, children }: { id: string; title: string; text: string; children: React.ReactNode }) {
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-3">
+    <section aria-labelledby={id} data-tour={id} className="flex flex-col gap-3">
       <div className="flex flex-col gap-0.5">
         <h2 id={id} className="text-lg font-bold">
           {title}
@@ -121,7 +121,7 @@ export function RulesYouTaught({ rows, failed, query }: { rows: PatternRow[] | n
             const level = levelOf(p);
             const name = patternName(p);
             return (
-              <li key={`${p.kind}|${p.action}`} className="flex flex-col gap-4 rounded-[22px] border bg-card p-5">
+              <li key={`${p.kind}|${p.action}`} data-tour="knows-rule" className="flex flex-col gap-4 rounded-[22px] border bg-card p-5">
                 <div className="flex items-center gap-3">
                   <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <FileTextIcon className="size-[18px]" strokeWidth={1.9} />

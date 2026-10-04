@@ -61,6 +61,7 @@ function NavLink({ href, label, icon: Icon, count, onClick }: NavItem & { count?
       href={href}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
+      data-tour={`nav-${href.slice(1)}`}
       className={cn(
         "flex min-h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground",
         active && "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -178,6 +179,7 @@ function Tab({ href, label, short, icon: Icon, count }: NavItem & { count?: numb
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
+      data-tour={`nav-${href.slice(1)}`}
       className={cn(
         "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-muted-foreground",
         active && "text-foreground",
@@ -211,6 +213,7 @@ function More() {
       <button
         type="button"
         aria-expanded={open}
+        data-tour="nav-more"
         onClick={() => setOpen(true)}
         className={cn("flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-muted-foreground", active && "text-foreground")}
       >

@@ -44,7 +44,7 @@ export function PromisesPage() {
         />
 
         {GROUPS.map((g) => (
-          <section key={g.group} aria-labelledby={`promises-${g.group}`} className="flex flex-col gap-3">
+          <section key={g.group} aria-labelledby={`promises-${g.group}`} data-tour={`promises-${g.group}`} className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
               <h2
                 id={`promises-${g.group}`}

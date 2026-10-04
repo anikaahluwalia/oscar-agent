@@ -15,7 +15,7 @@ import { shownLevel } from "@/lib/labels";
 export function InboxRow({ item, selected, waiting }: { item: DecisionWithFeedback; selected: boolean | "wide"; waiting: boolean }) {
   const { decision: d, done, feedback } = item;
   return (
-    <li>
+    <li data-tour={`email-${d.email_id}`}>
       <InboxLink
         id={d.id}
         aria-current={selected === true ? "true" : undefined}

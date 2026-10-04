@@ -106,7 +106,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
             Hold to approve
           </HoldButton>
         ) : (
-          <Button key="approve" className={TAP} disabled={busy} onClick={() => give("APPROVE")}>
+          <Button key="approve" data-tour="approve" className={TAP} disabled={busy} onClick={() => give("APPROVE")}>
             Approve
           </Button>
         ),
@@ -135,7 +135,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
   ];
 
   return (
-    <section aria-label="Oscar's note" className="flex flex-col gap-4 rounded-[22px] border bg-card p-5 sm:p-6">
+    <section aria-label="Oscar's note" data-tour="email-note" className="flex flex-col gap-4 rounded-[22px] border bg-card p-5 sm:p-6">
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
         {pose ? <OscarMood pose={pose} size={84} className="-my-1" /> : <OscarAvatar size={44} className="mx-2" />}
         <div className="flex min-w-[13.75rem] flex-1 flex-col gap-1 pt-1">
@@ -145,7 +145,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {buttons}
           {canExplain && (
-            <Button variant="outline" className={TAP} onClick={() => openWhy(d.id)}>
+            <Button variant="outline" data-tour="why" className={TAP} onClick={() => openWhy(d.id)}>
               Why?
             </Button>
           )}
@@ -164,7 +164,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
         </div>
       )}
       {askHowMuch && (
-        <div className="border-t pt-3">
+        <div data-tour="like-this" className="border-t pt-3">
           <LikeThis busy={busy} onChoose={(c) => void give(c.kind, c.scope, c.level)} />
         </div>
       )}

@@ -387,7 +387,7 @@ export function ReviewWorkspace({
 
   if (!current) {
     return (
-      <div className="mx-auto flex w-full max-w-[744px] flex-col gap-6">
+      <div data-tour="review-done" className="mx-auto flex w-full max-w-[744px] flex-col gap-6">
         <Header pose="sleeping" mode={mode} reaction={null}>
           {progress}
         </Header>
@@ -451,6 +451,7 @@ export function ReviewWorkspace({
 
       <aside
         aria-label={mode === "safety" ? "Safety review" : "Your review"}
+        data-tour="review-answer"
         className="flex min-w-0 flex-col gap-5 rounded-3xl border bg-card p-5 shadow-card lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:overscroll-contain"
       >
         {tabs}

@@ -86,14 +86,17 @@ export function FollowUp({ item, onSaved, onBack }: { item: DecisionWithFeedback
   const [note, setNote] = useState(old?.note ?? "");
   const [busy, setBusy] = useState(false);
 
-  // Escape goes back, unless you're typing.
+  // Escape goes back, unless you're typing. It's handled first and marked as used, so it doesn't
+  // also close the demo tour.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
-      if (e.key === "Escape" && !target?.closest("input, textarea, select, [contenteditable]")) onBack();
+      if (e.key !== "Escape" || e.defaultPrevented || target?.closest("input, textarea, select, [contenteditable]")) return;
+      e.preventDefault();
+      onBack();
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () => window.removeEventListener("keydown", onKey, { capture: true });
   }, [onBack]);
 
   function pickLevel(next: Level) {

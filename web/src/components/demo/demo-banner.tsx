@@ -2,22 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GUIDE_KEY } from "@/components/demo/demo-guide";
+import { forgetTour, startTour } from "@/components/demo/tour";
 import { Button } from "@/components/ui/button";
 import { leaveDemo } from "@/lib/api";
 import { checkGmail, resetDemoInbox } from "@/lib/demo";
-import { useLocalSetting } from "@/lib/local-setting";
 import { useDemoSession, useOscar } from "@/lib/use-oscar";
 
 /**
- * A calm line across the top while you're in the demo: what it is, checking for new email (so the
- * later emails can come in without the guide), starting it again, and leaving. Starting again only
- * asks first once you've answered something, since that's what it forgets.
+ * A calm line across the top while you're in the demo: what it is, the tour, checking for new email
+ * (so the later emails can come in without the tour), starting it again, and leaving. Starting again
+ * only asks first once you've answered something, since that's what it forgets.
  */
 export function DemoBanner() {
   const session = useDemoSession();
   const { data } = useOscar();
-  const [, setGuide] = useLocalSetting<string>(GUIDE_KEY, "");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -28,8 +26,8 @@ export function DemoBanner() {
   async function reset() {
     setBusy(true);
     setConfirming(false);
-    // The guide starts over too: it asks again if you'd like to see how he learns.
-    if (await resetDemoInbox()) setGuide("");
+    // The tour starts over too: Oscar offers to show you around again.
+    if (await resetDemoInbox()) forgetTour();
     setBusy(false);
   }
 
@@ -63,12 +61,23 @@ export function DemoBanner() {
             </>
           ) : (
             <>
-              <Button size="sm" variant="ghost" className="h-9 px-3 font-semibold sm:h-8" disabled={busy} onClick={() => void checkGmail()}>
+              <Button size="sm" variant="ghost" className="h-9 px-3 font-semibold sm:h-8" onClick={() => startTour(session)}>
+                Tour
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                data-tour="check-now"
+                className="h-9 px-3 font-semibold sm:h-8"
+                disabled={busy}
+                onClick={() => void checkGmail()}
+              >
                 Check now
               </Button>
               <Button
                 size="sm"
                 variant="outline"
+                data-tour="reset-demo"
                 className="h-9 px-3.5 font-semibold sm:h-8"
                 disabled={busy}
                 onClick={() => (answered ? setConfirming(true) : void reset())}

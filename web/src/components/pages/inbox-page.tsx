@@ -129,7 +129,11 @@ export function InboxPage() {
             {readOnly ? "Every email, and what I'd do with it. I only read your Gmail for now." : "Every email, and what I did with it."}
           </p>
         </div>
-        {data.items.length > 0 && <FilterPills options={pills} value={filter} onChange={pick} />}
+        {data.items.length > 0 && (
+          <div data-tour="inbox-filters">
+            <FilterPills options={pills} value={filter} onChange={pick} />
+          </div>
+        )}
       </header>
 
       {data.items.length === 0 ? (
@@ -153,7 +157,7 @@ export function InboxPage() {
         </div>
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-          <div className={cn("flex min-w-0 flex-col gap-3", showingDetail && "hidden lg:flex")}>
+          <div data-tour="inbox-list" className={cn("flex min-w-0 flex-col gap-3", showingDetail && "hidden lg:flex")}>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <label htmlFor="inbox-search" className="sr-only">

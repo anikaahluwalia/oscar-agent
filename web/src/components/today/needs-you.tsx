@@ -98,7 +98,7 @@ export function NeedsYou({
 }) {
   if (!items.length) return null;
   return (
-    <section aria-labelledby="needs-you" className="flex flex-col rounded-[24px] border bg-card px-5 py-5 sm:px-6">
+    <section aria-labelledby="needs-you" data-tour="today-needs" className="flex flex-col rounded-[24px] border bg-card px-5 py-5 sm:px-6">
       <div className="mb-2 flex min-h-11 items-center justify-between">
         <h2 id="needs-you" className="text-lg font-bold">
           Needs you

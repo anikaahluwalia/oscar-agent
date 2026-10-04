@@ -117,7 +117,7 @@ export function TodayPage() {
 
       {needs.length ? <NeedsYou items={needs} canAct={!readOnly} onFeedback={feedback} /> : <CaughtUp readOnly={readOnly} />}
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,55fr)_minmax(0,45fr)]">
+      <div data-tour="today-day" className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,55fr)_minmax(0,45fr)]">
         <ActivityCard rows={activity(data.items, today, readOnly)} readOnly={readOnly} />
         <ComingUp items={data.items} now={now} />
       </div>

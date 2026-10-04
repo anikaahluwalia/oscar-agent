@@ -2,12 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import { DemoBanner } from "@/components/demo/demo-banner";
-import { DemoGuide } from "@/components/demo/demo-guide";
+import { DemoTour } from "@/components/demo/tour";
 import { Sidebar } from "@/components/sidebar";
 import { WhyDrawer } from "@/components/why-drawer";
 
 /**
- * The app around each page: the menu, the demo banner and guide, and the Why drawer. The front
+ * The app around each page: the menu, the demo banner and tour, and the Why drawer. The front
  * page ("/") stands on its own, and loads nothing about an inbox until you pick one.
  */
 export function AppFrame({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <WhyDrawer />
-      <DemoGuide />
+      <DemoTour />
     </>
   );
 }
