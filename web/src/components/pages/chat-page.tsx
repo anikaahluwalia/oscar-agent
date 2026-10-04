@@ -34,7 +34,7 @@ export function ChatPage() {
           m.from === "you" ? (
             <YourMessage key={i} text={m.text} />
           ) : (
-            <OscarMessage key={i} message={m} index={i} pose={moodOf(messages, i, items)} items={items} />
+            <OscarMessage key={i} message={m} index={i} pose={moodOf(messages, i, items)} items={items} latest={i === messages.length - 1} />
           ),
         )}
         {busy && <Typing />}

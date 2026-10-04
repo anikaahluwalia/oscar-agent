@@ -122,7 +122,7 @@ export function SafetyPanel({ item, onAnswered, footer }: { item: DecisionWithFe
         </div>
       </section>
 
-      <PanelSection title="Why I stopped">
+      <PanelSection title="Why I stopped" tour="review-call">
         <ul className="flex flex-col gap-2 text-sm">
           {why.map((w) => (
             <li key={w} className="flex items-start gap-2.5">
@@ -133,7 +133,7 @@ export function SafetyPanel({ item, onAnswered, footer }: { item: DecisionWithFe
         </ul>
       </PanelSection>
 
-      <PanelSection title="Did I identify the risk correctly?">
+      <PanelSection title="Did I identify the risk correctly?" tour="review-buttons">
         {answered ? (
           <div className="flex flex-wrap items-center justify-between gap-x-3 rounded-2xl border border-dashed bg-card px-4 py-3 text-sm">
             <p>

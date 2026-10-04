@@ -29,11 +29,14 @@ export function OscarMessage({
   index,
   pose,
   items,
+  latest = false,
 }: {
   message: ChatMessage;
   index: number;
   pose: OscarPose;
   items: DecisionWithFeedback[];
+  /** His newest message, for the demo tour to point at. */
+  latest?: boolean;
 }) {
   // Emails he talks about, as cards. Ones that aren't in the inbox any more are left out.
   const emails = (message.decisions ?? [])
@@ -41,7 +44,7 @@ export function OscarMessage({
     .map((id) => items.find((i) => i.decision.id === id))
     .filter((i): i is DecisionWithFeedback => !!i);
   return (
-    <div className="flex flex-col gap-1.5">
+    <div data-tour={latest ? "chat-reply" : undefined} className="flex flex-col gap-1.5">
       <FromOscar pose={pose}>
         <div className={BUBBLE}>
           <p className="break-words whitespace-pre-line">{message.text}</p>

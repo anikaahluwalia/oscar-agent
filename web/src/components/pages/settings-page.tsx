@@ -55,13 +55,16 @@ export function SettingsPage() {
 
       {!demo && <GmailCompanionSettings />}
 
-      <SettingsGroup title="You">
-        <NameRow />
-      </SettingsGroup>
+      {/* Your name and the look, together, for the demo tour to point at. */}
+      <div data-tour="settings-you" className="flex flex-col gap-10">
+        <SettingsGroup title="You">
+          <NameRow />
+        </SettingsGroup>
 
-      <SettingsGroup title="Appearance">
-        <AppearanceRow />
-      </SettingsGroup>
+        <SettingsGroup title="Appearance">
+          <AppearanceRow />
+        </SettingsGroup>
+      </div>
 
       <SettingsGroup title="Oscar's chat">
         <ChatRow />

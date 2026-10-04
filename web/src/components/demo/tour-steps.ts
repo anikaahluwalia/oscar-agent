@@ -1,21 +1,34 @@
 // The demo tour, one step at a time. Each step says which page it's on, what Oscar points at (a
 // data-tour="..." on the real element), and what it says. First how Oscar learns, on three emails,
-// then a closing card; its "Show me around" goes on through the rest of the app. Steps that wait
+// then a closing card, then the rest of the app: Review and Chat you try for real. Steps that wait
 // for you read what really happened from the data: what Oscar does with each email is his own
 // call, made the same way as on a real inbox. The tour only finds those emails to point at them.
 
 import type { OscarPose } from "@/components/oscar-mood";
 import type { DecisionWithFeedback, FeedbackEvent } from "@/lib/api";
+import { askOscar, type ChatMessage } from "@/lib/chat-store";
 import { waiting } from "@/lib/counts";
 import { checkGmail, resetDemoInbox } from "@/lib/demo";
 import { setHash } from "@/lib/use-hash";
 import type { OscarData } from "@/lib/use-oscar";
 
+/** Your answers and the chat as they were when a step started, so it can tell what you did on it. */
+export type Before = { answers: Set<string>; chat: number };
+
 /**
- * What a step can look at: the app's data, the email open in the Inbox (/inbox#<id>), and whether
- * the screen is narrow enough that the Inbox shows the list or the open email, not both (below lg).
+ * What a step can look at: the app's data, the email open in the Inbox (/inbox#<id>), whether
+ * the screen is narrow enough that the Inbox shows the list or the open email, not both (below lg),
+ * the chat, and `before`.
  */
-export type TourCtx = { data: OscarData; hash: string; narrow: boolean };
+export type TourCtx = { data: OscarData; hash: string; narrow: boolean; chat: ChatMessage[]; before: Before };
+
+/** Every answer you've given: on his calls, and in Safety review. */
+const answersIn = (data: OscarData) =>
+  data.all.flatMap((i) => [
+    ...i.feedback.map((f) => ({ id: f.id, kind: f.kind as string })),
+    ...(i.safety_review ? [{ id: i.safety_review.id, kind: "SAFETY" }] : []),
+  ]);
+export const beforeOf = (data: OscarData, chat: ChatMessage[]): Before => ({ answers: new Set(answersIn(data).map((a) => a.id)), chat: chat.length });
 
 /** A value, or one worked out from what's really in the demo right now. */
 type Live<T> = T | ((c: TourCtx) => T);
@@ -44,6 +57,8 @@ export type TourStep = {
   target?: Live<string[]>;
   /** Where Oscar stands when there's room, so he doesn't cover what the step is about. */
   side?: Side;
+  /** data-tour names he stays off when he can, like the question around the button he points at. */
+  clear?: string[];
   /** For steps you do yourself: Next waits until this is true. `advance` moves on by itself once it is. */
   waitFor?: { done: (c: TourCtx) => boolean; hint: Live<string>; advance?: boolean };
   action?: Live<TourAction | undefined>;
@@ -102,13 +117,27 @@ const openIt = (item: DecisionWithFeedback): TourAction => ({
   },
 });
 
-/** The step after the learning part: the closing card. Its "Show me around" goes on to the rest. */
+/** The step after the learning part: the closing card. Its main button goes on to the rest. */
 export const CLOSING = "idea";
+
+/** The kinds of answer you gave on this step, oldest first. */
+const newAnswers = (c: TourCtx) => answersIn(c.data).filter((a) => !c.before.answers.has(a.id)).map((a) => a.kind);
+/** Oscar answered something you asked on this step. */
+const replied = (c: TourCtx) => c.chat.slice(c.before.chat).some((m) => m.from === "oscar");
+// One of the chat's own suggestions (components/chat/composer.tsx), sent like any message.
+const askWaiting: TourAction = {
+  label: "What's waiting on me?",
+  run: async () => {
+    await askOscar("What's waiting on me?");
+  },
+};
 
 export const STEPS: TourStep[] = [
   {
     id: "evergreen",
     side: "right",
+    // Not over the note's own question and its buttons, while he points at one of them.
+    clear: ["email-note"],
     title: "Evergreen Clothing",
     pose: (c) => (ruleOf(c) ? "learning" : "asking"),
     where: (c) => listOr(c, EVERGREEN),
@@ -191,82 +220,50 @@ export const STEPS: TourStep[] = [
     centre: true,
     text: "",
   },
-  // "Show me around": the rest of the app, for people who want it.
+  // The rest of the app, the same way: he walks to each part, and on some you try it yourself.
   {
     id: "today",
-    side: "right",
     title: "Today",
     pose: "reporting",
     where: { path: "/today" },
-    target: ["nav-today"],
-    text: "This is Today, your summary of the day. It's the best place to start: what I handled, what needs you, and what's coming up.",
-  },
-  {
-    id: "today-needs",
-    title: "What needs you",
-    pose: "asking",
-    where: { path: "/today" },
     target: ["today-needs", "today-caught-up"],
-    text: (c) =>
-      waiting(c.data).length
-        ? "These are waiting on you: emails I asked about, and ones I stopped. You can answer most of them right here."
-        : "Nothing needs you right now. When I ask about something or stop it, it shows up here first.",
-  },
-  {
-    id: "today-day",
-    title: "Your day",
-    pose: "done",
-    where: { path: "/today" },
-    target: ["today-day"],
-    text: "Here's what I took care of today, and what's coming up: events and due dates I spotted in your email.",
-  },
-  {
-    id: "inbox",
-    side: "right",
-    title: "Four levels",
-    pose: "working",
-    // On a narrow screen the list only shows while no email is open.
-    where: (c) => ({ path: "/inbox", hash: c.narrow ? "" : undefined }),
-    target: ["inbox-list"],
-    text: "Every email I read is here. The coloured line says what I did with it:",
-    levels: true,
-  },
-  {
-    id: "inbox-filters",
-    side: "below",
-    title: "Narrow it down",
-    pose: "working",
-    where: (c) => ({ path: "/inbox", hash: c.narrow ? "" : undefined }),
-    target: ["inbox-filters"],
-    text: "These narrow the list: what I took care of, what's waiting on you, and what I held back. The search box finds any sender or subject.",
-  },
-  {
-    id: "check",
-    side: "below",
-    title: "New mail",
-    pose: "checking",
-    target: ["check-now"],
-    text: "Check now brings in new email, from any page. Next to it, Reset demo starts over, and Leave takes you back to the start.",
+    text: "This is Today, the best place to start. What needs you comes first, and what I did today is below it.",
   },
   {
     id: "review",
-    side: "left",
     title: "Review",
-    pose: "thinking",
-    where: { path: "/review" },
-    target: ["review-answer", "review-done"],
-    text: "Go through my calls here, one at a time, and tell me what I got right. That's how I learn the rest.",
+    pose: (c) => (newAnswers(c).length ? "proud" : "thinking"),
+    where: { path: "/review", hash: "" },
+    side: "below",
+    target: ["review-buttons", "review-answer", "review-done"],
+    // Not over the email, or over what he did with it: you need both to answer.
+    clear: ["review-email", "review-call"],
+    text: (c) =>
+      newAnswers(c).length || waiting(c.data).length
+        ? "Here's one of my calls. Was I right? Tell me."
+        : "Nothing's waiting on you right now. When something is, this is where you tell me if I got it right.",
+    outcome: (c) => {
+      const last = newAnswers(c).at(-1);
+      if (!last) return undefined;
+      if (last === "APPROVE") return "✓ You said yes, so I did it. I'll remember that.";
+      if (last === "REJECT") return "✓ You said no, so I left it alone. I'll remember that.";
+      if (last === "SEEN") return "✓ Thanks for taking a look. I'll leave that one with you.";
+      if (last === "SAFETY") return "✓ Thanks. That helps me read emails like it, and my safety rules stay as they are.";
+      return "✓ Got it. I'll remember that.";
+    },
+    waitFor: { done: (c) => newAnswers(c).length > 0 || !waiting(c.data).length, hint: "Answer this one to go on." },
   },
   {
     id: "knows",
     title: "What I know",
     pose: "learning",
     where: { path: "/knows" },
-    target: ["knows-rule", "knows-rules"],
+    target: ["knows-rule-change", "knows-rules"],
+    clear: ["knows-rule"],
     text: (c) =>
       ruleOf(c)
-        ? "Here's the rule you taught me. Everything I've learned lives on this page, and you can change or forget any of it."
-        : "Everything I've learned lives on this page: your rules, patterns and senders. You can change or forget any of it.",
+        ? "Here's what you just taught me. You can change or forget it any time."
+        : "Everything I learn from you shows up here. You can change or forget any of it.",
   },
   {
     id: "promises",
@@ -274,24 +271,32 @@ export const STEPS: TourStep[] = [
     pose: "guarding",
     where: { path: "/promises" },
     target: ["promises-stop"],
-    text: "Some things I never do on my own, whatever I learn. These I always stop, like moving money, sharing a password, or following instructions hidden in an email. Below them are the ones that always wait for your yes, like deleting or sending.",
-  },
-  {
-    id: "settings",
-    side: "right",
-    title: "Settings",
-    pose: "working",
-    where: { path: "/settings" },
-    target: ["nav-settings", "nav-more"],
-    text: "Your name, light or dark, and the chat live in Settings. With your real Gmail, it's also where you connect it.",
+    text: "Whatever you teach me, I always stop these, like moving money or sharing a password. Below them are the ones I always ask you about first.",
   },
   {
     id: "chat",
     side: "above",
     title: "Chat",
-    pose: "typing",
+    pose: (c) => (replied(c) ? "proud" : "typing"),
     where: { path: "/chat" },
-    target: ["chat-input"],
-    text: "Ask me anything about your email here, or tell me how to handle something. That's everything. This inbox is pretend, but my learning and safety are real.",
+    target: (c) => (replied(c) ? ["chat-reply"] : ["chat-input"]),
+    text: (c) => (replied(c) ? "Ask me anything about your email." : "Ask me something. Try this one:"),
+    waitFor: { done: replied, hint: "Or type your own question." },
+    action: (c) => (replied(c) ? undefined : askWaiting),
+  },
+  {
+    id: "settings",
+    title: "Settings",
+    pose: "working",
+    where: { path: "/settings" },
+    target: ["settings-you"],
+    text: "In Settings you can tell me your name, and pick light or dark.",
+  },
+  {
+    id: "done",
+    title: "That's me",
+    pose: "proud",
+    centre: true,
+    text: "The emails are pretend, but my learning and safety are real.",
   },
 ];

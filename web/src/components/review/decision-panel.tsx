@@ -42,9 +42,22 @@ const ACTION_ICONS: Partial<Record<Action, LucideIcon>> = {
 };
 
 /** A section of the panel: a heading, an optional line under it, then what's in it. */
-export function PanelSection({ title, text, children, className }: { title: string; text?: string; children: React.ReactNode; className?: string }) {
+export function PanelSection({
+  title,
+  text,
+  children,
+  className,
+  tour,
+}: {
+  title: string;
+  text?: string;
+  children: React.ReactNode;
+  className?: string;
+  /** Its data-tour name, for the demo tour to point at. */
+  tour?: string;
+}) {
   return (
-    <section className={cn("flex flex-col gap-3 border-t pt-5", className)}>
+    <section data-tour={tour} className={cn("flex flex-col gap-3 border-t pt-5", className)}>
       <div className="flex flex-col gap-0.5">
         <h2 className="text-[17px] font-bold tracking-[-0.01em]">{title}</h2>
         {text && <p className="text-sm text-muted-foreground">{text}</p>}
@@ -299,7 +312,7 @@ export function DecisionPanel({
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="flex flex-col gap-3">
+      <section data-tour="review-call" className="flex flex-col gap-3">
         <h2 className="text-[17px] font-bold tracking-[-0.01em]">Oscar&apos;s action</h2>
         <div className="flex items-start gap-3.5">
           <span aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -351,7 +364,7 @@ export function DecisionPanel({
           <DecisionControls item={item} canAct={canAct} feedback={feedback} onAnswered={onAnswered} undoOnly />
         </PanelSection>
       ) : (
-        <PanelSection title="Was the action right?" text="Your answer teaches me about this sender.">
+        <PanelSection title="Was the action right?" text="Your answer teaches me about this sender." tour="review-buttons">
           <DecisionControls item={item} canAct={canAct} feedback={feedback} onAnswered={onAnswered} />
           {!item.feedback.length && d.autonomy_level !== "ASK_FIRST" && d.autonomy_level !== "ESCALATE" && d.autonomy_level !== "PROCEED_AND_NOTIFY" && (
             <p className="text-sm text-muted-foreground">Nothing here needs you.</p>

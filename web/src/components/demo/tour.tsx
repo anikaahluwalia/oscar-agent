@@ -2,11 +2,12 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { CLOSING, STEPS, live, type Side, type TourAction, type TourCtx } from "@/components/demo/tour-steps";
+import { CLOSING, STEPS, beforeOf, live, type Side, type TourAction, type TourCtx } from "@/components/demo/tour-steps";
 import { LevelDot } from "@/components/kit/status";
 import { OscarMood, type OscarPose } from "@/components/oscar-mood";
 import { Button } from "@/components/ui/button";
 import type { Level } from "@/lib/api";
+import { useChat } from "@/lib/chat-store";
 import { STATUS } from "@/lib/labels";
 import { useLocalSetting, writeSetting } from "@/lib/local-setting";
 import { setHash, useHash } from "@/lib/use-hash";
@@ -39,6 +40,24 @@ const OTHER_DIALOG = '[role="dialog"][aria-modal="true"]';
 // ...and for an open menu (Change, Make it a rule, the Inbox's pills), which sits below the dim.
 const COVERING = `${OTHER_DIALOG}, [role="menu"][data-state="open"]`;
 
+// Whether Oscar's bubble is on screen, so toasts can keep out of its way (components/toasts.tsx).
+let bubbleShown = false;
+const bubbleListeners = new Set<() => void>();
+function showBubble(on: boolean) {
+  bubbleShown = on;
+  bubbleListeners.forEach((l) => l());
+}
+export function useTourBubble() {
+  return useSyncExternalStore(
+    (onChange) => {
+      bubbleListeners.add(onChange);
+      return () => bubbleListeners.delete(onChange);
+    },
+    () => bubbleShown,
+    () => false,
+  );
+}
+
 const MEANS: Record<Level, string> = {
   PROCEED_SILENTLY: "I did it.",
   PROCEED_AND_NOTIFY: "I did it, and told you.",
@@ -46,7 +65,7 @@ const MEANS: Record<Level, string> = {
   ESCALATE: "Something's off, so I won't touch it.",
 };
 
-function useMedia(query: string) {
+export function useMedia(query: string) {
   return useSyncExternalStore(
     (onChange) => {
       const m = window.matchMedia(query);
@@ -60,10 +79,10 @@ function useMedia(query: string) {
 
 /**
  * The demo tour: Oscar shows you how he learns, on three emails, moving to each thing the tour
- * talks about and pointing at it. Then a closing card, where "Show me around" goes on through the
- * rest of the app. Only in demo mode. A fresh demo starts with an offer in the middle of the
- * screen; after that it's one step at a time, and you can leave it at any point. It never blocks
- * the app: the dimmed screen lets every click through.
+ * talks about and pointing at it. Then a closing card, and on through the rest of the app, where
+ * you answer one of his calls in Review and ask him something in Chat. Only in demo mode. A fresh
+ * demo starts with an offer in the middle of the screen; after that it's one step at a time, and
+ * you can leave it at any point. It never blocks the app: the dimmed screen lets every click through.
  */
 export function DemoTour() {
   const session = useDemoSession();
@@ -97,10 +116,10 @@ export function DemoTour() {
       <Card
         pose="proud"
         title={STEPS[END].title}
-        main="Explore Oscar →"
-        other="Show me around"
-        onMain={close}
-        onOther={() => go(STEPS[END + 1].id)}
+        main="Show me the rest →"
+        other="Explore on my own"
+        onMain={() => go(STEPS[END + 1].id)}
+        onOther={close}
         onClose={close}
       />
     );
@@ -171,7 +190,7 @@ type Dir = "left" | "right" | "up" | "down";
  * What's on screen right now: the target (padded for the ring), the screen, where the phone's tabs
  * start (`floor`, the screen's bottom elsewhere), and Oscar's own size.
  */
-type Geo = { key: string; target: Box | null; lost: boolean; covered: boolean; vw: number; vh: number; floor: number; unit: Box };
+type Geo = { key: string; target: Box | null; clear: Box[]; lost: boolean; covered: boolean; vw: number; vh: number; floor: number; unit: Box };
 
 const boxOf = (r: DOMRect, pad = 0): Box => ({
   x: Math.round(r.left - pad),
@@ -181,7 +200,8 @@ const boxOf = (r: DOMRect, pad = 0): Box => ({
 });
 const sameBox = (a: Box | null, b: Box | null) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h);
 const sameGeo = (a: Geo, b: Geo) =>
-  a.key === b.key && a.lost === b.lost && a.covered === b.covered && a.vw === b.vw && a.vh === b.vh && a.floor === b.floor && sameBox(a.target, b.target) && sameBox(a.unit, b.unit);
+  a.key === b.key && a.lost === b.lost && a.covered === b.covered && a.vw === b.vw && a.vh === b.vh && a.floor === b.floor && sameBox(a.target, b.target) && sameBox(a.unit, b.unit) &&
+  a.clear.length === b.clear.length && a.clear.every((box, i) => sameBox(box, b.clear[i]));
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 
 /** The part of a box that's on screen, so he points at what you can see of something tall. */
@@ -231,24 +251,35 @@ function bringIntoView(el: HTMLElement, phone: boolean, top: number, bottom: num
 }
 
 /**
- * Where Oscar stands: on the step's own side when he fits there (so he doesn't cover what it's
- * about), otherwise the side with the most room for him. Always fully on screen.
+ * Where Oscar stands: on the step's own side when he fits there, otherwise the side with the most
+ * room for him. Either way not over anything in `clear` (what the step is about) when another side
+ * keeps him off it. Always fully on screen.
  */
-function placeBeside(t: Box | null, vw: number, vh: number, w: number, h: number, prefer?: Side): { x: number; y: number; side: Side | null } {
+function placeBeside(t: Box | null, vw: number, vh: number, w: number, h: number, prefer?: Side, clear: Box[] = []): { x: number; y: number; side: Side | null } {
   if (!t) return { x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2), side: null };
   const room: Record<Side, number> = { right: vw - t.x - t.w, left: t.x, below: vh - t.y - t.h, above: t.y };
   const need: Record<Side, number> = { right: w + GAP + EDGE, left: w + GAP + EDGE, below: h + GAP + EDGE, above: h + GAP + EDGE };
-  const sides: Side[] = ["right", "left", "below", "above"];
-  const side = prefer && room[prefer] >= need[prefer] ? prefer : sides.reduce((best, s) => (room[s] / need[s] > room[best] / need[best] ? s : best));
   const cx = t.x + t.w / 2;
   const cy = t.y + t.h / 2;
-  const at = {
-    right: [t.x + t.w + GAP, cy - h / 2],
-    left: [t.x - GAP - w, cy - h / 2],
-    below: [cx - w / 2, t.y + t.h + GAP],
-    above: [cx - w / 2, t.y - GAP - h],
-  }[side];
-  return { x: Math.round(clamp(at[0], EDGE, vw - w - EDGE)), y: Math.round(clamp(at[1], EDGE, vh - h - EDGE)), side };
+  const spot = (side: Side) => {
+    const at = {
+      right: [t.x + t.w + GAP, cy - h / 2],
+      left: [t.x - GAP - w, cy - h / 2],
+      below: [cx - w / 2, t.y + t.h + GAP],
+      above: [cx - w / 2, t.y - GAP - h],
+    }[side];
+    return { x: Math.round(clamp(at[0], EDGE, vw - w - EDGE)), y: Math.round(clamp(at[1], EDGE, vh - h - EDGE)), side };
+  };
+  const covers = (p: { x: number; y: number }) => clear.some((b) => p.x < b.x + b.w && p.x + w > b.x && p.y < b.y + b.h && p.y + h > b.y);
+  // The step's own side first, then the others, the roomiest first.
+  const sides = (["right", "left", "below", "above"] as Side[]).sort((a, b) => room[b] / need[b] - room[a] / need[a]);
+  const order = prefer ? [prefer, ...sides.filter((s) => s !== prefer)] : sides;
+  const fits = order.filter((s) => room[s] >= need[s]);
+  for (const s of fits) {
+    const p = spot(s);
+    if (!covers(p)) return p;
+  }
+  return spot(fits[0] ?? sides[0]);
 }
 
 /** Along one edge: the middle of where the target and Oscar overlap, or as near the target as he reaches. */
@@ -284,9 +315,14 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
   const phone = useMedia("(max-width: 767px)");
   const narrow = useMedia("(max-width: 1023px)");
   const still = useMedia("(prefers-reduced-motion: reduce)");
-  const c: TourCtx = { data, hash, narrow };
+  const { messages } = useChat();
+  // What you'd done when this step started, so a step you do yourself can tell what's new.
+  const [start, setStart] = useState(() => ({ index, before: beforeOf(data, messages) }));
+  if (start.index !== index) setStart({ index, before: beforeOf(data, messages) });
+  const c: TourCtx = { data, hash, narrow, chat: messages, before: start.before };
 
   const names = step.centre ? "" : (live(step.target, c) ?? []).join(" ");
+  const clearNames = step.centre ? "" : (step.clear ?? []).join(" ");
   const where = live(step.where, c);
   const done = !step.waitFor || step.waitFor.done(c);
   const action = live(step.action, c);
@@ -303,6 +339,11 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
 
   const move = (to: number) => to >= 0 && to < STEPS.length && go(STEPS[to].id);
   const close = () => go("off");
+
+  useEffect(() => {
+    showBubble(true);
+    return () => showBubble(false);
+  }, []);
 
   // Each step opens its page (and its email). Only when the step starts, or the email it's about
   // changes, so it never pulls you back from wherever you've wandered.
@@ -328,6 +369,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
   // new mail, a new page arriving). After LOST_MS without it, he talks from the middle instead.
   useEffect(() => {
     const list = names ? names.split(" ") : [];
+    const keepClear = clearNames ? clearNames.split(" ") : [];
     let started = 0;
     let shown: HTMLElement | null = null; // the element brought into view, so each one only scrolls once
     let frame = 0;
@@ -349,12 +391,16 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
       }
       const lost = !el && list.length > 0 && now - started > LOST_MS;
       const covered = !!document.querySelector(COVERING);
+      const clear = keepClear.flatMap((name) => {
+        const near = findTarget([name]);
+        return near && near !== el ? [boxOf(near.getBoundingClientRect())] : [];
+      });
       setGeo((prev) => {
         // Still looking (the new page is on its way): he stays with the last thing he pointed at.
         const looking = !el && list.length > 0 && !lost && prev;
         const next: Geo = looking
           ? { ...prev, covered, vw, vh, floor, unit }
-          : { key, target: el ? boxOf(el.getBoundingClientRect(), PAD) : null, lost, covered, vw, vh, floor, unit };
+          : { key, target: el ? boxOf(el.getBoundingClientRect(), PAD) : null, clear, lost, covered, vw, vh, floor, unit };
         return prev && sameGeo(prev, next) ? prev : next;
       });
     };
@@ -374,7 +420,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
       window.removeEventListener("scroll", soon, { capture: true });
       window.removeEventListener("resize", soon);
     };
-  }, [key, names, phone, still]);
+  }, [key, names, clearNames, phone, still]);
 
   // Esc closes the tour; the arrow keys move through it while you're on it.
   const canNext = done && !last;
@@ -420,7 +466,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
 
   // On a phone the tabs cover the bottom of the screen, so he only points at what's above them.
   const visible = target && geo ? onScreen(target, geo.vw, phone ? geo.floor : geo.vh) : null;
-  const spot = geo ? placeBeside(visible, geo.vw, geo.vh, geo.unit.w, geo.unit.h, step.side) : null;
+  const spot = geo ? placeBeside(visible, geo.vw, geo.vh, geo.unit.w, geo.unit.h, step.side, geo.clear) : null;
   const unitBox = geo && spot ? (phone ? geo.unit : { x: spot.x, y: spot.y, w: geo.unit.w, h: geo.unit.h }) : null;
   const arrow =
     ready && visible && unitBox
@@ -581,7 +627,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
               </button>
             </p>
           )}
-          {last && <p className="text-[13px] text-muted-foreground">Reset demo, at the top, starts it all over.</p>}
+          {last && <p className="text-[13px] text-muted-foreground">Tour, at the top, shows you around again, and Reset demo starts it all over.</p>}
           <div className="flex items-center justify-between gap-2 pt-0.5">
             <Button variant="ghost" className={cn(TAP, "-ml-2 px-3")} disabled={index === 0} onClick={() => move(index - 1)}>
               Back

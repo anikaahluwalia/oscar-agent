@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import { AppFrame } from "@/components/app-frame";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Toasts } from "@/components/toasts";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TooltipProvider>
             <AppFrame>{children}</AppFrame>
           </TooltipProvider>
-          <Toaster position="bottom-center" mobileOffset={{ bottom: "5rem" }} />
+          <Toasts />
         </ThemeProvider>
       </body>
     </html>

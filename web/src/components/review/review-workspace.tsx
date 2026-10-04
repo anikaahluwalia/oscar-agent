@@ -421,7 +421,7 @@ export function ReviewWorkspace({
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] xl:gap-8">
-      <div className="flex min-w-0 flex-col gap-5">
+      <div data-tour="review-email" className="flex min-w-0 flex-col gap-5">
         <Header pose={mood.pose} mode={mode} reaction={flash?.title ?? null}>
           {progress}
         </Header>

@@ -142,7 +142,7 @@ export function RulesYouTaught({ rows, failed, query }: { rows: PatternRow[] | n
                 </dl>
                 {id ? (
                   confirm === id ? (
-                    <div role="group" aria-label={`Forget the rule for ${name}?`} className="flex flex-wrap items-center gap-2 border-t pt-3">
+                    <div role="group" aria-label={`Forget the rule for ${name}?`} data-tour="knows-rule-change" className="flex flex-wrap items-center gap-2 border-t pt-3">
                       <span className="text-[13px]">Forget this rule? I&apos;ll go back to asking.</span>
                       <Button variant="destructive" className="h-9 rounded-full px-3.5 text-[13px]" disabled={busy === id} onClick={() => void forget(id)}>
                         Forget
@@ -152,7 +152,7 @@ export function RulesYouTaught({ rows, failed, query }: { rows: PatternRow[] | n
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2 border-t pt-3">
+                    <div data-tour="knows-rule-change" className="flex flex-wrap gap-2 border-t pt-3">
                       <RuleMenu decisionId={id} current={level} label="Change" name={name} />
                       <Button variant="outline" className="h-9 rounded-full px-3.5 text-[13px] font-semibold" onClick={() => setConfirm(id)}>
                         Forget

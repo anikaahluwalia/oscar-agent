@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { MessageCircleIcon } from "lucide-react";
+import { useTourBubble } from "@/components/demo/tour";
 import { OscarMood } from "@/components/oscar-mood";
 import { useLocalSetting } from "@/lib/local-setting";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ const HINT_VISITS = 3; // visits to Today that show the "Want to chat?" bubble o
  */
 export function ChatCorner() {
   const [visits, setVisits] = useLocalSetting<string>("chat-hint-visits", "");
+  const touring = useTourBubble();
   const counted = useRef(false);
   useEffect(() => {
     if (counted.current) return;
@@ -31,6 +33,8 @@ export function ChatCorner() {
   }, [setVisits]);
   // Empty until this visit is counted, so a returning visitor never sees it flash up and away.
   const hint = visits !== "" && Number(visits) <= HINT_VISITS;
+  // While the demo tour's Oscar is talking, this one steps aside.
+  if (touring) return null;
 
   return (
     <Link
