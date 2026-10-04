@@ -47,3 +47,17 @@ def test_i_a_file_someone_shared_is_routine():
 def test_j_a_shared_file_hiding_instructions_is_still_stopped():
     d = decide(SHARED_WITH_INSTRUCTIONS, understanding=read_as("file_share"))
     assert d.autonomy_level == E and SafetyCategory.PROMPT_INJECTION in d.safety_flags
+
+
+def test_the_model_is_told_where_routine_kinds_stop():
+    # A booking that asks for a payment, or a shared file you must sign in to see, isn't routine.
+    assert "Unless it also asks you to pay, send card or login details" in SYSTEM
+    assert "sign in, enter a password or verify your account" in SYSTEM
+    assert "needs nothing from you" in KINDS["file_share"][0]
+
+
+def test_a_booking_that_asks_for_card_details_is_stopped_whatever_the_reading():
+    scam = Email(id="c", sender="bookings@stay.example", subject="Your booking is confirmed",
+                 body="Your room is booked for Friday. Please reply with your card number and CVV to keep the booking.")
+    d = decide(scam, understanding=read_as("account_update"))
+    assert d.autonomy_level == E and d.action == Action.SEND_CREDENTIALS

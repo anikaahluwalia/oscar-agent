@@ -186,6 +186,20 @@ def test_a_scan_that_had_gone_further_back_lists_again_recent_only(tmp_path):
     assert Store(history).load()["ids"] == [f"p{i}" for i in range(6)]
 
 
+def test_a_finished_list_that_had_gone_further_back_is_counted_again_recent_only(tmp_path):
+    fake = FakeGmail(promos(6) + promos(3, prefix="old"))
+    fake.older = {f"old{i}" for i in range(3)}
+    history = History()
+    store = Store(history)
+    old = store.load()
+    old.update(state="failed", phase="understanding", ids=[f"p{i}" for i in range(6)] + ["old0", "old1"], discovered=8,
+               older=True, listed=True, processed=7)
+    store.save(old)
+    run(history, GmailClient(connected(tmp_path), fake.http()))
+    assert Store(history).load()["ids"] == [f"p{i}" for i in range(6)]
+    assert status(history)["processed"] == 6
+
+
 def test_a_list_made_under_the_old_cap_keeps_the_newest(tmp_path, monkeypatch):
     monkeypatch.setattr(cold_start, "MAX_MESSAGES", 10)
     history = History()

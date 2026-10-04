@@ -53,6 +53,7 @@ SECRET = (r"\b(?:passwords?|passcodes?|passphrases?|log-?in (?:details|info|info
           r"|your log-?in\b(?! (?:screen|page|flow|button|form|mockups?|styles?|issue))|usernames? and passwords?|credentials"
           r"|(?:your|the|my|card|bank|atm) pin\b|pin (?:number|code)s?"
           r"|(?:verification|security|one-time|2fa|otp|mfa|auth(?:entication)?|sign-?in|login|backup|recovery) codes?"
+          r"|(?:your |the )?card (?:number|details)|cvv|cvc|(?:the )?security code on the back"
           r"|the code (?:it|that|we|they|you) (?:just )?(?:texts?|sent|send|got)|codes? (?:that )?(?:just )?(?:came|hit|went) to"
           r"|(?:code|digits|numbers?) (?:\w+ ){0,5}(?:just )?(?:texted|sent to your phone|by text|via sms))\b")
 GIFT_CARDS = r"(?:gift ?cards?|(?:apple|steam|google play|itunes|amazon|ebay|razer|xbox|playstation|visa) (?:gift )?cards?)"

@@ -173,9 +173,11 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
     if len(data["ids"]) > MAX_MESSAGES:  # listed under a bigger cap: keep the newest
         data["ids"] = data["ids"][:MAX_MESSAGES]
         data.update(discovered=MAX_MESSAGES, processed=min(data["processed"], MAX_MESSAGES))
-    if data.get("older") and not data["listed"]:
-        # Listed by an older Oscar that went past six months to reach a minimum: list again, recent only.
-        data.update(ids=[], next_page=None, listed=False, older=False, discovered=0, processed=0, stats={})
+    if data.get("older"):
+        # Listed by an older Oscar that went past six months to reach a minimum: list and count again,
+        # recent only, however far it had got.
+        data.update(ids=[], next_page=None, listed=False, older=False, discovered=0, processed=0, skipped_emails=0,
+                    stats={})
     if data.get("counting") != COUNTING:
         data.update(processed=0, skipped_emails=0, stats={}, counting=COUNTING)
     data.update(state="running", error=None, started_at=data["started_at"] or _now())
