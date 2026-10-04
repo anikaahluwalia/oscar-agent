@@ -153,24 +153,10 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         decision = decision.model_copy(update={"source": "gmail", "gmail": info, "policy_version": version, "acting": act})
         arrived_since = info.received_at is not None and act_since is not None and info.received_at >= act_since
         did = False
-        if (act and arrived_since and decision.autonomy_level in ACTED_LEVELS and can_do(decision)
-                and done < MAX_PER_CHECK and still_acting()):
-            try:
-                do(history, gmail, decision, by="oscar")
-                done += 1
-                did = True
-            except (ActionError, GmailError, httpx.HTTPError):
-                pass  # the decision stays logged; the app shows it wasn't done
-        elif (act and arrived_since and decision.autonomy_level in ACTED_LEVELS and drafter and can_draft(decision)
-              and done < MAX_PER_CHECK and still_acting()):
-            text = drafter.write(email) if fit_to_answer(email) else None
-            if text:  # no reply fit to save (or the model didn't answer): it stays yours to answer
-                try:
-                    draft(history, gmail, decision, text, by="oscar")
-                    done += 1
-                    did = True
-                except (ActionError, GmailError, httpx.HTTPError):
-                    pass
+        if act and arrived_since and decision.autonomy_level in ACTED_LEVELS and done < MAX_PER_CHECK and still_acting():
+            write = (lambda: drafter.write(email) if fit_to_answer(email) else None) if drafter else None
+            did = act_alone(history, gmail, decision, write)
+            done += did
         if act and decision.autonomy_level in ACTED_LEVELS and not did:
             # He didn't do it in Gmail (an old email, the cap, an action he doesn't do there, or Gmail
             # said no), so his note says what he would do, never "I archived this".
@@ -184,6 +170,25 @@ def _sync(history: History, gmail: GmailClient, limit: int, reader: Reader | Non
         new += 1
     follow_up(history, gmail)
     return SyncResult(new=new, skipped=skipped, done=done)
+
+
+def act_alone(history: History, gmail: GmailClient, decision: Decision, write: Callable[[], str | None] | None) -> bool:
+    """Do what Oscar decided to do on his own, if it's something he does in Gmail: change its labels,
+    or save a reply as a draft. write writes the reply; without it, or when it writes nothing fit to
+    save, there's no draft and the email stays yours to answer. Returns whether he did it. If Gmail
+    says no, the decision stays logged and the app shows it wasn't done. The demo uses this too, on
+    its pretend Gmail (oscar/demo.py)."""
+    try:
+        if can_do(decision):
+            do(history, gmail, decision, by="oscar")
+            return True
+        text = write() if write and can_draft(decision) else None
+        if text:
+            draft(history, gmail, decision, text, by="oscar")
+            return True
+    except (ActionError, GmailError, httpx.HTTPError):
+        pass
+    return False
 
 
 def label_inbox(history: History, gmail: GmailClient, still_acting: Callable[[], bool],

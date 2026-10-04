@@ -195,10 +195,11 @@ def test_nothing_real_can_be_reached_from_the_demo(setup, method, path, body):
 
 def test_every_route_that_touches_gmail_or_settings_is_guarded():
     """Found from the routes themselves, so a new endpoint can't be missed. /feedback and /chat use the
-    token only for real-inbox decisions (none in a demo), /email-image only fetches an email's image,
-    and reading the app settings is fine. Opening an email and reviewing look up anything real only
-    outside the demo, and only when it's needed, so they aren't found here:
-    test_opening_a_demo_email_never_touches_anything_real and test_reviewing_in_the_demo_never_touches_anything_real
+    token only for real-inbox decisions (a demo's own decisions act in its pretend Gmail instead),
+    /email-image only fetches an email's image, and reading the app settings is fine. Opening an email
+    and reviewing look up anything real only outside the demo, and only when it's needed, so they
+    aren't found here: test_opening_a_demo_email_never_touches_anything_real,
+    test_reviewing_in_the_demo_never_touches_anything_real and test_acting_in_the_demo_never_touches_anything_real
     check them instead."""
     allowed = {("POST", "/feedback"), ("POST", "/chat"), ("GET", "/email-image"), ("GET", "/app-settings")}
 
@@ -325,13 +326,166 @@ def test_a_no_in_the_demo_teaches_that_demo_only(setup):
     assert r.status_code == 200, r.text
     assert r.json()["complete"] and r.json()["label"] == "MISINTERPRETED_RISK"
     item = next(i for i in one.get("/decisions").json() if i["decision"]["id"] == quiet["id"])
-    assert item["feedback"] == []  # nothing is put back or done instead: it's only your answer
+    assert item["feedback"] == []  # your answer is the review; putting it back isn't feedback
+    assert item["done"]["undone_at"], "he should have asked, so it's put back in the demo's pretend Gmail"
     assert item["answer"]["level"] == "ASK_FIRST" and item["answer"]["error"] == "too_permissive"
     email = next(e.email for e in demo.emails() if e.email.id == quiet["email_id"])
     taught = Preferences.from_feedback(api.teaching(demo.SESSIONS.get("browser-one")))
     assert decide(email, taught).autonomy_level == "ASK_FIRST"
     assert api.teaching(demo.SESSIONS.get("browser-two")) == [] and two.get("/learned").json() == []
     assert real.reviews == [] and client.get("/learned").json() == []
+
+
+# --- Acting in the demo's own pretend Gmail ----------------------------------------------------
+
+def item_for(client: TestClient, email_id: str) -> dict:
+    return next(i for i in client.get("/decisions").json() if i["decision"]["email_id"] == email_id)
+
+
+def inbox_of(session: str = "browser-one"):
+    return demo.SESSIONS.inbox(demo.SESSIONS.get(session))
+
+
+def labels_of(session: str, email_id: str) -> list[str]:
+    return inbox_of(session).messages[email_id]["labelIds"]
+
+
+def drafts_in(email_id: str, session: str = "browser-one") -> list[dict]:
+    """The drafts in that email's thread, in the demo's pretend Gmail."""
+    return [d for d in inbox_of(session).drafts if d["threadId"] == f"t-{email_id}"]
+
+
+def test_a_reply_he_drafts_in_the_demo_is_the_saved_draft_in_its_own_pretend_gmail(setup):
+    one, two = in_demo("browser-one"), in_demo("browser-two")
+    one.post("/demo/start")
+    work = item_for(one, "demo_work_draft")
+    saved = demo.saved_draft(demo.demo_email("demo_work_draft"))
+    assert saved and work["done"]["draft_text"] == saved and work["done"]["by"] == "oscar", "drafted, never sent"
+    assert [d["id"] for d in drafts_in("demo_work_draft")] == [work["done"]["draft_id"]]
+    assert inbox_of().sent == [] and "INBOX" in labels_of("browser-one", "demo_work_draft")
+    # A yes keeps it, and it's only in this demo.
+    assert one.post("/reviews", json={"decision_id": work["decision"]["id"], "label": "CORRECT"}).status_code == 200
+    assert item_for(one, "demo_work_draft")["done"]["undone_at"] is None
+    assert two.get("/decisions").json() == [] and inbox_of("browser-two").drafts == []
+
+
+def test_saying_yes_to_a_reply_he_asked_about_drafts_it(setup):
+    client = in_demo()
+    client.post("/demo/start")
+    work = item_for(client, "demo_work_draft")["decision"]
+    client.post("/feedback", json={"decision_id": work["id"], "kind": "KEEP_ASKING"})
+    # Daniel writes again: now Oscar asks first, and your yes drafts the saved reply.
+    history = demo.SESSIONS.get("browser-one")
+    with httpx.Client() as http:
+        ask = demo.arrive(history, demo.demo_email("demo_work_draft"), demo.reader(http), inbox_of())
+    assert (ask.action, ask.autonomy_level) == ("DRAFT_REPLY", "ASK_FIRST")
+    assert client.post("/feedback", json={"decision_id": ask.id, "kind": "APPROVE"}).status_code == 200
+    record = history.action_for(ask.id)
+    assert record.by == "you" and record.draft_text == demo.saved_draft(demo.demo_email("demo_work_draft"))
+
+
+def test_without_a_saved_draft_there_is_no_draft(setup, monkeypatch, tmp_path):
+    monkeypatch.setattr(demo, "DRAFTS", tmp_path / "none.jsonl")
+    client = in_demo()
+    client.post("/demo/start")
+    assert item_for(client, "demo_work_draft")["done"] is None and inbox_of().drafts == []
+    work = item_for(client, "demo_work_draft")["decision"]
+    client.post("/feedback", json={"decision_id": work["id"], "kind": "KEEP_ASKING"})
+    with httpx.Client() as http:
+        ask = demo.arrive(demo.SESSIONS.get("browser-one"), demo.demo_email("demo_work_draft"), demo.reader(http), inbox_of())
+    r = client.post("/feedback", json={"decision_id": ask.id, "kind": "APPROVE"})
+    assert r.status_code == 400 and "no draft" in r.json()["detail"]
+
+
+def test_a_no_in_review_takes_his_draft_away_and_does_what_you_said(setup):
+    client = in_demo()
+    client.post("/demo/start")
+    work = item_for(client, "demo_work_draft")["decision"]
+    r = client.post("/reviews", json={"decision_id": work["id"], "should_be_level": "PROCEED_SILENTLY",
+                                      "should_be_action": "MARK_READ", "why": "preference"})
+    assert r.status_code == 200, r.text
+    done = item_for(client, "demo_work_draft")["done"]
+    assert drafts_in("demo_work_draft") == [], "the draft for this email is gone"
+    assert done["action"] == "MARK_READ" and done["by"] == "you" and "UNREAD" not in labels_of("browser-one", "demo_work_draft")
+    # Only that email: the reply he drafted to Sarah is still there.
+    assert len(drafts_in("demo_friend_dinner")) == 1 and item_for(client, "demo_friend_dinner")["done"]["undone_at"] is None
+
+
+def test_a_no_in_review_puts_back_what_he_did_on_his_own(setup):
+    client = in_demo()
+    client.post("/demo/start")
+    shipped = item_for(client, "demo_shipping_out")
+    assert shipped["done"]["action"] == "APPLY_LABEL" and shipped["label"] in [
+        lbl["name"] for lbl in inbox_of().labels if lbl["id"] in labels_of("browser-one", "demo_shipping_out")]
+    client.post("/reviews", json={"decision_id": shipped["decision"]["id"], "should_be_level": "PROCEED_SILENTLY",
+                                  "should_be_action": "ARCHIVE", "why": "preference"})
+    assert labels_of("browser-one", "demo_shipping_out") == ["UNREAD", "CATEGORY_UPDATES"], "his label off, and archived instead"
+
+
+def test_undo_in_the_demo_puts_it_back(setup):
+    client = in_demo()
+    client.post("/demo/start")
+    work = item_for(client, "demo_work_draft")["decision"]
+    assert client.post("/feedback", json={"decision_id": work["id"], "kind": "UNDO"}).status_code == 200
+    assert item_for(client, "demo_work_draft")["done"]["undone_at"] and drafts_in("demo_work_draft") == []
+    evergreen = item_for(client, "demo_promo_evergreen")["decision"]
+    client.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"})
+    assert "INBOX" not in labels_of("browser-one", "demo_promo_evergreen"), "your yes archived it"
+    assert client.post("/feedback", json={"decision_id": evergreen["id"], "kind": "UNDO"}).status_code == 200
+    assert "INBOX" in labels_of("browser-one", "demo_promo_evergreen")
+    assert client.post("/feedback", json={"decision_id": evergreen["id"], "kind": "UNDO"}).status_code == 400
+
+
+def test_acting_in_the_demo_never_touches_anything_real(setup, tmp_path, monkeypatch):
+    """Yes, No, Undo and a rule all act in the demo's pretend Gmail. The real Gmail client, the token
+    and the real inbox are never even looked up."""
+    client, tokens, real = setup
+    connect(tokens)
+    before = {p.name: p.read_text() for p in tmp_path.rglob("*") if p.is_file()}
+
+    def never(*args, **kwargs):
+        raise AssertionError("the demo used something real")
+
+    for dependency in (get_real_history, get_app_settings_path):
+        app.dependency_overrides[dependency] = never
+    monkeypatch.setattr(api, "gmail_client", never)
+    monkeypatch.setattr(TokenStore, "load", never)  # a demo's pretend connection has its own, in memory
+    demo_client = in_demo()
+    demo_client.post("/demo/start")
+    evergreen = item_for(demo_client, "demo_promo_evergreen")["decision"]
+    work = item_for(demo_client, "demo_work_draft")["decision"]
+    assert demo_client.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"}).status_code == 200
+    teach_like_this(demo_client, evergreen)
+    assert demo_client.post("/reviews", json={"decision_id": work["id"], "should_be_level": "ASK_FIRST",
+                                              "should_be_action": "DRAFT_REPLY", "why": "preference"}).status_code == 200
+    assert demo_client.post("/feedback", json={"decision_id": evergreen["id"], "kind": "UNDO"}).status_code == 200
+    demo_client.post("/demo/check")
+    assert {p.name: p.read_text() for p in tmp_path.rglob("*") if p.is_file()} == before
+    assert real.actions == {} and real.feedback == [] and real.reviews == []
+
+
+def test_starting_again_gives_a_fresh_pretend_gmail(setup):
+    client = in_demo()
+    client.post("/demo/start")
+    first = inbox_of()
+    evergreen = item_for(client, "demo_promo_evergreen")["decision"]
+    client.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"})
+    client.post("/demo/reset")
+    assert inbox_of() is not first and "INBOX" in labels_of("browser-one", "demo_promo_evergreen")
+    assert item_for(client, "demo_promo_evergreen")["done"] is None
+
+
+def test_every_saved_draft_is_for_a_demo_email_he_drafts():
+    """After changing a demo email, run python -m oscar.demo --read to write its draft again."""
+    sessions = demo.Sessions()
+    history = sessions.get("drafts-check")
+    with httpx.Client() as http:
+        read = demo.reader(http)
+        for e in START + LATER:
+            demo.arrive(history, e.email, read, sessions.inbox(history))
+    replies = [d for d in history.decisions.values() if d.action == "DRAFT_REPLY" and d.autonomy_level in (
+        "PROCEED_SILENTLY", "PROCEED_AND_NOTIFY")]
+    assert replies and all(history.action_for(d.id) and history.action_for(d.id).draft_text for d in replies)
 
 
 # --- The real pipeline -------------------------------------------------------------------------

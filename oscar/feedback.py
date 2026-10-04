@@ -164,14 +164,15 @@ ASKS_FOR_MORE = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.JUST_HANDLE_IT, Feedb
 
 def check_allowed(decision: Decision, kind: FeedbackKind, edited_text: str | None, undoable: bool = False) -> None:
     """Whether this feedback makes sense for this decision. undoable: Oscar did something in Gmail
-    for it that hasn't been undone (Stage 12), so undo is allowed whatever the level."""
+    for it that hasn't been undone (Stage 12, or in a demo's pretend Gmail), so undo is allowed
+    whatever the level."""
     if kind == FeedbackKind.REVIEW:
         raise FeedbackError("Answer on the Review page instead.")  # lessons come from your reviews only
     if kind in CHOICES and decision.autonomy_level == AutonomyLevel.ESCALATE:
         raise FeedbackError("I bring these straight to you, so there's nothing to teach me here.")
     if kind == FeedbackKind.FORGET or (decision.source == "gmail" and kind in TEACHING_ONLY) or kind in CHOICES:
         return  # these only teach him (or make him forget); they're fine on any email
-    if decision.source == "gmail" and kind == FeedbackKind.UNDO:
+    if kind == FeedbackKind.UNDO and (decision.source == "gmail" or undoable):
         if not undoable:
             raise FeedbackError("I didn't do anything in Gmail with that one, so there's nothing to undo.")
         return

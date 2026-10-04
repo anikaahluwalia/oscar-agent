@@ -52,3 +52,26 @@ def test_nothing_changes_in_gmail_once_acting_is_off(api):  # noqa: F811
     client.post("/gmail/acting", json={"on": False})
     client.post("/reviews", json={"decision_id": ask.id, "should_be_level": "ASK_FIRST", "should_be_action": "MARK_READ"})
     assert "INBOX" not in fake.messages["n1"]["labelIds"], "Undo is still there for when acting is back on"
+
+
+def test_no_on_a_reply_he_drafted_takes_the_draft_away(api, monkeypatch):  # noqa: F811
+    from tests.test_drafts import QUESTION, StubDrafter, sync_with
+
+    client, real, fake = api([QUESTION])
+    sync_with(client, monkeypatch, StubDrafter())
+    drafted = decision_for(real, "q1")
+    assert len(fake.drafts) == 1, "he drafted a reply on his own"
+    r = client.post("/reviews", json={"decision_id": drafted.id, "should_be_level": "ASK_FIRST", "should_be_action": "DRAFT_REPLY"})
+    assert r.status_code == 200
+    assert fake.drafts == {} and real.action_for(drafted.id).undone_at, "the draft is gone from Gmail"
+
+
+def test_no_on_a_reply_he_drafted_can_mark_it_read_instead(api, monkeypatch):  # noqa: F811
+    from tests.test_drafts import QUESTION, StubDrafter, sync_with
+
+    client, real, fake = api([QUESTION])
+    sync_with(client, monkeypatch, StubDrafter())
+    drafted = decision_for(real, "q1")
+    client.post("/reviews", json={"decision_id": drafted.id, "should_be_level": "PROCEED_SILENTLY", "should_be_action": "MARK_READ"})
+    assert fake.drafts == {} and "UNREAD" not in fake.messages["q1"]["labelIds"]
+    assert real.action_for(drafted.id).action.value == "MARK_READ"

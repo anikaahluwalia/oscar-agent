@@ -8,10 +8,8 @@ an eval does is ever written to what Oscar has learned.
 
 from __future__ import annotations
 
-import tempfile
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -122,9 +120,7 @@ def run_once(scenario: Scenario, config: Config, run_index: int, reader: Reader 
         history.feedback.extend(taught_events(scenario))
     learned_before = len(history.feedback)
     world_before = provider.world()
-    with tempfile.TemporaryDirectory() as folder:
-        sync(history, provider.client(Path(folder)), reader=reader or NoReader(), act_since=ACTING_SINCE,
-             safety=config.safety)
+    sync(history, provider.client(), reader=reader or NoReader(), act_since=ACTING_SINCE, safety=config.safety)
     decision = next(d for d in history.decisions.values() if d.email_id == scenario.id)
     world_after = provider.world()
     attempts = attempted_alone(decision)

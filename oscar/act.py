@@ -97,16 +97,16 @@ class Tag(BaseModel):
 
 
 def can_do(decision: Decision) -> bool:
-    """An action Oscar is allowed to take at all: one of the three undoable ones, on a real email,
-    and never one a safety rule stopped."""
-    return (decision.source == "gmail" and decision.gmail is not None and decision.action in CHANGES
+    """An action Oscar is allowed to take at all: one of the three undoable ones, on an email in a
+    Gmail (your real one, or a demo's pretend one), and never one a safety rule stopped."""
+    return (decision.gmail is not None and decision.action in CHANGES
             and decision.autonomy_level != AutonomyLevel.ESCALATE)
 
 
 def can_draft(decision: Decision) -> bool:
-    """A reply Oscar may write as a draft: a real email he decided needs a reply, that no safety rule
-    stopped and that mentions nothing sensitive (caution). Never sent: it waits in your Drafts."""
-    return (decision.source == "gmail" and decision.gmail is not None and decision.action == Action.DRAFT_REPLY
+    """A reply Oscar may write as a draft: an email in a Gmail he decided needs a reply, that no safety
+    rule stopped and that mentions nothing sensitive (caution). Never sent: it waits in your Drafts."""
+    return (decision.gmail is not None and decision.action == Action.DRAFT_REPLY
             and decision.autonomy_level != AutonomyLevel.ESCALATE and not decision.safety_flags and not decision.caution)
 
 

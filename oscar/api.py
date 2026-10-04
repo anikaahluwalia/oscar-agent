@@ -660,11 +660,13 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
             desired_level: AutonomyLevel | None = None) -> tuple[FeedbackEvent, str]:
     # Stage 12: on a real inbox, approving an ask does it in Gmail, and undo puts it back. Gmail
     # goes first, and the feedback is only saved if it worked: it never says "done" (or teaches
-    # Oscar) when nothing happened.
-    done = history.action_for(decision.id) if decision.source == "gmail" else None
+    # Oscar) when nothing happened. The demo does the same in its own pretend Gmail.
+    done = history.action_for(decision.id)
     undoable = bool(done and not done.undone_at)
     check_allowed(decision, kind, edited_text, undoable)
-    if decision.source == "gmail" and decision.acting:
+    if decision.source == "demo":
+        _act_in_demo(history, decision, kind)
+    elif decision.source == "gmail" and decision.acting:
         if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
             if not (can_do(decision) or can_draft(decision)):
                 raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
@@ -677,6 +679,25 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
         elif kind == FeedbackKind.UNDO:
             undo(history, gmail_client(tokens, http), decision.id)
     return record_feedback(history, decision.id, kind, edited_text, undoable, scope=scope, desired_level=desired_level)
+
+
+def _act_in_demo(history: History, decision: Decision, kind: FeedbackKind) -> None:
+    """Your yes and Undo in a browser's demo, done in its pretend Gmail (oscar/demo.py) the same way
+    as in your real one. A reply gets the draft saved for that demo email; if there isn't one, there's
+    no draft, and he says so. An ask he doesn't do in Gmail (forwarding, say) is only your answer."""
+    pretend = demo.SESSIONS.gmail(history)
+    if pretend is None:
+        return  # the old shared example inbox has no Gmail, pretend or real
+    if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
+        if can_draft(decision):
+            text = demo.draft_for(decision)
+            if not text:
+                raise FeedbackError("I don't have a draft written for this one, so there's no draft. It's yours to answer.")
+            draft(history, pretend, decision, text, by="you")
+        elif can_do(decision):
+            do(history, pretend, decision, by="you")
+    elif kind == FeedbackKind.UNDO:
+        undo(history, pretend, decision.id)
 
 
 DONE_WORDS = {Action.ARCHIVE: "archived", Action.MARK_READ: "marked as read", Action.APPLY_LABEL: "labelled",
@@ -986,8 +1007,8 @@ def review_endpoint(request: ReviewRequest, http_request: Request, session: str 
     a yes to something he's waiting to do is your approval too (approve_from_review).
 
     In the demo it's the same answer about one of its made-up emails, saved only in this browser's
-    demo: it teaches that Oscar, and a yes is still your approval there. Nothing real is looked up
-    (the token, Gmail, the real inbox), so nothing is done in Gmail, put back or re-read."""
+    demo: it teaches that Oscar, a yes is still your approval, and a No puts the email back in the
+    demo's own pretend Gmail. Nothing real is looked up (the token, Gmail, the real inbox)."""
     history = demo.SESSIONS.get(session) if session else _when_needed(http_request, get_real_history)
     decision = history.get_decision(request.decision_id)
     try:
@@ -1005,8 +1026,9 @@ def review_endpoint(request: ReviewRequest, http_request: Request, session: str 
         saved = record_review(history, review, demo=bool(session))
     except ReviewError as e:
         raise HTTPException(400, str(e))
-    if session:
-        approve_from_review(history, saved, None, None)  # a demo decision never reaches Gmail
+    if session:  # the demo's pretend Gmail, never a real one
+        approve_from_review(history, saved, None, None)
+        correct_from_review(history, saved, None, None)
         return saved
     tokens, http = _when_needed(http_request, get_tokens), _when_needed(http_request, get_http)
     approve_from_review(history, saved, tokens, http)
@@ -1021,8 +1043,7 @@ def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore 
     it right, or should have just done it, the same action), that's your approval: he does it now,
     exactly as Approve would, so you don't approve it again in the inbox. Only for what he can do
     in Gmail, and only while acting is on; otherwise it stays on your list. Returns whether he did it.
-    In the demo it's only your approval, as the demo's Approve always was: nothing is done anywhere,
-    so it needs no token."""
+    In the demo it's done in the demo's pretend Gmail, so it needs no token."""
     decision = real.get_decision(review.decision_id)
     if decision is None or decision.autonomy_level != AutonomyLevel.ASK_FIRST:
         return False
@@ -1032,8 +1053,8 @@ def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore 
     says_do_it = review.label == ReviewLabel.CORRECT or (
         review.should_be_level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY)
         and review.should_be_action == decision.action)
-    in_demo = decision.source == "demo" and (decision.action in CHANGES or decision.action == Action.DRAFT_REPLY)
-    if not (says_do_it and (in_demo or (decision.acting and (can_do(decision) or can_draft(decision))))):
+    doable = can_do(decision) or can_draft(decision)
+    if not (says_do_it and doable and (decision.source == "demo" or decision.acting)):
         return False
     try:
         _answer(real, decision, FeedbackKind.APPROVE, None, tokens, http)
@@ -1046,18 +1067,22 @@ def correct_from_review(real: History, review: Review, tokens: gmail.TokenStore,
     """You said "No" about something Oscar already did in Gmail, so it isn't left that way: he puts
     it back exactly as it was (undo), and if you said he should have done a different easy-to-undo
     action on his own (mark as read instead of archive, say), he does that instead. If you said he
-    should have asked or stopped, it just goes back. Only while acting is on, as with Approve and
-    Undo. Your review is what teaches him; this only fixes the email. Returns what changed, if anything."""
+    should have asked or stopped, it just goes back. A reply he drafted is taken away. Only while
+    acting is on, as with Approve and Undo, or in the demo's pretend Gmail. Your review is what teaches
+    him; this only fixes the email. Returns what changed, if anything."""
     if review.label in (ReviewLabel.CORRECT, ReviewLabel.SKIP) or not review.complete:
         return None  # only a "No" with what he should have done changes anything
     decision = real.get_decision(review.decision_id)
     record = real.action_for(decision.id) if decision else None
     right = expected_answer(review, decision)
-    if record is None or record.undone_at or right is None or not decision.acting or not acting_on(tokens, real):
+    if record is None or record.undone_at or right is None:
+        return None
+    pretend = demo.SESSIONS.gmail(real) if decision.source == "demo" else None
+    if not pretend and not (decision.acting and acting_on(tokens, real)):
         return None
     if right.level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY) and right.action == decision.action:
         return None  # he did what you wanted; only how much to ask was off
-    client = gmail_client(tokens, http)
+    client = pretend or gmail_client(tokens, http)
     try:
         undo(real, client, decision.id)
         instead = right.action if right.level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY) else None
