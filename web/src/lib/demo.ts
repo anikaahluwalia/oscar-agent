@@ -28,13 +28,29 @@ export async function startOver() {
 // --- The real inbox ---------------------------------------------------------
 
 let checking = false;
+const BUSY_WAIT = 3000; // ms between tries while he's already checking on his own
+const BUSY_TRIES = 20; // about a minute, longer than a check takes
 
+/** One check, waiting for his own check to finish first if one is running (the API says it's busy). */
+async function syncWhenFree() {
+  for (let tries = 1; ; tries++) {
+    try {
+      return await syncGmail();
+    } catch (e) {
+      const busy = e instanceof Error && /already checking/i.test(e.message);
+      if (!busy || tries >= BUSY_TRIES) throw e;
+      await new Promise((resolve) => setTimeout(resolve, BUSY_WAIT));
+    }
+  }
+}
+
+/** Check now, and what opening or refreshing the app does (use-oscar.tsx). */
 export async function checkGmail() {
   if (checking) return; // a second click while the first check is running does nothing
   checking = true;
   oscarSays("On it! Checking your inbox...");
   try {
-    const { new: count, skipped, done } = await syncGmail();
+    const { new: count, skipped, done } = await syncWhenFree();
     notifyChanged();
     const read = !count
       ? "Nothing new in your inbox. All quiet!"

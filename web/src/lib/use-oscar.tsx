@@ -17,7 +17,6 @@ import {
   getLearned,
   getReviewSummary,
   sendFeedback,
-  syncGmail,
   type AutonomyRow,
   type Brief,
   type Category,
@@ -148,13 +147,13 @@ let followUp: ReturnType<typeof setTimeout> | null = null; // while he redoes hi
 let checkedOnOpen = false;
 
 /**
- * Opening the app (or refreshing the page) checks Gmail once, like pressing Check now, so what you
- * see is up to date straight away instead of at his next check on his own. Quietly: if he's
- * already checking, that check is as good, and anything wrong shows up when you press Check now.
+ * Opening the app (or refreshing the page) checks Gmail, the same as pressing Check now: he says
+ * he's checking, then what he found, and the lists update. If he's already checking on his own, it
+ * waits for that to finish and checks again (demo.ts). Loaded when needed, since demo.ts uses this file.
  */
 function checkOnOpen() {
   checkedOnOpen = true;
-  syncGmail().then(notifyChanged, () => {});
+  void import("@/lib/demo").then(({ checkGmail }) => checkGmail());
 }
 
 /**
