@@ -819,6 +819,22 @@
   }, 1500);
   const checking = setInterval(refresh, 60_000);
 
+  // A last net under alive(): if anything in this copy still reaches Chrome after the extension was
+  // reloaded, it retires quietly instead of filling the extension's error page.
+  const invalidated = (error) => /extension context invalidated/i.test(String(error?.message ?? error ?? ""));
+  window.addEventListener("error", (e) => {
+    if (invalidated(e.error ?? e.message)) {
+      e.preventDefault();
+      retire();
+    }
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    if (invalidated(e.reason)) {
+      e.preventDefault();
+      retire();
+    }
+  });
+
   // This copy can't reach Chrome any more: stop everything and take Oscar and the chips off the page.
   let retired = false;
   function retire() {
