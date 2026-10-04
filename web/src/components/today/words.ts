@@ -50,9 +50,8 @@ export function whoFrom(senders: string[], shown = 3) {
   return `${names.slice(0, shown).join(", ")} and ${names.length - shown} more`;
 }
 
-export type ActivityRow =
-  | { key: string; type: "done"; title: string; detail: string; at: number }
-  | { key: string; type: "reminder"; title: string; detail: string; at: number; id: string };
+/** One row of what he took care of. id is the email it opens: for a group, the newest one in it. */
+export type ActivityRow = { key: string; type: "done" | "reminder"; title: string; detail: string; at: number; id: string };
 
 /**
  * What Oscar took care of since `since`, grouped: "Archived 4 promotions" rather than four rows,
@@ -60,23 +59,26 @@ export type ActivityRow =
  * have done on his own. Reminders from emails he read since then are listed too, unless the email was stopped or flagged.
  */
 export function activity(items: DecisionWithFeedback[], since: number, readOnly: boolean): ActivityRow[] {
-  const groups = new Map<string, { action: Action; type: string; senders: string[]; at: number }>();
+  const groups = new Map<string, { action: Action; type: string; senders: string[]; at: number; id: string }>();
   for (const i of items) {
     const counted = readOnly ? wouldOnly(i.decision) && ON_OWN.has(i.decision.autonomy_level) : reallyDone(i);
     const at = handledAt(i);
     if (!counted || at < since) continue;
     const type = i.decision.action === "DRAFT_REPLY" ? "" : noun(i.decision.email_type ?? "", 2);
     const key = `${i.decision.action}|${type}`;
-    const g = groups.get(key) ?? { action: i.decision.action, type: i.decision.email_type ?? "", senders: [], at: 0 };
+    const g = groups.get(key) ?? { action: i.decision.action, type: i.decision.email_type ?? "", senders: [], at: 0, id: "" };
     g.senders.push(i.decision.sender);
-    g.at = Math.max(g.at, at);
+    if (at >= g.at) {
+      g.at = at;
+      g.id = i.decision.id;
+    }
     groups.set(key, g);
   }
   const rows: ActivityRow[] = [...groups.entries()].map(([key, g]) => {
     const n = g.senders.length;
     const words = (readOnly ? GROUP_WOULD : GROUP_DID)[g.action];
     const title = words ? words(n, noun(g.type, n)) : `${ACTIONS[g.action]}: ${n.toLocaleString()}`;
-    return { key, type: "done", title, detail: `From ${whoFrom(g.senders)}`, at: g.at };
+    return { key, type: "done", title, detail: `From ${whoFrom(g.senders)}`, at: g.at, id: g.id };
   });
   for (const i of items) {
     const r = i.decision.reminder;

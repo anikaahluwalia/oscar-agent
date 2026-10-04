@@ -13,11 +13,19 @@ const ASKS: Partial<Record<Action, (who: string) => React.ReactNode>> = {
  * to for a sender at least twice, never no, with no level learned yet. Yes is a rule from you
  * ("always do this": he does it and tells you, and the safety rules still win), and he does the
  * ones from that sender already waiting too, so you don't approve them again; No is "always ask".
+ *
+ * The answer is saved on one of that sender's emails, so it has to be one a rule can be about:
+ * nothing he brought to you or a safety rule flagged. On those he learns nothing from an answer
+ * (oscar/preferences.py add, feedback.floor_reply), so Yes and No would leave the question here.
+ * Not one you've deleted in Gmail either.
  */
+const canTeach = (i: DecisionWithFeedback) =>
+  !i.gone && i.decision.autonomy_level !== "ESCALATE" && !i.decision.safety_flags.length;
+
 export function candidates(learned: LearnedRow[], items: DecisionWithFeedback[]) {
   return learned
     .filter((r) => ASKS[r.action] && !r.always_ask && r.no === 0 && r.yes >= 2 && !r.level)
-    .map((r) => ({ row: r, item: items.find((i) => i.decision.sender === r.sender && i.decision.action === r.action) }))
+    .map((r) => ({ row: r, item: items.find((i) => i.decision.sender === r.sender && i.decision.action === r.action && canTeach(i)) }))
     .filter((c): c is { row: LearnedRow; item: DecisionWithFeedback } => !!c.item)
     .sort((a, b) => b.row.yes - a.row.yes)
     .slice(0, 3);

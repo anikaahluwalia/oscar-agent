@@ -305,3 +305,33 @@ def test_an_older_yes_in_review_is_caught_up_on_the_next_check(api):
     assert "INBOX" not in fake.messages["n1"]["labelIds"]
     client.post("/gmail/sync")
     assert len([f for f in real.feedback if f.kind == "APPROVE"]) == 1, "only once"
+
+
+def test_yes_and_no_on_a_mark_as_read_question_change_what_he_does(api):
+    # Today's "Mark emails from ... as read without asking?" once stayed put after Yes and No: the
+    # answer was saved on that sender's newest email marked read, which was one he'd brought to you.
+    # He learns nothing from answers on those, so the card has to be answered on one of the others
+    # (web/src/components/today/approve-actions.tsx candidates).
+    shop = [new(f"j{i}", "hello@jewels.example", f"New in {i}", "Our new rings are here. View in browser. Manage your preferences.",
+                thread=f"t{i}") for i in range(4)]
+    client, real, fake = api(shop)
+    client.post("/gmail/sync")
+    for d in list(real.decisions.values()):  # what he does once you've shown him you want these marked read
+        real.decisions[d.id] = d.model_copy(update={"action": "MARK_READ"})
+    for m in ("j0", "j1"):
+        assert client.post("/feedback", json={"decision_id": decision_for(real, m).id, "kind": "APPROVE"}).status_code == 200
+        assert "UNREAD" not in fake.messages[m]["labelIds"]
+    learned = lambda: next(r for r in client.get("/learned").json() if r["action"] == "MARK_READ")  # noqa: E731
+    assert learned()["yes"] >= 2 and not learned()["level"] and not learned()["always_ask"], "the question shows"
+
+    brought = decision_for(real, "j3")
+    real.decisions[brought.id] = brought.model_copy(update={"autonomy_level": "ESCALATE"})
+    client.post("/feedback", json={"decision_id": brought.id, "kind": "ALWAYS_ASK_ME"})
+    assert not learned()["always_ask"], "nothing learned from an answer on an email he brought to you"
+
+    waiting = decision_for(real, "j2")
+    assert client.post("/feedback", json={"decision_id": waiting.id, "kind": "ALWAYS_DO_THIS"}).status_code == 200
+    assert "UNREAD" not in fake.messages["j2"]["labelIds"], "Yes also marks the one waiting as read"
+    assert learned()["level"] == "PROCEED_AND_NOTIFY", "and the question goes away"
+    assert client.post("/feedback", json={"decision_id": waiting.id, "kind": "ALWAYS_ASK_ME"}).status_code == 200
+    assert learned()["always_ask"], "No goes back to asking, and the question goes away too"

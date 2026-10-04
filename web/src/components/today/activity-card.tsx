@@ -34,7 +34,8 @@ function Row({ row }: { row: ActivityRow }) {
           {body}
         </InboxLink>
       ) : (
-        <Link href="/inbox?show=done" className={cls}>
+        // That email (the newest in the group) open, with the rest of what he took care of beside it.
+        <Link href={`/inbox?show=done#${row.id}`} className={cls}>
           {body}
         </Link>
       )}
@@ -42,7 +43,7 @@ function Row({ row }: { row: ActivityRow }) {
   );
 }
 
-/** What Oscar took care of today, grouped and newest first, each group opening your Inbox. */
+/** What Oscar took care of today, grouped and newest first, each group opening its newest email in your Inbox. */
 export function ActivityCard({ rows, readOnly }: { rows: ActivityRow[]; readOnly: boolean }) {
   return (
     <section aria-labelledby="took-care" className="flex flex-col rounded-[24px] border bg-card px-5 py-5 sm:px-6">

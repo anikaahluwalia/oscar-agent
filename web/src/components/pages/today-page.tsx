@@ -122,7 +122,7 @@ export function TodayPage() {
         <ComingUp items={data.items} now={now} />
       </div>
 
-      {!needs.length && <ApproveActions learned={data.learned} items={data.items} onAnswer={(id, kind) => void feedback(id, kind)} />}
+      {!needs.length && <ApproveActions learned={data.learned} items={data.all} onAnswer={(id, kind) => void feedback(id, kind)} />}
       <LearnedCard learned={data.learned} rules={rules} now={now} />
     </Frame>
   );

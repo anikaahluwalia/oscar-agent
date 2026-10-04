@@ -17,6 +17,7 @@ import {
   getLearned,
   getReviewSummary,
   sendFeedback,
+  syncGmail,
   type AutonomyRow,
   type Brief,
   type Category,
@@ -144,6 +145,18 @@ let again = false; // something changed while we were loading, so load once more
 let retry: ReturnType<typeof setTimeout> | null = null;
 let followUp: ReturnType<typeof setTimeout> | null = null; // while he redoes his calls after you teach him
 
+let checkedOnOpen = false;
+
+/**
+ * Opening the app (or refreshing the page) checks Gmail once, like pressing Check now, so what you
+ * see is up to date straight away instead of at his next check on his own. Quietly: if he's
+ * already checking, that check is as good, and anything wrong shows up when you press Check now.
+ */
+function checkOnOpen() {
+  checkedOnOpen = true;
+  syncGmail().then(notifyChanged, () => {});
+}
+
 /**
  * Gets everything the app shows from the API in one go. If something changes while a load is still running (say you
  * approve an email), `changed` makes it load once more after, so the page never shows the old state.
@@ -162,6 +175,7 @@ function load(changed = true) {
     .finally(() => {
       loading = false;
       listeners.forEach((l) => l());
+      if (store.data?.gmail.connected && !checkedOnOpen) checkOnOpen();
       if (again) {
         again = false;
         load();
