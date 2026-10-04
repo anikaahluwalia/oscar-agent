@@ -6,7 +6,7 @@ Oscar is a proactive email agent, named after my dog Oscar. Like the real
 Oscar, keeps an eye on things, and comes to get you when something isn't
 right (on your inbox).
 
-[Try Oscar](https://oscar-demo-1has.onrender.com/) [Design process](DESIGN.md) [Example transcripts](TRANSCRIPTS.md)
+[Try Oscar](https://oscar-demo-1has.onrender.com/)  [Design process](DESIGN.md)  [Example transcripts](examples/TRANSCRIPTS.md)
 
 The demo uses sample emails, so you don't need an account, Gmail connection, or API key. It runs the same decision, learning, and safety code as Oscar's real inbox mode.
 
