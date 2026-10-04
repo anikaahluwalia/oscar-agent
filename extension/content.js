@@ -3,8 +3,9 @@
 //  - Oscar at the bottom of the page (right by default, wherever you drag him). When Gmail opens he
 //    says hello and whether anything needs you, then shows one card at a time: all caught up, what
 //    needs you, something he handled, an approval, something he stopped, and "was that right?";
-//  - a panel down the right for the open email: Summary, Actions, Why? and Thread. It opens by
-//    itself every time you open an email. Closing it hides it while you stay on that email.
+//  - a panel down the right for the open email, on one short page: his call at the top, what he did,
+//    the email in a line, and why (folded away until you ask). It opens by itself every time you
+//    open an email. Closing it hides it while you stay on that email.
 // Everything is drawn in closed shadow roots so Gmail's styles can't reach it, and every piece of
 // email text goes in as text (never HTML), since subjects and senders come from strangers.
 
@@ -14,10 +15,10 @@
   // His call on an email, in the app's words. The Gmail labels are only Stopped, Needs you and FYI
   // (handled emails get none), and can be renamed in Settings (oscar/labels.py).
   const STATUS = {
-    Handled: { tone: "handled", icon: "check", why: "Why I handled it" },
-    FYI: { tone: "fyi", icon: "bell", why: "Why I'm telling you" },
-    "Needs you": { tone: "needs", icon: "question", why: "Why I'm asking" },
-    Stopped: { tone: "blocked", icon: "shield", why: "Why I stopped it" },
+    Handled: { tone: "handled", icon: "check", why: "Why?", lead: "I took care of this." },
+    FYI: { tone: "fyi", icon: "bell", why: "Why I'm telling you", lead: "I handled this. Thought you'd want to know." },
+    "Needs you": { tone: "needs", icon: "question", why: "Why I'm asking", lead: "I need your call on this." },
+    Stopped: { tone: "blocked", icon: "shield", why: "Why I stopped this", lead: "I stopped here." },
   };
   const DOING = {
     ARCHIVE: "Archive it", MARK_READ: "Mark it as read", APPLY_LABEL: "Label it", DRAFT_REPLY: "Draft a reply",
@@ -42,7 +43,8 @@
     thumb: "M7 11v9H4v-9zM7 11l4-7c1.5 0 2.5 1 2.2 2.6L12.7 10H18a2 2 0 0 1 2 2.3l-1.2 6a2 2 0 0 1-2 1.7H7",
     pen: "M4 20h4L19 9l-4-4L4 16zM14 6l4 4",
     close: "M6 6l12 12M18 6L6 18",
-    chevron: "M6 9l6 6 6-6",
+    chevron: "M9 6l6 6-6 6",
+    out: "M14 5h5v5M19 5l-8 8M18 14v5H5V6h5",
   };
   // After the extension is reloaded or updated, this copy keeps running in an open Gmail tab but
   // can't reach Chrome any more ("Extension context invalidated"). It then tidies itself away
@@ -58,6 +60,9 @@
   const mood = (name) => url(`moods/${name}.webp`);
   const today = () => new Date().toDateString();
   const time = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "");
+  // When something happened: "at 3:05 PM" today, "on Oct 2" before that.
+  const when = (iso) => (!iso ? "" : new Date(iso).toDateString() === today() ? `at ${time(iso)}`
+    : `on ${new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" })}`);
   const address = (sender) => sender.match(/<([^>]+)>/)?.[1] ?? sender;
 
   const TOKENS = `
@@ -114,74 +119,117 @@
     .note-text b { color: var(--ink); font-weight: 600; }
     .tick { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; }
 
-    /* The panel down the right side. */
+    /* The panel down the right side: one short page, sized by how much the email needs you. */
     .panel { position: fixed; top: 8px; right: 8px; bottom: 8px; z-index: 2147483001; width: 372px; max-width: calc(100vw - 16px);
              border-radius: 22px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 18px 56px rgba(22,23,26,.2);
              display: flex; flex-direction: column; overflow: hidden; }
     .panel[hidden], .peek[hidden], .note[hidden] { display: none; }
-    .head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 6px 16px; }
-    .head img { width: 36px; height: 36px; border-radius: 50%; }
-    .name { flex: 1; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
-    .name small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+    .head { display: flex; align-items: center; gap: 8px; padding: 12px 12px 4px 18px; }
+    .head img { width: 26px; height: 26px; border-radius: 50%; }
+    .name { flex: 1; margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .name small { display: block; font-size: 11.5px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
     .x { width: 32px; height: 32px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer;
          display: grid; place-items: center; }
     .x:hover { background: var(--soft); }
-    .tabs { display: flex; gap: 4px; padding: 6px 12px 10px; border-bottom: 1px solid var(--line); }
-    .tab { border: 0; background: transparent; padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
-           color: var(--muted); cursor: pointer; }
-    .tab:hover { background: var(--soft); }
-    .tab[aria-selected="true"] { background: var(--fyi-bg); color: var(--fyi); }
-    .body { flex: 1; overflow: auto; padding: 14px 14px 120px; display: flex; flex-direction: column; gap: 12px; }
-    .box { padding: 14px 16px; border-radius: 16px; background: var(--soft); display: flex; flex-direction: column; gap: 8px; }
-    .box.handled { background: var(--handled-bg); } .box.fyi { background: var(--fyi-bg); }
-    .box.needs { background: var(--needs-bg); } .box.blocked { background: var(--blocked-bg); }
-    .box.plain { background: var(--card); border: 1px solid var(--line); }
-    .subject { margin: 0; font-size: 15px; font-weight: 700; }
+    .body { flex: 1; overflow: auto; padding: 10px 18px 20px; display: flex; flex-direction: column; gap: 16px; }
     .text { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
     .text.ink { color: var(--ink); }
     h3 { margin: 0; font-size: 14px; font-weight: 700; }
-    .rec { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--card);
-           font-size: 13px; font-weight: 600; line-height: 1.4; }
-    .rec svg { color: var(--fyi); }
-    .state { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border: 0; border-radius: 14px;
-             cursor: pointer; font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; text-align: left; }
-    .state span { flex: 1; }
-    .state i { display: grid; transition: transform .2s ease; }
-    .state i.open { transform: rotate(180deg); }
     .handled-t { color: var(--handled); } .fyi-t { color: var(--fyi); } .needs-t { color: var(--needs); } .blocked-t { color: var(--blocked); }
     .bg-handled { background: var(--handled-bg); } .bg-fyi { background: var(--fyi-bg); }
     .bg-needs { background: var(--needs-bg); } .bg-blocked { background: var(--blocked-bg); }
-    ul.why { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+
+    /* His call: the status first, then what he did, in his words. */
+    .call { display: flex; flex-direction: column; gap: 6px; }
+    .status { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin: 0 0 4px; padding: 4px 10px 4px 8px;
+              border-radius: 999px; font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .lead { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
+    .did { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+    .did b { color: var(--ink); font-weight: 600; }
+    .did-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    /* A stop gets the strongest words: what he found, with a red rule beside it. */
+    .found { margin: 2px 0 0; padding: 2px 0 2px 12px; border-left: 3px solid var(--blocked); font-size: 14px; line-height: 1.5;
+             font-weight: 600; color: var(--ink); }
+    /* The email itself, as plain text. */
+    .mail { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .subject { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.4; }
+    .gist { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); display: -webkit-box; -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3; overflow: hidden; }
+    .calm .lead, .fyi .lead { font-size: 15.5px; }
+    .calm .gist { -webkit-line-clamp: 2; }
+
+    /* Cards only for something to act on, like a draft. */
+    .card { padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--card);
+            display: flex; flex-direction: column; gap: 8px; }
+    .card-title { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+    .draft { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: 13px; line-height: 1.5;
+             white-space: pre-wrap; overflow-wrap: anywhere; }
+    .fine { margin: 0; font-size: 12px; color: var(--muted); }
+    .link { padding: 0; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer;
+            text-decoration: underline; text-underline-offset: 2px; }
+    .link:hover { color: var(--ink); }
+    .link:disabled { opacity: .5; cursor: default; }
+    .ask { display: flex; flex-direction: column; gap: 10px; }
+    .ask-q { color: var(--ink); font-weight: 500; font-size: 14.5px; }
+
+    /* Why, and "Earlier in this thread": folded away until you open them. */
+    .more { align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; padding: 4px 0; border: 0; background: none;
+            font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+    .more:hover { color: var(--ink); }
+    .more i { display: grid; transition: transform .15s ease; }
+    .more[aria-expanded="true"] { color: var(--ink); }
+    .more[aria-expanded="true"] i { transform: rotate(90deg); }
+    .fold { display: flex; flex-direction: column; gap: 12px; margin-top: -8px; }
+    .list.fold { gap: 0; margin-top: -14px; }
+    ul.why { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.55; color: var(--ink); }
+    ul.why li + li { margin-top: 4px; }
+    .teach { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .teach-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .label { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+    .out { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
+    .out:hover { color: var(--ink); }
+
     .row { display: flex; flex-wrap: wrap; gap: 8px; }
     .stack { display: flex; flex-direction: column; gap: 10px; }
-    .btn { min-height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    .btn { min-height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
            font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
            justify-content: center; gap: 6px; }
     .btn:hover { background: var(--soft); }
     .btn.main { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); }
     .btn.wide { flex: 1; }
+    .btn.small { min-height: 30px; padding: 0 12px; font-size: 12px; }
     .btn:disabled { opacity: .5; cursor: default; }
     .thumbs { display: flex; gap: 8px; }
     .thumb { width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; }
+    .teach .thumb { width: 32px; height: 32px; }
     .thumb.up { background: var(--handled-bg); color: var(--handled); }
     .thumb.down { background: var(--blocked-bg); color: var(--blocked); }
     .thumb.down svg { transform: rotate(180deg); }
     .thumb[aria-pressed="true"] { box-shadow: 0 0 0 2px currentColor; }
     label.pick { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
     select { height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 13px; }
-    .list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
-    .item { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink);
-            text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+
+    /* Lists: what's waiting on you, and the other emails in this thread. */
+    .list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+    .list li + li { border-top: 1px solid var(--line); }
+    .item { width: calc(100% + 16px); padding: 10px 8px; margin: 0 -8px; border: 0; border-radius: 10px; background: transparent; color: var(--ink);
+            text-align: left; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
     .item:hover { background: var(--soft); }
-    .item.on { border-color: var(--fyi); }
-    .item b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .item small { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-    .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line);
-            font-size: 12px; color: var(--muted); background: var(--card); position: relative; z-index: 1; }
-    .foot a { font-weight: 700; color: var(--ink); }
-    .buddy { position: absolute; right: 12px; bottom: 40px; width: 92px; height: 92px; pointer-events: none;
-             filter: drop-shadow(0 6px 14px rgba(22,23,26,.18)); }
+    .item.on { background: var(--soft); }
+    .item .dot { margin-top: 1px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+    .item span { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .item b { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .item small { font-size: 12px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    /* Oscar himself, bigger, only where there's nothing to decide: all caught up, or getting started. */
+    .empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 28px 8px 8px; }
+    .empty img { width: 112px; height: 112px; margin-bottom: 6px; filter: drop-shadow(0 6px 14px rgba(22,23,26,.14)); }
+    .empty .subject { font-size: 15px; font-weight: 700; }
+    .empty a { font-weight: 700; color: var(--ink); }
+    .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 18px 12px; border-top: 1px solid var(--line);
+            font-size: 12px; background: var(--card); }
+    .foot a { color: var(--muted); text-decoration: none; }
+    .foot a:hover { color: var(--ink); text-decoration: underline; }
+    .foot a.home { font-weight: 700; color: var(--ink); }
     .said { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--soft); font-size: 13px; line-height: 1.45; }
   `;
 
@@ -208,10 +256,6 @@
     svg.append(path);
     return svg;
   }
-  const chip = (status) => {
-    const s = STATUS[status] ?? STATUS.FYI;
-    return el("span", { class: `chip bg-${s.tone} ${s.tone}-t` }, icon(s.icon, 12), status);
-  };
 
   const ask = (message) =>
     new Promise((resolve) => {
@@ -272,7 +316,9 @@
     visit: undefined, // the email you're on (see where), or null in your list; undefined until he's looked
     closed: false, // you closed the panel on this email: it stays closed until you leave it
     listing: false, // "Show me": the panel shows what's waiting, even on an email
-    open: false, tab: "summary", whyOpen: true, busy: false, said: null,
+    open: false, busy: false, said: null,
+    why: null, // the email whose "Why?" you opened; it starts folded on each email
+    others: false, // "Earlier in this thread" opened
     card: null, // what the card above Oscar shows: { kind, item, wrong? }
     feedback: {}, // decision id -> "down" while you pick what he should have done
     spot: 1, // where Oscar sits along the bottom: 0 is the far left, 1 the far right
@@ -349,7 +395,7 @@
     render();
   }
 
-  function showEmail(item, tab = "summary") {
+  function showEmail(item, why = false) {
     if (item?.id) markSeen(item.id);
     if (state.card?.kind === "attention") memory.quietCount = state.status?.count ?? null;
     keep();
@@ -358,7 +404,8 @@
     state.open = true;
     state.byHimself = false;
     state.listing = false;
-    state.tab = tab;
+    state.why = why ? item?.id ?? null : null;
+    state.others = false;
     state.focus = item?.id ?? null;
     state.pinned = item?.thread_id && item.thread_id !== openThread() ? item : null;
     if (state.pinned) location.hash = `#all/${item.thread_id}`;
@@ -467,7 +514,7 @@
     if (c.kind === "stopped") {
       return note("", el("p", { class: "note-title" }, el("span", { class: "tick bg-blocked blocked-t" }, icon("shield", 14)), "Oscar stopped here"),
         el("p", { class: "note-text" }, el("b", { text: item.subject || "(no subject)" }), `. ${item.message}`),
-        el("button", { class: "btn wide", type: "button", onclick: () => showEmail(item, "why") }, "See why"));
+        el("button", { class: "btn wide", type: "button", onclick: () => showEmail(item, true) }, "See why"));
     }
     if (c.kind === "feedback") {
       return note("", el("p", { class: "note-title", text: c.wrong ? "What should I have done?" : "Was that right?" }),
@@ -478,14 +525,15 @@
   }
 
   // Thumbs up, or thumbs down and what he should have done instead. Saved as a review.
-  function rightOrNot(item, compact = false) {
+  function rightOrNot(item, compact = false, label = null) {
     const down = state.feedback[item.id] === "down";
-    return el("div", { class: "stack" },
-      el("div", { class: "thumbs" },
+    const thumbs = el("div", { class: "thumbs" },
         el("button", { class: "thumb up", type: "button", "aria-label": "Yes, that was right", disabled: state.busy,
           onclick: () => review(item, null) }, icon("thumb", 18)),
         el("button", { class: "thumb down", type: "button", "aria-label": "No", "aria-pressed": String(down), disabled: state.busy,
-          onclick: () => { state.feedback[item.id] = down ? null : "down"; render(); } }, icon("thumb", 18))),
+          onclick: () => { state.feedback[item.id] = down ? null : "down"; render(); } }, icon("thumb", 18)));
+    return el("div", { class: "stack" },
+      label ? el("div", { class: "teach-row" }, el("p", { class: "label", text: label }), thumbs) : thumbs,
       down ? el("label", { class: "pick" }, compact ? "Tell Oscar what to do instead" : "What should I have done?",
         el("select", { disabled: state.busy, onchange: (e) => e.target.value && review(item, e.target.value) },
           el("option", { value: "", text: "Pick one" }),
@@ -525,121 +573,195 @@
 
   const shown = () => state.pinned ?? (state.thread?.thread ?? []).find((i) => i.id === state.focus) ?? state.thread?.item ?? null;
 
-  function recommends(item) {
-    if (item.status === "Stopped") return "Leave it with me. Don't reply, click its links or send anything.";
-    if (item.level === "ESCALATE") return "This one's for you. I haven't done anything with it.";
-    if (item.undoable) return `${didWords(item, item.done.action)}. You can undo it if that wasn't right.`;
-    const doing = DOING[item.action] ?? "Look at it";
-    return item.level === "ASK_FIRST" ? `${doing}, once you say yes.` : `${doing}.`;
+  // His call as the panel shows it. A reply he drafted and told you about comes back as "Handled"
+  // (it's done), but it's one he wanted you to see, so here it's FYI, like its Gmail label.
+  const callOf = (item) => (item.status === "Handled" && item.level === "PROCEED_AND_NOTIFY" ? "FYI" : STATUS[item.status] ? item.status : "FYI");
+  const doing = (item) => (DOING[item.action] ?? "Look at it").toLowerCase();
+  const sentence = (text) => (text ? `${text[0].toUpperCase()}${text.slice(1)}${/[.!?]$/.test(text) ? "" : "."}` : "");
+  // An ask, in his own words from the API: "Want me to archive this?" When he couldn't tell what
+  // the email is, he doesn't ask about a guess, so it's his whole message ("Can you tell me...").
+  const asked = (item) => item.message?.match(/^Want me to [^?]+\?/)?.[0];
+  const question = (item) => asked(item) ?? item.message ?? `Want me to ${doing(item)}?`;
+
+  // The line under the status, which changes with the call.
+  function lead(item, call) {
+    const done = item.done && !item.done.undone;
+    if (call === "Handled" && done && item.done.by !== "oscar") return "Done, like you asked.";
+    if ((call === "Handled" || call === "FYI") && !done) return item.acting ? "Just so you know." : "Here's what I'd do.";
+    return STATUS[call].lead;
   }
 
-  function mainButtons(item) {
-    const app = state.status?.app ?? "http://localhost:3000";
-    const out = [];
-    if (item.answerable) {
-      out.push(el("button", { class: "btn main wide", type: "button", disabled: state.busy, onclick: () => answer(item, "APPROVE") }, "Approve"));
-      out.push(el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "REJECT") }, "Not this one"));
-    } else if (item.undoable) {
-      if (item.done?.draft) {  // a reply he drafted: it's in this thread, and in Drafts
-        out.push(el("a", { class: "btn main wide", href: "https://mail.google.com/mail/u/0/#drafts", target: "_top" }, "Open draft"));
-      }
-      out.push(el("button", { class: "btn wide", type: "button", disabled: state.busy, onclick: () => answer(item, "UNDO") }, "Undo"));
-    } else if (item.level === "ESCALATE" && item.acting) {
-      // "Got it": it's yours now, so it comes off your list. It teaches him nothing.
-      out.push(el("button", { class: "btn main wide", type: "button", disabled: state.busy, onclick: () => answer(item, "SEEN") }, "Got it"));
-    } else if (item.action === "DRAFT_REPLY") {
-      out.push(el("a", { class: "btn main wide", href: `${app}/inbox#${item.id}`, target: "_blank", rel: "noopener" }, "Review draft"));
-    } else if (item.thread_id && !item.acting) {
-      out.push(el("a", { class: "btn main wide", href: `${app}/review#${item.id}`, target: "_blank", rel: "noopener" }, "Check this call"));
-    }
-    return out.length ? el("div", { class: "row" }, out) : null;
-  }
-
-  function whyList(item) {
-    const lines = [...(item.factors ?? [])];
-    if (item.safety_rule && !lines.some((f) => f.includes(item.safety_rule))) lines.push(`Safety rule: ${item.safety_rule}`);
-    if (item.learned_from) lines.push(`Learned from your answers about this ${item.learned_from}`);
-    return lines.length ? el("ul", { class: "why" }, lines.map((f) => el("li", { text: f }))) : el("p", { class: "text", text: item.message });
-  }
-
-  function summaryTab(item) {
-    const s = STATUS[item.status] ?? STATUS.FYI;
-    return [
-      el("div", { class: `box ${s.tone}` },
-        el("p", { class: "subject", text: item.subject || "(no subject)" }),
-        el("p", { class: "text", text: item.summary || item.message })),
-      el("div", { class: "box" },
-        el("h3", { text: "Oscar recommends" }),
-        el("div", { class: "rec" }, icon("pen", 18), recommends(item))),
-      // The reply he drafted, as text (it came from the model, so never as HTML). Never sent.
-      item.done?.draft && !item.done.undone ? el("div", { class: "box plain" },
-        el("h3", { text: "My draft, waiting in Gmail" }),
-        el("p", { class: "text ink", style: "white-space: pre-wrap", text: item.done.draft }),
-        el("p", { class: "text", text: "Nothing is sent until you send it." })) : null,
-      el("button", { class: `state bg-${s.tone} ${s.tone}-t`, type: "button", "aria-expanded": String(state.whyOpen),
-        onclick: () => { state.whyOpen = !state.whyOpen; render(); } },
-      icon(s.icon, 18), el("span", { text: item.status }), el("i", { class: state.whyOpen ? "open" : "" }, icon("chevron"))),
-      state.whyOpen ? el("div", { class: "box plain" }, el("h3", { text: s.why }), whyList(item)) : null,
-      mainButtons(item),
-    ];
-  }
-
-  function actionsTab(item) {
+  // What he did, or didn't do, in a line or two.
+  function happened(item, call) {
     const done = item.done;
-    const by = done?.by === "oscar" ? "me" : "you";
-    return [
-      el("div", { class: "box" }, el("h3", { text: "What I did" }),
-        el("p", { class: "text ink", text: done ? `${didWords(item, done.action)} by ${by} at ${time(done.at)}${done.undone ? ", then undone" : ""}.`
-          : item.status === "Stopped" ? "Nothing. I never act on an email I've stopped."
-            : item.level === "ESCALATE" ? "Nothing. I left it for you."
-            : item.acting ? "Nothing in Gmail yet." : "Nothing. I was only reading your Gmail when this came in." }),
-        item.undoable ? el("div", { class: "row" }, el("button", { class: "btn", type: "button", disabled: state.busy,
-          onclick: () => answer(item, "UNDO") }, "Undo")) : null),
-      el("div", { class: "box" }, el("h3", { text: "What I'd do" }), el("p", { class: "text ink", text: recommends(item) }),
-        item.answerable ? el("div", { class: "row" },
-          el("button", { class: "btn main", type: "button", disabled: state.busy, onclick: () => answer(item, "APPROVE") }, "Approve"),
-          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "REJECT") }, "Not this one")) : null),
-      // How much to ask next time is its own answer: approving only says the action was right.
-      LIKE_THIS_ACTIONS.has(item.action) && item.level !== "ESCALATE" ? el("div", { class: "box" },
-        el("h3", { text: "For emails like this" }),
-        el("div", { class: "row" },
-          el("button", { class: "btn main", type: "button", disabled: state.busy, onclick: () => answer(item, "JUST_HANDLE_IT") }, "Just handle them"),
-          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "HANDLE_AND_TELL_ME") }, "Handle + tell me"),
-          el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "KEEP_ASKING") }, "Keep asking"))) : null,
-      el("div", { class: "box" }, el("h3", { text: "Was that right?" }),
-        item.reviewed ? el("p", { class: "text", text: "You've told me about this one. Thank you." }) : rightOrNot(item)),
-    ];
+    if (call === "Stopped") return "I didn't take any action. Don't reply, click its links or send anything.";
+    if (done && !done.undone) {
+      if (done.draft) return "I drafted a reply for you.";
+      return `${didWords(item, done.action)}${done.by === "oscar" ? "" : " after you said yes"} ${when(done.at)}.`;
+    }
+    if (done?.undone) return done.draft ? "I wrote a draft, then deleted it. Nothing was sent." : `${didWords(item, done.action)}, then undone. It's back the way it was.`;
+    if (item.level === "ESCALATE") return "This one's for you. I haven't done anything with it.";
+    if (!item.acting) return `I'd ${doing(item)}. I'm only reading your Gmail for now, so nothing changed.`;
+    if (item.level === "ASK_FIRST") return "You've answered this one.";
+    return "Nothing in Gmail yet.";
   }
 
-  function whyTab(item) {
-    const s = STATUS[item.status] ?? STATUS.FYI;
+  // Only what set this call: the reason in his message ("...because it goes out under your name"),
+  // what he noticed in the email, what he thinks it is, what you taught him that he used, and the
+  // safety rule. "A sender I haven't learned about yet" is left out unless he was guessing, since
+  // then it's why he asks. A stop's rule is already at the top, so it isn't said twice.
+  function reasons(item) {
+    const factors = item.factors ?? [];
+    const guess = factors.some((f) => f.startsWith("I couldn't tell"));
+    const said = callOf(item) === "Stopped" ? item.message?.replace(/^I stopped this one\.\s*/, "").toLowerCase() ?? "" : "";
+    const lines = [];
+    const because = item.message?.match(/\b(?:because|since) (.+?)\.?$/)?.[1];
+    if (because && !(item.safety_rule && because.includes(item.safety_rule))) lines.push(sentence(because));
+    // Something he brought to you that no safety rule stopped (it looks urgent, say): his own words.
+    if (item.level === "ESCALATE" && callOf(item) !== "Stopped" && item.message) lines.push(sentence(item.message.replace(/^I stopped this one\.\s*/, "")));
+    const noticed = item.noticed?.length > 60 ? `${item.noticed.slice(0, 60).trim()}…` : item.noticed;
+    if (noticed && !noticed.startsWith("reads like")) lines.push(`I noticed “${noticed}” in it.`);
+    for (const f of factors) {
+      if (/^A sender (I haven't learned about yet|you've taught me about)$/.test(f) && !(guess && f.includes("haven't"))) continue;
+      if (f.startsWith("Safety rule: ") && said.includes(f.slice(13).toLowerCase())) continue;
+      lines.push(f);
+    }
+    if (item.safety_rule && !lines.some((f) => f.includes(item.safety_rule)) && !said.includes(item.safety_rule.toLowerCase())) {
+      lines.push(`Safety rule: ${item.safety_rule}`);
+    }
+    if (item.learned_from && !factors.some((f) => f.endsWith("sure)"))) lines.push(`Learned from your answers about this ${item.learned_from}`);
+    if (callOf(item) === "Stopped") lines.push("Nothing you teach me changes this.");
+    return lines.length ? lines : [item.message];
+  }
+
+  // The buttons for this email, if it has any: your answer to an ask, "Got it" on something he
+  // brought to you, or a link to look at it in Oscar. Undo and the draft's buttons sit with what he did.
+  function answers(item) {
     const app = state.status?.app ?? "http://localhost:3000";
+    if (item.answerable) {
+      return el("div", { class: "row" },
+        el("button", { class: "btn main wide", type: "button", disabled: state.busy, onclick: () => answer(item, "APPROVE") },
+          asked(item) ? `Yes, ${doing(item)}` : DOING[item.action] ?? "Approve"),
+        el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "REJECT") }, "Not this one"));
+    }
+    if (item.undoable) return null;
+    if (item.level === "ESCALATE" && item.acting) {
+      // "Got it": it's yours now, so it comes off your list. It teaches him nothing.
+      return el("div", { class: "row" },
+        el("button", { class: "btn main", type: "button", disabled: state.busy, onclick: () => answer(item, "SEEN") }, "Got it"));
+    }
+    if (item.action === "DRAFT_REPLY" && !item.done) {
+      return el("div", { class: "row" }, el("a", { class: "btn", href: `${app}/inbox#${item.id}`, target: "_blank", rel: "noopener" }, "Review draft"));
+    }
+    if (item.thread_id && !item.acting) {
+      return el("div", { class: "row" }, el("a", { class: "btn", href: `${app}/review#${item.id}`, target: "_blank", rel: "noopener" }, "Check this call"));
+    }
+    return null;
+  }
+
+  // The reply he drafted, as text (it came from the model, so never as HTML). Never sent. "Delete
+  // draft" is the same undo as anywhere else: it takes the draft out of Gmail.
+  function draftCard(item) {
+    // Trimmed to its first few lines: the whole thing is one click away in Gmail.
+    const lines = item.done.draft.trim().replace(/\n{3,}/g, "\n\n").split("\n");
+    let text = lines.slice(0, 6).join("\n");
+    if (text.length > 320) text = text.slice(0, 320).replace(/\s+\S*$/, "");
+    if (text.length < lines.join("\n").length) text += " …";
+    return el("div", { class: "card" },
+      el("p", { class: "card-title" }, icon("pen", 14), "Draft ready"),
+      el("p", { class: "draft", text }),
+      el("p", { class: "fine", text: "Nothing has been sent." }),
+      el("div", { class: "did-row" },
+        el("a", { class: "btn main", href: "https://mail.google.com/mail/u/0/#drafts", target: "_top" }, "Open draft"),
+        el("button", { class: "link", type: "button", disabled: state.busy, onclick: () => answer(item, "UNDO") }, "Delete draft")));
+  }
+
+  // Folded until opened: the reasons, then telling him whether he got it right.
+  function why(item, call) {
+    const app = state.status?.app ?? "http://localhost:3000";
+    const open = state.why === item.id;
+    const toggle = el("button", { class: "more", type: "button", "aria-expanded": String(open),
+      onclick: () => { state.why = open ? null : item.id; render(); } }, STATUS[call].why, el("i", {}, icon("chevron", 14)));
+    if (!open) return [toggle];
+    return [toggle, el("div", { class: "fold" },
+      el("ul", { class: "why" }, reasons(item).map((f) => el("li", { text: f }))),
+      el("div", { class: "teach" },
+        item.reviewed ? el("p", { class: "label", text: "You've told me about this one. Thank you." })
+          : rightOrNot(item, false, "Was that right?"),
+        // How much to ask next time is its own answer: approving only says the action was right.
+        LIKE_THIS_ACTIONS.has(item.action) && item.level !== "ESCALATE" ? el("div", { class: "stack" },
+          el("p", { class: "label", text: "For emails like this" }),
+          el("div", { class: "row" },
+            el("button", { class: "btn small", type: "button", disabled: state.busy, onclick: () => answer(item, "JUST_HANDLE_IT") }, "Just handle them"),
+            el("button", { class: "btn small", type: "button", disabled: state.busy, onclick: () => answer(item, "HANDLE_AND_TELL_ME") }, "Handle + tell me"),
+            el("button", { class: "btn small", type: "button", disabled: state.busy, onclick: () => answer(item, "KEEP_ASKING") }, "Keep asking"))) : null,
+        el("a", { class: "out", href: `${app}/review#${item.id}`, target: "_blank", rel: "noopener" }, "See it all in Oscar", icon("out", 13))))];
+  }
+
+  // The other emails in this thread he's read, folded away. Picking one shows his call on it.
+  function others(item) {
+    const rest = (state.thread?.thread ?? []).filter((i) => i.id !== item.id);
+    if (!rest.length || state.pinned) return [];
+    const toggle = el("button", { class: "more", type: "button", "aria-expanded": String(state.others),
+      onclick: () => { state.others = !state.others; render(); } }, `Earlier in this thread (${rest.length})`, el("i", {}, icon("chevron", 14)));
+    if (!state.others) return [toggle];
+    return [toggle, el("ul", { class: "list fold" }, rest.map((i) => el("li", {},
+      el("button", { class: "item", type: "button", onclick: () => { state.focus = i.id; state.why = null; render(); } },
+        dot(callOf(i)), el("span", {}, el("b", { text: i.subject || "(no subject)" }), el("small", { text: `${address(i.sender)} · ${when(i.received_at).replace(/^(at|on) /, "")}` }))))))];
+  }
+
+  const dot = (call) => {
+    const s = STATUS[call] ?? STATUS.FYI;
+    return el("i", { class: `dot bg-${s.tone} ${s.tone}-t`, title: call }, icon(s.icon, 12));
+  };
+
+  // One page, top to bottom: the status, his line about it, what he did (or the question), the
+  // email in a line, a draft if there is one, then Why folded away. Handled stays small; Needs you
+  // and Stopped get more, since they need more from you.
+  function decision(item) {
+    const call = callOf(item);
+    const s = STATUS[call];
+    const done = item.done && !item.done.undone;
+    const stop = call === "Stopped";
+    const asking = call === "Needs you" && item.level === "ASK_FIRST";
+    const did = el("p", { class: "did", text: happened(item, call) });
     return [
-      el("div", { class: `box ${s.tone}` }, el("div", {}, chip(item.status)), el("p", { class: "text ink", text: item.message })),
-      el("div", { class: "box" }, el("h3", { text: s.why }), whyList(item)),
-      el("div", {}, el("a", { class: "btn", href: `${app}/review#${item.id}`, target: "_blank", rel: "noopener" }, "See it all in Oscar")),
+      el("div", { class: `call ${s.tone}${call === "Handled" ? " calm" : ""}` },
+        el("p", { class: `status bg-${s.tone} ${s.tone}-t` }, icon(s.icon, 13), call),
+        el("p", { class: "lead", text: lead(item, call) }),
+        // A stop says what he found, in his words, before anything else.
+        stop ? el("p", { class: "found", text: sentence(item.message?.replace(/^I stopped this one\.\s*/, "") || item.safety_rule) }) : null,
+        asking ? el("p", { class: "did ask-q", text: question(item) }) : item.undoable && !item.done?.draft
+          ? el("div", { class: "did-row" }, did, el("button", { class: "btn small", type: "button", disabled: state.busy,
+            onclick: () => answer(item, "UNDO") }, "Undo"))
+          : did),
+      el("div", { class: `mail${call === "Handled" ? " calm" : ""}` },
+        el("p", { class: "subject", text: item.subject || "(no subject)" }),
+        item.summary ? el("p", { class: "gist", text: item.summary }) : null),
+      asking ? el("div", { class: "ask" },
+        item.answerable ? null : el("p", { class: "did", text: happened(item, call) }),
+        answers(item),
+        item.answerable && item.action === "DRAFT_REPLY" ? el("p", { class: "fine", text: "It waits in your Drafts. I never send it." }) : null)
+        : done && item.done.draft ? draftCard(item) : answers(item),
+      ...why(item, call),
+      ...others(item),
     ];
   }
 
-  function threadTab() {
-    const current = shown();
-    return [el("ul", { class: "list" }, (state.thread?.thread ?? []).map((i) => el("li", {},
-      el("button", { class: `item${i.id === current?.id ? " on" : ""}`, type: "button",
-        onclick: () => { state.focus = i.id; state.tab = "summary"; render(); } },
-      el("b", { text: i.subject || "(no subject)" }),
-      el("small", {}, chip(i.status), `${address(i.sender)} · ${time(i.received_at)}`)))))];
-  }
+  // Nothing to decide here: Oscar himself, bigger, and a line.
+  const empty = (pose, title, ...text) =>
+    el("div", { class: "empty" }, el("img", { src: mood(pose), alt: "" }), el("p", { class: "subject", text: title }),
+      el("p", { class: "text" }, ...text));
 
   function waitingList() {
     const s = state.status;
     const items = s?.waiting ?? [];
     if (!items.length) {
-      return [el("div", { class: "box handled" }, el("p", { class: "subject", text: "All caught up" }),
-        el("p", { class: "text", text: s?.handled_today ? `I handled ${s.handled_today} today. Nothing needs you.` : "Nothing needs you right now." }))];
+      return [empty("proud", "All caught up!", s?.handled_today ? `I handled ${s.handled_today} today. Nothing needs you.` : "Nothing needs you right now.")];
     }
     return [el("h3", { text: "Waiting on you" }), el("ul", { class: "list" }, items.map((i) => el("li", {},
-      el("button", { class: "item", type: "button", onclick: () => showEmail(i) },
-        el("b", { text: i.subject || "(no subject)" }), el("small", {}, chip(i.status), address(i.sender))))))];
+      el("button", { class: "item", type: "button", onclick: () => showEmail(i) }, dot(i.status),
+        el("span", {}, el("b", { text: i.subject || "(no subject)" }), el("small", { text: `${i.status} · ${address(i.sender)}` }))))))];
   }
 
   // Closing the panel on an email hides it while you stay there. The next email you open gets it
@@ -654,34 +776,36 @@
 
   // When the API can't be reached, he says so calmly. He checks again every minute, and whenever
   // you open another email.
-  const DOWN = "I can't reach my API right now, so I can't tell you about your emails. Is Oscar running on this computer? I'll keep checking.";
-  const trouble = (error) => (/can't reach/i.test(error) ? DOWN : error);
+  const DOWN = "So I can't tell you about your emails. Is Oscar running on this computer? I'll keep checking.";
 
   function panel() {
     const s = state.status;
     const item = state.listing ? null : shown();
     const app = s?.app ?? "http://localhost:3000";
-    const TABS = [["summary", "Summary"], ["actions", "Actions"], ["why", "Why?"], ["thread", "Thread"]];
-    let body;
-    if (state.error) body = [el("p", { class: "said", text: trouble(state.error) })];
-    else if (s && !s.connected) body = [el("p", { class: "said" }, "Connect Gmail in Oscar's ", el("a", { href: `${app}/settings`, target: "_blank", rel: "noopener" }, "Settings"), " first.")];
-    else if (!item) body = [state.threadId && state.thread && !state.listing ? el("p", { class: "said", text: "I haven't read this one yet." }) : null, ...waitingList()];
-    else body = { summary: summaryTab, actions: actionsTab, why: whyTab, thread: threadTab }[state.tab](item);
-
-    const buddy = item ? { Stopped: "guarding", "Needs you": "asking", Handled: "proud", FYI: "alert" }[item.status] ?? "alert"
-      : s?.count ? "thinking" : "sleeping";
+    // The little Oscar in the header is for his calls. Where there's nothing to decide, the bigger
+    // one in the page (empty) is there instead.
+    let body, hero = !item;
+    if (state.error) {
+      body = /can't reach/i.test(state.error) ? [empty("thinking", "I can't reach my API right now.", DOWN)]
+        : [el("p", { class: "said", text: state.error })];
+    } else if (s && !s.connected) {
+      body = [empty("sleeping", "I'm not reading your Gmail yet.", "Connect Gmail in Oscar's ",
+        el("a", { href: `${app}/settings`, target: "_blank", rel: "noopener" }, "Settings"), " first, and I'll get started.")];
+    } else if (!item) {
+      body = [state.threadId && state.thread && !state.listing ? el("p", { class: "said", text: "I haven't read this one yet." }) : null, ...waitingList()];
+      hero = !s?.waiting?.length;
+    } else {
+      body = decision(item);
+    }
     return el("section", { class: "panel", role: "dialog", "aria-label": "Oscar", hidden: !state.open },
       el("div", { class: "head" },
-        el("img", { src: url("icons/oscar-48.png"), alt: "" }),
+        hero ? el("span", { hidden: true }) : el("img", { src: url("icons/oscar-48.png"), alt: "" }),
         el("p", { class: "name" }, "Oscar", s?.read_only ? el("small", { text: "I only read your Gmail for now" }) : null),
         el("button", { class: "x", type: "button", "aria-label": "Close", onclick: closePanel }, icon("close", 18))),
-      item ? el("div", { class: "tabs", role: "tablist" }, TABS.map(([key, words]) =>
-        el("button", { class: "tab", type: "button", role: "tab", "aria-selected": String(state.tab === key),
-          onclick: () => { state.tab = key; render(); } }, words))) : null,
       el("div", { class: "body" }, state.said ? el("p", { class: "said", role: "status", text: state.said }) : null, body),
-      el("img", { class: "buddy", src: mood(buddy), alt: "" }),
-      el("div", { class: "foot" }, el("a", { href: `${app}/today`, target: "_blank", rel: "noopener" }, "Open Oscar"),
-        el("span", { text: s?.read_only ? "Nothing here changes without you." : "Everything I do can be undone." })));
+      el("div", { class: "foot" },
+        el("a", { class: "home", href: `${app}/today`, target: "_blank", rel: "noopener" }, "Open Oscar ↗"),
+        el("a", { href: `${app}/knows`, target: "_blank", rel: "noopener" }, "Review what Oscar has learned")));
   }
 
   // --- Oscar himself, and dragging him -------------------------------------------------------
@@ -748,6 +872,7 @@
     window.dispatchEvent(new Event("resize"));
   }
 
+  let lastPage = null; // which email the panel showed last time it was drawn
   function render() {
     if (!alive()) return retire();
     makeRoom(state.open);
@@ -774,7 +899,12 @@
     wrap.classList.toggle("still", !companion.animate);
     // "Show Oscar in Gmail" off: no Oscar in the corner, no cards, and the panel doesn't open by
     // itself (load, above). The chips and labels on your emails stay.
+    // The panel is drawn afresh each time, so it keeps its place when you open Why on the same email.
+    const page = `${state.listing}|${shown()?.id ?? ""}`;
+    const scrolled = page === lastPage ? wrap.querySelector(".panel .body")?.scrollTop ?? 0 : 0;
+    lastPage = page;
     wrap.replaceChildren(...(companion.show ? [peek, card() ?? ""] : []), panel());
+    if (scrolled) wrap.querySelector(".panel .body").scrollTop = scrolled;
   }
 
   // One look at a time. Asked again mid-look (you opened another email meanwhile), he looks once
@@ -840,6 +970,7 @@
       state.visit = here.visit;
       state.closed = false;
       state.listing = false;
+      state.others = false;
       waitedFor = null;
       // Back in your list, a panel he opened by himself goes away again.
       if (!here.visit && state.byHimself) {
@@ -860,7 +991,6 @@
       if (thread || waitedFor === here.visit) {
         state.open = true;
         state.byHimself = true;
-        state.tab = "summary";
       } else {
         lookAgain(here.visit);
       }

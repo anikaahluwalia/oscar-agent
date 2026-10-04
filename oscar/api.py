@@ -426,7 +426,7 @@ def _extension_item(history: History, d: Decision, waiting: set[str] | None = No
         waiting = {w.id for w in needs_you(history)[AutonomyLevel.ASK_FIRST]}
     return {
         "id": d.id, "subject": d.subject, "sender": d.sender, "level": d.autonomy_level.value, "action": d.action.value,
-        "message": d.message, "factors": d.factors, "acting": d.acting,
+        "message": d.message, "factors": d.factors, "acting": d.acting, "noticed": d.noticed,
         "summary": d.summary or d.snippet, "status": status_label(history, d, waiting),
         "label": label_for(history, d, label_names()),
         "safety_rule": d.safety_rule, "learned_from": d.preference.scope if d.preference else None,

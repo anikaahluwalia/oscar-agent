@@ -21,9 +21,11 @@ Oscar inside Gmail, in three parts:
   goes away when you're back in your list. Close it and it stays closed while you're on that
   email; the next one you open gets it again, and so does that one if you leave and come back.
   If Gmail is slow to show the email he waits a few seconds for it, then opens anyway. If he
-  can't reach his API, or Gmail isn't connected yet, it still opens and tells you so. Summary (what it is, what he recommends and why),
-  Actions (what he did, Approve, Undo, "always do this" or "always ask me", and "Was that right?"),
-  Why? (what mattered and any safety rule) and Thread (his call on each email in it).
+  can't reach his API, or Gmail isn't connected yet, it still opens and tells you so. It's one
+  short page: his call at the top (Handled, FYI, Needs you or Stopped), what he did, the email in
+  a line, then what you can do (Yes or Not this one on an ask, Undo, or his draft with Open draft).
+  Why is folded until you open it: only what set his call, then "Was that right?" and how to
+  handle emails like it. Other emails in the thread are folded at the bottom.
 
 While he only reads your Gmail, there's nothing to approve or undo; it's "Check this call".
 

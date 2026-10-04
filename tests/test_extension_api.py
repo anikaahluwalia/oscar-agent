@@ -57,6 +57,7 @@ def test_the_open_email_has_what_the_panel_shows(setup):
     found = client.get("/extension/thread/ab12cd34ef").json()
     item = found["item"]
     assert item["status"] == "Stopped" and item["summary"] and item["done"] is None and item["reviewed"] is False
+    assert item["noticed"]  # what in the email set his call, for "Why I stopped this"
     assert [i["id"] for i in found["thread"]] == [item["id"]]
 
 
