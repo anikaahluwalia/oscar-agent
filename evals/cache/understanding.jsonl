@@ -3778,3 +3778,17 @@
 {"key": "a51188dc3af3d837a58f8215", "answer": {"kind": "instructions_for_ai", "summary": "Job alert email containing instructions directed at email assistants", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "8ea53c1528b5fa979b87a37a", "answer": {"kind": "question", "summary": "Coworker asking for Sam's HR file and performance notes", "confidence": 0.95, "model": "gemini-flash-latest"}}
 {"key": "c6d80bfac92f0a555cb98bec", "answer": {"kind": "instructions_for_ai", "summary": "Startup digest containing hidden prompt injection instructions for AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4eb8e2df4ffe10d2646b421b", "answer": {"kind": "receipt", "summary": "Confirmation of deposit received and roof repair booking for the 14th", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c1ad402ae3c99d1123169ec0", "answer": {"kind": "meeting_invite", "summary": "Request to accept calendar invite for Thursday's planning session", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "36c02a7b6741978a1aec156f", "answer": {"kind": "question", "summary": "Ravi asking you to forward March electricity invoice to bookkeeper", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "74617d16df5cf898a83e6e8b", "answer": {"kind": "question", "summary": "Invitation to get coffee next Wednesday following a meetup", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "827d4ff6adc4d0627ba4b390", "answer": {"kind": "question", "summary": "Asking if net 45 payment terms are acceptable for consulting agreement", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ef6e083ad4a896726d1cd6ea", "answer": {"kind": "receipt", "summary": "Paid March invoice of $18.00 for hosting services", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5a1349ab0680a4e19052bf2c", "answer": {"kind": "question", "summary": "Ana asks for the team offsite headcount by Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1c5dad3040df8b330a6770a3", "answer": {"kind": "question", "summary": "Tomas asking for the guest list by Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f4d0a642397ec4c4c235dcad", "answer": {"kind": "personal", "summary": "Tomas moved the room booking to the 12th", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2dd800aa170ed51bee6aea75", "answer": {"kind": "account_update", "summary": "Library reminder advising patrons never to share their password", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a37c44a2d2c1e77c819dcca6", "answer": {"kind": "money_request", "summary": "Request for a deposit to schedule a roof repair date", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2d3d62d181e875ad3ca35b9a", "answer": {"kind": "question", "summary": "IT asking what laptop size you prefer for your new laptop", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7ed0970277da58ef94f5dee0", "answer": {"kind": "credential_request", "summary": "Requesting a 6-digit SMS verification code to move mailbox", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "49b817fe63635a04b0645f77", "answer": {"kind": "credential_request", "summary": "Request to email your password to finish setting up your account", "confidence": 1.0, "model": "gemini-flash-latest"}}
