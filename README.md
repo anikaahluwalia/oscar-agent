@@ -3,10 +3,14 @@
 # Oscar -- your inbox companion
 
 Oscar is a proactive email agent, named after my dog Oscar. Like the real
-Oscar, he's loyal, keeps an eye on things, and comes to get you when something isn't
+Oscar, keeps an eye on things, and comes to get you when something isn't
 right (on your inbox).
 
-## What it is
+[Try Oscar](https://oscar-demo-1has.onrender.com/) [Design process](DESIGN.md) [Example transcripts](TRANSCRIPTS.md)
+
+The demo uses sample emails, so you don't need an account, Gmail connection, or API key. It runs the same decision, learning, and safety code as Oscar's real inbox mode.
+
+## What Oscar does
 
 For each email, Oscar picks one action (archive, mark read, label, draft a reply...) and how much
 to do on his own.
@@ -26,6 +30,27 @@ Through user feedback and patterns, Oscar chooses between 4 levels...
 | `ASK_FIRST` | Ask me | Oscar asks first. You say yes or no. |
 | `ESCALATE` | Stopped / Needs you | Oscar does nothing and brings it straight to you. |
 
+You can review his decisions in the web app or use the Chrome extension inside Gmail. 
+
+The extension shows what Oscar decided, why, and the controls to approve, decline, undo, or give feedback. Little Oscar also sits in the corner to get your attention when something needs you.
+
+# How he learns
+Instead of simply approving an action, you can choose from:
+- Handle quietly
+- Handle and tell me
+- Ask me
+  
+For example, in the demo you approve a sale email and tell Oscar to handle emails like it. He then archives a sale from a different shop without asking again. A sale containing hidden instructions still gets stopped.
+
+Feedback can change how much he asks, but it cannot lower the safety floor that is forced. On a connected Gmail account, Oscar starts read-only. If you enable actions, he can mark emails read, archive them, add his own labels, and save drafts. He never sends email or permanently deletes your messages. You can toggle read-off in the settings so you can see him work at full potential!
+
+# What I tested
+
+I evaluated whether Oscar stopped on risky emails and whether he still acted on harmless ones. 
+Asking everytime shouldn't count as success. In the recorded evaluation at bcff50f, exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses. These are results on constructed test cases, not a production safety guarantee.
+
+The [evaluation write-up](docs/EVALUATION.md) includes the control pairs, learning experiment, failures, and limitations.
+
 ## Try it
 
 You need Python 3.11+ and Node 20.9+. No Gmail, no API key and no account needed.
@@ -44,51 +69,23 @@ npm install
 npm run dev                                   # the web app, on localhost:3000
 ```
 
-Open http://localhost:3000 and press **Try Oscar**. You get a pretend inbox of made-up emails,
-just for your browser and kept only in the API's memory. Every email still goes through Oscar's
-real decisions, learning and safety checks. He asks your name, then a short tour shows how he
-learns: approve the Evergreen sale, choose **Handle all emails like this**, press **Check now**,
-and he archives a sale from a different shop on his own while still stopping the one with hidden
-instructions. After that the tour walks through the rest of the app. The banner at the top has
-**Check now**, **Reset demo** and **Leave**.
+Open http://localhost:3000 and press **Try Oscar**. You get an inbox of made-up emails, for your browser and kept only in the API's memory. Every email still goes through Oscar's real decisions, learning and safety checks. with a guided tour!
 
 In the app:
 
-- **Today**: what's waiting on you, and what Oscar took care of today.
-- **Chat**: ask about your email ("what needs me?"), or teach him a rule. He shows you the rule
-  before he follows it.
-- **Inbox**: every email and what he did with it. Approve, decline or undo, and tap **Why?**.
-- **Review**: check his calls one email at a time.
+- **Today**: what's you need to do, what Oscar took care of today and coming up events.
+- **Chat**: ask about your email ("what needs me?"), or teach him a rule. 
+- **Inbox**: every email and what he did with it. Approve, decline, undo, learn **Why?**, etc.
+- **Review**: check his actions one email at a time.
 - **What Oscar knows**: what he's learned about each sender, which you can change or forget.
 - **Promises**: the things he never does alone, and what he held back lately.
-- **Settings**: Gmail, your name, light or dark, and how Oscar shows up in Gmail.
-
-## Deploy the demo
-
-You can put the demo online for free on [Render](https://render.com), so people can try Oscar without
-installing anything. Only the demo goes online: with `OSCAR_DEMO_ONLY=1`, the API answers nothing but
-a browser's own demo, so no visitor can reach a real inbox or connect Gmail. Never host Oscar without
-it, since there's no sign-in.
-
-1. On Render, New → Blueprint, and pick this repo. `render.yaml` sets up two services: the API
-   (`oscar-demo-api`) and the web app (`oscar-demo`). When it asks for `OSCAR_WEB_ORIGINS` and
-   `NEXT_PUBLIC_OSCAR_API`, leave them empty for now and press Apply.
-2. When both are deployed, copy each one's address from its page (like `https://oscar-demo.onrender.com`).
-3. In `oscar-demo` → Environment, set `NEXT_PUBLIC_OSCAR_API` to the API's address and save. It builds again.
-4. In `oscar-demo-api` → Environment, set `OSCAR_WEB_ORIGINS` to the web app's address and save.
-
-Then open the web app's address and press **Try Oscar**. Don't add Google or Gemini keys on Render:
-the demo doesn't need them. Free services sleep after 15 minutes with no visitors and take about a
-minute to wake up, so open the link yourself first before you share it. The Chrome extension only
-works with Oscar on your own computer; the **See it in Gmail** button in the app shows a short video
-of it.
+- **Settings**: Gmail connection, your name, light or dark, label names and how Oscar shows up in Gmail.
 
 ## Connect your Gmail
 
-Oscar starts read-only: he notes what he *would* do and nothing in Gmail changes. If you turn on
-**Let Oscar act in Gmail** in Settings, he can only do things you can undo: mark read, archive,
-add his own labels, and save a draft he tells you about. He never sends email, deletes your email
-or moves money; the Gmail code has nothing that can, apart from taking back a draft he saved. He acts on at most 25 emails per check, and only on new email.
+Oscar starts read-only so, he notes what he *would* do and nothing in Gmail changes. If you turn on
+**Let Oscar act in Gmail** in Settings, he can only do things you can undo such as, mark read, archive,
+add his own labels, and save a draft he tells you about. He acts on at most 25 emails per check and only on new email.
 
 1. Make a Gmail account for testing, or use your own.
 2. In [Google Cloud Console](https://console.cloud.google.com), create a project and enable the
@@ -102,10 +99,9 @@ or moves money; the Gmail code has nothing that can, apart from taking back a dr
    Connect Gmail**). Oscar checks for new email every 5 minutes while the API runs, or press
    **Check now**.
 
-The first time you connect, he looks over your last six months of email (read-only) and offers
-habits he noticed; nothing changes until you answer. While Gmail is connected the demo inbox is
-off. Google keeps the connection for 7 days while the app is in testing mode, so you may need to
-connect again after that.
+When you first connect, he will look at your last six months of email (read-only) and suggests
+habits/patterns he noticed (nothing changes until you answer). While Gmail is connected the demo inbox is
+off.
 
 ## The Chrome extension
 
@@ -114,21 +110,21 @@ connect again after that.
    pick the `extension` folder.
 3. Open Gmail.
 
-Each email Oscar has read gets a chip in your list: Handled, FYI, Needs you or Stopped. When you
+Each email Oscar has read gets tagged in your list: Handled, FYI, Needs you or Stopped. When you
 open an email, a panel opens beside it with his call first, what he did, and what you can do
-(Yes or Not this one, Undo, or his draft). Why is folded until you want it. Until you let him act
-in Gmail, the panel asks you to check his call instead. Oscar also sits in the corner and says
+(Yes or Not this one, Undo, or his draft). If you click on why, you can understand his thought process. Until you let him act
+in Gmail, the panel asks you to check his deciscion instead. Oscar also sits in the corner and says
 hello with how things stand when Gmail opens. It needs your real Gmail connected, and only talks
-to the API on localhost. More in [extension/README.md](extension/README.md).
+to the API on localhost.
 
-## Configuration
+## Environment Variables
 
 Everything goes in `.env` (copy `.env.example`). The keys that matter:
 
 | Key | What it does |
 |---|---|
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Your Google OAuth client, for Connect Gmail. |
-| `GEMINI_API_KEY` | Optional. For the chat, reading emails the rules don't recognise, and reply drafts. Without it Oscar uses the rules alone, a basic chat and no drafts. The demo and the evals don't need it. |
+| `GEMINI_API_KEY` | Optional. For the chat, reading emails the rules don't recognize, and reply drafts. Without it Oscar uses the rules alone, a basic chat and no drafts. The demo and the evals don't need it. |
 | `OSCAR_MODEL_READS` | Whether the model reads your real emails: `off` (default), `preview` (sender, subject, first few lines) or `full`. Only use `full` with a paid key: on the free tier Google may use what's sent. |
 | `OSCAR_CONTENT_ONLY_SENDERS` | Comma-separated addresses Oscar judges only by what their emails say, never by who sent them. Handy for your own test address that sends every kind of email. |
 | `OSCAR_AUTO_CHECK_MINUTES` | How often he checks Gmail on his own (default 5, 0 = never). |
@@ -136,7 +132,7 @@ Everything goes in `.env` (copy `.env.example`). The keys that matter:
 
 Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR` to use another folder).
 
-## Tests and evals
+## To test on your own
 
 ```bash
 .venv/bin/pytest -q                               # unit and integration tests
@@ -156,7 +152,7 @@ build is unsafe or a regression case fails.
 After changing a demo email, the reading prompt or the model, run
 `.venv/bin/python -m oscar.demo --read` (needs a key) to save the demo's readings and drafts again.
 
-## Where things are
+## Where everything is
 
 | Path | What's there |
 |---|---|
@@ -166,5 +162,4 @@ After changing a demo email, the reading prompt or the model, run
 | `evals/` | Eval runners, cases, saved model readings, and results in `evals/results/` |
 | `emails/demo/` | The demo's made-up emails, with their saved readings and drafts |
 | `tests/` | The tests |
-| [docs/STAGES.md](docs/STAGES.md) | How Oscar was built, stage by stage, with every result and mistake |
 | [examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md) | Example conversations with Oscar, all his real output |
