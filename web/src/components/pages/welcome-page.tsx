@@ -69,9 +69,9 @@ export function WelcomePage() {
 
         <div className="flex flex-col items-center gap-3">
           <h1 className="text-[44px] leading-none font-extrabold tracking-[-0.04em] sm:text-[56px]">Oscar</h1>
-          <p className="text-xl leading-snug font-bold tracking-[-0.02em] text-balance sm:text-[22px]">Your email, handled the way you would.</p>
+          <p className="text-xl leading-snug font-bold tracking-[-0.02em] text-balance sm:text-[22px]">Your inbox companion</p>
           <p className="max-w-[26rem] text-[15px] leading-normal text-balance text-muted-foreground sm:text-base">
-            He learns what to take care of, when to check with you, and what he never does on his own.
+            He learns what to take care of, and checks with you when he isn&apos;t sure.
           </p>
         </div>
 
