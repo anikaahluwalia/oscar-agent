@@ -223,3 +223,12 @@ def test_one_okay_each_from_many_senders_isnt_enough_to_carry_over():
     events = [e for s in ("a@one.example", "b@two.example", "d@four.example", "e@five.example", "f@six.example")
               for e in quietly(1, sender=s)]
     assert level(Preferences.from_feedback(events), sender="c@three.example") is None
+
+
+def test_a_senders_other_answers_still_count_when_nothing_else_says_anything():
+    # You taught him to mark a courier's notices read; the model now reads its next email as a
+    # receipt. Nobody's receipts say anything, so what you said for the sender still counts
+    # (found by the trap/control pairs: known_02_control).
+    taught = [event(FeedbackKind.JUST_HANDLE_IT, action=Action.MARK_READ, sender="notify@courier.example",
+                    email_type="fyi", desired=S)]
+    assert Preferences.from_feedback(taught).habit("notify@courier.example", "receipt") == Action.MARK_READ

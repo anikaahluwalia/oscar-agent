@@ -424,12 +424,13 @@ class Preferences:
         3. Your answers for this sender on emails he couldn't place yet (often the same kind,
            before he could read them).
         4. What emails like it get, from other senders.
-        Answers about the sender's other kinds of email don't count: two labels on a shop's
-        receipts say nothing about its newsletters."""
+        5. Your answers for this sender about its other kinds of email, when nothing above says
+           anything: two labels on a shop's receipts don't beat what everyone's newsletters get,
+           but a courier you said to mark read is still marked read when one reads as a receipt."""
         kind = family(email_type)
         # Without a kind, everything you said about the sender is about "this kind".
         own = [("sender", sender, kind), ("sender", sender, None)] if kind else [("sender", sender)]
-        rules, tiers = [], [{} for _ in range(len(own) + 1)]
+        rules, tiers = [], [{} for _ in range(len(own) + 2)]  # own scopes, emails like it, then the sender's others
         for action in HABIT_ACTIONS:
             records = [self.records.get((*scope, action)) for scope in own]
             if any(r and (r.always_ask or r.declined) for r in records):
@@ -444,7 +445,12 @@ class Preferences:
                     tier[action] = weight
             found = self._emails_like_it(action, A, sender, kind)
             if found and found.level in (S, N):
-                tiers[-1][action] = found.evidence + (10 if found.confidence == 1.0 else 0)
+                tiers[-2][action] = found.evidence + (10 if found.confidence == 1.0 else 0)
+            if kind:
+                anything = self.records.get(("sender", sender, action))
+                weight = self._shown(anything, action) + (10 if anything and anything.told else 0)
+                if weight and not (anything.always_ask or anything.declined):
+                    tiers[-1][action] = weight
         if rules:
             return max(rules, key=lambda rule: rule[0])[1]
         for tier in tiers:
