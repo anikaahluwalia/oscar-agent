@@ -154,7 +154,7 @@ def test_old_half_answers_are_counted_apart_never_guessed():
 # --- full answers: what Oscar should have done -------------------------------
 
 from oscar.models import Action, AutonomyLevel  # noqa: E402
-from oscar.review import Answer, Reason, answer, derive_label, expected_answer  # noqa: E402
+from oscar.review import Answer, Reason, answer, derive_label, expected_answer, grade_answer  # noqa: E402
 
 S, N, A, E = (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY, AutonomyLevel.ASK_FIRST,
               AutonomyLevel.ESCALATE)
@@ -190,9 +190,22 @@ def test_just_important_is_graded_as_ask_me_not_as_a_missed_scam():
 
 def test_a_yes_is_a_full_answer_and_old_half_answers_are_not():
     d = oscar_did(A, Action.ARCHIVE)
-    assert expected_answer(Review(decision_id=d.id, label=ReviewLabel.CORRECT), d) == Answer(A, Action.ARCHIVE)
+    assert expected_answer(Review(decision_id=d.id, label=ReviewLabel.CORRECT), d) == Answer(A, Action.ARCHIVE, level_open=True)
     old = Review(decision_id=d.id, label=ReviewLabel.INCORRECT_ACTION, should_be_action=Action.MARK_READ)
     assert expected_answer(old, d) is None
+
+
+def test_a_yes_to_an_ask_grades_the_action_not_how_much_he_asks():
+    # "Yes, archive it" isn't "keep asking me": a later read that archives quietly, because you
+    # taught him to, is right. Doing something else, or stopping it, still isn't.
+    right = expected_answer(Review(decision_id="d", label=ReviewLabel.CORRECT), oscar_did(A, Action.ARCHIVE))
+    assert grade_answer(right, S, Action.ARCHIVE) == ("none", 0.0)
+    assert grade_answer(right, A, Action.ARCHIVE) == ("none", 0.0)
+    assert grade_answer(right, S, Action.MARK_READ)[0] == "wrong_action"
+    assert grade_answer(right, E, Action.ARCHIVE)[0] == "too_cautious"
+    # A Yes to something he did quietly still says quietly was right.
+    quiet = expected_answer(Review(decision_id="d", label=ReviewLabel.CORRECT), oscar_did(S, Action.ARCHIVE))
+    assert not quiet.level_open and grade_answer(quiet, A, Action.ARCHIVE)[0] == "too_cautious"
 
 
 @pytest.mark.parametrize("level, action, kwargs, message", [

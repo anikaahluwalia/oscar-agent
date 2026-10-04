@@ -13,6 +13,7 @@
 import argparse
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 from oscar.agent import decide
@@ -166,8 +167,12 @@ def print_replay(history: History, result: dict) -> None:
 
     print()
     model = "rules only" if result["model"] == "off" else f"model reads {result['model']}"
-    print(f"Version {result['version']}, {model}. "
-          f"{result['read']} of {result['emails']} emails read again, {result['skipped']} skipped (gone from Gmail).")
+    print(f"Version {result['version']}, {model}. {result['read']} of {result['emails']} emails read again.")
+    if result["not_read"]:
+        # What Gmail said, so a deleted email isn't mixed up with one Gmail wouldn't show.
+        said = Counter(g.get("status") for g in result["not_read"])
+        print(f"{result['skipped']} skipped: " + ", ".join(
+            f"{n} {'deleted (404)' if status == 404 else f'Gmail said {status}'}" for status, n in said.most_common()) + ".")
     risks, wrong = result["real_risks"], result["wrong_stops"]
     by_id = {r["email_id"]: r for r in [*result["per_email"], *result["not_read"]]}
     if risks["not_stopped"]:
@@ -178,13 +183,16 @@ def print_replay(history: History, result: dict) -> None:
             print(f"     now: {call(by_id[email_id]['now'])}")
     if risks["not_read"]:
         print()
-        print(f"Real risks that couldn't be checked: {len(risks['not_read'])}. Gmail no longer has them.")
+        print(f"Real risks that couldn't be checked: {len(risks['not_read'])}. Gmail didn't give them back.")
         for email_id in risks["not_read"]:
             print(f"  {about(by_id[email_id])}")
     before, now_ = result["before"], result["now"]
     if now_["n"]:
         print()
         print(f"On the same {now_['n']} emails you answered in Review:")
+        if now_.get("level_not_graded"):
+            print(f"  ({now_['level_not_graded']} are a Yes to something he asked: a Yes says the action was right,"
+                  " not how much to ask, so only the action is graded.)")
         print(f"  {'':34}{'before':>8}{'now':>8}")
         rows = [("right", "passed"), ("too cautious", "too_cautious"), ("too permissive", "too_permissive"),
                 ("wrong action", "wrong_action"), ("acted when you'd have stopped it", "acted_when_you_would_stop")]
@@ -192,11 +200,11 @@ def print_replay(history: History, result: dict) -> None:
             pick = lambda g: g[key] if key in g else g["errors"][key]  # noqa: E731
             print(f"  {name:34}{pick(before):>8}{pick(now_):>8}")
     print()
-    if wrong["of"]:
+    if wrong["of"] or wrong["not_read"]:
         print(f"Wrong stops: {wrong['still_stopped']} of {wrong['of']} you marked misclassified are still stopped.")
     if wrong["not_read"]:
         print(f"  {len(wrong['not_read'])} more couldn't be read from Gmail, so they weren't checked.")
-    if risks["of"]:
+    if risks["of"] or risks["not_read"]:
         print(f"Real risks: {risks['still_stopped']} of {risks['of']} you marked as real risks are still stopped.")
     if risks["not_read"]:
         print(f"  {len(risks['not_read'])} more couldn't be read from Gmail, so they weren't checked.")

@@ -74,7 +74,8 @@ def replay(history: History, gmail: GmailClient, reader: Reader | None = None, l
             refused = refused + 1 if e.status == 403 else 0
             if not skippable(e) or refused >= MAX_REFUSED_IN_A_ROW:
                 raise
-            gone.append({"email_id": before.email_id, "decision_id": before.id, "safety_review": verdict})
+            gone.append({"email_id": before.email_id, "decision_id": before.id, "safety_review": verdict,
+                         "status": e.status})  # 404 is deleted; 400 or 403 is Gmail not showing it
             continue
         _sleep(PACE)
         # Only what you taught him about other emails: this one's answer is what he's graded against.

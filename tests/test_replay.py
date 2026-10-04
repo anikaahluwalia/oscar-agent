@@ -219,6 +219,7 @@ def test_safety_reviewed_emails_gmail_no_longer_has_are_named(tmp_path, capsys):
     assert result["real_risks"] == {"of": 1, "still_stopped": 1, "not_stopped": [], "not_read": ["w1", "w2"]}
     assert result["wrong_stops"]["not_read"] == ["p1"]
     assert json.loads(open(result["saved_to"]).read())["real_risks"]["not_read"] == ["w1", "w2"]
+    assert {g["status"] for g in result["not_read"]} == {404}, "what Gmail said is kept, to tell deleted from hidden"
     print_replay(history, result)
     out = capsys.readouterr().out
     assert "Real risks that couldn't be checked: 2" in out

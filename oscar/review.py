@@ -109,10 +109,13 @@ OTHER_ACTION = "OTHER"
 
 class Answer(NamedTuple):
     """The right answer for an email. action None means any action is fine (asking first already
-    leaves it to you); escalate_ok means stopping it and bringing it to you is right too."""
+    leaves it to you); escalate_ok means stopping it and bringing it to you is right too. level_open
+    is a Yes to something he asked about: the action was right, but it says nothing about how much
+    he should ask, so only the action is graded."""
     level: AutonomyLevel
     action: Action | str | None
     escalate_ok: bool = False
+    level_open: bool = False
 
 
 def expected_answer(review: Review | None, decision: Decision | None) -> Answer | None:
@@ -122,7 +125,9 @@ def expected_answer(review: Review | None, decision: Decision | None) -> Answer 
     if review is None or not review.has_answer:
         return None
     if review.label == ReviewLabel.CORRECT and not review.complete:
-        return Answer(decision.autonomy_level, decision.action) if decision else None
+        # "Yes" on an ask means "yes, archive it", not "keep asking me" (like _lesson), so a later
+        # read that does it quietly, because you taught him to, isn't marked wrong for it.
+        return Answer(decision.autonomy_level, decision.action, level_open=decision.autonomy_level == A) if decision else None
     level = review.should_be_level
     if level == E and set(review.reasons) == {Reason.IMPORTANT}:
         return Answer(A, None, escalate_ok=True)
@@ -135,6 +140,8 @@ def grade_answer(right: Answer, level: AutonomyLevel, action: Action) -> tuple[s
     """grade() for a review's answer: the same as the evals, plus "stopping it is fine too"."""
     if right.escalate_ok and level == E:
         return "none", 0.0
+    if right.level_open and level != E:
+        return grade(level, right.action, level, action)  # only the action; stopping it is still too cautious
     return grade(right.level, right.action, level, action)  # an OTHER_ACTION never matches, so it's wrong_action
 
 
@@ -271,6 +278,7 @@ def grade_all(rows: list[tuple[Decision, Answer, Why | None]]) -> dict:
     return {
         "n": len(rows),
         "passed": errors["none"],
+        "level_not_graded": sum(right.level_open for _, right, _ in rows),  # Yeses to an ask: only the action counts
         "level_accuracy": ratio(sum(e not in ("too_cautious", "too_permissive") for *_, e, _ in graded_rows), graded_rows),
         "action_accuracy": ratio(sum(e == "none" for *_, e, _ in with_action), with_action),
         "errors": {e: errors[e] for e in ("too_cautious", "too_permissive", "wrong_action")},
