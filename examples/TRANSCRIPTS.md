@@ -58,4 +58,4 @@ Oscar looks for what an email asks for, not for scary words. A receipt that ment
 **Oscar** (`MARK_READ` → `PROCEED_SILENTLY`): All sorted! I marked this as read, since it didn't need anything from you. (I noticed "nothing needed from you".)  
 
 **Email** from `Elliot Morgan <elliot@partner-demo.example>`: "Re: spreadsheet I sent earlier"  
-**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to permanently delete this? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "could you permanently delete that".)  
+**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to move this to the Trash? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "could you permanently delete that".)  

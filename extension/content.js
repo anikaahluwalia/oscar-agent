@@ -23,9 +23,9 @@
   const DOING = {
     ARCHIVE: "Archive it", MARK_READ: "Mark it as read", APPLY_LABEL: "Label it", DRAFT_REPLY: "Draft a reply",
     SEND_REPLY: "Reply", FORWARD: "Forward it", UNSUBSCRIBE: "Unsubscribe", ACCEPT_MEETING: "Accept the invite",
-    PERMANENTLY_DELETE: "Delete it for good", SEND_CREDENTIALS: "Send login details", MOVE_MONEY: "Send money",
+    PERMANENTLY_DELETE: "Move it to the Trash", SEND_CREDENTIALS: "Send login details", MOVE_MONEY: "Send money",
   };
-  const DID = { ARCHIVE: "Archived", MARK_READ: "Marked as read", APPLY_LABEL: "Labelled", DRAFT_REPLY: "Drafted a reply" };
+  const DID = { ARCHIVE: "Archived", MARK_READ: "Marked as read", APPLY_LABEL: "Labelled", DRAFT_REPLY: "Drafted a reply", PERMANENTLY_DELETE: "Moved to the Trash" };
   // What he did, naming the label for "Label it": 'Labelled "Receipts"'. The name is the one from
   // Oscar's Settings, sent by the API with each email.
   const didWords = (item, action) =>
@@ -645,6 +645,10 @@
         el("button", { class: "btn", type: "button", disabled: state.busy, onclick: () => answer(item, "REJECT") }, "Not this one"));
     }
     if (item.undoable) return null;
+    if (item.action === "PERMANENTLY_DELETE" && item.level === "ASK_FIRST" && item.acting && !item.done) {
+      // Deleting needs a hold to approve, so it's answered in the app, not with one click here.
+      return el("div", { class: "row" }, el("a", { class: "btn main", href: `${app}/inbox#${item.id}`, target: "_blank", rel: "noopener" }, "Hold to approve in Oscar"));
+    }
     if (item.level === "ESCALATE" && item.acting) {
       // "Got it": it's yours now, so it comes off your list. It teaches him nothing.
       return el("div", { class: "row" },

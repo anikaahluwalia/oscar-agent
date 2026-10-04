@@ -115,7 +115,7 @@ class Sessions:
     def _keep(self, session_id: str, history: History) -> History:
         self.histories[session_id] = history
         if history not in self.inboxes:
-            self.inboxes[history] = PretendGmail(drafts=True)
+            self.inboxes[history] = PretendGmail(drafts=True, trash=True)
         while len(self.histories) > self.limit:
             gone, _ = self.histories.popitem(last=False)
             self.arrivals.pop(gone, None)
@@ -221,7 +221,7 @@ def write_drafts(found: list[Email]) -> None:
     """Write the reply Oscar would draft to each demo email he'd answer, with the real Drafter. Only
     for the ones a fresh demo decides to reply to and may (act.can_draft): never one a safety rule
     or caution word stopped. A draft already saved for the same email is kept, not written again."""
-    history, inbox = History(), PretendGmail(drafts=True)
+    history, inbox = History(), PretendGmail(drafts=True, trash=True)
     drafts = {}
     with httpx.Client(timeout=40) as http:
         read, drafter = reader(http), Drafter(http)

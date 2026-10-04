@@ -138,7 +138,7 @@ const PHRASE: Record<Action, string> = {
   FORWARD: "forward this",
   UNSUBSCRIBE: "unsubscribe you",
   ACCEPT_MEETING: "accept this invite",
-  PERMANENTLY_DELETE: "permanently delete this",
+  PERMANENTLY_DELETE: "move this to the Trash",
   SEND_CREDENTIALS: "send your credentials",
   MOVE_MONEY: "move money",
 };
@@ -151,7 +151,7 @@ const PAST: Record<Action, string> = {
   FORWARD: "forwarded this",
   UNSUBSCRIBE: "unsubscribed you",
   ACCEPT_MEETING: "accepted this invite",
-  PERMANENTLY_DELETE: "permanently deleted this",
+  PERMANENTLY_DELETE: "moved this to the Trash",
   SEND_CREDENTIALS: "sent your credentials",
   MOVE_MONEY: "moved money",
 };

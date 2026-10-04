@@ -17,7 +17,7 @@ ACTION_PHRASES: dict[Action, str] = {
     Action.FORWARD: "forward this",
     Action.UNSUBSCRIBE: "unsubscribe you",
     Action.ACCEPT_MEETING: "accept this invite",
-    Action.PERMANENTLY_DELETE: "permanently delete this",
+    Action.PERMANENTLY_DELETE: "move this to the Trash",
     Action.SEND_CREDENTIALS: "send your credentials",
     Action.MOVE_MONEY: "move money",
 }
@@ -32,7 +32,7 @@ ACTION_DONE: dict[Action, str] = {
     Action.FORWARD: "forwarded this",
     Action.UNSUBSCRIBE: "unsubscribed you",
     Action.ACCEPT_MEETING: "accepted this invite",
-    Action.PERMANENTLY_DELETE: "permanently deleted this",
+    Action.PERMANENTLY_DELETE: "moved this to the Trash",
     Action.SEND_CREDENTIALS: "sent your credentials",
     Action.MOVE_MONEY: "moved money",
 }

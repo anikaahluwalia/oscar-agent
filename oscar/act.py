@@ -1,9 +1,10 @@
 """Stage 12: Oscar acts on a real inbox, only in ways that can be undone.
 
 He may mark an email as read, archive it, put one of his own labels on it, or save a
-reply he wrote as a draft in its thread (draft, below). Nothing else: no sending,
-forwarding, unsubscribing, deleting or anything to do with money. The Gmail client
-can't do those either (oscar/gmail.py).
+reply he wrote as a draft in its thread (draft, below). When an email asks to be deleted
+and you hold to approve, he moves it to Gmail's Trash (trash, below), never on his own.
+Nothing else: no sending, forwarding, unsubscribing, deleting for good or anything to do
+with money. The Gmail client can't do those either (oscar/gmail.py).
 
 Each action records exactly which labels it added and which it removed, given
 what the email had at the time, so undo puts it back the way it was.
@@ -70,6 +71,7 @@ class ActionRecord(BaseModel):
     label: str | None = None  # for "Label it": which of his labels he used, by role (oscar/labels.py)
     draft_id: str | None = None  # for a reply: the Gmail draft he saved, so undo can take it away
     draft_text: str | None = None  # and what it says, so the app can show it
+    trashed: bool = False  # for a delete you approved: he moved it to the Trash, so undo takes it back out
     done_at: datetime = Field(default_factory=now)
     undone_at: datetime | None = None
 
@@ -108,6 +110,28 @@ def can_draft(decision: Decision) -> bool:
     rule stopped and that mentions nothing sensitive (caution). Never sent: it waits in your Drafts."""
     return (decision.gmail is not None and decision.action == Action.DRAFT_REPLY
             and decision.autonomy_level != AutonomyLevel.ESCALATE and not decision.safety_flags and not decision.caution)
+
+
+def can_trash(decision: Decision) -> bool:
+    """An email that asks to be deleted, that Oscar asked you about: only your yes moves it to the
+    Trash. Never one a safety rule stopped, and never on his own (he only ever asks about these)."""
+    return (decision.gmail is not None and decision.action == Action.PERMANENTLY_DELETE
+            and decision.autonomy_level == AutonomyLevel.ASK_FIRST)
+
+
+def trash(history: History, gmail: GmailClient, decision: Decision) -> ActionRecord:
+    """You held to approve deleting this email: move it to Gmail's Trash, and record it so it can be undone."""
+    if not can_trash(decision):
+        raise ActionError("That's not something Oscar deletes.")
+    with _lock:
+        done = history.action_for(decision.id)
+        if done and not done.undone_at:
+            raise ActionError("Oscar already did this one.")
+        gmail.trash(decision.gmail.message_id)
+        record = ActionRecord(decision_id=decision.id, message_id=decision.gmail.message_id,
+                              action=Action.PERMANENTLY_DELETE, by="you", trashed=True)
+        history.save_action(record)
+        return record
 
 
 def draft(history: History, gmail: GmailClient, decision: Decision, text: str, by: Literal["oscar", "you"]) -> ActionRecord:
@@ -167,6 +191,8 @@ def undo(history: History, gmail: GmailClient, decision_id: str) -> ActionRecord
             raise ActionError("There's nothing to undo here.")
         if record.draft_id:
             gmail.delete_draft(record.draft_id)  # a reply he drafted: take the draft away
+        elif record.trashed:
+            gmail.untrash(record.message_id)  # an email you said to delete: back out of the Trash
         else:
             gmail.modify_labels(record.message_id, add=record.removed, remove=record.added)
         record = record.model_copy(update={"undone_at": now()})

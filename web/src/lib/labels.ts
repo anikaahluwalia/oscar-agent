@@ -151,7 +151,7 @@ const NEVER: Partial<Record<Action, string>> = {
 // Actions you can't approve with one tap, because they're hard to undo or leave your inbox.
 // The same actions ACTION_FLOORS sets to ASK_FIRST.
 export const HOLD_TO_CONFIRM: Partial<Record<Action, string>> = {
-  PERMANENTLY_DELETE: "Deleted email can't be brought back",
+  PERMANENTLY_DELETE: "It goes to the Trash. Undo brings it back",
   UNSUBSCRIBE: "Unsubscribing is hard to undo",
   SEND_REPLY: "This goes out under your name",
   FORWARD: "This shares the email with someone else",

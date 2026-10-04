@@ -85,7 +85,8 @@ In the app:
 
 Oscar starts read-only so, he notes what he *would* do and nothing in Gmail changes. If you turn on
 **Let Oscar act in Gmail** in Settings, he can only do things you can undo such as, mark read, archive,
-add his own labels, and save a draft he tells you about. He acts on at most 25 emails per check and only on new email.
+add his own labels, and save a draft he tells you about. When an email asks to be deleted, he asks first,
+and only if you hold to approve does he move it to Gmail's Trash, where Undo can bring it back. He acts on at most 25 emails per check and only on new email.
 
 1. Make a Gmail account for testing, or use your own.
 2. In [Google Cloud Console](https://console.cloud.google.com), create a project and enable the

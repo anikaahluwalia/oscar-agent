@@ -72,7 +72,7 @@ export function Composer({ busy }: { busy: boolean }) {
           <ArrowUpIcon className="size-[18px]" strokeWidth={2.2} />
         </button>
       </form>
-      <p className="text-center text-[13px] text-muted-foreground">I can sort, label and archive. I never send, delete or unsubscribe.</p>
+      <p className="text-center text-[13px] text-muted-foreground">I can sort, label and archive. I never send or unsubscribe, and I only delete when you hold to approve.</p>
     </div>
   );
 }

@@ -154,6 +154,8 @@ KIND_REPLIES: dict[FeedbackKind, str] = {
 }
 
 OSCAR_ACTED = {AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY}
+# Asks he never carries out himself: a yes says asking was right, and the rest is yours.
+NOT_MINE_TO_DO = {Action.SEND_REPLY, Action.FORWARD, Action.ACCEPT_MEETING, Action.UNSUBSCRIBE}
 REPLY_ACTIONS = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
 
@@ -240,6 +242,10 @@ def record_feedback(
     reply = KIND_REPLIES[kind] if scope == "kind" else REPLIES[kind]
     if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.PROCEED_AND_NOTIFY:
         reply = "Thanks! Good to know I got that one right."
+    elif kind == FeedbackKind.APPROVE and decision.action in NOT_MINE_TO_DO:
+        reply = "Thanks! I don't do that myself, so it's yours to do in Gmail."
+    elif kind == FeedbackKind.APPROVE and (done := history.action_for(decision.id)) and done.trashed and not done.undone_at:
+        reply = "Done! I moved it to the Trash. Undo brings it back."
     blocked = False
     if kind in ASKS_FOR_MORE:
         blocked_reply = floor_reply(decision)

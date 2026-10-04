@@ -163,7 +163,7 @@ function AccountCard({ gmail }: { gmail: GmailStatus }) {
 
 const ACTING_FACTS = [
   "Marks read, archives and labels. If he isn't sure, he asks first.",
-  "Never sends, deletes, unsubscribes or touches money.",
+  "Deletes only when you hold to approve, into the Trash. Never sends, unsubscribes or touches money.",
   "Everything can be undone. Only new emails.",
 ];
 

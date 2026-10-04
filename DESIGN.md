@@ -58,8 +58,9 @@ which imports nothing from learning.
 
 The checks look for what an email asks for, not single words (see "A mention isn't a request"
 below). On a real Gmail he starts read-only, then can only do undoable things (mark read, archive,
-his own labels, save a draft he tells you about). The Gmail client has no code to send email,
-delete your email or move money.
+his own labels, save a draft he tells you about, and move an email to the Trash when it asked to be
+deleted and you held to approve). The Gmail client has no code to send email, delete anything for
+good or move money.
 
 ## Cold start
 
@@ -123,4 +124,4 @@ A receipt that mentions a payment is routine. Asking him to delete an email for 
 **Oscar** (`APPLY_LABEL` → `PROCEED_SILENTLY`): All sorted! I labelled this, since labels are easy to change. (I noticed "invoice".)  
 
 **Email** from `Elliot Morgan <elliot@partner-demo.example>`: "Re: spreadsheet I sent earlier"  
-**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to permanently delete this? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "could you permanently delete that".)
+**Oscar** (`PERMANENTLY_DELETE` → `ASK_FIRST`): Want me to move this to the Trash? I'm checking with you first because it asks to delete email for good, and that can't be undone. (I noticed "could you permanently delete that".)

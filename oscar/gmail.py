@@ -4,11 +4,12 @@ Connecting asks Google for read-only access (gmail.readonly). Oscar only asks fo
 gmail.modify when you choose to let him act. Even then, the only writes in this
 client are modify_labels, which only adds or removes UNREAD, INBOX and Oscar's own
 labels, label_id, which makes one of his labels (oscar/labels.py), rename_label, which
-renames one of his labels when you change its name in Settings, and create_draft and
+renames one of his labels when you change its name in Settings, create_draft and
 delete_draft, which save a reply he wrote as a draft in the email's thread and take it away
-again on undo. So: marking read, archiving, labelling and drafting, all undoable. There is no
-code here that can send an email or a draft, or trash or delete a message; tests/test_gmail.py
-checks that.
+again on undo, and trash and untrash, which move an email you held to approve deleting into
+Gmail's Trash and back out on undo (Gmail empties the Trash after 30 days). So: marking read,
+archiving, labelling, drafting and moving to Trash, all undoable. There is no code here that can
+send an email or a draft, or delete a message for good; tests/test_gmail.py checks that.
 
 Google's OAuth: the user is sent to Google to say yes, Google sends them back to
 /auth/google/callback with a code, and the code is swapped for tokens. The
@@ -340,6 +341,15 @@ class GmailClient:
         response = self.http.delete(f"{GMAIL_URL}/drafts/{draft_id}", headers={"Authorization": f"Bearer {self._access_token()}"})
         if response.status_code not in (200, 204, 404):
             raise GmailError(f"Gmail said no ({response.status_code}).", response.status_code, _reason(response))
+
+    def trash(self, message_id: str) -> None:
+        """Move one email to Gmail's Trash, after you held to approve deleting it. Not for good:
+        untrash brings it back until Gmail empties the Trash, 30 days later."""
+        self._post(f"/messages/{message_id}/trash", {})
+
+    def untrash(self, message_id: str) -> None:
+        """Take an email Oscar moved to the Trash back out, for undo."""
+        self._post(f"/messages/{message_id}/untrash", {})
 
     def modify_labels(self, message_id: str, add: list[str], remove: list[str]) -> None:
         """Add and remove labels on one email. Only UNREAD, INBOX and Oscar's own labels: anything

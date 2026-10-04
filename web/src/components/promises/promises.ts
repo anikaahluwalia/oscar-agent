@@ -75,12 +75,12 @@ export const PROMISES: OscarPromise[] = [
     line: "Contracts, renewals, quotes and terms are your call.",
   },
   {
-    // PERMANENTLY_DELETE and UNSUBSCRIBE floors: ask first. act.py has no code for either.
+    // PERMANENTLY_DELETE and UNSUBSCRIBE floors: ask first. A yes to a delete moves it to the Trash (act.trash); act.py has no code to unsubscribe.
     key: "delete",
     group: "ask",
     icon: MailXIcon,
     title: "Delete or unsubscribe",
-    line: "Deleted email can't be brought back, and unsubscribing is hard to undo.",
+    line: "A delete only happens when you hold to approve, and goes to the Trash. Unsubscribing is hard to undo.",
   },
   {
     // SEND_REPLY and FORWARD floors: ask first. act.py has no code for either.

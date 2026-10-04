@@ -36,18 +36,21 @@ def test_never_changes_anything_in_gmail(tmp_path):
     assert {r.method for r in fake.gmail_requests()} == {"GET"}
 
 
-def test_client_has_no_way_to_send_trash_or_delete_an_email():
-    # Its only writes are labels (Stage 12) and reply drafts (Stage 17): it can save a draft and take
-    # back a draft it made, but nothing can send an email or a draft, trash or delete a message.
+def test_client_has_no_way_to_send_or_delete_an_email_for_good():
+    # Its only writes are labels (Stage 12), reply drafts (Stage 17), and moving an email you held to
+    # approve deleting into the Trash and back out. Nothing can send an email or a draft, or delete a
+    # message for good: the Trash keeps it for 30 days, and undo takes it back out.
     import inspect
 
     from oscar import gmail
-    risky = {"send", "trash", "insert", "batch", "import", "spam"}
+    risky = {"send", "insert", "batch", "import", "spam"}
     assert not {name for name in dir(GmailClient) if any(w in name.lower() for w in risky)}
+    assert {name for name in dir(GmailClient) if "trash" in name.lower()} == {"trash", "untrash"}
     assert {name for name in dir(GmailClient) if "delete" in name.lower()} == {"delete_draft"}
     assert {name for name in dir(GmailClient) if "draft" in name.lower()} == {"create_draft", "delete_draft"}
     source = inspect.getsource(gmail)
-    assert "/send" not in source and "/trash" not in source, "Gmail's send and trash endpoints are never named"
+    assert "/send" not in source and "batchDelete" not in source, "Gmail's send and delete-for-good endpoints are never named"
+    assert source.count("/trash") == 1 and source.count("/untrash") == 1
     assert source.count("self.http.delete(") == 1 and "self.http.delete(" in inspect.getsource(GmailClient.delete_draft)
     assert 'f"{GMAIL_URL}/drafts/{draft_id}"' in inspect.getsource(GmailClient.delete_draft), "only ever a draft"
 

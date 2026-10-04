@@ -23,8 +23,8 @@ from pydantic import BaseModel
 from oscar import gmail, images
 from oscar.config import API_URL, WEB_URL, setting
 
-from oscar.act import (CHANGES, MAX_PER_CHECK, ActionError, ActionRecord, can_do, can_draft, do, draft, label_role,
-                       status_label, undo)
+from oscar.act import (CHANGES, MAX_PER_CHECK, ActionError, ActionRecord, can_do, can_draft, can_trash, do, draft,
+                       label_role, status_label, trash, undo)
 from oscar.drafting import drafter_for, fit_to_answer
 from oscar.understand import api_key as model_api_key
 from oscar.agent import decide
@@ -262,6 +262,13 @@ def label_for(history: History, d: Decision, names: dict[str, str]) -> str | Non
     return names.get(done.label if done and done.label else label_role(d))
 
 
+def trashed_by_you(history: History, d: Decision) -> bool:
+    """An email in the Trash because you held to approve deleting it: it stays on the lists, handled,
+    so you can still undo it. One you deleted in Gmail yourself leaves them."""
+    done = history.action_for(d.id)
+    return bool(done and done.trashed and not done.undone_at)
+
+
 @app.get("/decisions", response_model=list[DecisionWithFeedback])
 def list_decisions(history: History = Depends(get_history)) -> list[DecisionWithFeedback]:
     """Every decision, newest first, with the feedback given on it."""
@@ -273,7 +280,7 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
                              answer=graded(history, d),
                              done=history.action_for(d.id), classification=history.classification_for(d.email_id),
                              safety_review=history.safety_review_for(d.id), label=label_for(history, d, names),
-                             gone=d.email_id in deleted)
+                             gone=d.email_id in deleted and not trashed_by_you(history, d))
         for d in decisions
     ]
 
@@ -454,7 +461,9 @@ def _extension_item(history: History, d: Decision, waiting: set[str] | None = No
         "received_at": d.gmail.received_at.isoformat() if d.gmail and d.gmail.received_at else None,
         "thread_id": d.gmail.thread_id if d.gmail else None, "message_id": d.gmail.message_id if d.gmail else None,
         # Approve or decline: only an ask made while he could act, not answered yet.
-        "answerable": d.source == "gmail" and d.acting and d.autonomy_level == AutonomyLevel.ASK_FIRST and not answered,
+        # A delete isn't answered here: it needs a hold to approve, in the app.
+        "answerable": (d.source == "gmail" and d.acting and d.autonomy_level == AutonomyLevel.ASK_FIRST and not answered
+                       and d.action != Action.PERMANENTLY_DELETE),
         "undoable": bool(done and not done.undone_at),
         "done": {"action": done.action.value, "by": done.by, "at": done.done_at.isoformat(),
                  "undone": done.undone_at is not None, "draft": done.draft_text} if done else None,
@@ -691,12 +700,14 @@ def _answer(history: History, decision: Decision, kind: FeedbackKind, edited_tex
         _act_in_demo(history, decision, kind)
     elif decision.source == "gmail" and decision.acting:
         if kind == FeedbackKind.APPROVE and decision.autonomy_level == AutonomyLevel.ASK_FIRST:
-            if not (can_do(decision) or can_draft(decision)):
+            if not (can_do(decision) or can_draft(decision) or can_trash(decision)):
                 raise FeedbackError("That's not something I do in Gmail, so it's yours to do there.")
             if not acting_on(tokens, history):
                 raise HTTPException(409, "Turn on \"Let Oscar act in Gmail\" in Settings first.")
             if can_draft(decision):
                 _draft_reply(history, decision, tokens, http)
+            elif can_trash(decision):
+                trash(history, gmail_client(tokens, http), decision)
             else:
                 do(history, gmail_client(tokens, http), decision, by="you")
         elif kind == FeedbackKind.UNDO:
@@ -717,6 +728,8 @@ def _act_in_demo(history: History, decision: Decision, kind: FeedbackKind) -> No
             if not text:
                 raise FeedbackError("I don't have a draft written for this one, so there's no draft. It's yours to answer.")
             draft(history, pretend, decision, text, by="you")
+        elif can_trash(decision):
+            trash(history, pretend, decision)
         elif can_do(decision):
             do(history, pretend, decision, by="you")
     elif kind == FeedbackKind.UNDO:

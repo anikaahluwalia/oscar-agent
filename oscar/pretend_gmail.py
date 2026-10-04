@@ -10,7 +10,9 @@ the world is pretend, and nothing in it is ever saved. Everything is inspectable
 
 Sending, trash and delete are refused and traced as blocked, so if a change ever made him try,
 the trace shows it. So are drafts, unless it's made with drafts=True (the demo): then Oscar can
-save a reply as a draft and take his own draft away again, as he can in Gmail.
+save a reply as a draft and take his own draft away again, as he can in Gmail. With trash=True
+(the demo too), a delete you held to approve moves the email to the Trash, and undo takes it back
+out. Deleting for good is always refused.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from __future__ import annotations
 import base64
 import copy
 import json
+import re
 import time
 
 import httpx
@@ -66,11 +69,13 @@ class MemoryTokens(TokenStore):
 
 
 class PretendGmail:
-    def __init__(self, messages: list[dict] = (), emailed: set[str] = frozenset(), drafts: bool = False) -> None:
+    def __init__(self, messages: list[dict] = (), emailed: set[str] = frozenset(), drafts: bool = False,
+                 trash: bool = False) -> None:
         self.messages = {m["id"]: copy.deepcopy(m) for m in messages}
         self.emailed = {e.lower() for e in emailed}  # people you've written to, for "emailed before"
         self.labels = [{"id": "Label_1", "name": "Work"}]  # one of yours, which Oscar must never touch
         self.allow_drafts = drafts
+        self.allow_trash = trash  # the demo: a delete you held to approve moves the email to the Trash
         self.sent: list[dict] = []
         self.drafts: list[dict] = []
         self.deleted: list[str] = []
@@ -115,6 +120,16 @@ class PretendGmail:
             return self._log("delete_draft", {"draft": draft_id}, httpx.Response(204))
         return httpx.Response(404, json={})
 
+    def _trash(self, path: str) -> httpx.Response:
+        """Move an email to the Trash, or back out, as Gmail does: only its TRASH label changes."""
+        message_id, verb = path.split("/")[2], path.split("/")[3]
+        message = self.messages.get(message_id)
+        if message is None:
+            return self._log(verb, {"id": message_id}, httpx.Response(404, json={}))
+        labels = [label for label in message["labelIds"] if label != "TRASH"]
+        message["labelIds"] = labels + ["TRASH"] if verb == "trash" else labels
+        return self._log(verb, {"id": message_id}, httpx.Response(200, json={"id": message_id, "labelIds": message["labelIds"]}))
+
     def handler(self, request: httpx.Request) -> httpx.Response:
         url = str(request.url)
         if url.startswith(TOKEN_URL):
@@ -131,6 +146,8 @@ class PretendGmail:
         if path in ("/messages/send", "/drafts/send") or path.startswith("/drafts"):
             tool = "create_draft" if path == "/drafts" else "send_email"
             return self._log(tool, body, httpx.Response(403, json={"error": BLOCKED_RULE}), False, BLOCKED_RULE)
+        if self.allow_trash and method == "POST" and re.fullmatch(r"/messages/[^/]+/(un)?trash", path):
+            return self._trash(path)
         if path.endswith("/trash") or method == "DELETE" or path.endswith("/batchDelete"):
             return self._log("permanent_delete", {"path": path}, httpx.Response(403, json={"error": BLOCKED_RULE}),
                              False, BLOCKED_RULE)
