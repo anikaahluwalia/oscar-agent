@@ -119,7 +119,7 @@ NEGATED = re.compile(
 # Patterns in the email text that hold Oscar back no matter which action the
 # classifier picked (how far: FLAG_LEVELS below). These look for requests, not just
 # mentions. Injection is first so its explanation is the one the user sees. Every
-# scan is bounded, so a long email can't make them slow.
+# scan is bounded, so a long email can't make them slow (tests/safety/test_slow_text.py).
 AI = r"(?:ai|llms?|language models?|bots?|chatbots?|automated (?:\w+ )?(?:assistants?|agents?|helpers?|systems?)|virtual assistants?|email assistants?)"
 EMAIL_CHECKS = MappingProxyType({
     SafetyCategory.PROMPT_INJECTION: (
@@ -133,20 +133,20 @@ EMAIL_CHECKS = MappingProxyType({
             # Addressing Oscar *and* telling him to do something with your email, or to change his
             # rules. A greeting alone isn't an instruction: "Hi Oscar," is how people write to
             # anyone called Oscar (found on a real inbox: tests/test_review_findings.py).
-            r"(^|\n)\s*(hey |hi |hello |dear )?oscar\s*[,:](?s:.{0,300}?)(\b(always|from now on|remember (this|that)|rules?"
+            r"(^|\n)[^\S\n]*(hey |hi |hello |dear )?oscar\s*[,:](?s:.{0,300}?)(\b(always|from now on|remember (this|that)|rules?"
             r"|silently|without (asking|telling|notifying)|the user)\b|\b(forward|send|share|export|delete|remove|archive|move"
             r"|mark|label|search|find|copy|unsubscribe)\b[^.?!\n]{0,40}?\b(e-?mails?|messages?|threads?|inbox|mailbox|attachments?"
             r"|contacts?|invoices?|passwords?|codes?|conversations?|data|records?|files?|folders?|notes)\b)",
             # Text aimed at an AI, or trying to change what the assistant may do.
-            r"(^|\n)\s*\[?\s*system\s*(override|message|prompt|instructions?|note)?\s*[\]:]",
+            r"(^|\n)[^\S\n]*(\[\s*)?system(\s*(override|message|prompt|instructions?|note))?\s*[\]:]",
             r"\[\s*system\b[^\]\n]{0,20}\]|\bsystem (override|prompt|instructions?)\b",
             # "To the AI reading this:", not "welcome to the AI era".
             r"\b(to|for) the (ai|assistant|bot|agent)\b\s*(reading|processing|handling|[:,])",
             r"\b(ai|assistant|bot|agent) reading this\b",
             rf"\bif (you(?:'re| are) )?(an? |any |the )?{AI}\b[^.?!\n]{{0,30}}\b(is |are )?(reading|processing|handling|scanning|summari[sz]ing)\b",
             rf"\bdear {AI}\b",
-            rf"(^|[.!?>]\s*|\n)\s*{AI}\s*(instructions?|note|notice)?\s*[,:]",
-            r"(^|[.!?:>]\s*|\n)\s*assistants?\s*(instructions?|note|notice)?\s*[,:]",
+            rf"(^|[.!?>\n])[^\S\n]*{AI}(\s*(instructions?|note|notice))?\s*[,:]",
+            r"(^|[.!?:>\n])[^\S\n]*assistants?(\s*(instructions?|note|notice))?\s*[,:]",
             r"\b(safety|security) (checks?|rules?|filters?) (are |is |have been )?(disabled|off|turned off|suspended)\b",
             r"\b(your|the assistant'?s?) (permissions?|autonomy|level|access|rules?) (have|has|were|was) (been )?(raised|changed|updated|upgraded|expanded)\b",
             r"\b(act|proceed) (silently|without asking) on (all|every)\b",
