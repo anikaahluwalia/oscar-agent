@@ -1,5 +1,6 @@
 // Types and calls for the Oscar API (oscar/api.py).
 
+import { demoName, withName } from "@/lib/demo-name";
 import { readSetting, writeSetting } from "@/lib/local-setting";
 
 export type Level = "PROCEED_SILENTLY" | "PROCEED_AND_NOTIFY" | "ASK_FIRST" | "ESCALATE";
@@ -400,7 +401,17 @@ async function call<T>(path: string, init?: RequestInit, demo = demoSession()): 
   return response.json();
 }
 
-export const getDecisions = () => call<DecisionWithFeedback[]>("/decisions");
+/** In the demo, the emails greet you by the name you gave it (withName). Only for showing. */
+function named(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
+  const name = demoName(demoSession());
+  if (name === null) return items;
+  return items.map((i) => ({
+    ...i,
+    decision: { ...i.decision, subject: withName(i.decision.subject, name), snippet: withName(i.decision.snippet, name), summary: withName(i.decision.summary, name) },
+  }));
+}
+
+export const getDecisions = () => call<DecisionWithFeedback[]>("/decisions").then(named);
 export const getLearned = () => call<LearnedRow[]>("/learned");
 export const getBrief = () => call<Brief>("/brief");
 export const getAutonomy = () => call<AutonomyRow[]>("/autonomy");
@@ -518,7 +529,10 @@ export const imageThroughOscar = (url: string) => `${API}/email-image?url=${enco
 export const API_ORIGIN = new URL(API).origin;
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 export const getEmailContent = (decisionId: string) =>
-  call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
+  call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`).then((c) => ({
+    ...c,
+    text: withName(c.text, demoName(demoSession())),
+  }));
 /** A saved eval run (evals/results/runs). The test note on Promises comes from one of these. */
 export interface EvalRun {
   run_id: string;

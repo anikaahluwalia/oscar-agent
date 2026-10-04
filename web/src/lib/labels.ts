@@ -53,6 +53,12 @@ export const yesOrNo = (decision: Decision) => decision.source === "gmail" || (d
 export const DOABLE = new Set<Action>(["MARK_READ", "ARCHIVE", "APPLY_LABEL", "DRAFT_REPLY"]);
 
 /**
+ * The email is in a Gmail: your real one, or a demo's own pretend one (oscar/demo.py). Then what Oscar
+ * did is only what Gmail's record says (done), never what he decided.
+ */
+export const inGmail = (decision: Decision) => decision.source === "gmail" || !!decision.gmail;
+
+/**
  * A decision on the real inbox that's only ever what Oscar would do: made while he only read it,
  * or an action he doesn't do in Gmail (a reply, an invite, unsubscribing). Stops are the exception:
  * those you mark as seen.
@@ -67,13 +73,14 @@ export const wouldOnly = (decision: Decision) =>
  */
 export function whatOscarDid(decision: Decision, done?: ActionDone | null): string {
   const { action, autonomy_level: level } = decision;
-  if (decision.source === "gmail" && decision.acting && (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY")) {
+  const acting = decision.source === "gmail" ? decision.acting : inGmail(decision);
+  if (acting && (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY")) {
     if (!done) return `Would ${ACTIONS[action].toLowerCase()}`; // Gmail doesn't say he did it, or it's not something he does there
-    return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[action];
+    return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[done.action];
   }
-  // An ask you approved: once Gmail says it was done, it's done.
-  if (decision.source === "gmail" && decision.acting && level === "ASK_FIRST" && done) {
-    return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[action];
+  // An ask you approved: once Gmail says it was done, it's done. (After a No in Review, what he did instead.)
+  if (acting && level === "ASK_FIRST" && done) {
+    return done.undone_at ? `Undone: ${ACTIONS[action].toLowerCase()}` : DONE[done.action];
   }
   // Made while Oscar only read the inbox: what he would have done.
   if (wouldOnly(decision)) {

@@ -34,7 +34,7 @@ function poseOf(item: DecisionWithFeedback): OscarPose | null {
   if (d.autonomy_level === "ESCALATE") return isSafetyStop(d) ? "guarding" : "asking";
   if (isOpen(item)) return "asking";
   if (wouldOnly(d)) return toGrade(item) ? "thinking" : null;
-  if (didIt(d, done, feedback) || (d.source === "gmail" && done && !done.undone_at)) return "done";
+  if (didIt(d, done, feedback) || (done && !done.undone_at)) return "done";
   return null;
 }
 

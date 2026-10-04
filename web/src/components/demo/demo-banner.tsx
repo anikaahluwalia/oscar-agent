@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { leaveDemo } from "@/lib/api";
 import { checkGmail, resetDemoInbox } from "@/lib/demo";
+import { forgetDemoName } from "@/lib/demo-name";
 import { useDemoSession, useOscar } from "@/lib/use-oscar";
 
 /**
@@ -27,8 +28,11 @@ export function DemoBanner() {
   async function reset() {
     setBusy(true);
     setConfirming(false);
-    // The tour starts over too: Oscar offers to show you around again.
-    if (await resetDemoInbox()) forgetTour();
+    // The tour starts over too: Oscar asks your name and offers to show you around again.
+    if (await resetDemoInbox()) {
+      forgetDemoName();
+      forgetTour();
+    }
     setBusy(false);
   }
 

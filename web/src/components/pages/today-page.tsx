@@ -18,8 +18,8 @@ import { Button } from "@/components/ui/button";
 import { handledSince, plural, waiting } from "@/lib/counts";
 import { bringInDemo } from "@/lib/demo";
 import { greeting } from "@/lib/insights";
-import { useLocalSetting } from "@/lib/local-setting";
-import { isReadOnly, useOscar, type OscarData } from "@/lib/use-oscar";
+import { firstName, useYourName } from "@/lib/demo-name";
+import { isReadOnly, useDemoSession, useOscar, type OscarData } from "@/lib/use-oscar";
 import { isSafetyStop } from "@/lib/labels";
 
 /** The time now, updated every minute, so "today" stays right past midnight. */
@@ -42,8 +42,8 @@ const Frame = ({ children }: { children: React.ReactNode }) => (
 
 /** "Good evening, Sam!": your first name from Google, or the one you gave in Settings. */
 function useHello(data: OscarData | null | undefined, now: number) {
-  const [saved] = useLocalSetting("name", "");
-  const name = data?.gmail.name?.split(" ")[0] || saved.trim();
+  const [saved] = useYourName(useDemoSession());
+  const name = data?.gmail.name?.split(" ")[0] || firstName(saved);
   return `${greeting(new Date(now))}${name ? `, ${name}` : ""}!`;
 }
 

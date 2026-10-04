@@ -7,7 +7,7 @@ import { HoldButton } from "@/components/hold-button";
 import { Button } from "@/components/ui/button";
 import type { DecisionWithFeedback, FeedbackKind } from "@/lib/api";
 import { reallyDone } from "@/lib/insights";
-import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, wouldOnly } from "@/lib/labels";
+import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, inGmail, wouldOnly } from "@/lib/labels";
 import { isAnswered, type useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ export function controlsFor(item: DecisionWithFeedback) {
   const real = d.source === "gmail";
   const would = wouldOnly(d);
   const answered = isAnswered(item);
-  const canUndo = real ? !!item.done && !item.done.undone_at : (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && !item.feedback.some((f) => f.kind === "UNDO");
+  const canUndo = inGmail(d) ? !!item.done && !item.done.undone_at : (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && !item.feedback.some((f) => f.kind === "UNDO");
   const ask = !would && level === "ASK_FIRST" && !answered && (!real || DOABLE.has(d.action));
   const stop = !would && level === "ESCALATE" && !answered;
   const told = !would && level === "PROCEED_AND_NOTIFY" && !answered && reallyDone(item);

@@ -3,7 +3,7 @@
 // page says so instead of showing a made-up number.
 
 import type { Decision, DecisionWithFeedback } from "@/lib/api";
-import { DOABLE, KIND_NAMES, riskOf } from "@/lib/labels";
+import { DOABLE, inGmail, KIND_NAMES, riskOf } from "@/lib/labels";
 
 /** When the email arrived, or when Oscar read it for emails that don't say. */
 export const timeOf = (i: DecisionWithFeedback) => i.decision.gmail?.received_at ?? i.decision.created_at;
@@ -82,9 +82,9 @@ export function whatItIs(d: Decision): string | null {
   return KIND_NAMES[kind] ?? kind.replace(/_/g, " ");
 }
 
-/** Whether Oscar really did this and it wasn't undone: in Gmail on the real inbox, or at all on the demo. */
+/** Whether Oscar really did this and it wasn't undone: in Gmail (real, or the demo's pretend one), or at all on the old example inbox. */
 export function reallyDone(i: DecisionWithFeedback): boolean {
-  if (i.decision.source !== "gmail") return ACTED.has(i.decision.autonomy_level) && !i.feedback.some((f) => f.kind === "UNDO");
+  if (!inGmail(i.decision)) return ACTED.has(i.decision.autonomy_level) && !i.feedback.some((f) => f.kind === "UNDO");
   return !!i.done && !i.done.undone_at && DOABLE.has(i.decision.action);
 }
 

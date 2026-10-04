@@ -11,7 +11,8 @@ import { useChat } from "@/lib/chat-store";
 import { STATUS } from "@/lib/labels";
 import { useLocalSetting, writeSetting } from "@/lib/local-setting";
 import { setHash, useHash } from "@/lib/use-hash";
-import { useDemoSession, useOscar, type OscarData } from "@/lib/use-oscar";
+import { firstName, saveDemoName, useDemoName } from "@/lib/demo-name";
+import { notifyChanged, useDemoSession, useOscar, type OscarData } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 /**
@@ -90,6 +91,8 @@ export function DemoTour() {
   const session = useDemoSession();
   const { data } = useOscar();
   const [saved, setSaved] = useLocalSetting<string>(TOUR_KEY, "");
+  const name = useDemoName(session);
+  const [typed, setTyped] = useState("");
   // Not while the demo inbox is still starting.
   if (!session || !data?.all.length) return null;
 
@@ -98,11 +101,29 @@ export function DemoTour() {
   const go = (next: string) => setSaved(`${session}:${next}`);
   if (state === "off") return null;
   const close = () => go("off");
+  // Before the offer, your name, so the demo emails can greet you (lib/demo-name.ts).
+  const keepName = (given: string) => {
+    saveDemoName(session, given);
+    notifyChanged();
+  };
+  if (state === "offer" && name === null)
+    return (
+      <Card
+        pose="asking"
+        title="Hi! What should I call you?"
+        main="Continue"
+        other="Skip"
+        field={{ value: typed, onChange: setTyped, label: "Your name", placeholder: "Your name" }}
+        onMain={() => keepName(typed)}
+        onOther={() => keepName("")}
+        onClose={() => keepName("")}
+      />
+    );
   if (state === "offer")
     return (
       <Card
         pose="asking"
-        title="Want to see how Oscar learns?"
+        title={name ? `Hi ${firstName(name)}! Want to see how Oscar learns?` : "Want to see how Oscar learns?"}
         text="See it in about a minute."
         main="Start demo"
         other="Explore on my own"
@@ -129,8 +150,8 @@ export function DemoTour() {
 }
 
 /**
- * A card in the middle of the screen with two choices: the offer when a demo starts, and the
- * closing card after the learning part. Esc closes the tour.
+ * A card in the middle of the screen with two choices: asking your name, the offer when a demo
+ * starts, and the closing card after the learning part. Esc closes the tour (or skips the name).
  */
 function Card(props: {
   pose: OscarPose;
@@ -138,15 +159,18 @@ function Card(props: {
   text?: string;
   main: string;
   other: string;
+  /** A box to type in, above the choices. Enter picks the main one. */
+  field?: { value: string; onChange: (value: string) => void; label: string; placeholder: string };
   onMain: () => void;
   onOther: () => void;
   onClose: () => void;
 }) {
-  const { pose, title, text, main, other, onMain, onOther, onClose } = props;
+  const { pose, title, text, main, other, field, onMain, onOther, onClose } = props;
   const first = useRef<HTMLButtonElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const titleId = useId();
   useEffect(() => {
-    first.current?.focus({ preventScroll: true });
+    (input.current ?? first.current)?.focus({ preventScroll: true });
   }, [title]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector(OTHER_DIALOG) && onClose();
@@ -171,14 +195,35 @@ function Card(props: {
             </h2>
             {text && <p className="text-[15px] leading-snug text-muted-foreground">{text}</p>}
           </div>
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button ref={first} className="h-11 rounded-full px-5 font-semibold" onClick={onMain}>
-              {main}
-            </Button>
-            <Button variant="ghost" className="h-11 rounded-full px-5" onClick={onOther}>
-              {other}
-            </Button>
-          </div>
+          <form
+            className="flex w-full flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onMain();
+            }}
+          >
+            {field && (
+              <input
+                ref={input}
+                type="text"
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+                aria-label={field.label}
+                placeholder={field.placeholder}
+                maxLength={40}
+                autoComplete="name"
+                className="h-11 w-full rounded-xl border border-input bg-background px-3.5 text-center text-[15px] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            )}
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
+              <Button ref={first} type="submit" className="h-11 rounded-full px-5 font-semibold">
+                {main}
+              </Button>
+              <Button type="button" variant="ghost" className="h-11 rounded-full px-5" onClick={onOther}>
+                {other}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </>

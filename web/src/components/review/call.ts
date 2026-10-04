@@ -4,7 +4,7 @@
 import type { Action, DecisionWithFeedback } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
 import { labelName } from "@/components/inbox/outcome";
-import { confused, DOABLE, isSafetyStop, wouldOnly } from "@/lib/labels";
+import { confused, DOABLE, inGmail, isSafetyStop, wouldOnly } from "@/lib/labels";
 
 // Mirrors ACTION_PHRASES and ACTION_DONE in oscar/voice.py.
 const PHRASE: Record<Action, string> = {
@@ -39,12 +39,15 @@ const said = (i: DecisionWithFeedback, kind: string) => i.feedback.some((f) => f
 /** "I'd mark this as read without asking.", "I stopped this and brought it to you." */
 export function callLine(item: DecisionWithFeedback): string {
   const { decision: d, done } = item;
-  const real = d.source === "gmail";
+  // In Gmail (real, or the demo's pretend one), only what its record says he did.
+  const real = inGmail(d);
   const would = wouldOnly(d);
   // "Label it" names the label: 'add the "Receipts" label'.
   const label = d.action === "APPLY_LABEL" ? `"${labelName(item)}" label` : null;
   const phrase = label ? `add the ${label}` : PHRASE[d.action];
-  const past = label ? `added the ${label}` : DONE[d.action];
+  // What he did: Gmail's record when there is one (after a No in Review, what he did instead).
+  const doneAs = done?.action ?? d.action;
+  const past = doneAs === "APPLY_LABEL" ? `added the "${labelName(item)}" label` : DONE[doneAs];
 
   if (d.autonomy_level === "ESCALATE" && !isSafetyStop(d)) {
     return would ? "I'd bring this to you, without doing anything." : "I brought this to you. Nothing was done.";
@@ -98,7 +101,8 @@ export function smallPrint(item: DecisionWithFeedback): string | null {
   const real = d.source === "gmail";
   if (d.action === "SEND_REPLY") return "I never send emails. If it needs a reply, send it from Gmail yourself.";
   if (d.action === "DRAFT_REPLY") {
-    if (!real) return "This is an example, so there's no draft. On your real inbox I save the draft in Gmail and never send it.";
+    if (!real && !d.gmail) return "This is an example, so there's no draft. On your real inbox I save the draft in Gmail and never send it.";
+    if (!real) return item.done && !item.done.undone_at ? "Draft saved, not sent. This is the demo, so it only lives here." : "There's no draft for this one, so it's yours to answer.";
     if (item.done && !item.done.undone_at) return "Your draft is waiting in Gmail Drafts. Nothing is sent until you send it.";
     return d.acting ? "I didn't write a draft for this one, so it's yours to answer." : "I was only reading your inbox then, so there's no draft.";
   }

@@ -313,9 +313,9 @@ export function DecisionPanel({
   const Icon = ACTION_ICONS[d.action] ?? MailIcon;
   const because = becauseOf(item);
   const gradeable = real && yesOrNo(d);
-  // On the demo inbox a Yes approves what he can do there too (api.approve_from_review), with nothing done anywhere.
+  // On the demo inbox a Yes approves what he can do there too (api.approve_from_review), in its pretend Gmail.
   const approves = gradeable && d.autonomy_level === "ASK_FIRST" && !item.done && (d.source === "gmail" ? canAct : DOABLE.has(d.action) && !isAnswered(item));
-  // He already did it: in Gmail, or (the demo) on his own and you haven't undone it.
+  // He already did it: in Gmail (real, or the demo's pretend one) and it hasn't been undone.
   const didAlready = d.source === "gmail" ? d.acting && !!item.done && !item.done.undone_at : didIt(d, item.done, item.feedback);
 
   return (

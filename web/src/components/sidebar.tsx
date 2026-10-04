@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { GmailStatus } from "@/lib/api";
 import { needsReview } from "@/lib/labels";
-import { isOpen, isReadOnly, useOscar } from "@/lib/use-oscar";
+import { isOpen, isReadOnly, useDemoSession, useOscar } from "@/lib/use-oscar";
+import { useYourName } from "@/lib/demo-name";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; short?: string; icon: typeof SunIcon };
@@ -143,6 +144,7 @@ function AccountMenu({ children, side }: { children: React.ReactNode; side: "top
 function Account() {
   const { data } = useOscar();
   const gmail = data?.gmail;
+  const [demoName] = useYourName(useDemoSession()); // in the demo, the name you gave it
   return (
     <AccountMenu side="top">
       <button
@@ -152,7 +154,7 @@ function Account() {
       >
         <Photo gmail={gmail} size={36} />
         <span className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className="truncate text-sm font-bold">{gmail?.name ?? gmail?.address ?? "You"}</span>
+          <span className="truncate text-sm font-bold">{gmail?.name ?? gmail?.address ?? (demoName.trim() || "You")}</span>
           <span className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
             <span className={cn("size-[7px] shrink-0 rounded-full", gmail?.connected ? "bg-level-silent" : "bg-muted-foreground/50")} aria-hidden />
             {connectionLine(gmail)}

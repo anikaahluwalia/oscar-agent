@@ -2,7 +2,7 @@
 // what Gmail says Oscar did (done) and your answers. It never says he did something he didn't.
 
 import type { Action, ActionDone, Decision, DecisionWithFeedback, FeedbackEvent } from "@/lib/api";
-import { ACTIONS, confused, DOABLE, isSafetyStop, LEVEL_SOURCES, whatOscarDid, wouldOnly } from "@/lib/labels";
+import { ACTIONS, confused, DOABLE, inGmail, isSafetyStop, LEVEL_SOURCES, whatOscarDid, wouldOnly } from "@/lib/labels";
 import { dayLabel, formatTime } from "@/lib/time";
 
 /** "Today, 9:32 AM". */
@@ -11,18 +11,18 @@ export const when = (iso: string) => `${dayLabel(iso)}, ${formatTime(iso)}`;
 const ACTED = new Set(["PROCEED_SILENTLY", "PROCEED_AND_NOTIFY"]);
 const lower = (d: Decision) => ACTIONS[d.action].toLowerCase();
 
-/** Undone, on the real inbox (Gmail's record) or the demo (your Undo). */
+/** Undone, in Gmail (its record, real or the demo's pretend one) or on the old example inbox (your Undo). */
 export function isUndone(decision: Decision, done: ActionDone | null | undefined, feedback: FeedbackEvent[] = []) {
-  return decision.source === "gmail" ? !!done?.undone_at : feedback.some((f) => f.kind === "UNDO");
+  return inGmail(decision) ? !!done?.undone_at : feedback.some((f) => f.kind === "UNDO");
 }
 
 /**
- * Whether Oscar really did it and it still stands. Real inbox: Gmail has a record and it wasn't
- * undone (like reallyDone). Demo: he acted on his own, it's one of the three things he can do
- * (mark read, archive, label), and you didn't undo it. A reply is never "done": he doesn't write them.
+ * Whether Oscar really did it and it still stands. In Gmail (real, or the demo's pretend one): Gmail
+ * has a record and it wasn't undone (like reallyDone). The old example inbox: he acted on his own,
+ * it's something he can do, and you didn't undo it.
  */
 export function didIt(decision: Decision, done: ActionDone | null | undefined, feedback: FeedbackEvent[] = []) {
-  if (decision.source === "gmail") return !!done && !done.undone_at && DOABLE.has(decision.action);
+  if (inGmail(decision)) return !!done && !done.undone_at && DOABLE.has(decision.action);
   return ACTED.has(decision.autonomy_level) && DOABLE.has(decision.action) && !isUndone(decision, done, feedback);
 }
 
@@ -45,11 +45,11 @@ const answered = (feedback: FeedbackEvent[], ...kinds: FeedbackEvent["kind"][]) 
  */
 export function didLine(decision: Decision, done: ActionDone | null | undefined, feedback: FeedbackEvent[] = []) {
   const level = decision.autonomy_level;
+  if (level === "ASK_FIRST" && done) {
+    // whatOscarDid only words his own actions; this one you approved, and Gmail shows it done.
+    return done.undone_at ? `Undone: ${lower(decision)}` : `${whatOscarDid({ ...decision, autonomy_level: "PROCEED_SILENTLY" }, done)}, after you approved`;
+  }
   if (decision.source === "gmail") {
-    if (level === "ASK_FIRST" && done) {
-      // whatOscarDid only words his own actions; this one you approved, and Gmail shows it done.
-      return done.undone_at ? `Undone: ${lower(decision)}` : `${whatOscarDid({ ...decision, autonomy_level: "PROCEED_SILENTLY" }, done)}, after you approved`;
-    }
     if (level === "ASK_FIRST" && !wouldOnly(decision) && answered(feedback, "REJECT")) return `You declined: ${lower(decision)}`;
     return whatOscarDid(decision, done);
   }
@@ -76,18 +76,22 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
   const level = d.autonomy_level;
   const action = lower(d);
 
-  if (d.source === "gmail") {
-    if (done) {
-      const how = done.by === "you" ? "after you approved it" : "on my own";
-      const what =
-        d.action === "APPLY_LABEL" ? `Added the "${labelName(item)}" label in Gmail`
-        : d.action === "DRAFT_REPLY" ? "Saved a draft reply in Gmail"
-        : `Done in Gmail (${action})`;
-      if (done.undone_at) {
-        return { tone: "undone", text: `${what} ${how}, ${when(done.done_at)}. Undone ${when(done.undone_at)}, so it's back the way it was.` };
-      }
-      return { tone: "done", text: `${what} ${how}, ${when(done.done_at)}.` };
+  if (done) {
+    // What Gmail says he did (after a No in Review, what he did instead), real or the demo's pretend one.
+    const fixed = done.by === "you" && !!item.review?.complete && item.review.label !== "CORRECT";
+    const how = done.by === "oscar" ? "on my own" : fixed ? "as you said in Review" : "after you approved it";
+    const where = d.source === "gmail" ? "in Gmail" : "in the demo inbox";
+    const what =
+      done.action === "APPLY_LABEL" ? `Added the "${labelName(item)}" label ${where}`
+      : done.action === "DRAFT_REPLY" ? `Saved a draft reply ${where}, not sent,`
+      : `Done ${where} (${ACTIONS[done.action].toLowerCase()})`;
+    if (done.undone_at) {
+      return { tone: "undone", text: `${what} ${how}, ${when(done.done_at)}. Undone ${when(done.undone_at)}, so it's back the way it was.` };
     }
+    return { tone: "done", text: `${what} ${how}, ${when(done.done_at)}.` };
+  }
+
+  if (d.source === "gmail") {
     if (wouldOnly(d)) {
       if (!d.acting) return { tone: "nothing", text: "Nothing changed in Gmail. I was only reading your inbox when this came in." };
       return { tone: "nothing", text: `Nothing changed in Gmail. I don't ${action} in Gmail, so this is only what I would do.` };
@@ -105,7 +109,7 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
     return { tone: "nothing", text: "Gmail doesn't show this as done, so nothing changed." };
   }
 
-  // The demo inbox: example emails, nothing in Gmail.
+  // The demo: example emails, in its own pretend Gmail (or, on the old example inbox, in none).
   if (level === "ESCALATE") return { tone: "stopped", text: "I stopped here. Nothing was done." };
   if (level === "ASK_FIRST") {
     if (answered(feedback, "REJECT")) return { tone: "nothing", text: "You declined, so I left it alone." };
@@ -114,6 +118,11 @@ export function outcomeOf(item: DecisionWithFeedback): Outcome {
   }
   if (!DOABLE.has(d.action)) {
     return { tone: "nothing", text: `Nothing was written or sent. I don't ${action} myself, so this is only what I would do.` };
+  }
+  if (inGmail(d)) {
+    return d.action === "DRAFT_REPLY"
+      ? { tone: "nothing", text: "I don't have a draft written for this one, so there's no draft. It's yours to answer." }
+      : { tone: "nothing", text: "Nothing changed in the demo inbox." };
   }
   if (isUndone(d, done, feedback)) return { tone: "undone", text: "Done in the demo inbox, then you undid it." };
   return { tone: "done", text: `Done in the demo inbox, ${when(d.created_at)}.` };
@@ -150,7 +159,11 @@ const PAST: Record<Action, string> = {
 /** What he'd do and what he did, in his words, naming the label when it's "Label it":
  * 'add the "Receipts" label', 'added the "Receipts" label'. */
 const phraseOf = (i: DecisionWithFeedback) => (i.decision.action === "APPLY_LABEL" ? `add the "${labelName(i)}" label` : PHRASE[i.decision.action]);
-const past = (i: DecisionWithFeedback) => (i.decision.action === "APPLY_LABEL" ? `added the "${labelName(i)}" label` : PAST[i.decision.action]);
+/** What he did: Gmail's record when there is one (after a No in Review, what he did instead). */
+const past = (i: DecisionWithFeedback) => {
+  const action = i.done?.action ?? i.decision.action;
+  return action === "APPLY_LABEL" ? `added the "${labelName(i)}" label` : PAST[action];
+};
 
 /**
  * Oscar's one bold line about an email, in his words. Like didLine, it only says he did something
@@ -169,17 +182,19 @@ export function noteLine(item: DecisionWithFeedback): string {
   }
   if (level === "ESCALATE") return isSafetyStop(d) ? "I held this one back." : "This one's for you, so I left it alone.";
   if (level === "ASK_FIRST") {
-    if (d.source === "gmail" && done) return done.undone_at ? `You said yes and I ${past(item)}, then it was undone.` : `You said yes, so I ${past(item)}.`;
+    if (done) return done.undone_at ? `You said yes and I ${past(item)}, then it was undone.` : `You said yes, so I ${past(item)}.`;
     if (answered(feedback, "REJECT")) return "You said no, so I left it alone.";
     if (answered(feedback, "APPROVE", "EDIT_THEN_SEND")) {
       return d.source === "gmail" ? "You said yes, but Gmail doesn't show it done." : "You said yes.";
     }
     return confused(d) ? "I'm not sure what to do with this one. Can you tell me what you'd like?" : `Want me to ${phrase}?`;
   }
+  // After a No in Review, what you said to do instead.
+  if (done && done.by === "you" && !done.undone_at) return `You said to ${PHRASE[done.action]}, so I did.`;
   if (didIt(d, done, feedback)) return level === "PROCEED_AND_NOTIFY" ? `I ${past(item)}, and I'm letting you know.` : `I ${past(item)}.`;
-  if (isUndone(d, done, feedback)) return d.source === "gmail" ? `I ${past(item)}, and it's been undone.` : `I ${past(item)}, then you undid it.`;
+  if (isUndone(d, done, feedback)) return inGmail(d) ? `I ${past(item)}, and it's been undone.` : `I ${past(item)}, then you undid it.`;
   if (!DOABLE.has(d.action)) return `I'd ${phrase}.`; // the line under it says he doesn't do it himself
-  return `I was going to ${phrase}, but Gmail doesn't show it done.`;
+  return d.source === "gmail" ? `I was going to ${phrase}, but Gmail doesn't show it done.` : `I'd ${phrase}.`;
 }
 
 const sentence = (text: string) => {

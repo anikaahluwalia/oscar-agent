@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { didIt } from "@/components/inbox/outcome";
 import { displayName } from "@/components/kit/sender";
 import { OscarMood } from "@/components/oscar-mood";
 import {
@@ -57,23 +56,20 @@ const DID: Partial<Record<Action, string>> = { ARCHIVE: "archived", MARK_READ: "
 
 /**
  * What saving will do in Gmail when he already did something there (api.correct_from_review): put it
- * back, and do the easy-to-undo action you picked instead if you said he should just do it. Null when
- * nothing in Gmail changes (he did what you wanted, or he didn't act on it). In the demo it says that
- * nothing is put back.
+ * back, and do the easy-to-undo action you picked instead if you said he should just do it. A reply
+ * he drafted is deleted. Null when nothing in Gmail changes (he did what you wanted, or he didn't act
+ * on it). The demo does the same in its own pretend Gmail.
  */
-function inGmail(item: DecisionWithFeedback, level: Level | null, action: Action | null) {
+function whatSavingDoes(item: DecisionWithFeedback, level: Level | null, action: Action | null) {
   const { decision: d, done } = item;
-  if (d.source === "demo") {
-    // The demo has no Gmail to put back, so your answer only teaches me. Said plainly, so it isn't a surprise.
-    const same = (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && action === d.action;
-    return level && !same && didIt(d, done, item.feedback) ? "This is the demo inbox, so nothing gets put back. Saving teaches me for next time." : null;
-  }
-  if (!done || done.undone_at || !d.acting || !level) return null;
+  if (!done || done.undone_at || (d.source === "gmail" && !d.acting) || !level) return null;
   const acts = level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY";
   if (acts && action === d.action) return null;
-  const did = DID[d.action] ?? "changed";
+  const where = d.source === "gmail" ? "in Gmail" : "in the demo inbox";
+  const did = done.action === "DRAFT_REPLY" ? "saved a draft reply to" : (DID[done.action] ?? "changed");
+  const back = done.action === "DRAFT_REPLY" ? "deletes the draft" : "puts it back";
   const instead = acts && action ? DO[action] : undefined;
-  return instead ? `I ${did} this in Gmail. Saving puts it back and I'll ${instead} instead.` : `I ${did} this in Gmail. Saving puts it back the way it was.`;
+  return instead ? `I ${did} this ${where}. Saving ${back} and I'll ${instead} instead.` : `I ${did} this ${where}. Saving ${back}${done.action === "DRAFT_REPLY" ? "" : " the way it was"}.`;
 }
 
 /**
@@ -144,7 +140,7 @@ export function FollowUp({ item, onSaved, onBack }: { item: DecisionWithFeedback
   const typeMissing = finalWhy === "misread" && !type.trim() ? "Say what kind of email it is." : null;
   const sameHint = same && finalWhy !== "misread" && !note.trim() ? "That's what I picked. Change something, or go back and press Yes." : null;
   const problem = missing ?? whyMissing ?? typeMissing ?? sameHint;
-  const gmailNote = problem ? null : inGmail(item, level, action);
+  const gmailNote = problem ? null : whatSavingDoes(item, level, action);
 
   async function save() {
     if (busy || problem) return;

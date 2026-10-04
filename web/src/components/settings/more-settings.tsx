@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Facts, Segmented, SettingsGroup, SettingsRow, ROW_BUTTON } from "@/components/settings/rows";
 import { getChatStatus } from "@/lib/api";
 import { bringInDemo, startOver } from "@/lib/demo";
-import { useLocalSetting } from "@/lib/local-setting";
+import { useYourName } from "@/lib/demo-name";
+import { notifyChanged, useDemoSession } from "@/lib/use-oscar";
 
-/** Your first name, kept in this browser. The Today page uses it to say hello when Google hasn't given one. */
+/** Your first name, kept in this browser. The Today page uses it to say hello when Google hasn't given one.
+ * In the demo it's the name you gave the demo, which its emails use too. */
 export function NameRow() {
-  const [name, setName] = useLocalSetting<string>("name", "");
+  const [name, setName] = useYourName(useDemoSession());
   // What you're typing, so spaces aren't trimmed away mid-word. Saved as you go.
   const [draft, setDraft] = useState<string | null>(null);
   return (
@@ -37,7 +39,10 @@ export function NameRow() {
             setDraft(e.target.value);
             setName(e.target.value.trim());
           }}
-          onBlur={() => setDraft(null)}
+          onBlur={() => {
+            setDraft(null);
+            notifyChanged(); // so the demo's emails greet you by the new name
+          }}
           className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-10 sm:w-56"
         />
       }

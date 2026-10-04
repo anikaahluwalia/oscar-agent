@@ -3,7 +3,7 @@
 
 import type { DecisionWithFeedback, FeedbackKind, Level } from "@/lib/api";
 import { reallyDone, timeOf } from "@/lib/insights";
-import { ACTIONS, DOABLE, isOldWay, isSafetyStop, needsReview, toGrade, whatOscarDid, wouldOnly } from "@/lib/labels";
+import { ACTIONS, DOABLE, inGmail, isOldWay, isSafetyStop, needsReview, toGrade, whatOscarDid, wouldOnly } from "@/lib/labels";
 import { isOpen } from "@/lib/use-oscar";
 
 export type FilterKey = "needs" | "check" | "all" | "done" | "stopped" | "finish";
@@ -118,7 +118,7 @@ const said = (i: DecisionWithFeedback, kind: FeedbackKind) => i.feedback.some((f
 export function outcomeOf(item: DecisionWithFeedback): string {
   const { decision: d, done } = item;
   const action = ACTIONS[d.action].toLowerCase();
-  if (d.source === "gmail" && done && DOABLE.has(d.action)) {
+  if (inGmail(d) && done && DOABLE.has(d.action)) {
     if (done.undone_at) return `Undone: ${action}`;
     // Past tense from the shared labels ("Archived"), whatever level he picked.
     const past = whatOscarDid({ ...d, autonomy_level: "PROCEED_SILENTLY" }, done);
