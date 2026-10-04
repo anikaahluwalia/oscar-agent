@@ -3,7 +3,8 @@
 //  - Oscar at the bottom of the page (right by default, wherever you drag him), with one card at a
 //    time: all caught up, what needs you, something he handled, an approval, something he stopped,
 //    and "was that right?";
-//  - a panel down the right for the open email: Summary, Actions, Why? and Thread.
+//  - a panel down the right for the open email: Summary, Actions, Why? and Thread. It opens by
+//    itself when you open an email, and stays closed on one you closed it on.
 // Everything is drawn in closed shadow roots so Gmail's styles can't reach it, and every piece of
 // email text goes in as text (never HTML), since subjects and senders come from strangers.
 
@@ -237,7 +238,8 @@
     return decimal ? BigInt(decimal).toString(16) : null;
   }
   // The open email: the subject heading of Gmail's reading pane (h2.hP) carries the thread id.
-  const openThread = () => threadOf(document.querySelector("h2.hP")?.parentElement);
+  // Gmail can keep an email you left hidden on the page, so only a heading you can see counts.
+  const openThread = () => threadOf([...document.querySelectorAll("h2.hP")].find((h) => h.offsetParent)?.parentElement);
 
   const host = el("div", { id: "oscar-for-gmail" });
   const root = host.attachShadow({ mode: "closed" });
@@ -253,7 +255,10 @@
     card: null, // what the card above Oscar shows: { kind, item, wrong? }
     feedback: {}, // decision id -> "down" while you pick what he should have done
     spot: 1, // where Oscar sits along the bottom: 0 is the far left, 1 the far right
+    byHimself: false, // the panel opened because you opened an email, not because you asked
   };
+  // Emails you closed the panel on, so it stays closed there until Gmail is reloaded.
+  const closedOn = new Set();
   // What you've already seen, so each card shows once. Kept in this browser only.
   let memory = { seen: [], quietDay: null, quietCount: null, started: false, position: null };
 
@@ -323,6 +328,7 @@
     state.card = null;
     state.said = null;
     state.open = true;
+    state.byHimself = false;
     state.tab = tab;
     state.focus = item?.id ?? null;
     state.pinned = item?.thread_id && item.thread_id !== openThread() ? item : null;
@@ -549,6 +555,14 @@
         el("b", { text: i.subject || "(no subject)" }), el("small", {}, chip(i.status), address(i.sender))))))];
   }
 
+  // Closing the panel on an email keeps it closed there; the next email you open gets it again.
+  function closePanel() {
+    state.open = false;
+    state.byHimself = false;
+    if (state.threadId) closedOn.add(state.threadId);
+    render();
+  }
+
   function panel() {
     const s = state.status;
     const item = shown();
@@ -566,7 +580,7 @@
       el("div", { class: "head" },
         el("img", { src: url("icons/oscar-48.png"), alt: "" }),
         el("p", { class: "name" }, "Oscar", s?.read_only ? el("small", { text: "I only read your Gmail for now" }) : null),
-        el("button", { class: "x", type: "button", "aria-label": "Close", onclick: () => { state.open = false; render(); } }, icon("close", 18))),
+        el("button", { class: "x", type: "button", "aria-label": "Close", onclick: closePanel }, icon("close", 18))),
       item ? el("div", { class: "tabs", role: "tablist" }, TABS.map(([key, words]) =>
         el("button", { class: "tab", type: "button", role: "tab", "aria-selected": String(state.tab === key),
           onclick: () => { state.tab = key; render(); } }, words))) : null,
@@ -655,6 +669,7 @@
         if (justDragged) return;
         if (state.card?.kind === "attention" || state.card?.kind === "idle") dismiss();
         state.open = true;
+        state.byHimself = false;
         state.said = null;
         render();
         refresh();
@@ -663,7 +678,8 @@
     draggable(peek);
     const companion = { show: true, animate: true, ...(s?.settings?.companion ?? {}) };
     wrap.classList.toggle("still", !companion.animate);
-    // "Show Oscar in Gmail" off: no Oscar in the corner and no cards. The chips and labels on your emails stay.
+    // "Show Oscar in Gmail" off: no Oscar in the corner, no cards, and the panel doesn't open by
+    // itself (load, above). The chips and labels on your emails stay.
     wrap.replaceChildren(...(companion.show ? [peek, card() ?? ""] : []), panel());
   }
 
@@ -698,6 +714,17 @@
       // Gmail opened another email: the one you picked, or one you clicked yourself.
       if (thread !== state.pinned?.thread_id) state.focus = null;
       state.pinned = null;
+      // Opening an email opens his panel beside it, unless you closed it on that one or turned him
+      // off in Oscar's Settings. Back in your list, a panel he opened by himself goes away again.
+      const show = status.ok && status.data.connected && (status.data.settings?.companion?.show ?? true);
+      if (thread && show && !state.open && !closedOn.has(thread)) {
+        state.open = true;
+        state.byHimself = true;
+        state.tab = "summary";
+      } else if (!thread && state.byHimself) {
+        state.open = false;
+        state.byHimself = false;
+      }
     }
     state.threadId = thread;
     if (thread && status.ok) {
@@ -778,21 +805,17 @@
   watcher.observe(document.body, { childList: true, subtree: true });
 
   // The open email changes without a page load: watch the address, and check the page now and then.
-  let lastThread = null;
+  // The check compares with the email he last looked at, so a change he missed mid-load is caught next time.
   const onHash = () => setTimeout(refresh, 600);
   const onResize = () => render();
   window.addEventListener("hashchange", onHash);
   window.addEventListener("resize", onResize);
   // Escape closes the panel when you're in it; anywhere else it's Gmail's.
   host.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && state.open) { state.open = false; render(); }
+    if (e.key === "Escape" && state.open) closePanel();
   });
   const watching = setInterval(() => {
-    const now = openThread();
-    if (now !== lastThread) {
-      lastThread = now;
-      refresh();
-    }
+    if (openThread() !== state.threadId) refresh();
   }, 1500);
   const checking = setInterval(refresh, 60_000);
 

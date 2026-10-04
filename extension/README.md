@@ -10,7 +10,9 @@ Oscar inside Gmail, in three parts:
   show, whether he's there at all, which side he starts on and whether he moves are set in the
   app, under Settings > Oscar in Gmail and Notifications.
 - **A panel down the right** for the open email, beside Gmail rather than on top of it (Gmail gets
-  narrower while it's open; in a narrow window it goes on top instead): Summary (what it is, what he recommends and why),
+  narrower while it's open; in a narrow window it goes on top instead). It opens by itself when
+  you open an email and goes away when you're back in your list. Close it and it stays closed on
+  that email; the next one you open gets it again. Summary (what it is, what he recommends and why),
   Actions (what he did, Approve, Undo, "always do this" or "always ask me", and "Was that right?"),
   Why? (what mattered and any safety rule) and Thread (his call on each email in it).
 
