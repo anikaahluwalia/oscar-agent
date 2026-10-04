@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { MonitorPlayIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// A short recording of the Chrome extension in Gmail. Drop it in web/public under this name; until
-// then the window says it's on its way instead of showing a broken player.
+// A short recording of the Chrome extension in Gmail, in web/public. If it ever goes missing,
+// the window says it's on its way instead of showing a broken player.
 const VIDEO = "/oscar-in-gmail.mp4";
 const OPEN = "oscar:gmail-preview";
 

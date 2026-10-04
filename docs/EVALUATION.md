@@ -93,5 +93,5 @@ The scenarios are small and written by hand: they show the floor holds and learn
 rates on a real inbox. The held-out v2 set was run blind once, then its misses were fixed, so it has
 been looked at; a fresh blind v3 is the next honest step. The safety checks are patterns: a request
 with no punctuation at all ("sorry about that delete it for good") can slip past the deletion check,
-and a question ("remove it forever? your call") can trip it. Oscar runs on your computer, the extension relies on Gmail's page markup, and the "See it in Gmail" video isn't
-recorded yet (the window says it's on its way).
+and a question ("remove it forever? your call") can trip it. Oscar runs on your computer, and the
+extension relies on Gmail's page markup.
