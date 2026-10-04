@@ -11,7 +11,7 @@ from oscar.classification import RISKY_TYPES
 from oscar.classifier import APP_ACCESS, classify, is_bulk
 from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
-from oscar.preferences import HABIT_ACTIONS, Preferences
+from oscar.preferences import HABIT_ACTIONS, Preferences, content_only
 from oscar.safety import (ACTION_FLOORS, FLAG_ACTIONS, FLAG_LEVELS, LEVEL_ORDER, apply_floor, caution, check_email,
                           is_stricter, required_level)
 from oscar.understand import URGENT, Understanding
@@ -85,6 +85,8 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     backstop. It's only for measuring what they add, in the simulated inbox: inbox.sync refuses it
     for a real Gmail, and the app never passes it.
     """
+    if content_only(email.sender):
+        type_hint = None  # judged on what it says: what you said this sender's emails are doesn't count
     classification = classify(email, bulk_action)
     understood_by = "rules" if classification.matched_pattern else None
     usable = understanding if understanding and understanding.confidence >= MODEL_MIN_CONFIDENCE else None

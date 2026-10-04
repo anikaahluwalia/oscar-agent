@@ -47,6 +47,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import NamedTuple
 
+from oscar.config import setting
 from oscar.feedback import CHOICES, FeedbackEvent, FeedbackKind, Learned, action_verdict, normalize
 from oscar.models import Action, AutonomyLevel
 from oscar.policy import autonomy_for
@@ -122,6 +123,15 @@ def family(email_type: str | None) -> str | None:
     if not email_type or email_type in ("unknown", "unspecified"):
         return None
     return FAMILIES.get(email_type, email_type)
+
+
+def content_only(sender: str) -> bool:
+    """A sender whose emails are judged on what they say, never on who sent them: your own test
+    address, say, that sends every kind of email (OSCAR_CONTENT_ONLY_SENDERS in .env, comma
+    separated). Nothing is learned about them as a sender; rules for a kind of email still apply."""
+    address = sender.split("<")[-1].rstrip(">").strip().lower()
+    listed = {a.strip().lower() for a in setting("OSCAR_CONTENT_ONLY_SENDERS").split(",") if a.strip()}
+    return address in listed
 
 
 def domain_of(sender: str) -> str | None:
@@ -295,6 +305,9 @@ class Preferences:
     def _mine(event: FeedbackEvent, kind: str | None) -> list[tuple]:
         # Also kept apart by kind, and (kind None) for emails he couldn't place, so habit() can tell
         # your answers about this kind of email from your answers about the sender's other ones.
+        # A content-only sender gets none: what you say counts only towards emails like it.
+        if content_only(event.sender):
+            return []
         return [("sender", event.sender, event.action), ("sender", event.sender, kind, event.action)]
 
     def _rule(self, scope: tuple, event: FeedbackEvent) -> None:
