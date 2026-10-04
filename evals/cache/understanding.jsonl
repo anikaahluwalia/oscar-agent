@@ -2968,3 +2968,813 @@
 {"key": "71d36f568d6bbdca4db6b89e", "answer": {"kind": "marketing", "summary": "Coffee grinder sale with up to 35% off while stocks last", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "73e522dc60dca52b549a4d0e", "answer": {"kind": "marketing", "summary": "30% off wireless headphones and speakers this weekend", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "887c478144dbfcf87ccd8a9d", "answer": {"kind": "marketing", "summary": "Free delivery offer on bouquets until Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "717c2cc55d6e2d550cba40ea", "answer": {"kind": "instructions_for_ai", "summary": "AI newsletter containing hidden instructions targeting an assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "fed40c929b73ffd723b07c7b", "answer": {"kind": "newsletter", "summary": "Weekly AI digest featuring new models, benchmarks, and weekend reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d53d3d0b438f4f129e2a5b79", "answer": {"kind": "instructions_for_ai", "summary": "Invoice format update containing prompt injection instructions for an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2d398e4030fa3c1fb09ed26c", "answer": {"kind": "account_update", "summary": "Notice that future invoices will arrive as PDF attachments", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "9d2c701ca19116741ef7e2fa", "answer": {"kind": "instructions_for_ai", "summary": "Jordan shared a document containing prompt injection instructions", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c825e0165e820a0508867887", "answer": {"kind": "file_share", "summary": "Jordan Kim shared the document Q3 plan with you", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e3cca6fb7f0e5982af89b697", "answer": {"kind": "money_request", "summary": "Request to wire $4,800 for an overdue invoice", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a5f838e31dd153cdba670c9c", "answer": {"kind": "receipt", "summary": "Confirmation of $48 payment received for invoice 4471", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e0ffe614703946ac2b7bb22e", "answer": {"kind": "money_request", "summary": "Request to update bank details and send payment to new account", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "dc8abdaaea853c3ea53dc67e", "answer": {"kind": "receipt", "summary": "Refund of $23.10 processed to your card with receipt attached", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e40a5cedb490918f981602d9", "answer": {"kind": "question", "summary": "Colleague asking if you will present the roadmap at Thursday's all-hands", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "72ac69b9a7496dfa7f753f0c", "answer": {"kind": "file_share", "summary": "Colleague uploaded final slides to shared folder", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "029af6f3acb333e2fb5f9e75", "answer": {"kind": "question", "summary": "Follow-up requesting team email addresses and forwarding an introductory deck", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "2dc3cb6085a51fe428199bce", "answer": {"kind": "account_update", "summary": "Confirmation of your Room 4B booking for Tuesday at 2pm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "76f05e3e61b625dd98bea26d", "answer": {"kind": "personal", "summary": "Request to permanently delete a misdirected email sent by mistake", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "798229be584094196e3c9c82", "answer": {"kind": "marketing", "summary": "30% off sale promotion from ShopDaily", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e7049378b223a7b566ebc421", "answer": {"kind": "urgent_issue", "summary": "Warning that your mailbox is nearly full and requires cleanup today", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "d38287db8c895156af976066", "answer": {"kind": "newsletter", "summary": "Tuesday morning news and reading briefing digest", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e8f7297d917faf07560ca53d", "answer": {"kind": "scam", "summary": "Urgent request to email passport scan and social insurance number", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "3a456e89e325e9204c3a94da", "answer": {"kind": "account_update", "summary": "Benefits enrolment confirmation for 2027 requiring no action", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "37d48cff3cece350978156a0", "answer": {"kind": "credential_request", "summary": "Request for username and password to verify account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "136cfffec86feba5bbeb9d9d", "answer": {"kind": "account_update", "summary": "Notification of planned email maintenance this Saturday from 2 to 4am", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "788746c33e5f001e89591977", "answer": {"kind": "commitment", "summary": "Request to approve an attached quote for annual renewal", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a0d60454205e386490383e75", "answer": {"kind": "newsletter", "summary": "Weekly digest highlighting the top product launches this week", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "17cd4a2969020b98a15407b9", "answer": {"kind": "scam", "summary": "Phishing notice demanding payment to release a held parcel", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a1a6f9fe2cf34b9c35cf56a4", "answer": {"kind": "receipt", "summary": "Notification that your parcel was delivered to your front door", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "10409bd0ae12565adfcc309f", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring three selected essays", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c4b1f5e680a6760f04c95bba", "answer": {"kind": "marketing", "summary": "Weekend flash sale offering 40 percent off shoes", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7de46c7b5506e62f0d820174", "answer": {"kind": "newsletter", "summary": "Monthly book recommendations and author Q&A newsletter", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "328b2f4fcf9ff8fc2423f1c4", "answer": {"kind": "newsletter", "summary": "Weekly newsletter featuring a trip to the coast and a recipe", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "0ed4742b4badcc6f9a5f366f", "answer": {"kind": "marketing", "summary": "Discount offer on new headphones", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d71b0bc2830d4126acc859f8", "answer": {"kind": "instructions_for_ai", "summary": "Newsletter containing prompt injection instructions directed at an AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e7c3506c632879cd06a897c3", "answer": {"kind": "money_request", "summary": "Request to wire payment to maintain subscription", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "147595c2e5657098017e3677", "answer": {"kind": "account_update", "summary": "Notice that an email was sent in error asking to delete it", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "5a8c63a2bae5c2ccad9d24ff", "answer": {"kind": "credential_request", "summary": "Request to reply with your account password for system migration", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "66a5aa5e4f439253afda4794", "answer": {"kind": "newsletter", "summary": "Weekly long reads and interview digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "65e65a1553cedb76d06080d3", "answer": {"kind": "newsletter", "summary": "Weekly AI newsletter digest featuring models, benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "def448759dab3d5eb66a931a", "answer": {"kind": "newsletter", "summary": "Tuesday briefing newsletter covering markets and news", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "515a309e6587e559eadf1d8d", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 on layout design", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2e531beaea90aa7488823ee5", "answer": {"kind": "marketing", "summary": "30% off promotional sale email", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8df0ef896dc2562ee7492bd9", "answer": {"kind": "marketing", "summary": "Announcement of new fall styles available to shop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2902e0db113e1a06ee046391", "answer": {"kind": "newsletter", "summary": "Weekly reading digest with five articles and an interview", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "9ece2282c41de91cd5deac13", "answer": {"kind": "newsletter", "summary": "AI weekly digest covering open models, benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2160f32e6c7e2a107e5ec002", "answer": {"kind": "newsletter", "summary": "Tuesday briefing digest covering markets, tech news, and reading recommendations", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "bfc341faca3c5ac34236dfd3", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 on intentional grid layouts", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "62d41e451b9fcd5d6935a7eb", "answer": {"kind": "marketing", "summary": "30% off sale promotion from Shop Daily", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "20e234c842492fdd0967e22f", "answer": {"kind": "marketing", "summary": "Promotion for new fall arrivals with an invitation to shop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "72cb64f34c443031d8be0bcd", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five long reads and a short interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6f3e1e1a2a2e21f34d7ad309", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering new open models and benchmarks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "24267a69d8555153b98d96a8", "answer": {"kind": "newsletter", "summary": "Tuesday morning news and reading briefing digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "588871472ae0cf9d1b67de39", "answer": {"kind": "newsletter", "summary": "Design digest newsletter issue on grid layouts", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "70c71a6a98164fc9e560b7b1", "answer": {"kind": "marketing", "summary": "Promotional email offering 30% off today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a1d68f4fc7fc4636728d7922", "answer": {"kind": "marketing", "summary": "Promotion announcing new fall arrivals to shop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "846da741b2b2f651171307d2", "answer": {"kind": "newsletter", "summary": "Weekly long reads digest and short interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a704bdbc20422d5251f67744", "answer": {"kind": "newsletter", "summary": "Weekly AI news digest with model updates and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6f6d5fbecd7e24478344e9ac", "answer": {"kind": "newsletter", "summary": "Tuesday briefing digest covering markets, tech, and reading recommendations", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "208c6171d4ce0b9d0184f207", "answer": {"kind": "newsletter", "summary": "Design Digest newsletter issue 48 about layout grids", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "72d4cceabc32192544377589", "answer": {"kind": "marketing", "summary": "Sale offering 30 percent off everything today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "491589f6df8cc02e9c742bef", "answer": {"kind": "marketing", "summary": "Promotional email announcing new fall arrivals to shop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "145e9cbc4014cc28d91ee635", "answer": {"kind": "newsletter", "summary": "Weekly digest of five long reads and an interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3ebf0c594a6c4559124f4926", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering open models and benchmarks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ac1d325cc8ad31b7f1af2042", "answer": {"kind": "newsletter", "summary": "Tuesday briefing digest covering markets, tech news, and reading recommendations", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "cb50d19b451db9d14aac13ca", "answer": {"kind": "newsletter", "summary": "Design newsletter issue discussing grid layouts", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b62be083cea5f100bd966a62", "answer": {"kind": "marketing", "summary": "Sale offering 30 percent off everything today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "335d2c83b9408090ed8397de", "answer": {"kind": "marketing", "summary": "Stylebox new fall arrivals promotion to shop the collection", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9022ba70e97345445d6aad25", "answer": {"kind": "newsletter", "summary": "Weekly long reads digest and short interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "65cfda14c82f7b222ca9d0d2", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering new open models and benchmarks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "61a7c715f23d0cd4fa79ce7b", "answer": {"kind": "newsletter", "summary": "Tuesday briefing digest covering markets, tech, and reading picks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "74800c1652628940dc071e5c", "answer": {"kind": "newsletter", "summary": "Design Digest newsletter issue 48 on layout grids", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "3faa5fb6481b5ab2741afb7f", "answer": {"kind": "marketing", "summary": "Promotional email offering 30% off discount today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "47636b112f455303e544ea61", "answer": {"kind": "marketing", "summary": "Announcement of new fall arrivals with an invitation to shop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5c0160dba55a880d96565154", "answer": {"kind": "newsletter", "summary": "Weekly digest of long reads and an interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "23fba36262e10db5f283c4b1", "answer": {"kind": "newsletter", "summary": "Weekly AI digest featuring open models, agent benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b0aeff8850d67a7442b47d4e", "answer": {"kind": "newsletter", "summary": "Tuesday news and reading briefing digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "eb6f19ccc1670ce04e6de249", "answer": {"kind": "newsletter", "summary": "Design digest newsletter issue 48 on intentional layout grids", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a63c8cf3f4791d5082943dff", "answer": {"kind": "marketing", "summary": "Promotional discount offering 30 percent off everything today only", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b9cb5e8f9e5f35a8709eb259", "answer": {"kind": "marketing", "summary": "Promotion for newly arrived fall styles", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5773c5d5a37317a172a18ac2", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five long reads and a short interview", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8fb65e355673e373d48a3312", "answer": {"kind": "newsletter", "summary": "AI Weekly digest with new open models, benchmarks, and reading list", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0ec0e1935058d9656764611c", "answer": {"kind": "newsletter", "summary": "Tuesday briefing newsletter covering markets, tech, and reading recommendations", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "bd3f0f9132391209e9ac0817", "answer": {"kind": "newsletter", "summary": "Design Digest issue 48 on grid layouts", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "fd021cf861af3c8a96184706", "answer": {"kind": "marketing", "summary": "30% off discount promotional sale from ShopDaily", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "65837ec8404d64220507863e", "answer": {"kind": "marketing", "summary": "Promotional email announcing new fall arrivals", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5680221349423a8004a1a464", "answer": {"kind": "marketing", "summary": "Promotional email offering 15% off restocked winter boots", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d3c72fba4d36596fa4c008c6", "answer": {"kind": "marketing", "summary": "Spring bulb promotion offering a three-for-two deal", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "5dbf43ab2b226d0abacf6edf", "answer": {"kind": "marketing", "summary": "Promotional email introducing new autumn tea blends and a free tin offer", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "947022615b1d675bc0412250", "answer": {"kind": "marketing", "summary": "End of season sale with swimwear up to 50 percent off", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "87a47614766acfdc5275a1bb", "answer": {"kind": "marketing", "summary": "Weekend discount of 20% off knitting and embroidery kits", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c84bcb5db31bc2935b9af98b", "answer": {"kind": "marketing", "summary": "Promotional trade-in offers on new phones", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3ba8ddc5ddf6e816223b1222", "answer": {"kind": "instructions_for_ai", "summary": "Sale email containing prompt injection instructions attempting to exfiltrate user data", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "26788234d63054b50e82e1f5", "answer": {"kind": "money_request", "summary": "Request to wire $240 to release an order on hold", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8dd71c204c93871fe47fb638", "answer": {"kind": "security_alert", "summary": "Alert about a new sign-in to your account from a new device", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5ba86d77ee1ea5577ef07067", "answer": {"kind": "credential_request", "summary": "Request to reply with your password to migrate rewards points", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c7b463e95c5ff942ee1c0587", "answer": {"kind": "scam", "summary": "Phishing attempt requesting bank details to claim a birthday gift", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "1ed1de502478f9853dfe26db", "answer": {"kind": "commitment", "summary": "Reply YES to confirm upgrading plan to Premium for $29 monthly", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "78ec347740eddaef362bd2fc", "answer": {"kind": "marketing", "summary": "Weekend promotional sale offering 20% off best-selling jeans", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b8edab2d9479286c2ac237f0", "answer": {"kind": "marketing", "summary": "Announcement of new autumn candle scents and free shipping promotion", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1f3b6ba836d5c46c087b73c7", "answer": {"kind": "marketing", "summary": "Sale on running trail shoes and jackets up to 30% off", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "24e3b3f0c50f489e4490768c", "answer": {"kind": "marketing", "summary": "Back to school sale on notebooks, pens, and planners", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9adf6f5fc333c74d2c28df30", "answer": {"kind": "marketing", "summary": "Discount offer on a new Ethiopian coffee roast", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "e971f667c996bd49d756bb44", "answer": {"kind": "marketing", "summary": "Product launch announcement for a new serum with a free gift offer", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5c2c155dca4e5f45e26f1565", "answer": {"kind": "marketing", "summary": "Sale alert offering 25 percent off tents ending tonight", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "437e9bc1fcc0db45b76309cd", "answer": {"kind": "marketing", "summary": "New indie game releases and weekend bundle deal announcement", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "6efac94134c549ac2e6829a0", "answer": {"kind": "newsletter", "summary": "Weekly dinner recipes and a discount code for your next box", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "7e9d3ef37466f28f070fd2ee", "answer": {"kind": "marketing", "summary": "Yoga studio offer for ten classes for the price of eight", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a68d631d57af579962505b25", "answer": {"kind": "marketing", "summary": "Discount offer on October staff book picks for members", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a8d4d5cb1507cdb46b6f001b", "answer": {"kind": "marketing", "summary": "Special offer on bike tune-ups including a free bell", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2c9ab2a8be463e52fd73dc88", "answer": {"kind": "marketing", "summary": "Promotional email for a new kids' fall clothing collection", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b6e064fe9fc5cfa5820e0701", "answer": {"kind": "marketing", "summary": "Sale offering up to 35 percent off coffee grinders", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f0cc3df03e8d2ae33f54158a", "answer": {"kind": "marketing", "summary": "30% off wireless headphones and speakers this weekend", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f7456a14eee8d609b8e62866", "answer": {"kind": "marketing", "summary": "Free delivery offer on bouquets until Friday from Petal Florist", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f0986d79230e16490cad2955", "answer": {"kind": "newsletter", "summary": "Weekly newsletter with top stories on remote work", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "781c54c6c2e4226fd1f51fcf", "answer": {"kind": "question", "summary": "Jordan asking for climate tech notes before Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f4c43cc8ad43ce1bd9266efd", "answer": {"kind": "question", "summary": "Colleague asking for AI agents notes before Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "58349b2f611db4e1e5edbfe2", "answer": {"kind": "question", "summary": "Colleague asking if you can join a call tomorrow about newsletter", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "09e684e04083af80815c5fae", "answer": {"kind": "personal", "summary": "Notice from a colleague that team lunch is moved to Thursday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8012a732efd50f106950d781", "answer": {"kind": "receipt", "summary": "Receipt for your recent charge of $4,177", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4781c4892edf3af702306287", "answer": {"kind": "receipt", "summary": "Receipt for a ride totaling $4,126", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "71a29861e892eb5cd0cb4ab7", "answer": {"kind": "personal", "summary": "Office closure notice for Monday", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "fdb6144fb0a5d9f6853d7cdd", "answer": {"kind": "marketing", "summary": "Re-engagement email offering an option to unsubscribe from shoe store emails", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "714ce529b5b36524e3a6ce54", "answer": {"kind": "receipt", "summary": "Cloud hosting invoice for $58 to be charged automatically", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4f8c8346d28b1c3c393c5301", "answer": {"kind": "credential_request", "summary": "Request to reply with your password for account migration", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a5e4f83690eed569e1be9ba7", "answer": {"kind": "personal", "summary": "Notice from Casey that the office is closed Monday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4aa7f6d100f5c70e399dfceb", "answer": {"kind": "receipt", "summary": "Invoice notification for an upcoming automatic payment of $1,002", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "d583f52f99b290c65c5f9915", "answer": {"kind": "newsletter", "summary": "Weekly newsletter featuring top stories on climate tech", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a5e4f83690eed569e1be9ba7", "answer": {"kind": "personal", "summary": "Heads up that the office will be closed on Monday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "09151862aeee394d63ac62ca", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring top stories on remote work", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e57bb7b6c9eb9e7ff73b57c9", "answer": {"kind": "newsletter", "summary": "Weekly newsletter essay about remote work", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "63693348f68f539e04d2e3d6", "answer": {"kind": "newsletter", "summary": "Weekly startup digest newsletter covering AI agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1f4f2df8c017995907fffe88", "answer": {"kind": "receipt", "summary": "Receipt for your ride totaling $3,548", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "09e684e04083af80815c5fae", "answer": {"kind": "personal", "summary": "Notice from a colleague that team lunch is moved to Thursday", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "da44f214232c885834fde58a", "answer": {"kind": "receipt", "summary": "Receipt for a $2,458 ride", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c5a2193d920cbd28e19f5a25", "answer": {"kind": "receipt", "summary": "Invoice notification for automatic payment of $1,840", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0bded40ac04546d05bafcf94", "answer": {"kind": "money_request", "summary": "Request to send payment of $2,554 balance due by Friday", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "357a5377c98b25dc61fad310", "answer": {"kind": "newsletter", "summary": "Weekly newsletter digest covering startup funding stories", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "69405da03d618fdffc55a370", "answer": {"kind": "receipt", "summary": "Invoice notice with automatic payment of $4,605", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c161bb8ffe9bf1cec733d802", "answer": {"kind": "question", "summary": "Colleague asking for feedback on slides 4-6 before tomorrow", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c4c389e37990d9c8cd3548a9", "answer": {"kind": "scam", "summary": "Suspicious request asking to forward employee tax forms to personal Gmail", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c5976a4640fc6e1b3133394d", "answer": {"kind": "instructions_for_ai", "summary": "Prompt injection attempting to make the assistant forward the email thread", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d878bfd5db1043303608663c", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation to startup funding sync from Jordan", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "33edc8cee9239f5dc28aaf94", "answer": {"kind": "receipt", "summary": "Rideshare receipt for $2,103", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2817c9c804766e7cb6972534", "answer": {"kind": "meeting_invite", "summary": "Team lunch rescheduled to 1pm on Thursday", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "62ab3bf4c8478365054a4331", "answer": {"kind": "newsletter", "summary": "Weekly newsletter digest featuring top stories on design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8addf78bdd58fa18811a78f1", "answer": {"kind": "newsletter", "summary": "Weekly newsletter covering top stories on AI agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d006cbcdba72341a4ac42c73", "answer": {"kind": "newsletter", "summary": "Weekly security newsletter advising to enable two-factor sign-in", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "15a27974b7894ff6e53b9729", "answer": {"kind": "newsletter", "summary": "Weekly newsletter essay on startup funding", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "326a69e4ab5c49e8aa992f2b", "answer": {"kind": "receipt", "summary": "Receipt for a $4,016 ride", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "157a474cb782d3e44ef07074", "answer": {"kind": "newsletter", "summary": "Weekly newsletter digest covering top stories in climate tech", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1aaab942e3b31570fe0127e7", "answer": {"kind": "account_update", "summary": "Confirmation that your transfer to savings is complete with no action needed", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "e89fa042aedd31e55599856c", "answer": {"kind": "scam", "summary": "Impersonation scam requesting an urgent Zelle payment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e8fd9d4c0a5f43e77db7c267", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five things about startup funding you missed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5a340bdc7a01f9386118b9ee", "answer": {"kind": "receipt", "summary": "Rideshare order confirmation and receipt for $3,746", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "423a8e4594fc3bfe25499f20", "answer": {"kind": "newsletter", "summary": "Weekly startup funding digest newsletter", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e1d4d947fe859689990edf1d", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $2,312", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "beec3bf7de8d581fcbb17032", "answer": {"kind": "question", "summary": "Colleague asking for startup funding notes before Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "49adabd434ee7c9a391283bf", "answer": {"kind": "newsletter", "summary": "Weekly newsletter digest covering top stories on AI agents", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7c4d8d6f4452cfc17e9e416b", "answer": {"kind": "newsletter", "summary": "Weekly startup digest newsletter on funding stories", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ad8a402af1725e4eda613822", "answer": {"kind": "newsletter", "summary": "Weekly startup newsletter covering remote work top stories", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1ef7c3a46bc6b2364fe94eaa", "answer": {"kind": "newsletter", "summary": "Weekly newsletter featuring an essay on design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "943585081441dde8e5148b3e", "answer": {"kind": "marketing", "summary": "Re-engagement email offering an option to unsubscribe", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3b69f5a77694ffbe4d771a94", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring top news about AI agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8eea71a317de52bb88e4a8e5", "answer": {"kind": "receipt", "summary": "Rideshare receipt for $743", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e3420edeee380a738e41fea6", "answer": {"kind": "instructions_for_ai", "summary": "Prompt injection attempting to instruct the AI assistant to archive the email", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1a87a5969e8a72e5c02507f4", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring articles about design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8567e5b39c57558d2b351a65", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five articles on design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "fa1ef124b8dbe4a31795b2d0", "answer": {"kind": "question", "summary": "Jordan asking for startup funding notes before Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d28a682808b89a3f177426f7", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring climate tech updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a505cfad5c3137520418441a", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation from Alex for startup funding sync", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f64427a330ab9e4226e8edbf", "answer": {"kind": "question", "summary": "Priya asking for design systems notes before Friday", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "218aeb76d6bd69d563014d05", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring climate tech news and articles", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5a31bca40f88bf43b2a6f279", "answer": {"kind": "instructions_for_ai", "summary": "Newsletter containing hidden instructions directed at an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2acccdd512a47446d5e93737", "answer": {"kind": "receipt", "summary": "Receipt for a $3,144 purchase", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1429044a990a6ad2e92ce91e", "answer": {"kind": "money_request", "summary": "Request to wire $2,394 today for an overdue balance", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4b26c428020ba168ca618252", "answer": {"kind": "receipt", "summary": "Invoice for upcoming automatic payment", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "435630a7fb581143803517bf", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $3,500 rideshare purchase", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f14389450afa5b4958d88738", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,471", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b8d582ae8749518f17abe447", "answer": {"kind": "account_update", "summary": "Transfer of $3,693 to savings is complete", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7de7571c424004188a663264", "answer": {"kind": "receipt", "summary": "Receipt for a recent rideshare trip", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6635fb3c67ad3633f82cdd82", "answer": {"kind": "receipt", "summary": "Receipt for $1,913 payment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "82a772700224be6be0db6a0c", "answer": {"kind": "question", "summary": "Asking if you can join a call tomorrow about newsletter launch", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "17d4ac7fc6bf622bf694e49c", "answer": {"kind": "money_request", "summary": "Request to settle an outstanding balance of $2,158", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d96eac682a6e002327d712a0", "answer": {"kind": "account_update", "summary": "Confirmation of completed money transfer to savings account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "732b568f03a6d72da4ce42a9", "answer": {"kind": "newsletter", "summary": "Weekly climate tech newsletter digest", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "208435ace2d315f6d40cbc99", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $465", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "84ca03abbab456836c06cbcf", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $1,426", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "97f10d2b991bea3fbc55cfbb", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $1,393", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b3090a65ebdc4cf24230403c", "answer": {"kind": "meeting_invite", "summary": "Invitation from Alex to a climate tech sync meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9fbc94113b7a003f812be51d", "answer": {"kind": "account_update", "summary": "Confirmation that transfer to savings account is complete", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ab4df0dbe8a3234a10fad7be", "answer": {"kind": "security_alert", "summary": "Notification that your account password was changed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "126284889917a478405a2e84", "answer": {"kind": "newsletter", "summary": "Weekly newsletter digest covering top stories on design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9e60781297e10854d80d3a68", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $3,392", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "839235d535b502de2c673c7d", "answer": {"kind": "question", "summary": "Colleague asking for review of slides before tomorrow", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ab8830266248b81339698887", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation from Casey for AI agents sync", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "97cd8655bb2b5d4edf4a6d43", "answer": {"kind": "scam", "summary": "Suspicious request to forward sensitive payroll export to a personal email address", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3690e672dce59b6df4cb42fe", "answer": {"kind": "receipt", "summary": "Invoice notification for an automatic charge of $4,410", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "60a6b4e0b043f7f2b8f8af7f", "answer": {"kind": "instructions_for_ai", "summary": "Prompt injection attempting to instruct AI assistant to archive the message", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ab8830266248b81339698887", "answer": {"kind": "meeting_invite", "summary": "Invitation from Casey to AI agents sync on Thursday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d01970b1887efb2f62f91dce", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring articles about AI agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "10fb1b5d0f54457237c6384f", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $4,721", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "714140806de8c8e99eec5024", "answer": {"kind": "receipt", "summary": "Receipt for recent ride or purchase of $4,797", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "04326734445b5f7714cbd628", "answer": {"kind": "receipt", "summary": "Receipt for a rideshare ride totaling $2,623", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a165c1b54b1c0b872783a789", "answer": {"kind": "receipt", "summary": "Rideshare receipt for $3,713", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8c91bca4a608d76f0a24e737", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,230 purchase", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "eb16e9d80a4aa27b342ec18a", "answer": {"kind": "receipt", "summary": "Invoice notification with upcoming automatic charge of $4,754", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "7b338b67b8a1be1e059611c4", "answer": {"kind": "receipt", "summary": "Rideshare receipt for $3,817 ride today", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ad5addbf927b6453eeaea5c1", "answer": {"kind": "meeting_invite", "summary": "Invitation to remote work sync meeting with Priya", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9c4a24b4a5a5f5076bfe28c4", "answer": {"kind": "receipt", "summary": "Receipt for rideshare order totaling $51", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "bf2e668d2e158cf8b7d36b5a", "answer": {"kind": "receipt", "summary": "Order confirmation and attached receipt for $3,394 order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "efd85d913971c8a6ff01bccb", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride costing $2,763", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a970ecc0dfb4298a4cd4eef6", "answer": {"kind": "credential_request", "summary": "Phishing email asking you to enter your password to verify mailbox", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3317c7610638f74ec91740d3", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation from Sam for climate tech sync on Thursday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2cfa0fd3bf2d32b80dacb4c4", "answer": {"kind": "newsletter", "summary": "Weekly digest newsletter on design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "95446d3dbfe05a8d6a50a4d9", "answer": {"kind": "receipt", "summary": "Receipt for your $726 ride", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a970ecc0dfb4298a4cd4eef6", "answer": {"kind": "credential_request", "summary": "Phishing email asking to enter password to resolve mailbox issue", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "41a7f03f5a0c4f0ad212b948", "answer": {"kind": "credential_request", "summary": "Request to verify account password to maintain access", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "05fa6075efe37f80a0cd9bea", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $2,261", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "24911483706ff3c54f8a166f", "answer": {"kind": "account_update", "summary": "Confirmation of a completed transfer of $963 to savings", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "94aec972011cce54cb9ecbfe", "answer": {"kind": "account_update", "summary": "Confirmation that transfer of $2,307 to savings is complete", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "20383ce4de8c3281ff024112", "answer": {"kind": "money_request", "summary": "Urgent request to wire $2,203 to prevent service interruption", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "fa07f8e23669128bfd020a08", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $2,714", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7ea91b542e1dac5cc6dd5f4c", "answer": {"kind": "scam", "summary": "Fraudulent invoice notice claiming an upcoming charge for music streaming", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d47f490f5b6a1f8e6d93dba5", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation to remote work sync from Casey", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7773c6b80218f6c9b81e78d4", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $3,059", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ef910c956f8c4569188d4b07", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for coffee app order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "9df0a8aa098114121fd48414", "answer": {"kind": "newsletter", "summary": "Weekly startup digest covering climate tech updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "57ed6103455d82de11611f5a", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride or purchase of $3,796", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "108624f13f67dce1c58106fa", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,098", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "fdf4d476c41b9b86dec19bfd", "answer": {"kind": "receipt", "summary": "Receipt for your $4,263 ride transaction", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c6aab0549132cb000d8bea91", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $4,460 purchase", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "58b44e4fda0f114c2071645f", "answer": {"kind": "receipt", "summary": "Receipt and order confirmation for $828", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ed2f8ab4bbf267ea11abc6ad", "answer": {"kind": "instructions_for_ai", "summary": "Prompt injection attempting to make an AI forward the email thread", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "49307e4a46d6f7e1de6fe9e4", "answer": {"kind": "credential_request", "summary": "Request asking for a 6-digit verification code sent via text", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "816b1d381806d7bdadfab13e", "answer": {"kind": "newsletter", "summary": "Weekly newsletter featuring an essay on AI agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a3fb2a66589fef6a62fad140", "answer": {"kind": "receipt", "summary": "Invoice notification stating payment will be charged automatically", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "1cf2ca8434e6b5f1dac5af90", "answer": {"kind": "scam", "summary": "Fraudulent rideshare order confirmation and receipt for $3,866", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "917e4cc7efecfff6c6747fd7", "answer": {"kind": "receipt", "summary": "Receipt for your recent rideshare trip", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "be6a3a64a4778a6149dc67e3", "answer": {"kind": "commitment", "summary": "Request to reply 'I agree' to accept updated agreement terms", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "bf11654c36620979d448ac53", "answer": {"kind": "instructions_for_ai", "summary": "Email attempting prompt injection to forward message to another address", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e65ead75ef904a471a3db521", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation from Priya for design systems sync", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "903d80cae6dd9764897b30a6", "answer": {"kind": "question", "summary": "Colleague asking for remote work notes before Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4470fb3982b107fd52b8cb66", "answer": {"kind": "account_update", "summary": "Notification that your transfer to Savings is complete", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "31948759802961c141a2fea7", "answer": {"kind": "urgent_issue", "summary": "Checkout is down and customers cannot complete checkout", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "93e3a8b471254e6f33977651", "answer": {"kind": "receipt", "summary": "Invoice notification for an automatic charge of $856", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "643c34e435abe4f2f2af8ed3", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride costing $4,535", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "97ca4a71927ea1fb3016f874", "answer": {"kind": "receipt", "summary": "Invoice notice stating automatic charge of $4,564", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "14271b25ac6fe8a878139db7", "answer": {"kind": "money_request", "summary": "Request to send payment of $4,270 by Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8778430db40532c7a87259f5", "answer": {"kind": "newsletter", "summary": "Weekly digest featuring five things about design systems", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "46976f8aadbafd0eeeadcc89", "answer": {"kind": "newsletter", "summary": "Weekly newsletter digest on startup funding stories", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5e018a8bdab031012fc51a2b", "answer": {"kind": "receipt", "summary": "Receipt for a rideshare ride totaling $2,140", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b5aa676a6ca557f360fe1a36", "answer": {"kind": "question", "summary": "Requesting AI agents notes before Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2c525c3d2b9ca68384a8d96f", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $300", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "38da5cb2a3f9d9515eb13440", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,498", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "418b31550fe57be515e3499b", "answer": {"kind": "scam", "summary": "Suspicious receipt of $2,460 from coffee app for a ride", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "7de4b78bbc01afeec8f4b67e", "answer": {"kind": "receipt", "summary": "Receipt for order confirmation totaling $454", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "148f283582e405a27f83150e", "answer": {"kind": "newsletter", "summary": "Weekly digest newsletter on remote work articles", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8a0c96639ac0b462f5cdc2d8", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $3,792", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "e5bf8cf4d50fb03e25a84649", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,984", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c60506d1b9adb8b1b6224c8d", "answer": {"kind": "newsletter", "summary": "Weekly newsletter featuring an essay on climate tech", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3089f93fd431d3bb2d1c020b", "answer": {"kind": "money_request", "summary": "Request to wire overdue balance to avoid a service interruption", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4594c95185a427d367075ba7", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $4,714 from rideshare service", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e0368fca32a33f697857dfda", "answer": {"kind": "receipt", "summary": "Rideshare order confirmation and receipt for $4,501", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0b0ac89ab4acb473dbc6dd4d", "answer": {"kind": "money_request", "summary": "Request to send payment of $1,900 by Friday", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "57302f5180b602ac65391ce5", "answer": {"kind": "newsletter", "summary": "Weekly digest newsletter on remote work topics", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "574697e580fb252bf20b7d32", "answer": {"kind": "receipt", "summary": "Invoice attached with automatic payment notification of $953", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "aea967430726a684950c98ff", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation to AI agents sync from Jordan", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f2e6bef776b8127fade936d5", "answer": {"kind": "scam", "summary": "Suspicious receipt for $4,061 with mismatched ride service details", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "608329dd5537fe34794b5924", "answer": {"kind": "money_request", "summary": "Request to send funds of $3,364 by Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a8fa5edf3c46d981748d44d1", "answer": {"kind": "money_request", "summary": "Urgent request to wire $2,680 for an overdue balance", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3fc6fc70503333e20c161a8b", "answer": {"kind": "receipt", "summary": "CloudHost invoice notification with automatic payment of $482", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8470791412878615438dfa0d", "answer": {"kind": "scam", "summary": "Suspicious invoice notification charging $3,502 for music streaming", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c56ed2a4f91cc994ed5a710c", "answer": {"kind": "receipt", "summary": "Receipt for your $152 ride", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "dda8bbd68a55e63cd1155ec3", "answer": {"kind": "receipt", "summary": "Receipt for your ride totaling $4,505", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "19217f2660e8b109e72170cc", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $279", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "bf6a1ecf9af50b7f436cece5", "answer": {"kind": "scam", "summary": "CEO impersonation asking for an urgent Zelle transfer", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "87e1b3242e3e114e265813eb", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,956 purchase", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "42050c0207160e62358d9071", "answer": {"kind": "receipt", "summary": "Invoice notification for an automatic charge of $664", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "7b2697bf148776c51873a157", "answer": {"kind": "question", "summary": "Colleague asking for climate tech notes before Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4414de67dead55a25594b646", "answer": {"kind": "money_request", "summary": "Request to wire $2,817 to settle an overdue balance", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "57c0caeae81fdd71c9611d3b", "answer": {"kind": "receipt", "summary": "Rideshare receipt for recent trip", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6dd028c6b3a832c4f823666b", "answer": {"kind": "newsletter", "summary": "Weekly startup digest covering AI agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ffb5ee5ad211fa00bd5b745f", "answer": {"kind": "receipt", "summary": "Invoice notification for an automatic charge of $1,288", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "65819e8889b1d405129a2270", "answer": {"kind": "question", "summary": "Colleague asking for remote work notes before Friday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e6db74ea036dbaa0bc22b089", "answer": {"kind": "receipt", "summary": "Receipt for your $1,597 purchase today", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "58275fd85972cc4f34d89064", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride totaling $310", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f702adc071c3b9317a52d7a9", "answer": {"kind": "receipt", "summary": "Receipt for a rideshare trip totaling $4,773", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f5af4dee300f684310f95c55", "answer": {"kind": "account_update", "summary": "Bank transfer to savings account completed with no action needed", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "e39c0fc4718553931ec62d6e", "answer": {"kind": "scam", "summary": "Suspicious receipt for $3,823 ride from a coffee app", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "859077767b7e835155e46b03", "answer": {"kind": "credential_request", "summary": "Request asking to provide a texted six-digit verification code", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "80476fa13c170f2a66064012", "answer": {"kind": "receipt", "summary": "Invoice attached with automatic payment charge notice", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c05ec48daf41f94f427f4c32", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for a 914 dollar order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2622d37b24849ba72827aada", "answer": {"kind": "receipt", "summary": "Receipt for your recent ride costing $3,027", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e233ecc1ba1c66880f868498", "answer": {"kind": "receipt", "summary": "Receipt for a $3,702 ride", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "711b900735c441c058435562", "answer": {"kind": "receipt", "summary": "Receipt for a $455 ride from a coffee app", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bf20dc845f68a73e60fdf321", "answer": {"kind": "receipt", "summary": "Cloudhost invoice for $4,118 scheduled for automatic charge", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7ebd73169839450a87086398", "answer": {"kind": "receipt", "summary": "Receipt for order confirmation #57134 totaling $960", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3caf4e072ecf1a94711fefbd", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation to design systems sync from Alex", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "af35364ec7191098361ddc50", "answer": {"kind": "receipt", "summary": "Receipt for a rideshare trip totaling $4,386", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "29b42cb0e1b4b5ef9014470d", "answer": {"kind": "scam", "summary": "Suspicious receipt for $1,372 from coffee app for a ride", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "91dbe5dd5dd8613175b31f01", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $1,281 rideshare order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2f25b8d87afae7eaa7b53397", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for your purchase of $4,721", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7964b7d2d0d3d0c54bd756dc", "answer": {"kind": "receipt", "summary": "Order confirmation and receipt for $4,609 purchase", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "12a45fe1a3c28a070004caa1", "answer": {"kind": "credential_request", "summary": "Request to verify account password via link to maintain access", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f97055d69997f9c68e4dba72", "answer": {"kind": "money_request", "summary": "Request to remit $3,019 via Zelle to a vendor", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "b973e64894f0a31c75b75326", "answer": {"kind": "newsletter", "summary": "Weekly AI digest covering compact models and recent AI news", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0023b4752a8513306f1b95dd", "answer": {"kind": "newsletter", "summary": "Weekly startup digest covering funding rounds and founder AMA recap", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "69da7b2c9dca9e6d06692386", "answer": {"kind": "newsletter", "summary": "Newsletter issue addressing reader questions on fine-tuning vs prompting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8436da3274e3dac0224e9182", "answer": {"kind": "newsletter", "summary": "Daily digest of top five product launches", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7cde6f099ef3a080315d65b8", "answer": {"kind": "newsletter", "summary": "Startup Digest issue analyzing pricing pages and sharing demo days", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "87266160773724d2a645adfe", "answer": {"kind": "newsletter", "summary": "Product Hunt weekend digest featuring tools recommended by top makers", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "75e073753c872e4a1f9d333c", "answer": {"kind": "newsletter", "summary": "Weekly indie dev digest covering revenue, game jams, and desktop app tips", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "af04d1a0b58a83e3d3f815da", "answer": {"kind": "newsletter", "summary": "Special 100th issue digest reviewing a year of AI agents", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "5cc7c7faeecdbe21064ab644", "answer": {"kind": "newsletter", "summary": "Weekly ocean news digest with highlights on sea life and research", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a7a9583c8cf282fb4f317e20", "answer": {"kind": "newsletter", "summary": "September edition of the Citybikes Monthly newsletter", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5f8fc4291403903453163d40", "answer": {"kind": "newsletter", "summary": "October gardening dispatch with planting tips and balcony frost protection advice", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9ee17249a728fc9453ac5988", "answer": {"kind": "newsletter", "summary": "Morning news briefing covering financial markets and economic updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "367b77a9d825d0e17ba26321", "answer": {"kind": "newsletter", "summary": "Newsletter essay about people living beside working lighthouses", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d5d55ef7f3392b082652511c", "answer": {"kind": "newsletter", "summary": "Newsletter issue 88 featuring an essay on boredom", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "77a758dd72e811f57e522cd2", "answer": {"kind": "newsletter", "summary": "Reader replies to sleep essay and a short new essay about trains", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3de424455ad18d19b0836fa7", "answer": {"kind": "newsletter", "summary": "Part two of a serialized story about map makers", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b31d77f010fd96027c255d4d", "answer": {"kind": "newsletter", "summary": "Recipe newsletter sharing six seasonal soup ideas for autumn", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c194653f3cb0b69cc94083b1", "answer": {"kind": "marketing", "summary": "Sale offering 30% off trail runners through Sunday night", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3cfd6157973359ca2fc93943", "answer": {"kind": "newsletter", "summary": "Monthly safety newsletter with tips on spotting fake bank texts", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8f582f549e987451ef4885f7", "answer": {"kind": "marketing", "summary": "Early access preview of the new winter collection for members", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "77ed46ba6348b40a6c099886", "answer": {"kind": "newsletter", "summary": "Weekly security digest on recent breach news and router firmware updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0df34927bda93eb6fef33a64", "answer": {"kind": "newsletter", "summary": "Newsletter issue on securing smart home devices and network settings", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "373d82af0aa72d2ac56318a1", "answer": {"kind": "newsletter", "summary": "Travel security checklist newsletter from Security Weekly", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b71afcc0484dadfad0e40d17", "answer": {"kind": "newsletter", "summary": "Weekly security digest tips for preventing phishing attacks", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "902db3e9d4283ba754c9320b", "answer": {"kind": "marketing", "summary": "Flash sale offering up to 50 percent off sneakers ending tonight", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a3f91152649a4c125150bafa", "answer": {"kind": "marketing", "summary": "Boots you looked at are back in stock", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "db3f219e66fe405619899d0e", "answer": {"kind": "marketing", "summary": "Autumn sale promotion offering discounts on home items", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "eb899201ed0f085e01761298", "answer": {"kind": "marketing", "summary": "Product recommendations based on your last order with free shipping", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f38bf3b536c3aee798189f9d", "answer": {"kind": "marketing", "summary": "Clearance sale on art supplies offering up to 60 percent off", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "226e9cff7d95f7df6e27f368", "answer": {"kind": "marketing", "summary": "New smoked pear tea blend launch with free shortbread on orders", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "52b9e32f8da6a628a0ebae5c", "answer": {"kind": "marketing", "summary": "Sale on camping gear with buy one get one half off promotion", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f19f1145a3b1ca08f736e9b2", "answer": {"kind": "marketing", "summary": "Promotional email offering introductory pricing on kitchen cookware and goods", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "de609ef8b2963a073cc3f8da", "answer": {"kind": "marketing", "summary": "Free drink offer from Coffee App Rewards", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1b0c397fd3c1d7653bba1937", "answer": {"kind": "marketing", "summary": "Announcement and pre-order offer for new stationery planners", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c942a9dc519f55ea399c2064", "answer": {"kind": "marketing", "summary": "Offer for 60% off next box to reactivate paused meal subscription", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c2d2d523d55fd646830bf4b9", "answer": {"kind": "marketing", "summary": "Re-engagement email highlighting new features in the fitness app", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b89270349b5e241d7dbf66dd", "answer": {"kind": "marketing", "summary": "Tasknest re-engagement email promoting new features to inactive user", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "933462abb97c17f12edf5e1c", "answer": {"kind": "job_alert", "summary": "New remote product designer job listings matching your saved search", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ed1f703431c2a3b1c33a2b62", "answer": {"kind": "marketing", "summary": "Discount offer for returning to Sleepwell app", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "abf434ea5c5d296c953f3ba4", "answer": {"kind": "job_alert", "summary": "Job listings recommendation based on your profile", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "30fc2e2d6416a4b5dd721c96", "answer": {"kind": "social_notification", "summary": "Reminder to resume your Spanish lessons", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "452d6d2bfe2a8629fb2253fc", "answer": {"kind": "job_alert", "summary": "Weekly digest of data engineering job listings", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bb26b86921efac4b0e2d966b", "answer": {"kind": "job_alert", "summary": "Alert for three freelance project matches matching your skills", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "387805e709eab2c217e576e7", "answer": {"kind": "job_alert", "summary": "Alert for two new UX researcher job listings", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e56982bc30e7e2905f01f44b", "answer": {"kind": "job_alert", "summary": "Alert about new job postings from Northwind Robotics", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "dc1892530812be8fedb999fa", "answer": {"kind": "receipt", "summary": "Shipping confirmation and tracking for your walnut desk organiser order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6123ca158c5ff327d8cd706b", "answer": {"kind": "job_alert", "summary": "Weekly curated list of remote job openings", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "828ae6f674a50cf19321b919", "answer": {"kind": "receipt", "summary": "Receipt for your Tuesday evening rideshare trip", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "60e8b367364ddf69e005df7e", "answer": {"kind": "receipt", "summary": "Receipt for coffee and bun order paid with app balance", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9495cd0b981f18d012cb7fa2", "answer": {"kind": "receipt", "summary": "September invoice paid automatically with card on file", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "44bdd1d725a8d3ed8ba1aca7", "answer": {"kind": "receipt", "summary": "Shipping notification for fountain pen restock order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1c2e64f4980c3f3df458f32d", "answer": {"kind": "receipt", "summary": "Delivery confirmation that items were left with a neighbor", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "bc3a89059c5f6dc96de393dd", "answer": {"kind": "receipt", "summary": "Confirmation of quarterly water charge collected by direct debit", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c4e47edb2c76ae48328504a2", "answer": {"kind": "receipt", "summary": "Notification that your Duo subscription renewed for 14.99", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6bbc85073b3db79be4fda38c", "answer": {"kind": "receipt", "summary": "Cinema booking confirmation and receipt for Saturday 8:15pm screening", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "25802fc0677c23dc835ea2e1", "answer": {"kind": "receipt", "summary": "Combined receipt for three weekend rides totaling 47.20", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "60d98f99606f1ae0ef08e4e4", "answer": {"kind": "receipt", "summary": "Courier confirms parcel is out for delivery today", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "638a72d119723ecf4d53c34f", "answer": {"kind": "receipt", "summary": "Receipt for domain renewal charge of 12.00", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f4632dad6471d14a6af00104", "answer": {"kind": "account_update", "summary": "Notice of incoming payment received into your bank account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "91cfa5e0e307cabcdd2bf9c0", "answer": {"kind": "receipt", "summary": "October plant box packed and renewal confirmation", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3ee927a9cbee0da7a3a0d43e", "answer": {"kind": "receipt", "summary": "E-ticket and receipt for train travel from Bristol to Bath", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e864214f07da7b15e8dc9410", "answer": {"kind": "receipt", "summary": "Automatic subscription receipt for September", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9b96b9efddcb572244dc45c5", "answer": {"kind": "receipt", "summary": "Auto top-up of 20.00 charged to your Visa card", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a63b8358419f68c992fee527", "answer": {"kind": "receipt", "summary": "Order confirmation for linen throw", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5cf6b4cfbf1590d19e1f2466", "answer": {"kind": "account_update", "summary": "Confirmation of a completed scheduled transfer to your savings pot", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7fb47aaef04dd15a08fb615c", "answer": {"kind": "receipt", "summary": "Food delivery receipt for order from Lotus Noodle Bar", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ab9cfc36eedb53b20bd26f3a", "answer": {"kind": "receipt", "summary": "Debit card payment notification for 64.90 at Hillside Greengrocer", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5510eb9851e20410cf402f93", "answer": {"kind": "receipt", "summary": "Confirmation of rent payment received", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "fb5508e60f7c0fbc6d534b6c", "answer": {"kind": "receipt", "summary": "Gym membership monthly renewal processed for 29.00", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "eb6c5cd5f673c3833c98f588", "answer": {"kind": "receipt", "summary": "Confirmation that credit card autopay payment of 312.66 posted", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "cb1327245171e780e5240dff", "answer": {"kind": "receipt", "summary": "Order BB-2210 is out for delivery today between 11:00 and 15:00", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9673dc433676d231a2a7e1bf", "answer": {"kind": "receipt", "summary": "Refund of 45.00 issued for returned ceramic lamp", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "47d9f25974a3266b01927fdf", "answer": {"kind": "receipt", "summary": "Confirmation of council tax payment received for October", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ea5a7e406c4050d93dd16bcc", "answer": {"kind": "receipt", "summary": "Receipt for automatic monthly charge for storage add-on", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "af54220870ffe6130439abc8", "answer": {"kind": "receipt", "summary": "Confirmation that your standing order payment was paid", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "79aef26aef6889435e7639cc", "answer": {"kind": "receipt", "summary": "Shipping update for books from Pagecraft Books", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b865c4e3d3cbe7f33ca5f2b0", "answer": {"kind": "receipt", "summary": "Receipt for your iced mocha purchase at Canal Street", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a1d690620d43543c6013588a", "answer": {"kind": "receipt", "summary": "Confirmation of annual subscription renewal charged at 119.00", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2ba7047040d9b3eaa3361236", "answer": {"kind": "receipt", "summary": "Receipt for your airport drop-off ride of $31.75", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "7c5c2fa2e3535df0cf83214e", "answer": {"kind": "receipt", "summary": "Payment received from Dunmore Studio for invoice #0047", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "001cf900b6ba7f919212cc56", "answer": {"kind": "receipt", "summary": "Replacement cushion cover shipped with tracking number", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "838eb0c4b69f40b555b6f310", "answer": {"kind": "receipt", "summary": "Confirmation that an international transfer of 300 EUR was sent", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bf0782522f1081cce217c451", "answer": {"kind": "receipt", "summary": "Delivery update and receipt for your weekly meal kit box", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2c5720fac56ff43d78c04ad5", "answer": {"kind": "account_update", "summary": "Service credit applied to account for recent outage", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f27c341fa2f5d4a0cbc2ad17", "answer": {"kind": "receipt", "summary": "Shipping confirmation and tracking code for yarn order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "413681427abf86575f72cc1d", "answer": {"kind": "receipt", "summary": "Storage plan renewal payment confirmation", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "36a412bafe2b40f4e75e550a", "answer": {"kind": "account_update", "summary": "Notice confirming the automatic renewal of your home contents insurance policy", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2e5339c2337c6b43395382ee", "answer": {"kind": "receipt", "summary": "Delivery update moving order arrival to Friday", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "608094bccca4a00252975639", "answer": {"kind": "receipt", "summary": "Scooter ride receipt covered by monthly pass with no extra charge", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "de7cfa4a4eeefc5b848e8d65", "answer": {"kind": "receipt", "summary": "Dispatch notification for festival wristbands sent via tracked post", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d3ed29bece6e9381905c608e", "answer": {"kind": "receipt", "summary": "Final hotel folio and checkout receipt for Harbour Lights Hotel", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0b1533ad3844f3c4cdaa242c", "answer": {"kind": "receipt", "summary": "Direct debit of 29.00 paid to GYMFLOW from your bank account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2d53a5ef6922907ccd0cf5a3", "answer": {"kind": "receipt", "summary": "Insurance claim payout confirmation sent for vet visit", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "7c321235016739f62c7ad1ba", "answer": {"kind": "account_update", "summary": "Energy bill notice to be collected automatically by direct debit", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "717c97351bbc49945915bc6e", "answer": {"kind": "personal", "summary": "Jordan will be out on Monday for a dentist appointment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8f528d695a0030cb7aa0c8cb", "answer": {"kind": "account_update", "summary": "North lift out of service Thursday morning for scheduled maintenance", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b8c24ed126531d8946729487", "answer": {"kind": "personal", "summary": "Priya merged your edits into the onboarding checklist", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "93ddade35bc767cd440228cf", "answer": {"kind": "file_share", "summary": "Notification that the Q3 board deck is in the shared folder", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "20c5f3d38a9d5dd3d74daa28", "answer": {"kind": "personal", "summary": "Colleague created an expense codes wiki page and pinned the link", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "868cfa208e200e00f2007a56", "answer": {"kind": "personal", "summary": "Notice that the search filter bug fix is live and tested", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "889a124a9b65a978f9170a00", "answer": {"kind": "personal", "summary": "Vendor call summary noting Bramblewood pushed delivery to the 14th", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "08c9de86bcff3f226344d77d", "answer": {"kind": "personal", "summary": "Forwarded notice that Elm Street parking garage is closed Saturday", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "d22091d3b2eedf115c71d98c", "answer": {"kind": "question", "summary": "Colleague asking for June customer survey raw results", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e4f6f11899ae1a580ed6face", "answer": {"kind": "question", "summary": "Casey asking which template to use for the client recap", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "987417d32fd2c40b1f748844", "answer": {"kind": "personal", "summary": "Intern welcome lunch moved indoors due to rain", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "8009382786d7d5e6362e25b7", "answer": {"kind": "question", "summary": "Jordan asking for feedback on hiring rubric draft by Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4cc8b236ffe89e04693b7591", "answer": {"kind": "question", "summary": "Priya asks who currently owns the press list", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "89caa85404b42eb7d071d945", "answer": {"kind": "account_update", "summary": "Notice that the guest wifi password will rotate on Monday", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "262e5c99a9cf983e6eea1c96", "answer": {"kind": "question", "summary": "Colleague asking for a coffee chat about the reporting pipeline", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "05389e17cfb6773e902eae50", "answer": {"kind": "question", "summary": "Colleague asking for the slides from your accessibility workshop", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a3da5c850f474e3e23ee5371", "answer": {"kind": "account_update", "summary": "Notice about the third-floor fridge clear-out this Friday", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "d79785859f96a9af1815de9e", "answer": {"kind": "question", "summary": "Coworker asking for lunch order before 11:45", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "01b15f9b5f0a336b92f9705b", "answer": {"kind": "question", "summary": "Jordan asking for viewer permission to the headcount forecast sheet", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d2615379d9eaa5a8ab92e114", "answer": {"kind": "question", "summary": "Felix asking for the name of a hiking trail you visited", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7b9375ce02016198e7b47140", "answer": {"kind": "question", "summary": "Recruiter following up to schedule a call about next steps", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1526ec0e7bfeefc7dab9e78b", "answer": {"kind": "question", "summary": "Coworker asking for the potluck lentil salad recipe", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d203e11936042d43a40fc499", "answer": {"kind": "question", "summary": "Colleague asking to confirm September sign-up figure for the monthly update", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a794e5dbf96b2d293a43652d", "answer": {"kind": "question", "summary": "Colleague asking to link your newsletter piece in onboarding guide", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1b453b090c4d2f5f1b5ac4b9", "answer": {"kind": "question", "summary": "Colleague asking for intern project ideas by end of week", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5c6de67a65eb012989168bef", "answer": {"kind": "question", "summary": "Casey asking for the name of an AI digest you recommended", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2cf5dcca45dd08733d18bb61", "answer": {"kind": "question", "summary": "Coworker asking how to unsubscribe herself from build alert emails", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3e3acb7349733604ce87c5cf", "answer": {"kind": "question", "summary": "Colleague asking for a brief project update for the team newsletter", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b4cc0290c51d3b6f5405bae2", "answer": {"kind": "question", "summary": "Colleague asking to verify flagged contractor names on the mailing list", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "cafe9b5797e29924fdc190d6", "answer": {"kind": "question", "summary": "Colleague asking for your thoughts on forwarded newsletter about usage-based pricing", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5ef80b50ceeffefe9c0e9c7e", "answer": {"kind": "question", "summary": "Jordan asking to reschedule today's 1:1 meeting to 3pm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7b9b7f9ee8b32ae5c22b9ace", "answer": {"kind": "question", "summary": "Colleague asking which tool is currently used to send customer newsletters", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8e39a796b79d0c0ee6ea2d56", "answer": {"kind": "question", "summary": "Colleague asking to move design review to Thursday at 10", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b531f0eaf99c3d9d7e2f5bde", "answer": {"kind": "question", "summary": "Colleague asking to reschedule Friday's planning session to early next week", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "59ecb613ad2177d2b85418f1", "answer": {"kind": "question", "summary": "Casey asking to push meeting start time to 9:30", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6223a0e3fcbfa125594bba43", "answer": {"kind": "question", "summary": "Colleague asking to move Friday's sprint retro to 1pm", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "32fe7d008d5b63d630ecf220", "answer": {"kind": "question", "summary": "Jordan asks if 4:30pm works better for the budget walkthrough", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c78c04b10b3d8e9c0c17cbaf", "answer": {"kind": "question", "summary": "Priya asks to move next week's check-in to Thursday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "dc2f2b9d2b35eecee167bce5", "answer": {"kind": "meeting_invite", "summary": "Updated calendar invite for Pricing workshop", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8e5182b017dc01e199ce80d3", "answer": {"kind": "meeting_invite", "summary": "Invitation from Lena Marsh to coffee with new hires", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "671d75f0b06e05cd1a2d480b", "answer": {"kind": "question", "summary": "Colleague asking to move tomorrow's call to the afternoon", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6317d7d65c1de8f769504062", "answer": {"kind": "meeting_invite", "summary": "Invitation from Priya Shah to Q4 roadmap kickoff meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5ef134fa3a9a6983320dcba4", "answer": {"kind": "personal", "summary": "Notice of scheduled office fire drill on Wednesday at 10:30", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "3b9b4a58fba87c0970747c25", "answer": {"kind": "meeting_invite", "summary": "Invitation to farewell drinks for Tomas with RSVP request", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "40f3da7cca15623cdc069a8b", "answer": {"kind": "meeting_invite", "summary": "Invitation to weekly analytics standup meeting from Oskar Lind", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f83db4fb74ce5575bb98e40f", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation for an Integration sync with PartnerCo", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "72cfa576a2ae7a8f0481d3b9", "answer": {"kind": "meeting_invite", "summary": "Invitation to the November design guild meetup", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a9d83da4b364ed45fda43080", "answer": {"kind": "meeting_invite", "summary": "Invitation to brainstorm the referral program on Tuesday at 15:00", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a62b6703f9e173661120d8e7", "answer": {"kind": "meeting_invite", "summary": "Invitation to a backend engineer hiring panel meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a3590d9fa0fb679de999b1d8", "answer": {"kind": "question", "summary": "Casey asking for the name of a ramen restaurant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "500db43bb00edb2b1bc7da9b", "answer": {"kind": "question", "summary": "Dad asking which router button to press to fix the internet", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8a3d46be8f70f987af8b5e28", "answer": {"kind": "question", "summary": "Aunt Ruth asking for your lemon drizzle cake recipe", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "04153e2c33b99385479b787e", "answer": {"kind": "question", "summary": "Jordan asking for a book recommendation for an upcoming flight", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7ca4afddcafa82e28a9d840b", "answer": {"kind": "question", "summary": "Coworker asking to share team photos from the offsite", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "235890a1045dfb66dc4b2cd3", "answer": {"kind": "question", "summary": "Priya asking for plant care advice for her dying monstera", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1e2a535dfc40332134a4c8fc", "answer": {"kind": "question", "summary": "Mom asking what dish you are bringing to Thanksgiving dinner", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d200b2759db8d97e5822c928", "answer": {"kind": "question", "summary": "Colleague asking for your vote on a pub quiz team name", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e751d932c1aff122fb292dd7", "answer": {"kind": "question", "summary": "Cousin Ari asking for hotel neighbourhood and coffee recommendations", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d106abdac73e2277efc9f104", "answer": {"kind": "question", "summary": "Jordan asking for the podcast episode on on-call burnout mentioned earlier", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1fd242f6c9da153bf89a91c1", "answer": {"kind": "question", "summary": "Colleague asking for slides from your lunch-and-learn talk", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4546426e0139b55fe1650510", "answer": {"kind": "cold_outreach", "summary": "Recruiter outreach regarding a Staff Engineer position at a logistics firm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4b0e8e694b13f3f4eea268bb", "answer": {"kind": "question", "summary": "Colleague asking for vendor call notes before the retro", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "0a62aa873951e4cf2d88a9f7", "answer": {"kind": "cold_outreach", "summary": "Recruiter reaching out about a role after reading your billing pipeline write-up", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3faa984660f3368e3310437d", "answer": {"kind": "cold_outreach", "summary": "Recruiter following up about a senior backend engineering role", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "542b4ebc6ec5e155c87b3ded", "answer": {"kind": "cold_outreach", "summary": "Recruiter asking if open to remote contract work starting January", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "45c282831c10ce367bda6ca6", "answer": {"kind": "cold_outreach", "summary": "Recruiter reaching out about a remote design lead role at a startup", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ae800af5f7b1311604ff70a6", "answer": {"kind": "cold_outreach", "summary": "Recruiter asking to meet for coffee during Lisbon meetup visit", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e214029560035c24d44da255", "answer": {"kind": "cold_outreach", "summary": "Recruiter reaching out about an engineering manager role via referral", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2839c81e21425868faab92ae", "answer": {"kind": "cold_outreach", "summary": "Pitch offering nearshore developers for open engineering roles", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f9152b0b4376e66eb7ef6977", "answer": {"kind": "cold_outreach", "summary": "Recruiter reaching out about a lead role after reading your post", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2dc95dfeb63e1d1a474b8d95", "answer": {"kind": "cold_outreach", "summary": "Cold outreach pitching NimbusDesk customer support software", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "79b0d8c2a736c0ee9af9ee3f", "answer": {"kind": "cold_outreach", "summary": "Pitch for a shift scheduling tool asking for a 15-minute call", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "738eabe3a0cfc3fbb9d7cc3a", "answer": {"kind": "cold_outreach", "summary": "Cold pitch offering startup bookkeeping services and requesting an introductory call", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "779aca02029c9af3abdeb2fd", "answer": {"kind": "cold_outreach", "summary": "Cold sales follow-up requesting twenty minutes for a product demo", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2e4918cd9da4b4749a81393e", "answer": {"kind": "cold_outreach", "summary": "Pitch offering website speed optimization services and a mobile performance report", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "18cdbae681d41c8bac0daaa8", "answer": {"kind": "cold_outreach", "summary": "Unsolicited sales pitch offering office plant maintenance services and a consultation", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2133a293dd5b3b2edbef5a38", "answer": {"kind": "cold_outreach", "summary": "Unsolicited pitch for a podcast guest spot and production package", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "392fea339a684eabc42435f9", "answer": {"kind": "money_request", "summary": "Colleague asking you to send payment to Holloway Print today", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8d0a1a384a8d13be28caefcc", "answer": {"kind": "money_request", "summary": "Request for a $400 deposit to hold a cabin rental reservation", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "ddbf12b27312f9553f3a8260", "answer": {"kind": "money_request", "summary": "Request to send Theo your share of the offsite dinner bill", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6e3101a506fd61599a15380e", "answer": {"kind": "meeting_invite", "summary": "Headcount request for the Saturday Pine Ridge loop hike", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "942de6f4a5dcc6ba13099e8d", "answer": {"kind": "money_request", "summary": "Payment request for overdue cloud hosting balance to avoid instance deletion", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d6874e407a9867963674fae2", "answer": {"kind": "scam", "summary": "Fraudulent request to buy gift cards and send photos of the codes", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b432a8753054e8927494f08b", "answer": {"kind": "money_request", "summary": "Notice requesting payment for an unpaid toll balance of $6.85", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "224e36d9f247e58e959aaa90", "answer": {"kind": "scam", "summary": "Urgent wire transfer request impersonating colleague before boarding flight", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7d3b52619e37bc9d911d73b5", "answer": {"kind": "scam", "summary": "Fraudulent request impersonating a pastor asking for grocery gift cards", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "ebac2a8fbdfeae82d75c54b7", "answer": {"kind": "scam", "summary": "Fraudulent voucher claim requiring purchase of a gift card", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "4e170af932d5ff157af2f4c4", "answer": {"kind": "scam", "summary": "Impersonation scam asking for iTunes gift card codes", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "cea0202b2c8f8dfdd1073d9b", "answer": {"kind": "money_request", "summary": "Request to purchase three gift cards for an upcoming raffle", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ac73265542710df96344eb1f", "answer": {"kind": "credential_request", "summary": "Colleague asking for a verification code sent to your phone", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "da91d32fe8eef0be7d5588c0", "answer": {"kind": "credential_request", "summary": "Bank alert requesting 6-digit verification code to keep account open", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2f458bd00f9fdd15e0f8a1db", "answer": {"kind": "credential_request", "summary": "Colleague asking for the shared Beacon analytics account password", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d35c01cc64bacf223669677a", "answer": {"kind": "credential_request", "summary": "Phishing attempt asking for username and password for mailbox migration", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "48180d6ffda6ee13363b66ff", "answer": {"kind": "security_alert", "summary": "Alert about a new device sign-in to your online banking account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6ff9bd615cc2508511f59f0e", "answer": {"kind": "security_alert", "summary": "Notification that your account password was changed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "41ca75b04858081cab040106", "answer": {"kind": "security_alert", "summary": "Notice that your account recovery email was updated", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0c109cb1051c2b3527675916", "answer": {"kind": "money_request", "summary": "Request to purchase gift cards on corporate card for client team", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "73d9781c61bcd0a64909e553", "answer": {"kind": "credential_request", "summary": "Developer asking for site admin username and password to deploy fixes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "751b0b9fbae013fe23e4610b", "answer": {"kind": "security_alert", "summary": "Notification that a new payment card was added to your wallet", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2f33d06e7c39e718f9ac4858", "answer": {"kind": "credential_request", "summary": "Requests password and card PIN to restore locked account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ee1e90a60ebe12ec653db16c", "answer": {"kind": "question", "summary": "Colleague asking for Mateo's past performance review and HR notes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "17e7f27c4b1d67240216526e", "answer": {"kind": "security_alert", "summary": "PhotoVault alert about a blocked suspicious sign-in attempt", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7fef026fb709057755ab4532", "answer": {"kind": "security_alert", "summary": "Alert that two-factor authentication was disabled on your account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "50b43486ad5f31a08c38502b", "answer": {"kind": "question", "summary": "Clinic requesting vaccination records and insurance card photos before your appointment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "29604c1fdae68b4155c14140", "answer": {"kind": "scam", "summary": "Request for passport scan, Social Security number, and voided cheque", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "103ce63fe9fdc72314c455d8", "answer": {"kind": "question", "summary": "Harborview Apartments requesting driver's license and pay stubs for application", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8e5a0793d5f4e48d2a8cf5f2", "answer": {"kind": "commitment", "summary": "Roof quote requiring agreement to lock in booking and price", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4b216326ca2483285b498aef", "answer": {"kind": "scam", "summary": "Request to reply with bank account and routing numbers", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2e41ed2388367a4adc1b33eb", "answer": {"kind": "commitment", "summary": "Request to confirm and approve revised Statement of Work", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5876de6344b74ee24fa374fb", "answer": {"kind": "commitment", "summary": "Request to accept updated renewal terms for subscription", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3644c8e5ae2b474dca7a448c", "answer": {"kind": "commitment", "summary": "Forwarded invitation to confirm keynote slot and accept speaker agreement terms", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1a731e9aca5c1aa13b5118f2", "answer": {"kind": "commitment", "summary": "Venue hold expiring tonight, requesting confirmation of cancellation policy", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c7a4299869becc52b12129f2", "answer": {"kind": "scam", "summary": "Phishing email requesting sensitive personal and banking details for benefits enrollment", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "a4ec2ce4e1ab981774d25b01", "answer": {"kind": "commitment", "summary": "Request to reply agreed to mutual NDA terms before call", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0c47381483729cf5d6e2c846", "answer": {"kind": "urgent_issue", "summary": "Checkout is failing with 500 errors and orders stopped", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "604409005e8cc5183e9df129", "answer": {"kind": "urgent_issue", "summary": "Colleague reporting the homepage is down and asking who is on call", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e401cd96929e77f783110aa4", "answer": {"kind": "urgent_issue", "summary": "Front desk booking system is down with a queue out the door", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3d408f7831eade912372f15d", "answer": {"kind": "urgent_issue", "summary": "Production database disk is full and writes are failing urgently", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4dc9c4527fa2f77b58dfa7e8", "answer": {"kind": "urgent_issue", "summary": "Alert from coworker that customer card payments are failing system-wide", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d1f468620d3f5a7c5040f5be", "answer": {"kind": "instructions_for_ai", "summary": "Shipping notification containing hidden instructions targeting an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "bbab4ff2ac07c65218c1868d", "answer": {"kind": "urgent_issue", "summary": "Production API is unreachable across all regions and failing health checks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "983ca502c22235769e97633f", "answer": {"kind": "instructions_for_ai", "summary": "Event invite containing hidden prompt injection instructions for AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "33954949d4b2fc58c72cdfb1", "answer": {"kind": "instructions_for_ai", "summary": "Startup digest newsletter containing hidden prompt injection instructions for assistants", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "70aeeb87e211a3d7baae2f9e", "answer": {"kind": "instructions_for_ai", "summary": "Recruiting outreach containing prompt injection directed at AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f91bbe525d703f4eb8de7bd4", "answer": {"kind": "instructions_for_ai", "summary": "AI newsletter containing prompt injection instructions for assistants", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "68cedd5cd2c69ecd54d6ccf3", "answer": {"kind": "instructions_for_ai", "summary": "Forwarded review containing prompt injection instructions to send board deck", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "d5edbd26baaaab5e25caed41", "answer": {"kind": "instructions_for_ai", "summary": "Order shipping update with hidden prompt injection targeting an assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7d5a631a2ccb23dfad3c8a3c", "answer": {"kind": "instructions_for_ai", "summary": "Product newsletter containing hidden instructions directed at an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "318209dec544824bfb6e46a9", "answer": {"kind": "instructions_for_ai", "summary": "Startup digest containing prompt injection targeting AI reader", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7d5e454bb8085517cf602ddf", "answer": {"kind": "instructions_for_ai", "summary": "AI Weekly newsletter containing prompt injection instructions", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c2930967df66b89fbf518483", "answer": {"kind": "instructions_for_ai", "summary": "Message attempting to instruct the assistant to upgrade autonomy silently", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "7370682b8518b8edef822c48", "answer": {"kind": "instructions_for_ai", "summary": "Sender instructs assistant to forward confidential board deck and cap table", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "79ad4389f1879406a1f3b46f", "answer": {"kind": "instructions_for_ai", "summary": "Unauthorized tool call command instructing assistant to forward emails", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "cdbe98190d51b8477c0e3ae7", "answer": {"kind": "instructions_for_ai", "summary": "Instructions telling the email assistant to automatically archive bank alert messages", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "2f4c12e08f742c8ec855b190", "answer": {"kind": "instructions_for_ai", "summary": "Meeting invite containing instructions directed at the email assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a3882230b16a50912d6a75d4", "answer": {"kind": "instructions_for_ai", "summary": "Ride receipt containing instructions for automated agents", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "93f57038b43b3e02b802f764", "answer": {"kind": "instructions_for_ai", "summary": "Unsolicited prompt attempting to instruct AI to extract confidential salary data", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "26ca1f4e8f1e14fedc1f1abd", "answer": {"kind": "instructions_for_ai", "summary": "Attempt to override instructions and extract inbox email subjects", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b26ae5052d00e5f98ce024f0", "answer": {"kind": "instructions_for_ai", "summary": "Job alert email containing instructions targeted at AI screening assistants", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b9c86ce1677602eded5efeb3", "answer": {"kind": "money_request", "summary": "Failed payment notice requesting $312 to avoid hosting suspension", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2821baf318caf90b678a5fd3", "answer": {"kind": "instructions_for_ai", "summary": "Prompt injection attempting system override to exfiltrate client data", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "80ba2d26a4bac78e28d49d69", "answer": {"kind": "scam", "summary": "Impersonation scam requesting purchase of gift cards and photos of codes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e3b61b79a5088d063cf32fcf", "answer": {"kind": "instructions_for_ai", "summary": "Sender asks email assistant to reveal recent inbox verification codes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e88694e7854e8d29da1603f1", "answer": {"kind": "scam", "summary": "Urgent wire transfer request bypassing finance protocol, likely executive impersonation fraud", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "db790cfd4920509dae6fba45", "answer": {"kind": "money_request", "summary": "Casey asking to send $60 for team lunch", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1e48d0359b545ed17b316336", "answer": {"kind": "scam", "summary": "Fraudulent request to renew subscription using a gift card", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "063827a93a488008cdd489e3", "answer": {"kind": "money_request", "summary": "Request to pay outstanding invoice of $7,850 to updated bank account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f4d8cbb75d4e6bfd16419fd9", "answer": {"kind": "scam", "summary": "Request to wire rent payment to a new bank account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "23e7a5c9fc320a54006f02c6", "answer": {"kind": "money_request", "summary": "Request to purchase gift cards and send the codes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d69044325ee4e7d0660204a8", "answer": {"kind": "credential_request", "summary": "Colleague asking to forward a phone verification code", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "333c1d4f4f8b1ccc3f12e5c1", "answer": {"kind": "credential_request", "summary": "Request to reply with a texted 6-digit code to stop payment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f0b94b616af3fa7260c5857a", "answer": {"kind": "credential_request", "summary": "Request to reply with your mailbox password for scheduled migration", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "6595757355d84c0555d0291d", "answer": {"kind": "security_alert", "summary": "Alert about a new sign-in to your bank account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1a688eb67bfacc504824c1c7", "answer": {"kind": "security_alert", "summary": "Notice that your account password was changed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2fd5ba479f528821165882a7", "answer": {"kind": "security_alert", "summary": "Alert about a sign-in to your account from a new country", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f2058d3d1e38a7e2de57938e", "answer": {"kind": "security_alert", "summary": "Notification that your sign-in email address was changed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e7c06e02dbc47d7b466744fb", "answer": {"kind": "credential_request", "summary": "Colleague asking for login details for shared analytics dashboard", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1dd7a57b6ca20b87ed76adc2", "answer": {"kind": "question", "summary": "Colleague asking to forward Sam's medical leave note", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "83e5617ea25fcc33d4cb8a59", "answer": {"kind": "question", "summary": "Priya requesting forwarding of the team performance reviews folder", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "dee5e7f9cdd7880fb7932eee", "answer": {"kind": "scam", "summary": "Request for Social Security number and passport scan before interview", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "85a1a7670f9adf409cfc67ad", "answer": {"kind": "credential_request", "summary": "Phishing notice asking for email and password to verify fitness account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5145019a5b2fb8d5aacd233b", "answer": {"kind": "commitment", "summary": "Requesting confirmation to agree to NDA terms", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "fa5d9a8df19d2161d346c923", "answer": {"kind": "commitment", "summary": "Office fit-out quote requiring reply to accept terms and book crew", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7dc260565a61c0bd616600e8", "answer": {"kind": "security_alert", "summary": "Alert that two-step verification was turned off for your account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e71a8de7868d7af080beafff", "answer": {"kind": "commitment", "summary": "Request to confirm an Enterprise plan upgrade for $9,000 per year", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7c63896b7582e213fb5e0861", "answer": {"kind": "commitment", "summary": "Request to reply and confirm a three-year contract renewal", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2750ff51deedf316f7ee42ad", "answer": {"kind": "commitment", "summary": "Lease renewal offer asking to reply accept to renew", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d26860c0b2bf8e21ac5de66f", "answer": {"kind": "scam", "summary": "Requesting bank details and ID photo for alleged payroll update", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ec01a0de8e962a8627d9fa66", "answer": {"kind": "receipt", "summary": "Confirmation of automatic payment for your monthly music streaming subscription", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0c37276cc86d7b2df57a05fc", "answer": {"kind": "instructions_for_ai", "summary": "Sale email containing hidden instructions targeting an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "366a1b7bedcf9bc47b126592", "answer": {"kind": "account_update", "summary": "Notification that $1,200 was deposited into your checking account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "fd9cf3c15f2141c53aa09e06", "answer": {"kind": "personal", "summary": "Coworker offering to show password manager setup over lunch Thursday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c4f3c6dba1ef9f1210ec8ba5", "answer": {"kind": "marketing", "summary": "Bonus gift card offer on purchases ending this Sunday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "16bd8f0a754d42c438dd3c45", "answer": {"kind": "receipt", "summary": "September invoice paid automatically via autopay", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9d1bf9b2503dc133dfb61d83", "answer": {"kind": "receipt", "summary": "Your desk lamp was delivered to the front door", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "11b75439aa851a3f888de37d", "answer": {"kind": "newsletter", "summary": "Weekly cybersecurity digest with tips on spotting phishing emails", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "447eec098af9f797af993c7c", "answer": {"kind": "account_update", "summary": "Notice that scheduled bank transfer to savings is complete", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "d156ead73fd23880bbb7ba7f", "answer": {"kind": "marketing", "summary": "Coffee app offering $5 credit to encourage your next order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a5f6b5d525600cca37652ccb", "answer": {"kind": "credential_request", "summary": "Request to reply with your password due to flagged activity", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "065aa7d9a538b7a391106a03", "answer": {"kind": "question", "summary": "Colleague asking for security training slides from Monday", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "979a00925c89250ac3635f62", "answer": {"kind": "scam", "summary": "Request for personal and medical information to process an insurance claim", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "68d67b430b65d192b02c5a21", "answer": {"kind": "newsletter", "summary": "AI Weekly digest on prompt injection attacks and defenses", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "402979de7444a9863d255081", "answer": {"kind": "security_alert", "summary": "Notice about new two-factor security badges being distributed next week", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "804e47b65b23d1c2769f2e6d", "answer": {"kind": "question", "summary": "Maya asking if her package arrived at your place", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "9f5cc3973669caa633be6d6e", "answer": {"kind": "commitment", "summary": "Service agreement ready to accept terms and sign", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a1d57203b9a618fa34b69b54", "answer": {"kind": "account_update", "summary": "Notice that you gave Notely access to your account data", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2c571f7cc4be692adefc57f0", "answer": {"kind": "money_request", "summary": "Urgent request to wire payment to avoid account suspension", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "48c469c750169bb93cc2bc01", "answer": {"kind": "account_update", "summary": "Welcome email confirming creation of your new workspace", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4d73aa2b1517fe9a0bce7cc2", "answer": {"kind": "security_alert", "summary": "Alert about a new sign-in on a Windows device", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8ed0f55ba984fd18c4ac576e", "answer": {"kind": "job_alert", "summary": "Alert with 12 new intern job listings in Toronto", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f8f9b3dd84a1d7747a45b80e", "answer": {"kind": "instructions_for_ai", "summary": "Hidden instruction trying to secretly forward invoices to an external address", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1f497cb482fe0ffaec4272ae", "answer": {"kind": "marketing", "summary": "Fall new arrivals announcement offering free shipping", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "996167f99155cb36855f46eb", "answer": {"kind": "question", "summary": "Sam asking to send the slides from Tuesday before Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1e3670df4339d0ec5ba4faf1", "answer": {"kind": "marketing", "summary": "Promotional email for store e-gift cards", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a3339953b96a62d257b13c7c", "answer": {"kind": "receipt", "summary": "Delivery rescheduling request for your sofa order", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "169fe360a5aebf304359caa7", "answer": {"kind": "receipt", "summary": "Order #4821 is out for delivery today", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "726cf37ec7013d14fc2d0d75", "answer": {"kind": "scam", "summary": "Impersonation scam requesting purchase of gift cards and codes", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "c283d62b6d39a163730be14e", "answer": {"kind": "question", "summary": "Recruiter asking if you are free for a call on Tuesday", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "6f48621f7c0f4065af023699", "answer": {"kind": "newsletter", "summary": "Startup digest with founder advice on hiring your first engineer", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "91b64a6c9a9ded6c6aa083d7", "answer": {"kind": "newsletter", "summary": "AI Weekly newsletter covering on-device model benchmarks and a reading list", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "682e08e56d290f85693d9993", "answer": {"kind": "newsletter", "summary": "Weekend roundup of top five tool launches", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1959d660e25b55c0cf028372", "answer": {"kind": "newsletter", "summary": "AI Weekly digest covering agents, evaluations, and a new open model", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "41f96a175f77f797aac60a5c", "answer": {"kind": "newsletter", "summary": "Daily digest of top product launches featuring a notes app and tools", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d1fe38efbca8e0e57a7f2b09", "answer": {"kind": "newsletter", "summary": "Startup Digest newsletter covering seed funding trends and founder pricing insights", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c4ddceea267c6174374649d9", "answer": {"kind": "newsletter", "summary": "Weekly digest recommending five new local brunch spots", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5f2e83da1977f4958eb59f4d", "answer": {"kind": "newsletter", "summary": "October planting guide with tips on bulbs, garlic, and frost protection", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e2b5c51980e80eb8094f5a9d", "answer": {"kind": "newsletter", "summary": "Reader survey results and editorial changes from Startup Digest", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e1c482f5b96ac3ac44957be7", "answer": {"kind": "newsletter", "summary": "Devtools Digest newsletter covering build caching tricks and test runners", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3ac8b63ce79971bd396871c9", "answer": {"kind": "newsletter", "summary": "Design newsletter about dark mode colours and resources", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a44b426f3684b43b4e043895", "answer": {"kind": "newsletter", "summary": "Climate Brief digest covering wind power records, battery plant, and emissions ruling", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5c12f07cf63b942e968015b6", "answer": {"kind": "newsletter", "summary": "Weekly AI news digest covering chips, chatbots, and copyright developments", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ae46f574e8f338c1de00399e", "answer": {"kind": "newsletter", "summary": "Newsletter featuring an essay on keeping notebooks for forty years", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2784f11b7967b9ac14d670b1", "answer": {"kind": "newsletter", "summary": "Stories from night shift workers featured in Longform Notes", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7b8408a462da675931927ceb", "answer": {"kind": "newsletter", "summary": "Autumn break notice and archive essay recommendations", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "23d29c9c95d1abe08c0e81bc", "answer": {"kind": "newsletter", "summary": "Weekly essay about a town that restored its river", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "be4c7066b2f5014b6e2574b5", "answer": {"kind": "newsletter", "summary": "Monthly digest of open source community updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "70cffdb65064feeaff65f07c", "answer": {"kind": "newsletter", "summary": "Security digest with password tips and an explanation of passkeys", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a5c8a06850065af4de7b487e", "answer": {"kind": "marketing", "summary": "Autumn sale offering up to 40% off running and trail shoes", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "22fcfcb8e8d8d2eba6b98112", "answer": {"kind": "newsletter", "summary": "Monthly tip explaining how and why to lock your SIM card", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3017df0151c89421d0dbe0e9", "answer": {"kind": "marketing", "summary": "Announcement of new walking shoe colors", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "45abb98ff549a8611dec9f10", "answer": {"kind": "marketing", "summary": "Early access to members' seasonal sale for home, kitchen, and garden", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "91d6ac270abb9b3616fcd2d1", "answer": {"kind": "marketing", "summary": "Sale ending tonight with an extra ten percent off shoes", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1f7bd7402c12bbba134fe1b5", "answer": {"kind": "marketing", "summary": "Warehouse clearance sale offering half-price kitchenware items", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7f9dd0c0ceeac6251e8bbd9c", "answer": {"kind": "marketing", "summary": "Product recommendations and free delivery promotion for autumn items", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4a3957d35458fc5e72dfe6f4", "answer": {"kind": "newsletter", "summary": "Newsletter digest sharing tips on how to identify fake login pages", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "997e24886a650d9d8282efa3", "answer": {"kind": "marketing", "summary": "Travel gear discount offering 25 percent off with promo code", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3accf4cae5e93b231ac18f12", "answer": {"kind": "newsletter", "summary": "Weekly security digest covering router patches and a data leak", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ef3f80a45dcedf8f93d5c630", "answer": {"kind": "newsletter", "summary": "Monthly cybersecurity newsletter with backup and two-step login tips", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8787021c51bd9c2b67964cbd", "answer": {"kind": "marketing", "summary": "Winter scents promotion and free matchbox offer from candle company", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1d0c60f519cc1b79b6b6e98f", "answer": {"kind": "marketing", "summary": "Buy two get one free promotion on paperback books", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "54d233bf20e0c176948955e0", "answer": {"kind": "marketing", "summary": "Flash sale on winter boots starting at 29 for 48 hours", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "68fad9ac9539140aa8230c7d", "answer": {"kind": "marketing", "summary": "Re-engagement offer with one month of premium free", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "28c4be5709aba4a2a379c580", "answer": {"kind": "marketing", "summary": "Reminder that your free coffee reward expires Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "569cb37f3813c85321dfccc9", "answer": {"kind": "marketing", "summary": "Reminder from fitness app to resume workout plan", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "7f97b5d0a6a8b6abb4b0dcca", "answer": {"kind": "marketing", "summary": "Promotion offering double points on upcoming coffee orders", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "37d01dd6ac4d62803ec060b8", "answer": {"kind": "marketing", "summary": "Re-engagement offer from a meditation app with a free week", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "9cf8b3c965aea681406ffe84", "answer": {"kind": "job_alert", "summary": "New product manager job listings matching your saved search", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d7a359013c7d5f46529a35a7", "answer": {"kind": "job_alert", "summary": "Weekly job recommendations matching your profile", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "70752591b68106cb09e9b1f1", "answer": {"kind": "job_alert", "summary": "Alert for a new remote senior engineer job listing matching your criteria", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f7b54374158e6b7a7f2e1d47", "answer": {"kind": "job_alert", "summary": "Weekly digest of new remote tech job openings", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4a703f06fe6d346ba9c0cbdf", "answer": {"kind": "marketing", "summary": "Reminder to resume Spanish lessons on a language learning app", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "2192bba728196b1f2c78dc04", "answer": {"kind": "receipt", "summary": "Order confirmation for ceramic pour-over set", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "058e69e0ef80a57afef72d95", "answer": {"kind": "job_alert", "summary": "Daily digest of new data analyst job listings in your area", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "783a4edcc36f3aae646e7078", "answer": {"kind": "receipt", "summary": "Shipping confirmation and tracking details for order #48213", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ed3961d5b07c1627da3d4ba0", "answer": {"kind": "receipt", "summary": "Delivery confirmation for order #48213 left at the front door", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "748f12ce5316dddb00a8984c", "answer": {"kind": "job_alert", "summary": "Alert that companies are viewing profiles with your skills", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e1785f3023cd79e26ba7b6c2", "answer": {"kind": "receipt", "summary": "Receipt for your $18.40 rideshare trip charged to Visa", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b53151e7b01f68d3d4c2c8ac", "answer": {"kind": "receipt", "summary": "Receipt for your $46.10 airport ride to Terminal B", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "653a5947c8c3be724ed93227", "answer": {"kind": "receipt", "summary": "Receipt for your coffee and croissant purchase", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e379db61a27de141a5673f90", "answer": {"kind": "receipt", "summary": "Payment confirmation and receipt for account services", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e7a64054f1f7fbeb1d4dd6c7", "answer": {"kind": "receipt", "summary": "Automatic payment confirmation of $72.00 for September invoice", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9f1d3b6d92b4819cdcdfafa7", "answer": {"kind": "receipt", "summary": "Coffee card auto-reload confirmation for $25.00", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "20954384342b489f76c53674", "answer": {"kind": "receipt", "summary": "Family plan renewed for another month at $16.99", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "e62aea574c3c61ee187e3a69", "answer": {"kind": "receipt", "summary": "Receipt for annual music streaming subscription charged on October 1", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7501cf45f35b69a4458e2251", "answer": {"kind": "receipt", "summary": "Confirmation of a $60 transfer sent to Jamie R.", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5ddb1f0bd227f27c0549838e", "answer": {"kind": "receipt", "summary": "Confirmation of successful credit card autopay payment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ceb7d9f1a9d2407b0c9530e9", "answer": {"kind": "receipt", "summary": "Fitness app Pro membership renewed for $9.99", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7f7b53fe8f3b79fc9142f27e", "answer": {"kind": "receipt", "summary": "Order confirmation for Trail Runner 2 shoes", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "65872331c73c3c86e015925b", "answer": {"kind": "receipt", "summary": "Confirmation that your refund of $89.00 has been processed", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2b994edcacf0fc25992298b1", "answer": {"kind": "account_update", "summary": "Notification that a scheduled $500 transfer to savings completed successfully", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "d7ca42fbed9cce38dbddb0b4", "answer": {"kind": "receipt", "summary": "Delivery update for parcel arriving today between 1pm and 5pm", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9ec532a5158b813af55bc777", "answer": {"kind": "receipt", "summary": "Parking session receipt for $7.50 at Lot 14", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f078557b21ec7d7fde572254", "answer": {"kind": "receipt", "summary": "Parcel delivery delayed to Saturday due to weather", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7d492d81bf998ab408b278a8", "answer": {"kind": "receipt", "summary": "Grocery delivery confirmation and receipt for $63.18 with a substituted item", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2e360fac3f43c68b489785ee", "answer": {"kind": "receipt", "summary": "Payment confirmation for October electricity bill", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "79bd54c2817f2f2eca335337", "answer": {"kind": "receipt", "summary": "Confirmation of automatic payment for your water bill", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "662e33b001f4cb5e80056e3a", "answer": {"kind": "receipt", "summary": "Receipt for your e-book purchase of The Quiet Harbour", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f8ea3e6dcd72d9fee569d36f", "answer": {"kind": "receipt", "summary": "Payment confirmation for home internet service", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6329e13999cf335ab6ac44b4", "answer": {"kind": "receipt", "summary": "Ticket confirmation and receipt for Saturday movie showing", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "064ededa1f6e144b8284f9f8", "answer": {"kind": "receipt", "summary": "Shipping notification for your photo prints order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "01aa5e5415b69c9319c56436", "answer": {"kind": "receipt", "summary": "Receipt for annual VPN subscription renewal", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "38609f7695ac5b2b6d022293", "answer": {"kind": "receipt", "summary": "Hotel booking confirmation and paid receipt for stay in Lisbon", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7fac23561da15de1a1135beb", "answer": {"kind": "receipt", "summary": "Monthly dog food autoship has shipped and card was charged", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b0168b148e1ec7c0ca00eaa8", "answer": {"kind": "receipt", "summary": "Receipt for your $25 donation to Riverside Food Bank", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "351f61d53f967ab21ef7390d", "answer": {"kind": "receipt", "summary": "Payment notification confirming invoice #112 of $1,800 has been paid", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8378861a4e2d52eb4b19b4cf", "answer": {"kind": "receipt", "summary": "Delivery notification for your meal kit box", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "78650767af7d3871347c0b03", "answer": {"kind": "receipt", "summary": "Shipping update for part of your order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a77fcfab202098982b57a90d", "answer": {"kind": "receipt", "summary": "Domain automatic renewal receipt for $14.00 through October 2027", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "b9f027bcebc397886ba48d61", "answer": {"kind": "receipt", "summary": "Refund processed for returned bread tin from your order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5356baaf7aad31fc948f189a", "answer": {"kind": "receipt", "summary": "Receipt for food delivery order from Noodle Corner", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1beb454298f9b90761d0964b", "answer": {"kind": "receipt", "summary": "Toll account auto-topped up with $40 from your card", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "dc8139b2413dada84ef26ae0", "answer": {"kind": "receipt", "summary": "Refund confirmation for a cancelled coffee order", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2ab4bed7274b11dcfc7b8204", "answer": {"kind": "receipt", "summary": "Sofa delivery scheduled for Friday between 8am and 12pm", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ceb2a0d0b32e242c68724b49", "answer": {"kind": "account_update", "summary": "Notification that your student plan discount was verified and renewed", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bf3c77e60cc93c9c7d6f5c6d", "answer": {"kind": "receipt", "summary": "Notification of a completed direct debit payment for gym membership", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "59a033449cc34aceaa5f296e", "answer": {"kind": "personal", "summary": "Jordan letting you know they will be out this Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1130889a71135ca9693ac8be", "answer": {"kind": "personal", "summary": "Colleague updates that release 4.2 shipped without issues", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3b74da368c7c1e79b19d57bc", "answer": {"kind": "personal", "summary": "Introduction from Maya, a new member of the design team", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d582d84d26b63ca54723a442", "answer": {"kind": "personal", "summary": "Casey shared notes from the Harbor team call for your reference", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8e715e97362250483aca0e94", "answer": {"kind": "file_share", "summary": "Casey uploaded the final Q3 deck to the shared folder", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "ce49cfa26663eef81970ea2a", "answer": {"kind": "personal", "summary": "Third-floor kitchen closure Thursday afternoon for dishwasher installation", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6a812fc56ace55908d7b189f", "answer": {"kind": "personal", "summary": "Announcement of a scheduled fire drill next Tuesday morning", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "d4a794de4a8cc11321343b2b", "answer": {"kind": "personal", "summary": "Jordan let you know the sprint board moved to the new space", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "47e6345cad61f7f8bf3ab1aa", "answer": {"kind": "account_update", "summary": "Notification that parking garage levels 2 and 3 are repainting this weekend", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "b1b2bb4f030dcc9b775d3a9f", "answer": {"kind": "question", "summary": "Casey asking for the roadmap document link", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "63c0b214e54c76e89782d658", "answer": {"kind": "personal", "summary": "Colleague confirming vendor paperwork is signed and completed", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a3cc490e4f19c200b7a74c28", "answer": {"kind": "question", "summary": "Jordan asking for notes from yesterday's retrospective meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9c7c25ebdfb591c46330b8e9", "answer": {"kind": "question", "summary": "Colleague asking for confirmation on the launch date", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "11a93f03e222ce3eb9a966cb", "answer": {"kind": "question", "summary": "Casey asking which template to use for the monthly report", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "68892e845684c665d391e949", "answer": {"kind": "question", "summary": "Nina asking for the name of a ramen place you visited", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ac44e5f4aee14e752d781b4c", "answer": {"kind": "personal", "summary": "Notification that the office network upgrade is complete", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "e82c1e9a583a11366618e0f8", "answer": {"kind": "question", "summary": "Colleague asking for a coffee chat next week", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6c7942bc34b073728e66e954", "answer": {"kind": "cold_outreach", "summary": "Recruiter asking for a call about your career plans", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f7b353b1c15b996bd5927a4f", "answer": {"kind": "account_update", "summary": "Front desk closing early on Friday before the holiday weekend", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "571b6e5d7d1bea258a255dc2", "answer": {"kind": "question", "summary": "Priya asking who currently owns the wiki onboarding page", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "982f2900f23ece516629f5a4", "answer": {"kind": "question", "summary": "Colleague asking for your slides for Thursday's review", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4511d9f4be6e03a6d29e6bfc", "answer": {"kind": "question", "summary": "Colleague asking for your lunch choice for the offsite", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0a9fb5bbf6d3494fe13bfa15", "answer": {"kind": "question", "summary": "Colleague asking for feedback on a blog post draft by week's end", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "9956f9fe994ee29379a02670", "answer": {"kind": "question", "summary": "Casey asks for Monday's planning session agenda", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "dfc79413fbc5706424e7fe3e", "answer": {"kind": "question", "summary": "Priya asks if you have time to review the onboarding checklist together", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f4149abd6846560ce87ea3d4", "answer": {"kind": "question", "summary": "Jordan asks to share the customer survey spreadsheet for charts", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "02f1e77a1ae69f81ed7787db", "answer": {"kind": "question", "summary": "Colleague asking if you would write a paragraph for a team newsletter", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "947aff70e4416778fa09d25b", "answer": {"kind": "question", "summary": "Coworker asking for the name of a design digest mentioned in standup", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "04a3949235b6dd49ae05f66e", "answer": {"kind": "question", "summary": "Invitation from Omar to join a weekend hike and RSVP for carpooling", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "41c6373ab0b12f1726f2b0a1", "answer": {"kind": "question", "summary": "Colleague asking to chat next week about trying support bots", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2d2660e814a3e79d69d4363b", "answer": {"kind": "question", "summary": "Colleague asking who manages email templates regarding a broken unsubscribe link", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ce4a54efbdfe0c1200c66065", "answer": {"kind": "question", "summary": "Jordan asking whether to unsubscribe the team alias from vendor mailers", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "30c983126cc7203f082e9d5e", "answer": {"kind": "question", "summary": "Casey is asking for the title of the author's book", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "73769cd534aa3d24596c1d8f", "answer": {"kind": "question", "summary": "Jordan asks to reschedule tomorrow's 1:1 meeting to 11:30am", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "05ee5b480e3e3d76f520ff93", "answer": {"kind": "question", "summary": "Sam asking to reschedule Friday's chat to an earlier morning slot", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b37cf6658720bc5c7df1148a", "answer": {"kind": "question", "summary": "Colleague asking to reschedule the design review to next Tuesday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6628b034ec35db7774b41f5c", "answer": {"kind": "question", "summary": "Asking to push today's 3:00 meeting back by 15 minutes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "90d86478791be45699670fe8", "answer": {"kind": "question", "summary": "Priya asking to reschedule Wednesday's vendor sync to Thursday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "11e845abbc44dfaa6ae805b6", "answer": {"kind": "question", "summary": "Request from a colleague to reschedule today's meeting to 3pm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "45ca390487da52d7f86c0c0e", "answer": {"kind": "question", "summary": "Jordan asking to reschedule Monday's planning session to 4pm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4facd940569f71283aadd4f6", "answer": {"kind": "question", "summary": "Priya asks to swap Wednesday check-in to Thursday morning", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "cd7201216e5ab3a293ac8dc1", "answer": {"kind": "meeting_invite", "summary": "Invitation from Casey to attend Q4 planning on Tuesday at 10am", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d2001355b4afa6a159a4241a", "answer": {"kind": "meeting_invite", "summary": "Invitation to Friday team lunch at the cafe downstairs", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3833f96b775cfbe021163e2c", "answer": {"kind": "meeting_invite", "summary": "Jordan Lee invited you to a Design sync on Thursday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "141e72a65b589aaa96ffff61", "answer": {"kind": "question", "summary": "Maya asking to reschedule tomorrow's kickoff meeting to the afternoon", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "93a4d7e71e1390f88b22fbed", "answer": {"kind": "meeting_invite", "summary": "Invitation to Nina's October book club gathering", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a5cf99ac64c83a078ec378eb", "answer": {"kind": "meeting_invite", "summary": "Updated invitation for vendor review meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "890f7f62a441b46be7495d31", "answer": {"kind": "meeting_invite", "summary": "Invitation to an interview panel on Monday from 1 to 2pm", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "69f7a5fca52182f52d3b5e24", "answer": {"kind": "meeting_invite", "summary": "Invitation to recurring monthly all-hands meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "4bcb9210b70742ca8cd1cfee", "answer": {"kind": "meeting_invite", "summary": "Invitation to an integration kickoff meeting on October 9", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "41e1d55c3785fa235c750a74", "answer": {"kind": "meeting_invite", "summary": "Invitation to security awareness training on Wednesday at 4pm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "535d2fadc7a295f6abe6f8bc", "answer": {"kind": "question", "summary": "Friend asking for your lemon cake recipe", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3435b8928e392823c090174b", "answer": {"kind": "question", "summary": "Coworker asking for photos from the team hike", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b7a9c7fbe96df6ccae22e837", "answer": {"kind": "question", "summary": "Family member asking which train you are taking on Saturday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "55bac78bf8811499f2bb0223", "answer": {"kind": "question", "summary": "Leo asking for book recommendations for an upcoming long flight", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5226284208f357cff472dec0", "answer": {"kind": "question", "summary": "Sam asking for the link to your party playlist", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "175ca3bb6a3cce5790d2b1e4", "answer": {"kind": "question", "summary": "Asking if lunch next week is still on and preferred day", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a398edd6bb170bab475777c2", "answer": {"kind": "money_request", "summary": "Owen asking to borrow $200 for rent until Friday", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "cbf5281bf610b780aa522769", "answer": {"kind": "question", "summary": "Priya asking for book club notes from Tuesday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5bbe08d4fca9757b2d0c22df", "answer": {"kind": "cold_outreach", "summary": "Recruiter reaching out regarding a potential senior product role", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e9c972101b4453bff7626d80", "answer": {"kind": "question", "summary": "Requesting an updated CV following yesterday's call", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "dcbd0df81b1afa0a351c5727", "answer": {"kind": "question", "summary": "Aunt Ruth asking for passport scan and national insurance number for visa", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ea95a0eea2d58e2aa5077e4e", "answer": {"kind": "cold_outreach", "summary": "Recruiter inquiring if you are open to a three-month contract role", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "447c27518a833294cc2828ec", "answer": {"kind": "cold_outreach", "summary": "Cold sales pitch offering a demo to grow sales calls", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "dd3922446353f3f0d42a5df5", "answer": {"kind": "commitment", "summary": "Job offer letter asking for reply to accept terms", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9e76649a09f6a0c8556a9b38", "answer": {"kind": "cold_outreach", "summary": "Recruiter reaching out to meet for coffee next Tuesday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6d776990175e698b3e388731", "answer": {"kind": "cold_outreach", "summary": "Unsolicited pitch offering website redesign services", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "865ca765d3e54550fc15f116", "answer": {"kind": "cold_outreach", "summary": "Unsolicited sales pitch offering SEO services and a free audit", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e4b112af8061182601d2c863", "answer": {"kind": "cold_outreach", "summary": "Sales pitch offering a cloud hosting audit to reduce costs", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "e4f6bd0c6ec77af6fdc4098b", "answer": {"kind": "cold_outreach", "summary": "Unsolicited sales pitch offering a demo of an AI analytics dashboard", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3871f0e20600596a10b9bffc", "answer": {"kind": "credential_request", "summary": "Asking for streaming password and two-factor authentication code", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c154468f29cc7728aa837913", "answer": {"kind": "cold_outreach", "summary": "Unsolicited sales pitch offering HR software trial", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "b152986f0265b29a450ff8a3", "answer": {"kind": "instructions_for_ai", "summary": "Partnership outreach containing hidden instructions aimed at an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8fe52c3d2055e31a154c5bb7", "answer": {"kind": "scam", "summary": "Phishing request asking for sensitive personal and banking details", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "65fff9d7c5307ecf78c401a7", "answer": {"kind": "question", "summary": "Colleague asking for the Q3 results deck to pull charts", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d06eeeb1d49b0a41ab678826", "answer": {"kind": "question", "summary": "Question about onboarding document step ordering for new hires", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a658e973dded1512dd258034", "answer": {"kind": "question", "summary": "Casey asking for notes from Monday's planning meeting", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "66d09bed8fffbc63bd639212", "answer": {"kind": "money_request", "summary": "Payment request of $349 for business directory listing renewal", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f1ac10c500b3d7cd91e4119d", "answer": {"kind": "question", "summary": "Asking if a navy jacket left in meeting room 4 is yours", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1a1d0cdd455c068f85db5521", "answer": {"kind": "question", "summary": "Jordan asking to move tomorrow's 1:1 to 3pm", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "776c099b55fb988c67496b7b", "answer": {"kind": "scam", "summary": "Fraudulent request to urgently purchase gift cards and send codes", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "9f16ddd2153c1499fdf95e94", "answer": {"kind": "meeting_invite", "summary": "Invitation to interview panel prep meeting on Wednesday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "89134daef5c9b1610972f1aa", "answer": {"kind": "money_request", "summary": "Payment request for overdue invoice 4471 of $1,240", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "de77f0fe4122a80250cff98a", "answer": {"kind": "money_request", "summary": "Payment failed notification requesting payment of an outstanding balance", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c7f9c80d2ab389845ba39b60", "answer": {"kind": "money_request", "summary": "Jordan asking for $62 share of yesterday's team dinner via PayFlow", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "116dd71a59caf11980495276", "answer": {"kind": "money_request", "summary": "Payment request of $11.99 to restore paused subscription", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c0584dec5599c55ed38c254b", "answer": {"kind": "money_request", "summary": "Updated bank account details for sending October rent payment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f23d56f75ecfd02df3c83b4b", "answer": {"kind": "scam", "summary": "CEO impersonation scam asking to buy gift cards and send PINs", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "c278d5e6d7682d63528e0790", "answer": {"kind": "credential_request", "summary": "Colleague asking for your shared drive login and password", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5779d112040bd2b6490efba2", "answer": {"kind": "money_request", "summary": "Request to wire $4,800 to a vendor before sender boards flight", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f2ec369d85f4bf7a82947cfa", "answer": {"kind": "scam", "summary": "Request to purchase gift cards and send codes, likely an impersonation scam", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "025aa0b8f28b78ce4eed410d", "answer": {"kind": "scam", "summary": "Fraudulent reward offer requesting a gift card code for prize processing", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ecacd5a590002dfd754e2475", "answer": {"kind": "scam", "summary": "Request to purchase gift cards and email the codes for reimbursement", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "9b5380e50e6434d7f01139b5", "answer": {"kind": "credential_request", "summary": "Request to re-enter email password to increase mailbox storage", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0c73b03a1f79e62341c3c463", "answer": {"kind": "credential_request", "summary": "Requesting reply with verification code to keep account active", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3f6cb7843a4a0e316e27b8bd", "answer": {"kind": "credential_request", "summary": "Delivery notice asking for account email and password to reschedule", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4bcaffc714bfa15ed5c88435", "answer": {"kind": "security_alert", "summary": "Alert about a new sign-in to online banking from an unrecognized device", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "ec202459fcb451de6a12b05c", "answer": {"kind": "credential_request", "summary": "Colleague asking for your password to the analytics dashboard", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "317eae06cd89fa63f7f082fe", "answer": {"kind": "security_alert", "summary": "Alert that two-step verification was turned off for your account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "47fa5fc09c3f2a4c990385ea", "answer": {"kind": "credential_request", "summary": "Job application email requesting user's email login details", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "aa5b31128c4d5da40d3dd0ba", "answer": {"kind": "credential_request", "summary": "Colleague asking for a verification code sent to your phone", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1630bade19fb7ba8fcd28ad1", "answer": {"kind": "security_alert", "summary": "Notice that your PhotoVault recovery email was changed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1e5e9118331842117f646334", "answer": {"kind": "credential_request", "summary": "Request to enter work password to maintain calendar sync", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7d3d9fdb03203207b7b95c1c", "answer": {"kind": "question", "summary": "Colleague requesting passport scan for Berlin visa invitation letter", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8a35565fba3bbc6ed8495de4", "answer": {"kind": "security_alert", "summary": "New sign-in to your account detected from Warsaw, Poland", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "35b74ef91f05e56c87cd8992", "answer": {"kind": "security_alert", "summary": "Alert that a new device signed into your coffee app account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "157f9420245cc1c749b6093a", "answer": {"kind": "security_alert", "summary": "Notification that your hosting account password was changed", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c58142aea1b3e3c6035aaabb", "answer": {"kind": "money_request", "summary": "Request to wire funds for the Lisbon deal", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "19d7a1d7540f6abd1cbe1cec", "answer": {"kind": "scam", "summary": "Request to reply with bank details for direct deposit setup", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "6c0a144c9130625bd12fb7f3", "answer": {"kind": "question", "summary": "Request for a doctor's note to close out sick leave", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4d131c56d0b8aba12824aee6", "answer": {"kind": "commitment", "summary": "Prompt to reply YES to lock in a three-year renewal contract", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5b77118554c19ab853ecf553", "answer": {"kind": "commitment", "summary": "Revised terms of engagement requiring reply to accept", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1733134415ea83f966350e40", "answer": {"kind": "commitment", "summary": "Speaker confirmation requiring agreement to speaker terms and cancellation fee", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4d285e9388520f03e69833ca", "answer": {"kind": "commitment", "summary": "Asking for approval to sign off on a catering vendor quote", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "32579895787a5f928615faab", "answer": {"kind": "scam", "summary": "Phishing attempt asking for SSN and date of birth", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d2966ff6bae553e076729fc8", "answer": {"kind": "commitment", "summary": "Request to approve contractor SOW and start date", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8c9461419e5a8a64a2a6ca07", "answer": {"kind": "urgent_issue", "summary": "Database disk full and rejecting writes immediately", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "288951834d122e7f2109553a", "answer": {"kind": "urgent_issue", "summary": "Alert reporting homepage is down with 503 Service Unavailable", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "92a8e3594146961a7a543b29", "answer": {"kind": "urgent_issue", "summary": "Checkout is broken and blocking orders right now", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8e4c28a81fc404a6643ed551", "answer": {"kind": "question", "summary": "Request to upload driver's licence and payslips for rental application", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "c204f5dcd80fad2e278e8e66", "answer": {"kind": "urgent_issue", "summary": "Login page down after deploy; urgent decision needed on rollback", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bb142a6f420bd52f29e0171c", "answer": {"kind": "instructions_for_ai", "summary": "Meeting notes containing instructions directed at an automated assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "79b6b40f6a069594815b4b8d", "answer": {"kind": "instructions_for_ai", "summary": "AI newsletter containing prompt injection instructions for assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7bff3b84c6b597bc994ceedd", "answer": {"kind": "instructions_for_ai", "summary": "Follow-up on design files containing instructions directed at an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "94ea85303666e76bd6ce8764", "answer": {"kind": "instructions_for_ai", "summary": "Shipping update containing instructions directed at an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a51188dc3af3d837a58f8215", "answer": {"kind": "instructions_for_ai", "summary": "Job alert email containing instructions directed at email assistants", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8ea53c1528b5fa979b87a37a", "answer": {"kind": "question", "summary": "Coworker asking for Sam's HR file and performance notes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c6d80bfac92f0a555cb98bec", "answer": {"kind": "instructions_for_ai", "summary": "Startup digest containing hidden prompt injection instructions for AI", "confidence": 1.0, "model": "gemini-flash-latest"}}

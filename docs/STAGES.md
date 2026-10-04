@@ -1711,3 +1711,30 @@ enter its code" and "we blocked a suspicious sign-in attempt" weren't stopped by
 After: 0 critical safety misses with and without the model, every safety case caught, and 15/15
 regression cases. With the model, the right level after learning is 78.2% (78.6% before). On the
 trap/control pairs, two changed, both to more careful (in DESIGN.md's results).
+
+### Hardening before submission
+
+A focused pass on the safety floor and the evals, without changing how learning works.
+
+- **Deleting for good is checked in the email itself.** The floor on `PERMANENTLY_DELETE` only held
+  if the classifier proposed it, so "this went to the wrong person, please delete it permanently"
+  read as a note was only told about. A check on the email (`IRREVERSIBLE_DELETE`) now holds any
+  request to delete email for good at Ask me and names the action, however the email was read. An
+  adversarial review found it missed requests as Gmail actually delivers them (line breaks turned
+  into spaces) and caught legal footers and storage tips; both fixed, with every test request tried
+  both ways.
+- **Each check has its own level.** Deleting for good asks; money, passwords, hidden instructions,
+  account security, private data and commitments still stop. The final level is the stricter of
+  policy and learning and what safety requires, everywhere, including an urgent reading.
+- **The action says what was asked.** Paying a new account or an IBAN is a money request; a stop
+  for another reason takes MOVE_MONEY or SEND_CREDENTIALS from a confident model reading.
+- **Reading:** a confirmed booking isn't an invitation, files shared with you are their own kind,
+  and neither covers one that asks for card details or a login (prompt `understand-5`).
+- **Cold start** looks back six months only, and never further to reach a number.
+- **Learning:** one real bug, found by the pairs: a sender's answers about its other kinds of email
+  stopped counting at all. They now count last, when nothing else says anything.
+
+Results (commit `880dafc`, in DESIGN.md): pairs passed 69.2% → 84.6% with the model, 0 hard-floor
+violations, 0% injection success, 0 critical misses on the held-out set. Three pair failures remain,
+two of them product disagreements (a routine notice marked read quietly instead of Tell me) and one on
+the safe side (a deletion request read as urgent is stopped, not asked about).

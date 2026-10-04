@@ -15,14 +15,14 @@ For each incoming email Oscar proposes one action and decides how much autonomy 
 | `ASK_FIRST` | Action is proposed to user, user must accept or decline |
 | `ESCALATE` | User is notified, Oscar takes no action |
 
-**Status: Stage 8 — product UI.** Oscar uses a keyword classifier, a fixed action →
-level table, what he has learned from your feedback (per sender), and a safety
-floor that neither the table nor learning can lower. There's a web app to see what
-he handled, what he told you about, what needs you and what he's learned. Eval
-results are in [evals/RESULTS.md](evals/RESULTS.md), a held-out check is in
-[evals/results/heldout.md](evals/results/heldout.md), and example transcripts are in
-[examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md). Synthetic emails only; no real
-side effects.
+Oscar uses keyword rules and, when they find nothing, a model that says what kind of
+email it is; a starting level per action; what he has learned from your answers; and a
+safety floor plus checks on the email itself that learning can never lower. There's a
+web app and a Chrome extension for Gmail. On a real Gmail he starts read-only, and can
+only ever do undoable things (mark read, archive, label, save a draft). Eval results are
+in [evals/results/latest/report.md](evals/results/latest/report.md) and
+[evals/results/REPORT-model-fill.md](evals/results/REPORT-model-fill.md), and example
+transcripts are in [examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md).
 
 ![Oscar's home screen](assets/home.png)
 
@@ -158,15 +158,21 @@ the list with the reason for each one:
 ## Evals
 
 ```bash
-.venv/bin/python -m evals.measure                 # learn, check for leakage, score; writes evals/results/REPORT.md
-.venv/bin/python -m evals.measure --policy careful-p2    # the same with another policy
-.venv/bin/python -m evals.runner                  # trap/control pairs and the learning experiment; writes evals/results/latest/
-.venv/bin/python -m evals.compare OLD.json NEW.json      # two saved runs side by side
+.venv/bin/python -m pytest -q                     # unit and integration tests
+.venv/bin/python -m evals.runner --model fill     # trap/control pairs and the learning experiment; writes evals/results/latest/
+.venv/bin/python -m evals.measure --model fill    # learn, check for leakage, score held-out, safety and regression cases
 .venv/bin/python -m evals.regressions             # just the regression cases
+.venv/bin/python -m oscar replay                  # today's Oscar on the real emails you've answered (needs Gmail connected)
 ```
 
+`--model fill` uses the model readings saved in `evals/cache/`, so it runs without a key and
+gives the same results; it only calls the model (with `GEMINI_API_KEY`) for emails it hasn't read.
+Leave `--model` out for the rules alone (`evals.measure` then writes `evals/results/REPORT.md`).
+`evals.measure --policy careful-p2` tries another learning policy, and `evals.compare OLD.json
+NEW.json` puts two saved runs side by side.
+
 `evals.measure` learns only from a generated learning inbox, scores the held-out
-set (215 cases) before and after learning, the safety suite (57 cases) and the
+set (220 cases) before and after learning, the safety suite (57 cases) and the
 regression cases, saves every run with every case's result in
 `evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The
 Oscar's Progress page in the app shows those saved runs. The method is in docs/STAGES.md (Stage 10).
