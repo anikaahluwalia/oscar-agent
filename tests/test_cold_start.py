@@ -141,7 +141,6 @@ def test_3_even_a_client_that_could_write_is_only_read_with(tmp_path):
 
 
 def test_4_every_page_is_read(tmp_path, monkeypatch):
-    monkeypatch.setattr(cold_start, "MIN_MESSAGES", 5)  # enough mail in six months: no older search
     fake = FakeGmail(promos(23))
     pages = []
     search = GmailClient.search
@@ -159,32 +158,32 @@ def test_it_looks_at_the_newest_2000_at_most(tmp_path, monkeypatch):
     assert Store(history).load()["ids"] == [f"p{i}" for i in range(10)], "the newest ones, as Gmail lists them"
 
 
-def test_a_quiet_six_months_goes_further_back_to_the_minimum(tmp_path, monkeypatch):
-    monkeypatch.setattr(cold_start, "MIN_MESSAGES", 10)
-    fake = FakeGmail(promos(6) + promos(20, prefix="old"))
-    fake.older = {f"old{i}" for i in range(20)}
+def test_k_a_quiet_six_months_is_all_he_looks_at(tmp_path, monkeypatch):
+    # 150 emails in six months: he reads those 150 and never searches older mail to reach a number.
+    fake = FakeGmail(promos(150) + promos(40, prefix="old"))
+    fake.older = {f"old{i}" for i in range(40)}
+    queries = []
+    search = GmailClient.search
+    monkeypatch.setattr(GmailClient, "search", lambda self, q, page=None, limit=500: queries.append(q) or search(self, q, page, limit))
     history = History()
     run(history, GmailClient(connected(tmp_path), fake.http()))
     ids = Store(history).load()["ids"]
-    assert len(ids) == 10 and ids[:6] == [f"p{i}" for i in range(6)], "six months first, then older mail"
-    assert status(history)["processed"] == 10
+    assert len(ids) == 150 and not [i for i in ids if i.startswith("old")]
+    assert status(history)["state"] == "ready" and status(history)["processed"] == 150
+    assert queries and all("newer_than:6m" in q and "older_than" not in q for q in queries)
 
 
-def test_a_busy_six_months_never_goes_further_back(tmp_path, monkeypatch):
-    monkeypatch.setattr(cold_start, "MIN_MESSAGES", 5)
-    fake = FakeGmail(promos(8) + promos(4, prefix="old"))
-    fake.older = {f"old{i}" for i in range(4)}
-    history = History()
-    run(history, GmailClient(connected(tmp_path), fake.http()))
-    assert not [i for i in Store(history).load()["ids"] if i.startswith("old")]
-
-
-def test_older_mail_runs_out_before_the_minimum(tmp_path):
+def test_a_scan_that_had_gone_further_back_lists_again_recent_only(tmp_path):
     fake = FakeGmail(promos(6) + promos(3, prefix="old"))
     fake.older = {f"old{i}" for i in range(3)}
     history = History()
+    store = Store(history)
+    old = store.load()
+    old.update(state="failed", phase="fetching", ids=[f"p{i}" for i in range(6)] + ["old0"], discovered=7,
+               older=True, listed=False, next_page="older-page-2")
+    store.save(old)
     run(history, GmailClient(connected(tmp_path), fake.http()))
-    assert status(history)["state"] == "ready" and status(history)["processed"] == 9, "everything there is"
+    assert Store(history).load()["ids"] == [f"p{i}" for i in range(6)]
 
 
 def test_a_list_made_under_the_old_cap_keeps_the_newest(tmp_path, monkeypatch):

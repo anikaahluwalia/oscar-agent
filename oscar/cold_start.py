@@ -12,7 +12,8 @@ the existing learning (oscar/preferences.py) and every safety check still runs a
 
 How it works, per account (kept in that account's folder, so accounts never mix):
 1. fetching: list the ids of the last six months of mail (Gmail search, page by page), the newest
-   2,000 at most. If that's fewer than 500, keep going further back until there are 500 (or no more).
+   2,000 at most. Never further back: older mail says how you used to do things, not how you do
+   them now. A quiet six months just means fewer emails, and fewer habits clear enough to show.
 2. understanding: read each one's labels, headers and preview, and let the rules (agent.decide,
    no model) say what kind of email it is. Count what you did with it from its Gmail labels:
    gone from the inbox (archived), read, starred.
@@ -45,13 +46,11 @@ from oscar.models import Action, AutonomyLevel
 from oscar.preferences import HABIT_ACTIONS, family
 
 QUERY = "newer_than:6m -in:chats -in:sent -in:drafts"  # about six months of mail you received
-OLDER = "older_than:6m -in:chats -in:sent -in:drafts"  # further back, only to reach MIN_MESSAGES
 # Which version of the counting the saved counts were made with. When the counting changes, a scan
 # that isn't finished starts its counts again (keeping the list of emails it found), so old and new
 # counts never mix.
 COUNTING = 2
 MAX_MESSAGES = 2000  # the most he looks at (the newest), so a huge inbox doesn't take all day
-MIN_MESSAGES = 500  # if six months has fewer than this, he goes further back until he has this many
 SAVE_EVERY = 25  # emails between saves, so a stop loses little
 PACE = 0.05  # seconds between reads: about 20 a second, well under Gmail's limit per account
 BACKOFF = (1, 2, 4, 8, 16)  # seconds to wait each time Gmail says to slow down, before giving up
@@ -174,6 +173,9 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
     if len(data["ids"]) > MAX_MESSAGES:  # listed under a bigger cap: keep the newest
         data["ids"] = data["ids"][:MAX_MESSAGES]
         data.update(discovered=MAX_MESSAGES, processed=min(data["processed"], MAX_MESSAGES))
+    if data.get("older") and not data["listed"]:
+        # Listed by an older Oscar that went past six months to reach a minimum: list again, recent only.
+        data.update(ids=[], next_page=None, listed=False, older=False, discovered=0, processed=0, stats={})
     if data.get("counting") != COUNTING:
         data.update(processed=0, skipped_emails=0, stats={}, counting=COUNTING)
     data.update(state="running", error=None, started_at=data["started_at"] or _now())
@@ -206,23 +208,14 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
 
 def _list(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[], bool]) -> None:
     """Phase 1: the message ids to look at, newest first, page by page, saved after each page. The
-    last six months, up to MAX_MESSAGES; if that's under MIN_MESSAGES, older mail until it isn't."""
+    last six months only, up to MAX_MESSAGES."""
     data.update(phase="fetching")
     while not data["listed"] and not should_stop():
-        refs, page = reader.search(OLDER if data["older"] else QUERY, data["next_page"])
+        refs, page = reader.search(QUERY, data["next_page"])
         known = set(data["ids"])
-        # Older mail only tops the list up to the minimum; the last six months goes up to the cap.
-        cap = max(MIN_MESSAGES, len(data["ids"])) if data["older"] else MAX_MESSAGES
-        data["ids"] = (data["ids"] + [r["id"] for r in refs if r["id"] not in known])[:cap]
+        data["ids"] = (data["ids"] + [r["id"] for r in refs if r["id"] not in known])[:MAX_MESSAGES]
         found = len(data["ids"])
-        data.update(next_page=page, discovered=found)
-        if found >= MAX_MESSAGES or (data["older"] and (found >= MIN_MESSAGES or not page)):
-            data["listed"] = True
-        elif not page and not data["older"]:
-            if found >= MIN_MESSAGES:
-                data["listed"] = True
-            else:
-                data.update(older=True, next_page=None)  # six months wasn't enough: go further back
+        data.update(next_page=page, discovered=found, listed=found >= MAX_MESSAGES or not page)
         store.save(data)
 
 
