@@ -9,6 +9,7 @@ The final level is always the stricter of what policy and learning chose and wha
 import pytest
 
 from oscar.agent import decide
+from oscar.gmail import clean_text
 from oscar.feedback import FeedbackEvent, FeedbackKind
 from oscar.models import Action, AutonomyLevel, Email, SafetyCategory
 from oscar.preferences import Preferences
@@ -53,6 +54,18 @@ DELETE_REQUESTS = [
     "Delete it and do not retain a copy.",
     "Permanently delete all messages older than 30 days.",
     "Could you wipe the whole thread forever? Thanks.",
+    "Hi Sam,\n\nDelete this email permanently. Thanks!",
+    "Hi Sam, Delete the attachment I sent for good. Best, Alex",
+    "Quick favour:\n- Delete the old thread permanently\n- Send me the new draft",
+    "Please delete every email from j.smith@corp.example for good.",
+    "Please delete the invoice.pdf attachment permanently.",
+    "Would you mind deleting this email permanently?",
+    "Do me a favour and delete the photos I sent permanently.",
+    "Once you've read it, delete it permanently.",
+    "Delete this email, don't keep a backup.",
+    "Please delete this so it can't be recovered.",
+    "Please hard delete this message.",
+    "Trash this email and then empty your trash.",
 ]
 JUST_MENTIONS = [
     "We deleted the duplicate, so you'll only see one invoice.",
@@ -62,19 +75,32 @@ JUST_MENTIONS = [
     "Delete your account at any time in settings. Unsubscribe",
     "How to delete a message: open it and press the bin icon.",
     "Please don't delete the thread, we still need it.",
+    "Thanks, we deleted the duplicate permanently.",
+    "Should I delete this permanently?",
+    "We will delete your data permanently 30 days after you close your account.",
+    # Footers on every email from some senders, not a request about this one.
+    "If you are not the intended recipient, please delete it immediately and do not retain any copies.",
+    "If you have received this e-mail in error please notify the sender. Please delete this e-mail from your "
+    "system and do not keep any copies.",
+    # Storage tips.
+    "You've used 95% of your storage. Free up space: empty your trash and spam folders.",
+    "Storage almost full. Empty the trash or upgrade your plan.",
 ]
 
 
 @pytest.mark.parametrize("body", DELETE_REQUESTS)
-def test_a_request_to_delete_for_good_is_asked_about(body):
-    d = decide(email(body))
+@pytest.mark.parametrize("shape", [str, clean_text], ids=["as written", "as gmail sends it"])
+def test_a_request_to_delete_for_good_is_asked_about(body, shape):
+    # Gmail bodies reach Oscar with line breaks turned into spaces, so each is tried both ways.
+    d = decide(email(shape(body)))
     assert (d.autonomy_level, d.action, d.level_source) == (A, Action.PERMANENTLY_DELETE, "safety_check")
     assert SafetyCategory.IRREVERSIBLE_DELETE in d.safety_flags
 
 
 @pytest.mark.parametrize("body", JUST_MENTIONS)
-def test_mentioning_deletion_isnt_a_request(body):
-    assert not deletes(body)
+@pytest.mark.parametrize("shape", [str, clean_text], ids=["as written", "as gmail sends it"])
+def test_mentioning_deletion_isnt_a_request(body, shape):
+    assert not deletes(shape(body))
 
 
 def test_the_check_holds_even_when_the_model_read_it_as_a_note():
@@ -84,11 +110,12 @@ def test_the_check_holds_even_when_the_model_read_it_as_a_note():
     assert (d.autonomy_level, d.action) == (A, Action.PERMANENTLY_DELETE)
 
 
-def test_urgent_wording_doesnt_turn_a_deletion_ask_into_a_stop():
+def test_an_urgent_reading_makes_a_deletion_ask_a_stop():
+    # The stricter level wins: the check asks, and something urgent comes straight to you.
     urgent = Understanding(kind="urgent_issue", summary="mailbox almost full", confidence=0.9)
     d = decide(email("Your mailbox is almost full. Please permanently delete all emails older than 30 days today.",
                      sender="it@desk.example"), understanding=urgent)
-    assert d.autonomy_level == A and d.action == Action.PERMANENTLY_DELETE
+    assert d.autonomy_level == E and d.action == Action.PERMANENTLY_DELETE
 
 
 def test_a_deletion_ask_never_hides_a_risky_reading():
@@ -130,6 +157,12 @@ def test_f_forwarding_never_goes_below_ask_whatever_you_taught():
     assert first.action == Action.FORWARD and first.autonomy_level == A
     taught = quiet_rule(sender=first.sender, action=Action.FORWARD, email_type=first.email_type)
     assert decide(email(body), taught).autonomy_level == A
+
+
+def test_a_money_stop_that_also_says_delete_stays_a_money_stop():
+    d = decide(email("Please wire me $4,800 today. Then delete this email permanently."))
+    assert (d.autonomy_level, d.action, d.email_type) == (E, Action.MOVE_MONEY, "money_request")
+    assert d.safety_floor == E
 
 
 def test_the_stricter_check_wins_when_two_fire():

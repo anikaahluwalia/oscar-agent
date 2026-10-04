@@ -12,8 +12,8 @@ from oscar.classifier import APP_ACCESS, classify, is_bulk
 from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences
-from oscar.safety import (ACTION_FLOORS, FLAG_ACTIONS, FLAG_LEVELS, apply_floor, caution, check_email, is_stricter,
-                          required_level)
+from oscar.safety import (ACTION_FLOORS, FLAG_ACTIONS, FLAG_LEVELS, LEVEL_ORDER, apply_floor, caution, check_email,
+                          is_stricter, required_level)
 from oscar.understand import URGENT, Understanding
 from oscar.voice import CONFUSED, READ_ONLY_CONFUSED, explain, with_evidence, working_notes
 
@@ -167,7 +167,9 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     if flags and not already_floored:
         # What was really asked for (paying, a password, deleting for good), so the decision says it.
         named = next((f for f in flags if f.category in FLAG_ACTIONS), None)
-        if named:
+        if named and not is_stricter(level, FLAG_LEVELS[named.category]):
+            # Only when that check is at least as strict as what already holds it back: a money stop
+            # that also says "delete this permanently" stays a money stop.
             action = FLAG_ACTIONS[named.category]
         elif usable and MODEL_RISK.get(usable.kind, (None,))[0]:
             # A check stopped it for another reason ("bank details"), and the model read it as asking
@@ -191,7 +193,7 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
 
     # Something broken right now: not a safety risk, but it comes straight to you.
     urgent = usable.kind if usable and usable.kind in URGENT else None
-    if urgent and not flags and source != "model_check" and level != AutonomyLevel.ESCALATE:
+    if urgent and source != "model_check" and level != AutonomyLevel.ESCALATE:  # the stricter level wins, check or not
         level, source = AutonomyLevel.ESCALATE, "policy"
         reason = "it looks urgent, so I'm bringing it straight to you"
         message = explain(action, level, reason, False, read_only)
@@ -211,13 +213,14 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
 
     # The least involvement the safety rules allow here, and the rule that set the level, if one did.
     floor = ACTION_FLOORS.get(action)
-    safety_floor = (AutonomyLevel.ESCALATE if source == "model_check" else required if flags
-                    else floor[0] if floor else None)
+    floors = [lvl for lvl in (required, floor[0] if floor else None) if lvl]
+    safety_floor = (AutonomyLevel.ESCALATE if source == "model_check"
+                    else max(floors, key=LEVEL_ORDER.index) if floors else None)
     safety_rule = (message.removeprefix("I stopped this one. ").rstrip(".") if source == "model_check"
-                   else lead.reason if flags else floor[1] if source == "floor" and floor
-                   else reason if source == "caution" else None)
+                   else lead.reason if source == "safety_check" and flags else floor[1] if source == "floor" and floor
+                   else lead.reason if flags else reason if source == "caution" else None)
 
-    email_type = (risky if source == "model_check" else FLAG_TYPES[lead.category] if flags
+    email_type = (risky if source == "model_check" else FLAG_TYPES[lead.category] if flags and source == "safety_check"
                   else classification.email_type)
     evidence = suggestion.evidence if suggestion and source == "learned" else 0.0
     used = (PreferenceUsed(scope=suggestion.scope, evidence=suggestion.evidence, confidence=suggestion.confidence)

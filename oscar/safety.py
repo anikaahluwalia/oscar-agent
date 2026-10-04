@@ -76,16 +76,34 @@ DEAL = r"\b(?:renewal|contract|billing|subscription|terms|quote|agreement|sow|lo
 
 # Warnings against sharing something ("never share your code with anyone") aren't requests.
 # They're removed before checking, up to where the sentence turns ("..., but send it to me").
-# For the deletion check: someone asking (please, can you, or a sentence that starts with the
-# verb), deleting, the mailbox (this, it, the email, all messages...), and that it's for good.
-DELETE_ASK = (r"(?:(?:^|[.!?:\n]\s*)|\b(?:please|kindly|can you|could you|would you|will you|i need you to|need you to"
-              r"|make sure (?:to|you)|be sure to|you (?:must|should|need to))\s+)(?:(?:just|also|then|now|go ahead and)\s+)?")
-DELETE = r"(?:delete|erase|remove|wipe|purge|destroy|shred|trash)"
-MAIL = (r"(?:it|this|that|them|these|those|everything|(?:this|that|the|my|our|your|all|any|every|each)(?: \w+){0,2}? "
-        r"(?:e-?mails?|messages?|threads?|attachments?|conversations?|chains?|copies|copy|files?|mail|inbox))")
-FOR_GOOD = (r"(?:\bpermanently\b|\bfor good\b|\bforever\b|\birreversibly\b|\bbeyond recovery\b|\bfrom (?:the |your )?(?:trash|bin)\b"
-            r"|\b(?:and|,)\s*(?:do not|don't|never)\s+(?:keep|retain|save|store|hold on to)\b[^.?!\n]{0,20}\bcop(?:y|ies)\b"
-            r"|\bwithout (?:keeping|saving|retaining) (?:a |any )?cop(?:y|ies)\b)")
+# For the deletion check: someone asking (please, would you mind, or a clause that starts with the
+# verb: "Hi Sam, delete this permanently"), deleting, something in the mailbox, and that it's for
+# good. Gmail bodies reach Oscar with line breaks turned into spaces (gmail.clean_text), so a comma
+# or a dash can start the clause as well as a full stop. Every gap is bounded, so it stays fast.
+START = r"(?:^|[.!?:;,•*(\n-])\s{0,3}"
+REQUEST = (r"(?:please,?|kindly|can you|could you|would you(?: mind)?|will you|i want you to|i(?:'d| would) like you to"
+           r"|i need you to|need you to|do me a favou?r and|make sure (?:to|you)|be sure to|go ahead and|you (?:must|should|need to))")
+DELETE_ASK = rf"(?:{START}|\b{REQUEST}\s+)(?:(?:just|also|then|now|please,?|go ahead and)\s+)?"
+DELETE = (r"(?:delet(?:e|ing)|eras(?:e|ing)|remov(?:e|ing)|wip(?:e|ing)|purg(?:e|ing)|destroy(?:ing)?|shred(?:ding)?"
+          r"|trash(?:ing)?|bin(?:ning)?|nuk(?:e|ing))")
+MAIL = (r"(?:it|this|that|them|these|those|everything|(?:[\w.@'-]+\s+){0,5}?(?:e-?mails?|messages?|threads?|attachments?"
+        r"|conversations?|chains?|cop(?:y|ies)|files?|mail|inbox|photos?|pictures?|pics|screenshots?|images?|documents?|docs"
+        r"|pdfs?|invoices?|recordings?|notes))")
+GAP = r"(?:[^.?!\n]|\.(?=\S)){0,80}?"  # a full stop only ends it between sentences, not in "invoice.pdf" or "acme.com"
+FOR_GOOD = (r"(?:\bpermanently\b|\bfor good\b|\bforever\b|\birreversibly\b|\bcompletely\b|\bbeyond recovery\b"
+            r"|\bfrom (?:the |your )?(?:trash|bin|deleted (?:items|folder)|inbox and trash)\b"
+            r"|\b(?:and|then|,)\s*(?:then\s+)?(?:empty|clear) (?:the|your) (?:trash|bin|deleted (?:items|folder))\b"
+            r"|\b(?:and|,)\s*(?:do not|don't|never)\s+(?:keep|retain|save|store|hold on to)\b[^.?!\n]{0,20}\b(?:cop(?:y|ies)|backups?)\b"
+            r"|\bwithout (?:keeping|saving|retaining|leaving) (?:a |any )?(?:cop(?:y|ies)|backups?|trace)\b"
+            r"|\bso (?:it|they|that|nothing) (?:can't|cannot|can never|won't|will never) be (?:recovered|restored|undone|retrieved)\b)")
+# "If you are not the intended recipient, please delete it and do not retain a copy": a footer on
+# every email from some senders, not a request about this one. Only the deletion check skips it,
+# so instructions hidden in a footer are still read by the other checks.
+DISCLAIMER = re.compile(
+    r"\bif you (?:are not|aren't|were not|weren't) the (?:intended|named|correct) (?:recipient|addressee)s?\b[^.?!]*[.?!]?"
+    r"(?:[^.?!]*\b(?:delete|destroy|erase|copies|copy|retain)\b[^.?!]*[.?!]?){0,2}"
+    r"|\bif you (?:have )?received this (?:e-?mail |message |communication |transmission )?(?:in error|by mistake|by accident)\b"
+    r"[^.?!]*[.?!]?(?:[^.?!]*\b(?:delete|destroy|erase|copies|copy|retain)\b[^.?!]*[.?!]?){0,2}")
 
 NEGATED = re.compile(
     r"\b(?:never|don't|do not|please don't|please do not)\s+(?:\w+\s+){0,2}?(?:share|give|disclose|reveal|tell|send)\b"
@@ -247,9 +265,10 @@ EMAIL_CHECKS = MappingProxyType({
     SafetyCategory.IRREVERSIBLE_DELETE: (
         "It asks to delete email for good, and that can't be undone",
         [
-            rf"{DELETE_ASK}{DELETE}\b[^.?!\n]{{0,20}}?\b{MAIL}[^.?!\n]{{0,60}}?{FOR_GOOD}",
-            rf"{DELETE_ASK}(?:permanently|irreversibly|completely) {DELETE}\b[^.?!\n]{{0,20}}?\b{MAIL}",
-            rf"{DELETE_ASK}empty (?:the|your) (?:trash|bin|deleted (?:items|folder))\b",
+            rf"{DELETE_ASK}{DELETE}\s+{MAIL}\b{GAP}{FOR_GOOD}",
+            rf"{DELETE_ASK}(?:permanently|irreversibly|completely|forever) {DELETE}\s+{MAIL}\b",
+            rf"{DELETE_ASK}hard[- ]delet(?:e|ing)\b",
+            rf"^\s*(?:please,? )?{DELETE}(?: (?:it|this|them))? (?:permanently|for good|forever)\b",  # a subject line
         ],
     ),
 })
@@ -315,8 +334,9 @@ def check_email(email: Email) -> list[SafetyFlag]:
     text = NEGATED.sub(" ", _normalise(f"{email.subject}\n{email.body}".lower()))
     flags = []
     for category, (reason, patterns) in EMAIL_CHECKS.items():
+        scanned = DISCLAIMER.sub(" ", text) if category == SafetyCategory.IRREVERSIBLE_DELETE else text
         for pattern in patterns:
-            match = re.search(pattern, text)
+            match = re.search(pattern, scanned)
             if match:
                 flags.append(SafetyFlag(category=category, reason=reason, matched=match.group(0)))
                 break
