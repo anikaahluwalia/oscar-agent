@@ -222,8 +222,8 @@ class FeedbackResponse(BaseModel):
 class DecisionWithFeedback(BaseModel):
     decision: Decision
     feedback: list[FeedbackEvent]
-    review: Review | None = None  # real inbox only: your latest review
-    answer: dict | None = None  # real inbox only: what you said he should have done, and how this decision does
+    review: Review | None = None  # real inbox and the demo: your latest review
+    answer: dict | None = None  # real inbox and the demo: what you said he should have done, and how this decision does
     done: ActionRecord | None = None  # Stage 12: what Oscar did in Gmail for it, and whether it was undone
     # Stage 15: your latest word on what kind of email it is, and your answer if a safety rule stopped it.
     classification: ClassificationFeedback | None = None
@@ -249,7 +249,7 @@ def list_decisions(history: History = Depends(get_history)) -> list[DecisionWith
     deleted = inbox.deleted_in_gmail(history)
     return [
         DecisionWithFeedback(decision=d, feedback=history.feedback_for(d.id), review=history.review_carried_over(d.id),
-                             answer=graded(history, d) if d.source == "gmail" else None,
+                             answer=graded(history, d),
                              done=history.action_for(d.id), classification=history.classification_for(d.email_id),
                              safety_review=history.safety_review_for(d.id), label=label_for(history, d, names),
                              gone=d.email_id in deleted)
@@ -980,12 +980,16 @@ class ReviewRequest(BaseModel):
     note: str | None = None
 
 
-@app.post("/reviews", response_model=Review, dependencies=NOT_IN_DEMO)
-def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_history),
-                    tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> Review:
+@app.post("/reviews", response_model=Review)
+def review_endpoint(request: ReviewRequest, http_request: Request, session: str | None = Depends(demo_session)) -> Review:
     """Score one of Oscar's decisions on the real inbox. It also teaches him about that sender, and
-    a yes to something he's waiting to do is your approval too (approve_from_review)."""
-    decision = real.get_decision(request.decision_id)
+    a yes to something he's waiting to do is your approval too (approve_from_review).
+
+    In the demo it's the same answer about one of its made-up emails, saved only in this browser's
+    demo: it teaches that Oscar, and a yes is still your approval there. Nothing real is looked up
+    (the token, Gmail, the real inbox), so nothing is done in Gmail, put back or re-read."""
+    history = demo.SESSIONS.get(session) if session else _when_needed(http_request, get_real_history)
+    decision = history.get_decision(request.decision_id)
     try:
         if request.should_be_level is not None and decision is not None:
             review = answer(decision, request.should_be_level, request.should_be_action, why=request.why,
@@ -998,21 +1002,27 @@ def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_his
         else:
             # Half-answers ("Incorrect action" alone) hold back grading, so new ones aren't taken.
             raise ReviewError("Say what Oscar should have done.")
-        saved = record_review(real, review)
+        saved = record_review(history, review, demo=bool(session))
     except ReviewError as e:
         raise HTTPException(400, str(e))
-    approve_from_review(real, saved, tokens, http)
-    correct_from_review(real, saved, tokens, http)
+    if session:
+        approve_from_review(history, saved, None, None)  # a demo decision never reaches Gmail
+        return saved
+    tokens, http = _when_needed(http_request, get_tokens), _when_needed(http_request, get_http)
+    approve_from_review(history, saved, tokens, http)
+    correct_from_review(history, saved, tokens, http)
     if saved.label != ReviewLabel.SKIP:
-        _rethink_after_teaching(real, tokens, http)  # a review teaches him about that sender
+        _rethink_after_teaching(history, tokens, http)  # a review teaches him about that sender
     return saved
 
 
-def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore, http: httpx.Client) -> bool:
+def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore | None, http: httpx.Client | None) -> bool:
     """When you review an ask he's still waiting on you for, and your answer says to do it (he got
     it right, or should have just done it, the same action), that's your approval: he does it now,
     exactly as Approve would, so you don't approve it again in the inbox. Only for what he can do
-    in Gmail, and only while acting is on; otherwise it stays on your list. Returns whether he did it."""
+    in Gmail, and only while acting is on; otherwise it stays on your list. Returns whether he did it.
+    In the demo it's only your approval, as the demo's Approve always was: nothing is done anywhere,
+    so it needs no token."""
     decision = real.get_decision(review.decision_id)
     if decision is None or decision.autonomy_level != AutonomyLevel.ASK_FIRST:
         return False
@@ -1022,7 +1032,8 @@ def approve_from_review(real: History, review: Review, tokens: gmail.TokenStore,
     says_do_it = review.label == ReviewLabel.CORRECT or (
         review.should_be_level in (AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY)
         and review.should_be_action == decision.action)
-    if not (says_do_it and decision.acting and (can_do(decision) or can_draft(decision))):
+    in_demo = decision.source == "demo" and (decision.action in CHANGES or decision.action == Action.DRAFT_REPLY)
+    if not (says_do_it and (in_demo or (decision.acting and (can_do(decision) or can_draft(decision))))):
         return False
     try:
         _answer(real, decision, FeedbackKind.APPROVE, None, tokens, http)
@@ -1058,9 +1069,12 @@ def correct_from_review(real: History, review: Review, tokens: gmail.TokenStore,
         return None  # the review is saved either way; Undo is still there
 
 
-@app.get("/reviews/summary", dependencies=NOT_IN_DEMO)
-def review_summary(real: History = Depends(get_real_history)) -> dict:
-    return summary(real)
+@app.get("/reviews/summary")
+def review_summary(request: Request, session: str | None = Depends(demo_session)) -> dict:
+    """How reviewing is going: on the real inbox, or in the demo only this browser's demo."""
+    if session:
+        return summary(demo.SESSIONS.get(session), inbox="demo")
+    return summary(_when_needed(request, get_real_history))
 
 
 # --- Eval runs (Stage 10) -----------------------------------------------------

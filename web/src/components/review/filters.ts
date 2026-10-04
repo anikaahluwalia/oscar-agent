@@ -59,7 +59,7 @@ export function filtersFor({ real, readOnly }: { real: boolean; readOnly: boolea
           key: "done",
           label: "Done on his own",
           // On the real inbox, only what Gmail says he did himself (not what you approved).
-          match: (i) => ON_HIS_OWN.has(i.decision.autonomy_level) && reallyDone(i) && (!real || i.done?.by === "oscar"),
+          match: (i) => ON_HIS_OWN.has(i.decision.autonomy_level) && reallyDone(i) && (i.decision.source !== "gmail" || i.done?.by === "oscar"),
           empty: "I haven't done anything on my own yet.",
         },
     {

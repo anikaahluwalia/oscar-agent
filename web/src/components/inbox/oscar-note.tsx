@@ -12,7 +12,7 @@ import { ReviewPanel } from "@/components/review-panel";
 import { Button } from "@/components/ui/button";
 import type { DecisionWithFeedback, FeedbackKind, Level, RuleScope } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
-import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, isSafetyStop, REPLIES, REVIEW_LABELS, toGrade, wouldOnly } from "@/lib/labels";
+import { DOABLE, FEEDBACK, HOLD_TO_CONFIRM, isSafetyStop, REPLIES, REVIEW_LABELS, toGrade, wouldOnly, yesOrNo } from "@/lib/labels";
 import { isAnswered, isOpen } from "@/lib/use-oscar";
 
 type Props = {
@@ -42,6 +42,7 @@ function poseOf(item: DecisionWithFeedback): OscarPose | null {
  * Oscar's note on one email: what he did (or would do) and why, with what you can do about it.
  * The buttons are the ones the backend accepts (oscar/feedback.py check_allowed):
  * - read-only or not something he does in Gmail: grade it (ReviewPanel), nothing to approve or undo
+ * - the demo: grade it too, the same Yes or No as your real inbox (a Yes to an ask approves it there)
  * - stopped: mark it as reviewed
  * - asked: approve or decline; on Gmail, approving does it there
  * - told you: "Looks good"
@@ -54,6 +55,8 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
   const real = d.source === "gmail";
   const level = d.autonomy_level;
   const would = wouldOnly(d);
+  // The demo is answered with Yes or No, like your real inbox, not Approve and Decline.
+  const demo = d.source === "demo" && yesOrNo(d);
   const answered = isAnswered(item);
   const reply = REPLIES.has(d.action);
   // Hold-to-approve, for what's hard to undo. Replies never go out, so they don't need it.
@@ -88,14 +91,14 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
         </Button>,
       );
     }
-    if (level === "ESCALATE" && !answered) {
+    if (level === "ESCALATE" && !answered && !demo) {
       buttons.push(
         <Button key="seen" variant="outline" className={TAP} disabled={busy} onClick={() => give("SEEN")}>
           Mark as reviewed
         </Button>,
       );
     }
-    if (level === "ASK_FIRST" && !answered) {
+    if (level === "ASK_FIRST" && !answered && !demo) {
       if (real) notes.push("Approving does it in Gmail. You can undo it after.");
       else if (d.action === "DRAFT_REPLY") notes.push("Approving writes a draft reply in your Gmail. Nothing is sent.");
       else if (reply) notes.push("I never send emails. Approving tells me asking was right; the reply is yours.");
@@ -115,14 +118,14 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
         </Button>,
       );
     }
-    if (level === "PROCEED_AND_NOTIFY" && !answered) {
+    if (level === "PROCEED_AND_NOTIFY" && !answered && !demo) {
       buttons.push(
         <Button key="ok" variant="outline" className={TAP} disabled={busy} onClick={() => give("APPROVE")}>
           Looks good
         </Button>,
       );
     }
-    if (!buttons.length) notes.push(answered ? "You've answered this one. Nothing else to do." : "Nothing to do here.");
+    if (!buttons.length && !demo) notes.push(answered ? "You've answered this one. Nothing else to do." : "Nothing to do here.");
   }
 
   // What came of it, with times, and your answers so far. A read-only note or an open ask
@@ -168,7 +171,7 @@ export function OscarNote({ item, onFeedback, canExplain }: Props) {
           <LikeThis busy={busy} onChoose={(c) => void give(c.kind, c.scope, c.level)} />
         </div>
       )}
-      {would && <ReviewPanel item={item} />}
+      {(would || demo) && <ReviewPanel item={item} />}
     </section>
   );
 }

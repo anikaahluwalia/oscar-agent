@@ -10,6 +10,9 @@ Since Stage 11 reviews also teach Oscar (lessons(), below). That stays honest be
 decision is always logged before it's reviewed: every first read was made only with what
 earlier reviews taught. A re-read of an email never learns from your answer to that same
 email. Old half-answers don't teach anything.
+
+The demo (oscar/demo.py) is answered the same way, so trying it shows what reviewing is really
+like. Its reviews live only in that browser's demo, in memory, and teach only its Oscar.
 """
 
 from __future__ import annotations
@@ -176,13 +179,15 @@ class ReviewError(ValueError):
     pass
 
 
-def record_review(history: History, review: Review) -> Review:
-    """Save a review. Only real-inbox decisions get reviewed, and only after they were logged."""
+def record_review(history: History, review: Review, demo: bool = False) -> Review:
+    """Save a review. Only real-inbox decisions get reviewed, and only after they were logged.
+    demo: this is a browser's own demo (oscar/demo.py), where you answer the same way about its
+    made-up emails. Its history is only in memory, so nothing said there reaches the real inbox."""
     decision = history.get_decision(review.decision_id)
     if decision is None:
         raise ReviewError(f"I can't find decision {review.decision_id}.")
-    if decision.source != "gmail":
-        raise ReviewError("Reviews are for decisions on your real inbox.")
+    if decision.source != ("demo" if demo else "gmail"):
+        raise ReviewError("That isn't one of this demo's emails." if demo else "Reviews are for decisions on your real inbox.")
     if review.reviewed_at < decision.created_at:
         raise ReviewError("A decision has to be logged before it's reviewed.")
     if review.complete:
@@ -293,8 +298,8 @@ def grade_all(rows: list[tuple[Decision, Answer, Why | None]]) -> dict:
     }
 
 
-def summary(history: History) -> dict:
-    """How Oscar is doing on the real inbox, from your latest review of each decision.
+def summary(history: History, inbox: Literal["gmail", "demo"] = "gmail") -> dict:
+    """How Oscar is doing on the real inbox (or a browser's own demo), from your latest review of each decision.
 
     Skips don't count either way. Agreement is Correct out of everything else. "graded" uses
     only full answers, with the same scoring as the evals; old half-answers are counted as
@@ -302,9 +307,9 @@ def summary(history: History) -> dict:
     fix can be compared with what came before.
     """
     # Re-reads by a newer Oscar are kept apart: some of those emails were used to write regression tests.
-    real = [d for d in history.decisions.values() if d.source == "gmail" and not d.recheck_of]
+    real = [d for d in history.decisions.values() if d.source == inbox and not d.recheck_of]
     latest_reread: dict[str, Decision] = {}
-    for d in sorted((d for d in history.decisions.values() if d.source == "gmail" and d.recheck_of),
+    for d in sorted((d for d in history.decisions.values() if d.source == inbox and d.recheck_of),
                     key=lambda d: d.created_at):
         latest_reread[d.email_id] = d
     rereads = list(latest_reread.values())
@@ -370,11 +375,12 @@ def _lesson(decision: Decision, review: Review, right: Answer) -> list[FeedbackE
 
 
 def lessons(history: History, skip_email: str | None = None) -> list[FeedbackEvent]:
-    """What your reviews on the real inbox teach Oscar, oldest first. skip_email leaves out your
-    answers about one email, for re-reading it: he mustn't learn the answer he's graded against."""
+    """What your reviews teach Oscar, oldest first: on the real inbox, or in a browser's own demo.
+    record_review already checked each one is about that history's own emails. skip_email leaves out
+    your answers about one email, for re-reading it: he mustn't learn the answer he's graded against."""
     out = []
     for decision in history.decisions.values():
-        if decision.source != "gmail" or decision.email_id == skip_email:
+        if decision.email_id == skip_email:
             continue
         review = history.review_for(decision.id)
         right = expected_answer(review, decision) if review else None

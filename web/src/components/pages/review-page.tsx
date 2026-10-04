@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { plural } from "@/lib/counts";
 import { bringInDemo, checkGmail } from "@/lib/demo";
 import { setHash } from "@/lib/use-hash";
-import { isReadOnly, useOscar, type OscarData } from "@/lib/use-oscar";
+import { isReadOnly, useDemoSession, useOscar, type OscarData } from "@/lib/use-oscar";
 
 /** How often Oscar looks at your Gmail by himself, from Settings. */
 function checksText(data: OscarData) {
@@ -43,11 +43,12 @@ function Resting({ title, text, children }: { title: string; text: React.ReactNo
 
 /**
  * Review: Oscar's calls, one at a time. On your real inbox you tell him whether he got each one
- * right, which grades him and teaches him. On the demo inbox you answer what he asked about or
- * stopped. "See all" keeps every email and the tabs within reach.
+ * right, which grades him and teaches him, and the demo works the same way. On the shared example
+ * inbox you answer what he asked about or stopped. "See all" keeps every email and the tabs within reach.
  */
 export function ReviewPage() {
   const { data, error, feedback } = useOscar();
+  const demo = !!useDemoSession();
   if (!data) {
     return (
       <Page>
@@ -56,10 +57,12 @@ export function ReviewPage() {
     );
   }
 
-  const real = data.gmail.connected;
+  const gmail = data.gmail.connected;
+  // The demo is reviewed the same way as your real inbox: Yes or No on every call.
+  const real = gmail || demo;
   const readOnly = isReadOnly(data);
   // Your Gmail once it's connected; until then, the demo inbox.
-  const items = data.items.filter((i) => i.decision.source === (real ? "gmail" : "demo"));
+  const items = data.items.filter((i) => i.decision.source === (gmail ? "gmail" : "demo"));
   const stats = <ReviewStats data={data} items={items} />;
 
   return (
@@ -69,18 +72,18 @@ export function ReviewPage() {
           items={items}
           real={real}
           readOnly={readOnly}
-          canAct={real && data.gmail.acting}
+          canAct={gmail && data.gmail.acting}
           feedback={feedback}
           stats={stats}
           done={(total) => (
             <Resting
               title="All caught up!"
-              text={real ? `${checkedText(total)} ${checksText(data)}` : answeredText(total)}
+              text={gmail ? `${checkedText(total)} ${checksText(data)}` : real ? checkedText(total) : answeredText(total)}
             >
               <Button variant="outline" className="h-11 bg-card px-5" onClick={() => setHash("all")}>
                 See all emails
               </Button>
-              {real && !data.gmail.auto_check_minutes && (
+              {gmail && !data.gmail.auto_check_minutes && (
                 <Button className="h-11 px-5" onClick={checkGmail}>
                   <RefreshCwIcon /> Check now
                 </Button>
@@ -88,7 +91,7 @@ export function ReviewPage() {
             </Resting>
           )}
         />
-      ) : real ? (
+      ) : gmail ? (
         <Resting title="Nothing read yet." text={checksText(data)}>
           {!data.gmail.auto_check_minutes && (
             <Button className="h-11 px-5" onClick={checkGmail}>

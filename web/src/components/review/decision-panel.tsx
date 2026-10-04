@@ -27,8 +27,9 @@ import { Button } from "@/components/ui/button";
 import type { Action, DecisionWithFeedback, FeedbackKind, Level, Review } from "@/lib/api";
 import { openWhy } from "@/lib/drawers";
 import { safetyChecks } from "@/lib/insights";
-import { isOldWay } from "@/lib/labels";
-import { useOscar } from "@/lib/use-oscar";
+import { didIt } from "@/components/inbox/outcome";
+import { DOABLE, isOldWay, yesOrNo } from "@/lib/labels";
+import { isAnswered, useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
 
 type Feedback = ReturnType<typeof useOscar>["feedback"];
@@ -244,7 +245,11 @@ function Graded({
         <Answer good selected={said === "yes"} title="Yes" text="This was the right call" keyName="Y" disabled={busy} onClick={onYes} />
         <Answer good={false} selected={said === "no"} title="No" text="This should have been different" keyName="N" disabled={busy} onClick={onNo} />
       </div>
-      {asking && approves && <p className="text-[13px] text-muted-foreground">Yes also approves it, so I&apos;ll do it in Gmail now. You can undo it after.</p>}
+      {asking && approves && (
+        <p className="text-[13px] text-muted-foreground">
+          {item.decision.source === "gmail" ? "Yes also approves it, so I'll do it in Gmail now. You can undo it after." : "Yes also approves it, here in the demo inbox."}
+        </p>
+      )}
       {asking && (
         <div className="flex flex-wrap items-center gap-x-4 text-[13px] text-muted-foreground">
           <button type="button" disabled={busy} onClick={onSkip} className="min-h-11 hover:text-foreground sm:min-h-8">
@@ -307,8 +312,11 @@ export function DecisionPanel({
   const d = item.decision;
   const Icon = ACTION_ICONS[d.action] ?? MailIcon;
   const because = becauseOf(item);
-  const gradeable = real && d.source === "gmail";
-  const approves = gradeable && d.autonomy_level === "ASK_FIRST" && canAct && !item.done;
+  const gradeable = real && yesOrNo(d);
+  // On the demo inbox a Yes approves what he can do there too (api.approve_from_review), with nothing done anywhere.
+  const approves = gradeable && d.autonomy_level === "ASK_FIRST" && !item.done && (d.source === "gmail" ? canAct : DOABLE.has(d.action) && !isAnswered(item));
+  // He already did it: in Gmail, or (the demo) on his own and you haven't undone it.
+  const didAlready = d.source === "gmail" ? d.acting && !!item.done && !item.done.undone_at : didIt(d, item.done, item.feedback);
 
   return (
     <div className="flex flex-col gap-5">
@@ -321,8 +329,8 @@ export function DecisionPanel({
           <div className="flex min-w-0 flex-col gap-0.5">
             <p className="text-[17px] leading-snug font-bold">{callLine(item)}</p>
             {because && <p className="text-[13px] text-muted-foreground">Because {lower(because)}</p>}
-            {/* He already did it in Gmail: one tap to say what you'd rather, which also fixes the email. */}
-            {gradeable && d.acting && item.done && !item.done.undone_at && (
+            {/* He already did it: one tap to say what you'd rather, which in Gmail also fixes the email. */}
+            {gradeable && didAlready && (
               <button type="button" disabled={busy} onClick={onNo}
                 className="mt-1 self-start text-[13px] font-semibold underline underline-offset-4 hover:no-underline disabled:opacity-60">
                 Not what you wanted? Do something else
@@ -337,7 +345,7 @@ export function DecisionPanel({
       </section>
 
       {gradeable ? (
-        <PanelSection title="Was the action right?" text="Did I make the right decision with this email?">
+        <PanelSection title="Was the action right?" text="Did I make the right decision with this email?" tour="review-buttons">
           <Graded
             item={item}
             busy={busy}

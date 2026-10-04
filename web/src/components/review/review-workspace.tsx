@@ -14,7 +14,7 @@ import { ReviewList } from "@/components/review/review-list";
 import { SafetyPanel } from "@/components/review/safety-panel";
 import { sendFeedback, sendReview, type DecisionWithFeedback, type FeedbackKind, type ReviewInput } from "@/lib/api";
 import { timeOf } from "@/lib/insights";
-import { isOldWay, isSafetyStop, toGrade, wouldOnly } from "@/lib/labels";
+import { isOldWay, isSafetyStop, toGrade, wouldOnly, yesOrNo } from "@/lib/labels";
 import { setHash, useHash } from "@/lib/use-hash";
 import { isOpen, notifyChanged, oscarSays, type useOscar } from "@/lib/use-oscar";
 import { cn } from "@/lib/utils";
@@ -65,7 +65,7 @@ const inScope = (i: DecisionWithFeedback, real: boolean, mode: Mode) =>
 /** Oscar's pose and words above the email. Each one says something true about it. */
 function moodFor(item: DecisionWithFeedback): { pose: OscarPose; title: string } {
   const d = item.decision;
-  if (d.source === "gmail") {
+  if (yesOrNo(d)) {
     const r = item.review;
     if (isOpen(item) && d.autonomy_level === "ESCALATE") return { pose: "guarding", title: "I stopped this one. Did I get it right?" };
     if (!r || isOldWay(r)) return { pose: "thinking", title: "Did I get this one right?" };
@@ -188,7 +188,7 @@ export function ReviewWorkspace({
   done: doneState,
 }: {
   items: DecisionWithFeedback[];
-  /** These are emails from your Gmail, not the demo inbox. */
+  /** Reviewed the way your real inbox is, with Yes or No on every call: your Gmail, or the demo. */
   real: boolean;
   /** Oscar only reads your Gmail. */
   readOnly: boolean;
@@ -312,7 +312,7 @@ export function ReviewWorkspace({
     [busy, next],
   );
 
-  const gradeable = !!current && real && current.decision.source === "gmail";
+  const gradeable = !!current && real && yesOrNo(current.decision);
   const fresh = gradeable && !current.review;
   const old = gradeable && isOldWay(current.review);
   const asking = gradeable && (fresh || stepNow === "change");

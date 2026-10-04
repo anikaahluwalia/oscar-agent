@@ -8,6 +8,7 @@ import type { OscarPose } from "@/components/oscar-mood";
 import type { DecisionWithFeedback, FeedbackEvent } from "@/lib/api";
 import { askOscar, type ChatMessage } from "@/lib/chat-store";
 import { waiting } from "@/lib/counts";
+import { REVIEW_LABELS, toGrade } from "@/lib/labels";
 import { checkGmail, resetDemoInbox } from "@/lib/demo";
 import { setHash } from "@/lib/use-hash";
 import type { OscarData } from "@/lib/use-oscar";
@@ -22,11 +23,12 @@ export type Before = { answers: Set<string>; chat: number };
  */
 export type TourCtx = { data: OscarData; hash: string; narrow: boolean; chat: ChatMessage[]; before: Before };
 
-/** Every answer you've given: on his calls, and in Safety review. */
+/** Every answer you've given: on his calls, your Yes or No (a review, by its label), and in Safety review. */
 const answersIn = (data: OscarData) =>
   data.all.flatMap((i) => [
     ...i.feedback.map((f) => ({ id: f.id, kind: f.kind as string })),
     ...(i.safety_review ? [{ id: i.safety_review.id, kind: "SAFETY" }] : []),
+    ...(i.review ? [{ id: i.review.id, kind: i.review.label as string }] : []),
   ]);
 export const beforeOf = (data: OscarData, chat: ChatMessage[]): Before => ({ answers: new Set(answersIn(data).map((a) => a.id)), chat: chat.length });
 
@@ -87,9 +89,19 @@ const isSenderAnswer = (f: FeedbackEvent) => f.kind === "JUST_HANDLE_IT" || f.ki
 
 /** The rule you made on the Evergreen email, if you did. */
 const ruleOf = (c: TourCtx) => answersOn(c, EVERGREEN).find(isKindRule);
-const approved = (c: TourCtx) => answersOn(c, EVERGREEN).some((f) => f.kind === "APPROVE");
-/** You answered Evergreen another way (Decline, or about just this sender), so Approve and "Handle all emails like this" won't show again. */
-const answeredOtherwise = (c: TourCtx) => !ruleOf(c) && answersOn(c, EVERGREEN).some((f) => isSenderAnswer(f) || f.kind === "REJECT");
+/** Your latest Yes or No on the Evergreen email, if you gave one. */
+const reviewOf = (c: TourCtx) =>
+  c.data.all
+    .filter((i) => i.decision.email_id === EVERGREEN && i.review)
+    .map((i) => i.review!)
+    .sort((a, b) => b.reviewed_at.localeCompare(a.reviewed_at))[0];
+/** You said Yes to it (which also approves it). */
+const approved = (c: TourCtx) => reviewOf(c)?.label === "CORRECT" || answersOn(c, EVERGREEN).some((f) => f.kind === "APPROVE");
+/** You answered Evergreen another way (No, Not sure, or about just this sender), so "Handle all emails like this" won't show. */
+const answeredOtherwise = (c: TourCtx) => {
+  const review = reviewOf(c);
+  return !ruleOf(c) && (answersOn(c, EVERGREEN).some((f) => isSenderAnswer(f) || f.kind === "REJECT") || (!!review && review.label !== "CORRECT"));
+};
 /** He decided on this email after you made the rule, so the rule could count. */
 const afterRule = (c: TourCtx, item: DecisionWithFeedback) => {
   const rule = ruleOf(c);
@@ -124,6 +136,8 @@ export const CLOSING = "idea";
 
 /** The kinds of answer you gave on this step, oldest first. */
 const newAnswers = (c: TourCtx) => answersIn(c.data).filter((a) => !c.before.answers.has(a.id)).map((a) => a.kind);
+/** Something in Review is waiting for your Yes or No: an open ask or stop, or a call you haven't checked. */
+const toCheck = (c: TourCtx) => waiting(c.data).length > 0 || c.data.items.some(toGrade);
 /** Oscar answered something you asked on this step. */
 const replied = (c: TourCtx) => c.chat.slice(c.before.chat).some((m) => m.from === "oscar");
 // One of the chat's own suggestions (components/chat/composer.tsx), sent like any message.
@@ -146,14 +160,14 @@ export const STEPS: TourStep[] = [
     target: (c) => {
       if (!isOpen(c, EVERGREEN)) return [`email-${EVERGREEN}`];
       if (ruleOf(c)) return ["email-note"];
-      return approved(c) ? ["like-this-all", "like-this", "email-note"] : ["approve", "email-note"];
+      return approved(c) ? ["like-this-all", "like-this", "email-note"] : ["review-yes", "email-note"];
     },
     text: "Oscar hasn't learned how you like these handled yet.",
     outcome: (c) => {
       if (!find(c, EVERGREEN)) return "Oscar can't find this email. Reset demo brings it back.";
       if (ruleOf(c)) return "✓ Got it. Oscar will handle emails like this on his own now, from any sender.";
       if (answersOn(c, EVERGREEN).some(isSenderAnswer)) return "You picked an answer about just this sender, which is fine. To see Oscar learn, reset the demo and choose Handle all emails like this.";
-      if (answeredOtherwise(c)) return "You said no to this one, which is fine. To see Oscar learn, reset the demo and approve it this time.";
+      if (answeredOtherwise(c)) return "You didn't say yes to this one, which is fine. To see Oscar learn, reset the demo and press Yes this time.";
       return undefined;
     },
     waitFor: {
@@ -162,7 +176,7 @@ export const STEPS: TourStep[] = [
         if (answeredOtherwise(c) || !find(c, EVERGREEN)) return "Reset demo to try it again.";
         if (!isOpen(c, EVERGREEN)) return "Open the Evergreen Clothing email.";
         if (approved(c)) return "Now click Handle all emails like this, the one I'm pointing at.";
-        return "Approve it. Then choose how to handle emails like this next time.";
+        return "Press Yes, that's right. Then choose how to handle emails like this next time.";
       },
     },
     action: (c) => {
@@ -241,19 +255,22 @@ export const STEPS: TourStep[] = [
     // Not over the email, or over what he did with it: you need both to answer.
     clear: ["review-email", "review-call"],
     text: (c) =>
-      newAnswers(c).length || waiting(c.data).length
+      newAnswers(c).length || toCheck(c)
         ? "Here's one of my calls. Was I right? Tell me."
         : "Nothing's waiting on you right now. When something is, this is where you tell me if I got it right.",
     outcome: (c) => {
       const last = newAnswers(c).at(-1);
       if (!last) return undefined;
+      if (last === "CORRECT") return "✓ You said I got it right. I'll remember that.";
+      if (last === "SKIP") return "✓ Okay, you weren't sure. That one won't count either way.";
       if (last === "APPROVE") return "✓ You said yes, so I did it. I'll remember that.";
       if (last === "REJECT") return "✓ You said no, so I left it alone. I'll remember that.";
       if (last === "SEEN") return "✓ Thanks for taking a look. I'll leave that one with you.";
       if (last === "SAFETY") return "✓ Thanks. That helps me read emails like it, and my safety rules stay as they are.";
+      if (last in REVIEW_LABELS) return "✓ Thanks for showing me what I should have done. I'll remember that.";
       return "✓ Got it. I'll remember that.";
     },
-    waitFor: { done: (c) => newAnswers(c).length > 0 || !waiting(c.data).length, hint: "Answer this one to go on." },
+    waitFor: { done: (c) => newAnswers(c).length > 0 || !toCheck(c), hint: "Answer this one to go on." },
   },
   {
     id: "knows",

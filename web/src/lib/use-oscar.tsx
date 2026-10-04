@@ -7,7 +7,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { OscarAvatar } from "@/components/oscar-avatar";
-import { wouldOnly } from "@/lib/labels";
+import { wouldOnly, yesOrNo } from "@/lib/labels";
 import { subscribeSettings } from "@/lib/local-setting";
 import {
   demoSession,
@@ -52,9 +52,12 @@ export type OscarData = {
 };
 
 const ANSWERS = new Set<FeedbackKind>(["APPROVE", "REJECT", "UNDO", "EDIT_THEN_SEND", "SEEN"]);
-/** You've dealt with it: answered Oscar, answered it in Safety review, or reviewed a call he only would have made (wouldOnly). */
+/**
+ * You've dealt with it: answered Oscar, answered it in Safety review, or reviewed a call he only would
+ * have made (wouldOnly). In the demo a Yes or No is how you answer, so any review counts there.
+ */
 export const isAnswered = (i: DecisionWithFeedback) =>
-  (wouldOnly(i.decision) && !!i.review) || !!i.safety_review || i.feedback.some((f) => ANSWERS.has(f.kind));
+  ((wouldOnly(i.decision) || (i.decision.source === "demo" && yesOrNo(i.decision))) && !!i.review) || !!i.safety_review || i.feedback.some((f) => ANSWERS.has(f.kind));
 /** Still waiting on you: an ask you haven't answered, or something Oscar stopped that you haven't reviewed. */
 export const isOpen = (i: DecisionWithFeedback) =>
   (i.decision.autonomy_level === "ASK_FIRST" || i.decision.autonomy_level === "ESCALATE") && !wouldOnly(i.decision) && !isAnswered(i);
@@ -83,18 +86,6 @@ function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
   return items.filter((i) => !seen.has(i.decision.email_id) && seen.add(i.decision.email_id));
 }
 
-// Reviews grade Oscar on a real inbox, so the demo has none (and the API doesn't offer them there).
-const NO_REVIEWS: ReviewSummary = {
-  decisions: 0,
-  reviewed: 0,
-  scored: 0,
-  agreement: null,
-  labels: { CORRECT: 0, QUESTIONED_TOO_MUCH: 0, NEEDED_TO_ASK: 0, MISINTERPRETED_RISK: 0, UNNECESSARY_FLAGGING: 0, INCORRECT_ACTION: 0, INCORRECT_TYPE: 0, OTHER: 0, SKIP: 0 },
-  old_way: 0,
-  graded: { n: 0 },
-  by_version: {},
-};
-
 async function fetchAll(): Promise<OscarData> {
   const [items, brief, autonomy, learned, gmail, reviews, categories] = await Promise.all([
     getDecisions(),
@@ -102,7 +93,7 @@ async function fetchAll(): Promise<OscarData> {
     getAutonomy(),
     getLearned(),
     getGmailStatus(),
-    demoSession() ? NO_REVIEWS : getReviewSummary(),
+    getReviewSummary(),
     getCategories(),
   ]);
   // An email you deleted in Gmail leaves the lists. `all` keeps it, so your answers on it still count.

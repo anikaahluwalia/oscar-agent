@@ -129,7 +129,7 @@ function Question({ title, children }: { title: string; children: React.ReactNod
 }
 
 /**
- * Scoring one of Oscar's decisions on the real inbox: "did he get it right?", and if not,
+ * Scoring one of Oscar's decisions on the real inbox (or the demo): "did he get it right?", and if not,
  * what he should have done: how much on his own, then what, then whether he understood
  * the email. That's the same answer the evals use. It grades him, and it teaches him about the sender.
  */
@@ -286,10 +286,10 @@ export function ReviewPanel({ item }: { item: DecisionWithFeedback }) {
       <div className="flex flex-col gap-3 rounded-xl border border-dashed p-4">
         <p className="text-sm font-medium">Did Oscar get this right?</p>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" className={TAP} disabled={busy} onClick={() => save({ decision_id: decision.id, label: "CORRECT" })}>
+          <Button size="sm" className={TAP} data-tour="review-yes" disabled={busy} onClick={() => save({ decision_id: decision.id, label: "CORRECT" })}>
             Yes, that&apos;s right
           </Button>
-          <Button size="sm" className={TAP} variant="outline" disabled={busy} onClick={startFixing}>
+          <Button size="sm" className={TAP} variant="outline" data-tour="review-no" disabled={busy} onClick={startFixing}>
             No
           </Button>
           <Button size="sm" className={TAP} variant="ghost" disabled={busy} onClick={() => save({ decision_id: decision.id, label: "SKIP" })}>

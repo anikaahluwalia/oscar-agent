@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { didIt } from "@/components/inbox/outcome";
 import { displayName } from "@/components/kit/sender";
 import { OscarMood } from "@/components/oscar-mood";
 import {
@@ -57,10 +58,16 @@ const DID: Partial<Record<Action, string>> = { ARCHIVE: "archived", MARK_READ: "
 /**
  * What saving will do in Gmail when he already did something there (api.correct_from_review): put it
  * back, and do the easy-to-undo action you picked instead if you said he should just do it. Null when
- * nothing in Gmail changes (he did what you wanted, or he didn't act on it).
+ * nothing in Gmail changes (he did what you wanted, or he didn't act on it). In the demo it says that
+ * nothing is put back.
  */
 function inGmail(item: DecisionWithFeedback, level: Level | null, action: Action | null) {
   const { decision: d, done } = item;
+  if (d.source === "demo") {
+    // The demo has no Gmail to put back, so your answer only teaches me. Said plainly, so it isn't a surprise.
+    const same = (level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY") && action === d.action;
+    return level && !same && didIt(d, done, item.feedback) ? "This is the demo inbox, so nothing gets put back. Saving teaches me for next time." : null;
+  }
   if (!done || done.undone_at || !d.acting || !level) return null;
   const acts = level === "PROCEED_SILENTLY" || level === "PROCEED_AND_NOTIFY";
   if (acts && action === d.action) return null;

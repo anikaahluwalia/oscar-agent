@@ -176,7 +176,6 @@ GUARDED = [
     ("post", "/gmail/acting", {"on": True}), ("get", "/auth/google/start", None),
     ("get", "/auth/google/callback?state=s&code=c", None), ("post", "/gmail/sync", {}), ("post", "/gmail/recheck", {}),
     ("post", "/gmail/disconnect", {}),
-    ("post", "/reviews", {"decision_id": "x", "label": "CORRECT"}), ("get", "/reviews/summary", None),
     # Not real, but a demo only takes in its own emails, so one browser can't fill up the API's memory.
     ("post", "/decide", {"id": "x", "sender": "a@b.example", "subject": "s", "body": "b"}), ("post", "/demo/inbox", {}),
 ]
@@ -197,9 +196,10 @@ def test_nothing_real_can_be_reached_from_the_demo(setup, method, path, body):
 def test_every_route_that_touches_gmail_or_settings_is_guarded():
     """Found from the routes themselves, so a new endpoint can't be missed. /feedback and /chat use the
     token only for real-inbox decisions (none in a demo), /email-image only fetches an email's image,
-    and reading the app settings is fine. Opening an email looks up Gmail only outside the demo, and
-    only when it's needed, so it isn't found here: test_opening_a_demo_email_never_touches_anything_real
-    checks it instead."""
+    and reading the app settings is fine. Opening an email and reviewing look up anything real only
+    outside the demo, and only when it's needed, so they aren't found here:
+    test_opening_a_demo_email_never_touches_anything_real and test_reviewing_in_the_demo_never_touches_anything_real
+    check them instead."""
     allowed = {("POST", "/feedback"), ("POST", "/chat"), ("GET", "/email-image"), ("GET", "/app-settings")}
 
     def calls(dependant) -> set:
@@ -266,6 +266,72 @@ def test_feedback_in_the_demo_never_opens_the_token(setup):
     teach_like_this(client, evergreen)
     assert client.post("/demo/check").json() == {"new": len(LATER), "skipped": 0, "done": 0}
     assert client.get("/gmail").json()["demo"] is True
+
+
+# --- Reviewing in the demo: the same Yes and No as on the real inbox --------------------------------
+
+def untouchable_real():
+    def untouchable():
+        raise AssertionError("the demo looked up something real")
+
+    for dependency in (get_tokens, get_real_history, get_http, get_app_settings_path):
+        app.dependency_overrides[dependency] = untouchable
+
+
+def test_reviewing_in_the_demo_never_touches_anything_real(setup, tmp_path):
+    client, tokens, real = setup
+    connect(tokens)
+    real.add_decision(decide(Email(id="r1", sender="boss@work.example", subject="Real", body="fyi")))
+    demo_client = in_demo()
+    evergreen = by_email(demo_client.post("/demo/start").json())["demo_promo_evergreen"]
+    before = {p.name: p.read_text() for p in tmp_path.rglob("*") if p.is_file()}
+    untouchable_real()
+    assert demo_client.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"}).status_code == 200
+    assert demo_client.get("/reviews/summary").json()["reviewed"] == 1
+    assert {p.name: p.read_text() for p in tmp_path.rglob("*") if p.is_file()} == before
+    assert real.reviews == [] and real.feedback == []
+
+
+def test_a_yes_in_the_demo_is_saved_only_there_and_approves_what_he_asked(setup):
+    client, tokens, real = setup
+    connect(tokens)
+    one, two = in_demo("browser-one"), in_demo("browser-two")
+    evergreen = by_email(one.post("/demo/start").json())["demo_promo_evergreen"]
+    two.post("/demo/start")
+    r = one.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"})
+    assert r.status_code == 200, r.text
+    item = next(i for i in one.get("/decisions").json() if i["decision"]["id"] == evergreen["id"])
+    assert item["review"]["label"] == "CORRECT"
+    assert [f["kind"] for f in item["feedback"]] == ["APPROVE"]  # a yes to an ask is your approval, as on the real inbox
+    # Never in another demo, or the real inbox.
+    assert all(i["review"] is None for i in two.get("/decisions").json())
+    assert two.get("/reviews/summary").json()["reviewed"] == 0
+    assert two.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"}).status_code == 400
+    assert real.reviews == [] and client.get("/reviews/summary").json()["reviewed"] == 0
+    # And the real inbox's own reviews still only take real decisions.
+    assert client.post("/reviews", json={"decision_id": evergreen["id"], "label": "CORRECT"}).status_code == 400
+
+
+def test_a_no_in_the_demo_teaches_that_demo_only(setup):
+    """You said he should have asked, because he missed that it's risky: always ask about it from now
+    on, straight away, as on the real inbox (review._lesson). Read again, the same email is asked about."""
+    client, tokens, real = setup
+    one, two = in_demo("browser-one"), in_demo("browser-two")
+    started = one.post("/demo/start").json()
+    two.post("/demo/start")
+    quiet = next(d for d in started if d["autonomy_level"] == "PROCEED_SILENTLY")
+    r = one.post("/reviews", json={"decision_id": quiet["id"], "should_be_level": "ASK_FIRST", "should_be_action": quiet["action"],
+                                   "why": "risk"})
+    assert r.status_code == 200, r.text
+    assert r.json()["complete"] and r.json()["label"] == "MISINTERPRETED_RISK"
+    item = next(i for i in one.get("/decisions").json() if i["decision"]["id"] == quiet["id"])
+    assert item["feedback"] == []  # nothing is put back or done instead: it's only your answer
+    assert item["answer"]["level"] == "ASK_FIRST" and item["answer"]["error"] == "too_permissive"
+    email = next(e.email for e in demo.emails() if e.email.id == quiet["email_id"])
+    taught = Preferences.from_feedback(api.teaching(demo.SESSIONS.get("browser-one")))
+    assert decide(email, taught).autonomy_level == "ASK_FIRST"
+    assert api.teaching(demo.SESSIONS.get("browser-two")) == [] and two.get("/learned").json() == []
+    assert real.reviews == [] and client.get("/learned").json() == []
 
 
 # --- The real pipeline -------------------------------------------------------------------------

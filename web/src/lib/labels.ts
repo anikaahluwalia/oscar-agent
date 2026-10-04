@@ -1,6 +1,6 @@
 // Plain-language labels for what the API returns.
 
-import type { Action, ActionDone, Decision, DecisionWithFeedback, FeedbackKind, Level, Review, ReviewLabel } from "@/lib/api";
+import { isDemo, type Action, type ActionDone, type Decision, type DecisionWithFeedback, type FeedbackKind, type Level, type Review, type ReviewLabel } from "@/lib/api";
 
 /** What each autonomy level is called in the app. */
 export const STATUS: Record<Level, { label: string; would: string; pill: string; dot: string }> = {
@@ -40,6 +40,13 @@ const DONE: Record<Action, string> = {
   SEND_CREDENTIALS: "Sent credentials",
   MOVE_MONEY: "Moved money",
 };
+
+/**
+ * Answered with Yes or No ("Did I get this right?", and "what should I have done?" after a No):
+ * every call on your real inbox, and in the demo, which works the same way so you see what answering
+ * is really like. Its answers stay in that demo (oscar/review.py record_review).
+ */
+export const yesOrNo = (decision: Decision) => decision.source === "gmail" || (decision.source === "demo" && isDemo());
 
 /** The only things Oscar does in Gmail (oscar/act.py). Mirrors CHANGES. */
 // What Oscar does in Gmail: three label changes, and saving a reply as a draft (never sending it).
@@ -174,8 +181,8 @@ export const PROTECTED_RULES: ProtectedRule[] = [
 export const isOldWay = (review: Review | null) =>
   !!review && !review.complete && review.label !== "CORRECT" && review.label !== "SKIP";
 
-/** Real-inbox decisions not graded yet: not reviewed, or only half-answered. A stop you answered in Safety review counts as looked at. */
-export const toGrade = (i: DecisionWithFeedback) => i.decision.source === "gmail" && !i.safety_review && (!i.review || isOldWay(i.review));
+/** Calls not graded yet (real inbox, or the demo): not reviewed, or only half-answered. A stop you answered in Safety review counts as looked at. */
+export const toGrade = (i: DecisionWithFeedback) => yesOrNo(i.decision) && !i.safety_review && (!i.review || isOldWay(i.review));
 
 /** Stopped by a safety rule: the floor, a check on the email, or the model reading it as risky. Mirrors oscar/safety_review.py. */
 export const isSafetyStop = (d: Decision) =>

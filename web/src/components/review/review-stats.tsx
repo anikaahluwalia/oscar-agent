@@ -1,5 +1,5 @@
 import type { DecisionWithFeedback } from "@/lib/api";
-import { isOldWay, wouldOnly } from "@/lib/labels";
+import { isOldWay, wouldOnly, yesOrNo } from "@/lib/labels";
 import { isAnswered, type OscarData } from "@/lib/use-oscar";
 
 function Item({ value, label }: { value: string; label: string }) {
@@ -17,11 +17,11 @@ const habits = (n: number) => (n === 1 ? "habit learned" : "habits learned");
  * score him; how often he's right isn't something you need to see.
  */
 export function ReviewStats({ data, items }: { data: OscarData; items: DecisionWithFeedback[] }) {
-  const real = items.some((i) => i.decision.source === "gmail");
+  const real = items.some((i) => yesOrNo(i.decision));
   const learned = data.learned.length;
 
   if (!real) {
-    // The demo inbox: what he asked about or stopped, and how many of those you've answered.
+    // The shared example inbox: what he asked about or stopped, and how many of those you've answered.
     const asks = items.filter((i) => (i.decision.autonomy_level === "ASK_FIRST" || i.decision.autonomy_level === "ESCALATE") && !wouldOnly(i.decision));
     const answered = asks.filter(isAnswered).length;
     return (
