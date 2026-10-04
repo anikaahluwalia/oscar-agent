@@ -236,10 +236,10 @@ def skippable(e: GmailError) -> bool:
     return not rate_limited(e) and e.status in (400, 403, 404)
 
 
-def patiently(read: Callable[[], dict]) -> dict:
+def patiently(read: Callable[[], dict], waits: tuple[float, ...] = BACKOFF) -> dict:
     """One Gmail read. When Gmail says to slow down, wait and try again (1, 2, 4, 8, 16 seconds)
-    before giving up. The replay (oscar/replay.py) reads the same way."""
-    for wait in (*BACKOFF, None):
+    before giving up. The replay (oscar/replay.py) reads the same way, with longer waits."""
+    for wait in (*waits, None):
         try:
             return read()
         except GmailError as e:

@@ -17,7 +17,7 @@ from collections.abc import Callable
 
 from oscar.agent import decide
 from oscar.classification import type_hints
-from oscar.cold_start import MAX_REFUSED_IN_A_ROW, PACE, patiently, skippable
+from oscar.cold_start import MAX_REFUSED_IN_A_ROW, patiently, skippable
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision, now
@@ -28,6 +28,11 @@ from oscar.understand import Reader
 from oscar.version import policy_version
 
 PROGRESS_EVERY = 25  # emails between progress lines, so a long replay doesn't look stuck
+# Slower than the six-month look back, and more patient: you'll often replay twice in a row (before
+# and after a fix), and Gmail limits how much one account reads in a few minutes. Two runs back to
+# back hit that limit about 300 emails in, with only half a minute of waiting.
+PACE = 0.25  # seconds between reads
+BACKOFF = (2, 4, 8, 16, 30, 60, 60)  # seconds to wait each time Gmail says to slow down (about 3 minutes)
 _sleep = time.sleep  # tests swap this so they don't wait
 
 
@@ -66,7 +71,7 @@ def replay(history: History, gmail: GmailClient, reader: Reader | None = None, l
         if i % PROGRESS_EVERY == 0:
             say(f"  {i} of {len(todo)}")
         try:
-            email, _ = parse_message(patiently(lambda: gmail.message(before.email_id)))
+            email, _ = parse_message(patiently(lambda: gmail.message(before.email_id), BACKOFF))
             refused = 0
         except GmailError as e:
             # Deleted since, or Gmail won't show it: skipped, and kept so it's clear what wasn't
