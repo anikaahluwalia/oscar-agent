@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-denim-sale",
+    "sender": "Denim Co <hello@denimco.example>",
+    "subject": "25% off everything this weekend",
+    "body": "This weekend only: 25% off everything, from our best-selling straight-leg jeans to the new fall jackets.\n\nUse code WEEKEND25 at checkout. Ends Sunday at midnight.\n\nShop the sale: https://denimco.example/sale\n\nFree shipping on orders over $75, and free returns, always.\n\nDenim Co · 88 Mercer Lane\nYou're getting this because you signed up at denimco.example. Unsubscribe",
+    "category": "promotions",
+    "bulk": true
+  }
+}

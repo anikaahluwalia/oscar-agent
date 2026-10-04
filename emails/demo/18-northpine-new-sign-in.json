@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-northpine-new-sign-in",
+    "sender": "Northpine <security@northpine.example>",
+    "subject": "New sign-in to your Northpine account",
+    "body": "Hi Alex,\n\nWe noticed a new sign-in to your Northpine account.\n\nDevice: Windows PC, Chrome\nLocation: near Lisbon, Portugal\nTime: today, 4:12 am\n\nIf this was you, you don't need to do anything. If it wasn't, secure your account now: https://account.northpine.example/security\n\nThe Northpine accounts team",
+    "category": "updates"
+  }
+}

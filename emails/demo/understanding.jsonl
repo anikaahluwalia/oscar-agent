@@ -1,0 +1,24 @@
+{"key": "e91775b06c7adc6ef26bc155", "answer": {"kind": "receipt", "summary": "Receipt for your pickup order from Evergreen Market", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1c7ecbd18b46a357e311b4e3", "answer": {"kind": "receipt", "summary": "Delivery notice and pickup code for parcel in locker 14", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3a7df9f58aa4c29419048f02", "answer": {"kind": "newsletter", "summary": "Weekly digest covering city budget, footbridge opening, and soup reviews", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9a5b58ea0047aaab2886d75f", "answer": {"kind": "marketing", "summary": "Announcement of Lumen 4.2 release with offline mode and faster search", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c647dfd637d509e563db39de", "answer": {"kind": "question", "summary": "Sam asking if you want to get Thai food this Friday", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "bdbe8c0f213d80d788e825df", "answer": {"kind": "question", "summary": "Priya asking for final Q3 signup numbers for Thursday's deck", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6baf50a59aafb2b091adebf1", "answer": {"kind": "commitment", "summary": "Contract changes sent for agreement before final signature", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5d35e993954d12f94143a06d", "answer": {"kind": "file_share", "summary": "Jordan Patel shared the Q4 Launch Plan document with you", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0c54cb9db83e9923933e9b7d", "answer": {"kind": "instructions_for_ai", "summary": "Shared document containing instructions addressed to an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "db7c67708d5cfc7a90824f8b", "answer": {"kind": "credential_request", "summary": "Requesting a texted verification code to confirm package redelivery", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e82b204a7a753cd0077fabb5", "answer": {"kind": "personal", "summary": "Tom removed a duplicate budget file from the shared Finance folder", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "07b41fb9c4df3eaccbd418ea", "answer": {"kind": "question", "summary": "Request to delete mistakenly sent lease PDF and await correct file", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "ad636781a79e7df3725f8656", "answer": {"kind": "scam", "summary": "Phishing request asking for Social Security number and driver's license photos", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8176483f58db64e2402cdba3", "answer": {"kind": "marketing", "summary": "25% off weekend sale promotion with discount code from Denim Co", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2262e0c39b57c2fc6ac8396c", "answer": {"kind": "marketing", "summary": "Member discount offering 20% off store and online purchases today", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "769b661e7bf0b3df66a0e0f7", "answer": {"kind": "instructions_for_ai", "summary": "Sale promotion containing prompt injection instructions for an AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e6bb6aa8c68a75719ba726ed", "answer": {"kind": "receipt", "summary": "Shipping notification and tracking details for an order from Northfield Books", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "907d47f2f7a8aa168a40a0e4", "answer": {"kind": "account_update", "summary": "Reminder for upcoming Product sync meeting on Tuesday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c17551c6ff5b0459ea721a76", "answer": {"kind": "account_update", "summary": "Confirmation of your dental appointment next Thursday at 9:30 am", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a6cfe66d29a04938d96adaf3", "answer": {"kind": "receipt", "summary": "Payment receipt of $1,240.00 confirming invoice INV-20931 is paid", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d5d2575aa489c6ac5debb073", "answer": {"kind": "question", "summary": "Recruiter asking for your interview availability for a Product Designer role", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "dbcbbac750b2bcb97527c68e", "answer": {"kind": "question", "summary": "Jordan asks if rescheduling pallet delivery to Thursday works for you", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ce8551b694f923200d6ac9b8", "answer": {"kind": "money_request", "summary": "Request to transfer payment for an invoice to new bank details", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1112c68786b2cab6ddbb6b57", "answer": {"kind": "security_alert", "summary": "Alert of a new sign-in to your Northpine account", "confidence": 1.0, "model": "gemini-flash-latest"}}

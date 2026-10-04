@@ -1,0 +1,376 @@
+"""Demo mode: each browser gets its own demo (oscar/demo.py), kept apart from the real inbox, and
+decided by the real Oscar. Entry, isolation, the real pipeline, starting again, learning and safety,
+and the demo emails themselves."""
+
+import inspect
+import json
+import re
+import time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+import httpx
+import pytest
+from fastapi.routing import APIRoute
+from fastapi.testclient import TestClient
+
+from oscar import api, demo
+from oscar.agent import decide
+from oscar.api import app, get_app_settings_path, get_http, get_real_history, get_tokens, not_in_demo
+from oscar.gmail import TokenStore
+from oscar.history import History
+from oscar.models import AutonomyLevel, Email
+from oscar.preferences import Preferences
+from oscar.understand import Reader
+
+LEVELS = [AutonomyLevel.PROCEED_SILENTLY, AutonomyLevel.PROCEED_AND_NOTIFY, AutonomyLevel.ASK_FIRST, AutonomyLevel.ESCALATE]
+START = [e for e in demo.emails() if e.arrives == "start"]
+LATER = [e for e in demo.emails() if e.arrives == "later"]
+
+
+@pytest.fixture
+def setup(tmp_path, monkeypatch):
+    """A real inbox in a scratch folder, its token file, and no demos yet."""
+    monkeypatch.setattr(demo, "SESSIONS", demo.Sessions())
+    real = History(tmp_path / "real")
+    tokens = TokenStore(tmp_path / "token.json")
+    app.dependency_overrides[get_tokens] = lambda: tokens
+    app.dependency_overrides[get_real_history] = lambda: real
+    yield TestClient(app, headers={"content-type": "application/json"}), tokens, real
+    app.dependency_overrides.clear()
+
+
+def in_demo(session: str = "browser-one") -> TestClient:
+    return TestClient(app, headers={"content-type": "application/json", "X-Oscar-Demo": session})
+
+
+def by_email(decisions: list[dict]) -> dict[str, dict]:
+    """The latest decision on each email."""
+    out = {}
+    for d in sorted(decisions, key=lambda d: d["created_at"]):
+        out[d["email_id"]] = d
+    return out
+
+
+def listed(client: TestClient) -> dict[str, dict]:
+    return by_email([item["decision"] for item in client.get("/decisions").json()])
+
+
+def teach_like_this(client: TestClient, decision: dict) -> dict:
+    """The rule menu's "always do this for emails like this", as What Oscar knows sends it."""
+    r = client.post("/feedback", json={"decision_id": decision["id"], "kind": "ALWAYS_DO_THIS", "scope": "kind",
+                                       "desired_level": "PROCEED_SILENTLY"})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def connect(tokens: TokenStore) -> None:
+    tokens.save({"refresh_token": "r", "access_token": "a", "expires_at": 9e9, "address": "me@example.com"})
+
+
+# --- Entry -------------------------------------------------------------------------------------
+
+def test_the_demo_works_without_gmail(setup):
+    client = in_demo()
+    started = client.post("/demo/start")
+    assert started.status_code == 200
+    assert {d["email_id"] for d in started.json()} == {e.email.id for e in START}
+    assert set(listed(client)) == {e.email.id for e in START}
+    status = client.get("/gmail").json()
+    assert status["demo"] is True and status["connected"] is False and status["address"] is None
+
+
+def test_the_demo_still_works_with_gmail_connected(setup):
+    client, tokens, real = setup
+    connect(tokens)
+    demo_client = in_demo()
+    assert demo_client.post("/demo/start").status_code == 200
+    assert demo_client.get("/gmail").json() | {"configured": None} == {
+        "configured": None, "connected": False, "demo": True, "address": None, "name": None, "picture": None,
+        "connected_at": None, "last_sync": None, "auto_check_minutes": 0, "rethinking": False, "can_draft": False,
+        "can_act": False, "acting": False, "read_only": False}
+    # Without the header it's the real connection, as before.
+    status = client.get("/gmail").json()
+    assert status["demo"] is False and status["connected"] is True and status["address"] == "me@example.com"
+
+
+def test_start_and_check_are_only_for_the_demo(setup):
+    client, *_ = setup
+    assert client.post("/demo/start").status_code == 400
+    assert client.post("/demo/check").status_code == 400
+
+
+@pytest.mark.parametrize("session", ["", "short", "has spaces in it", "a" * 65, "semi;colon1"])
+def test_a_bad_session_id_is_refused_not_ignored(setup, session):
+    client, tokens, real = setup
+    connect(tokens)
+    real.add_decision(decide(Email(id="r1", sender="boss@work.example", subject="Real", body="fyi")))
+    r = in_demo(session).get("/decisions")
+    assert r.status_code == 400  # never quietly the real inbox
+
+
+# --- Isolation ---------------------------------------------------------------------------------
+
+def test_teaching_in_the_demo_never_reaches_the_real_inbox(setup, tmp_path):
+    client, tokens, real = setup
+    connect(tokens)
+    real.add_decision(decide(Email(id="r1", sender="boss@work.example", subject="Real", body="fyi")))
+    before = {p.name: p.read_text() for p in (tmp_path / "real").iterdir()}
+    demo_client = in_demo()
+    denim = by_email(demo_client.post("/demo/start").json())["demo-denim-sale"]
+    teach_like_this(demo_client, denim)
+    demo_client.post("/demo/check")
+    assert real.feedback == [] and list(real.decisions) == list(History(tmp_path / "real").decisions)
+    assert {p.name: p.read_text() for p in (tmp_path / "real").iterdir()} == before
+    assert client.get("/learned").json() == []
+
+
+def test_starting_the_demo_again_leaves_the_real_inbox_and_token_alone(setup, tmp_path):
+    client, tokens, real = setup
+    connect(tokens)
+    real.add_decision(decide(Email(id="r1", sender="boss@work.example", subject="Real", body="fyi")))
+    token_before = (tmp_path / "token.json").read_text()
+    assert isinstance(in_demo().post("/demo/reset").json(), list)
+    assert (tmp_path / "token.json").read_text() == token_before
+    assert [d.email_id for d in real.decisions.values()] == ["r1"]
+    assert [d.email_id for d in History(tmp_path / "real").decisions.values()] == ["r1"]
+
+
+def test_real_decisions_never_show_in_a_demo(setup):
+    client, tokens, real = setup
+    connect(tokens)
+    real.add_decision(decide(Email(id="r1", sender="boss@work.example", subject="Real", body="fyi")))
+    demo_client = in_demo()
+    assert demo_client.get("/decisions").json() == []
+    demo_client.post("/demo/start")
+    assert "r1" not in listed(demo_client)
+    assert set(listed(client)) == {"r1"}  # and the real inbox has only its own
+
+
+def test_two_demos_never_see_each_other(setup):
+    one, two = in_demo("browser-one"), in_demo("browser-two")
+    denim = by_email(one.post("/demo/start").json())["demo-denim-sale"]
+    teach_like_this(one, denim)
+    assert two.get("/decisions").json() == [] and two.get("/learned").json() == []
+    two.post("/demo/start")
+    assert two.get("/learned").json() == []
+    assert one.get("/learned").json() != []
+    assert one.post("/feedback", json={"decision_id": listed(two)["demo-sam-dinner"]["id"], "kind": "APPROVE"}).status_code == 404
+
+
+def test_the_oldest_demo_is_forgotten_past_the_limit():
+    sessions = demo.Sessions(limit=2)
+    first = sessions.get("session-1")
+    sessions.get("session-2")
+    assert sessions.get("session-1") is first  # used again, so it's the newest
+    sessions.get("session-3")
+    assert list(sessions.histories) == ["session-1", "session-3"]
+
+
+GUARDED = [
+    ("post", "/app-settings", {"labels": {}}),
+    ("get", "/cold-start", None), ("post", "/cold-start/start", {}), ("post", "/cold-start/skip", {}),
+    ("post", "/cold-start/answer", {"pattern_id": "p", "choice": "handle"}), ("post", "/cold-start/done", {}),
+    ("post", "/labels/rename", {"role": "receipts", "name": "Paid"}),
+    ("get", "/extension/status", None), ("get", "/extension/thread/abcdef12", None), ("get", "/extension/threads?ids=abcdef12", None),
+    ("post", "/gmail/acting", {"on": True}), ("get", "/auth/google/start", None),
+    ("get", "/auth/google/callback?state=s&code=c", None), ("post", "/gmail/sync", {}), ("post", "/gmail/recheck", {}),
+    ("post", "/gmail/disconnect", {}), ("get", "/emails/abc/content", None),
+    ("post", "/reviews", {"decision_id": "x", "label": "CORRECT"}), ("get", "/reviews/summary", None),
+    # Not real, but a demo only takes in its own emails, so one browser can't fill up the API's memory.
+    ("post", "/decide", {"id": "x", "sender": "a@b.example", "subject": "s", "body": "b"}), ("post", "/demo/inbox", {}),
+]
+
+
+@pytest.mark.parametrize("method,path,body", GUARDED)
+def test_nothing_real_can_be_reached_from_the_demo(setup, method, path, body):
+    def untouchable():
+        raise AssertionError("the demo looked up something real")
+
+    for dependency in (get_tokens, get_real_history, get_http, get_app_settings_path):
+        app.dependency_overrides[dependency] = untouchable
+    client = in_demo()
+    r = client.post(path, json=body) if method == "post" else client.get(path, follow_redirects=False)
+    assert r.status_code == 409 and r.json() == {"detail": "That's not part of the demo."}
+
+
+def test_every_route_that_touches_gmail_or_settings_is_guarded():
+    """Found from the routes themselves, so a new endpoint can't be missed. /feedback and /chat use the
+    token only for real-inbox decisions (none in a demo), /email-image only fetches an email's image,
+    and reading the app settings is fine."""
+    allowed = {("POST", "/feedback"), ("POST", "/chat"), ("GET", "/email-image"), ("GET", "/app-settings")}
+
+    def calls(dependant) -> set:
+        found = set()
+        for sub in dependant.dependencies:
+            found |= {sub.call} | calls(sub)
+        return found
+
+    real = {get_tokens, get_real_history, get_http, get_app_settings_path}
+    for route in app.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        used = calls(route.dependant)
+        for method in route.methods:
+            if used & real and (method, route.path) not in allowed:
+                assert not_in_demo in used, f"{method} {route.path} can reach real data from the demo"
+
+
+def test_feedback_in_the_demo_never_opens_the_token(setup):
+    class NoPeeking(TokenStore):
+        def load(self):
+            raise AssertionError("the demo read the Gmail token")
+
+    app.dependency_overrides[get_tokens] = lambda: NoPeeking(Path("/nonexistent"))
+    client = in_demo()
+    denim = by_email(client.post("/demo/start").json())["demo-denim-sale"]
+    teach_like_this(client, denim)
+    assert client.post("/demo/check").json() == {"new": len(LATER), "skipped": 0, "done": 0}
+    assert client.get("/gmail").json()["demo"] is True
+
+
+# --- The real pipeline -------------------------------------------------------------------------
+
+def test_every_demo_decision_comes_from_decide(setup, monkeypatch):
+    made = []
+
+    def recording(email, preferences=None, **kwargs):
+        assert isinstance(preferences, Preferences)
+        decision = decide(email, preferences, **kwargs)
+        made.append(decision)
+        return decision
+
+    monkeypatch.setattr(demo, "decide", recording)
+    client = in_demo()
+    started = client.post("/demo/start").json()
+    assert [d["id"] for d in started] == [d.id for d in made]
+    assert started == [json.loads(d.model_dump_json()) for d in made]
+    client.post("/demo/check")
+    assert len(made) == len(START) + len(LATER)
+
+
+def test_the_demo_code_never_picks_a_decision_itself():
+    """Nothing in the demo code names a demo email or sets a level or an action: only decide() does."""
+    ids = [e.email.id for e in demo.emails()]
+    sources = [Path(demo.__file__).read_text()] + [inspect.getsource(f) for f in (
+        api.demo_session, api.not_in_demo, api.get_history, api.get_demo_history, api.demo_start, api.demo_check,
+        api.reset, api.gmail_status)]
+    for source in sources:
+        assert not any(i in source for i in ids)
+        assert "demo-" not in source
+        assert not re.search(r"AutonomyLevel\.|Action\.|autonomy_level\s*=|level_source|model_copy", source)
+
+
+# --- Starting again ----------------------------------------------------------------------------
+
+def test_starting_again_forgets_what_you_taught(setup):
+    client = in_demo()
+    denim = by_email(client.post("/demo/start").json())["demo-denim-sale"]
+    teach_like_this(client, denim)
+    client.post("/demo/check")
+    assert client.get("/learned").json() != []
+    restarted = client.post("/demo/reset").json()
+    assert {d["email_id"] for d in restarted} == {e.email.id for e in START}
+    assert client.get("/learned").json() == []
+    now = listed(client)
+    assert set(now) == {e.email.id for e in START}  # the later emails haven't come in again
+    assert now["demo-denim-sale"]["autonomy_level"] == "ASK_FIRST" and now["demo-denim-sale"]["id"] != denim["id"]
+    assert all(item["feedback"] == [] for item in client.get("/decisions").json())
+    assert client.post("/demo/check").json()["new"] == len(LATER)
+    assert client.post("/demo/check").json()["new"] == 0  # each comes in once
+
+
+def test_two_checks_at_once_bring_each_email_in_once(setup, monkeypatch):
+    """Two tabs share one demo, so both can check at the same moment."""
+    client = in_demo()
+    client.post("/demo/start")
+    arrive = demo.arrive
+
+    def slowly(*args):
+        time.sleep(0.05)  # long enough for the other checks to begin meanwhile
+        return arrive(*args)
+
+    monkeypatch.setattr(demo, "arrive", slowly)
+    with ThreadPoolExecutor(4) as pool:
+        counts = list(pool.map(lambda _: client.post("/demo/check").json()["new"], range(4)))
+    assert sorted(counts) == [0, 0, 0, len(LATER)]
+    later = [item["decision"]["email_id"] for item in client.get("/decisions").json()
+             if item["decision"]["email_id"] in {e.email.id for e in LATER}]
+    assert sorted(later) == sorted(e.email.id for e in LATER)
+
+
+# --- Learning and safety -----------------------------------------------------------------------
+
+def test_a_fresh_demo_shows_every_level(setup):
+    decisions = by_email(in_demo().post("/demo/start").json())
+    assert {d["autonomy_level"] for d in decisions.values()} == {level.value for level in LEVELS}
+    denim = decisions["demo-denim-sale"]
+    assert (denim["action"], denim["autonomy_level"], denim["level_source"]) == ("ARCHIVE", "ASK_FIRST", "policy")
+
+
+def test_one_rule_handles_another_shop_quietly_but_never_the_injection(setup):
+    client = in_demo()
+    teach_like_this(client, by_email(client.post("/demo/start").json())["demo-denim-sale"])
+    assert client.post("/demo/check").json() == {"new": 2, "skipped": 0, "done": 0}
+    now = listed(client)
+    trailhead, cedar = now["demo-trailhead-sale"], now["demo-cedar-sale"]
+    assert (trailhead["action"], trailhead["autonomy_level"], trailhead["level_source"]) == (
+        "ARCHIVE", "PROCEED_SILENTLY", "learned")
+    assert cedar["autonomy_level"] == "ESCALATE" and "PROMPT_INJECTION" in cedar["safety_flags"]
+
+
+def test_without_the_rule_the_other_shop_is_still_asked_about(setup):
+    client = in_demo()
+    client.post("/demo/start")
+    client.post("/demo/check")
+    trailhead = listed(client)["demo-trailhead-sale"]
+    assert (trailhead["action"], trailhead["autonomy_level"]) == ("ARCHIVE", "ASK_FIRST")
+
+
+def test_risky_emails_are_stopped_and_their_harmless_twins_are_not(setup):
+    d = by_email(in_demo().post("/demo/start").json())
+    assert d["demo-supplyco-new-bank-account"]["autonomy_level"] == "ESCALATE"
+    assert "MONEY" in d["demo-supplyco-new-bank-account"]["safety_flags"]
+    assert d["demo-parcel-code-request"]["autonomy_level"] == "ESCALATE"
+    assert "CREDENTIALS" in d["demo-parcel-code-request"]["safety_flags"]
+    assert d["demo-elena-delete-request"]["autonomy_level"] in ("ASK_FIRST", "ESCALATE")
+    assert d["demo-docs-vendor-budget"]["autonomy_level"] == "ESCALATE"
+    for twin in ("demo-supplyco-payment-received", "demo-locker-delivered", "demo-tom-duplicate-deleted",
+                 "demo-docs-q4-launch-plan"):
+        assert d[twin]["autonomy_level"] in ("PROCEED_SILENTLY", "PROCEED_AND_NOTIFY"), twin
+        assert d[twin]["safety_flags"] == [], twin
+
+
+# --- The demo emails ---------------------------------------------------------------------------
+
+def test_the_demo_emails_are_varied_and_made_up():
+    found = demo.emails()
+    assert 20 <= len(found) <= 24
+    assert len({e.email.id for e in found}) == len(found)
+    senders = {e.email.sender.split("@")[-1].rstrip(">").lower() for e in found}
+    assert len(senders) >= 15
+    for e in found:
+        text = f"{e.email.sender}\n{e.email.subject}\n{e.email.body}".lower()
+        assert "test" not in text and "scenario" not in text, e.email.id
+        # Every address and link, and any other name.with.a.dot (an address's name part dropped first).
+        for domain in re.findall(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b", re.sub(r"[\w.+-]+@", "", text)):
+            assert domain.endswith(".example"), (e.email.id, domain)
+    promos = {e.email.sender.split("@")[-1] for e in found if e.email.category == "promotions"}
+    assert len(promos) >= 3
+    assert [e.email.id for e in LATER] == ["demo-trailhead-sale", "demo-cedar-sale"]
+
+
+def test_every_demo_email_has_a_saved_reading():
+    """Saved for the current prompt (understand.PROMPT_VERSION). After changing an email or the
+    prompt, run python -m oscar.demo --read."""
+    with httpx.Client() as http:
+        reader = Reader(http, demo.READINGS, reads="full", saved_only=True)
+        for e in demo.emails():
+            assert reader.read(e.email) is not None, e.email.id
+
+
+def test_a_missing_reading_means_the_rules_alone(setup, monkeypatch, tmp_path):
+    monkeypatch.setattr(demo, "READINGS", tmp_path / "none.jsonl")
+    started = in_demo().post("/demo/start")
+    assert started.status_code == 200
+    assert all(d["understood_by"] != "model" for d in started.json())

@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-northwind-contract",
+    "sender": "Dana Whitfield <dana.whitfield@northwindlegal.example>",
+    "subject": "Re: Master Services Agreement, our changes",
+    "body": "Hi Alex,\n\nThanks for the redlines. We've taken most of them, with two changes on our side:\n\n1. Section 9.2: the liability cap is now 1x the annual fees, down from the 2x in your draft.\n2. Section 14.1: either side can end the agreement with 90 days' notice, instead of 30.\n\nIf you're happy with these, just reply \"agreed\" and I'll send the final version for signature this week.\n\nBest,\nDana Whitfield\nCounsel, Northwind Logistics",
+    "category": "primary"
+  }
+}

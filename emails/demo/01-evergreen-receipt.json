@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-evergreen-receipt",
+    "sender": "Evergreen Market <orders@evergreen-market.example>",
+    "subject": "Your Evergreen Market receipt",
+    "body": "Thanks for shopping with us, Alex.\n\nOrder EM-48213 · picked up Saturday, 10:42 am\n\nOrganic bananas (1.2 lb)  $0.89\nSourdough loaf  $5.49\nGreek yogurt, 32 oz  $6.29\nCold brew concentrate  $9.99\nCherry tomatoes  $3.99\n\nSubtotal  $26.65\nTax  $0.84\nTotal  $27.49\nPaid with Visa ending 2201\n\nYou earned 27 Evergreen Rewards points. See you next time!",
+    "category": "updates",
+    "bulk": true
+  }
+}

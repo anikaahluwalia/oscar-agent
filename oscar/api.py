@@ -12,7 +12,7 @@ from pathlib import Path
 from urllib.parse import urlencode, urlparse
 
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, Response
@@ -31,6 +31,7 @@ from oscar.agent import decide
 from oscar.assistant import ModelReply, Turn, model_name, talk
 from oscar import app_settings
 from oscar import cold_start
+from oscar import demo
 from oscar.labels import kind_role
 from oscar import categories as user_categories
 from oscar.categories import CategoryError
@@ -161,13 +162,44 @@ def get_http() -> httpx.Client:
     return httpx.Client(timeout=20)
 
 
-def get_history(tokens: gmail.TokenStore = Depends(get_tokens), real: History = Depends(get_real_history)) -> History:
-    """The real inbox once Gmail is connected, the demo inbox until then."""
-    return real if tokens.load() else demo_history()
+def demo_session(x_oscar_demo: str | None = Header(None)) -> str | None:
+    """The browser's own demo (oscar/demo.py), when it's in demo mode: it sends its session id with every call."""
+    if x_oscar_demo is None:
+        return None
+    if not demo.SESSION_ID.match(x_oscar_demo):
+        raise HTTPException(400, "That demo session id isn't one I can use.")
+    return x_oscar_demo
 
 
-def get_demo_history(tokens: gmail.TokenStore = Depends(get_tokens), history: History = Depends(get_history)) -> History:
-    if tokens.load():
+def not_in_demo(session: str | None = Depends(demo_session)) -> None:
+    """For everything that reads or changes your real Gmail, its connection, or your settings. Listed
+    first on those routes (NOT_IN_DEMO), so in demo mode nothing real is even looked up."""
+    if session:
+        raise HTTPException(409, "That's not part of the demo.")
+
+
+NOT_IN_DEMO = [Depends(not_in_demo)]
+
+
+def _when_needed(request: Request, dependency):
+    """A dependency looked up only when it's needed (with the tests' stand-in, if they gave one)."""
+    return request.app.dependency_overrides.get(dependency, dependency)()
+
+
+def get_history(request: Request, session: str | None = Depends(demo_session)) -> History:
+    """In demo mode, this browser's own demo. Otherwise the real inbox once Gmail is connected, and
+    the shared demo inbox until then (the command line and the old demo use that one). The real
+    inbox isn't looked up at all in demo mode."""
+    if session:
+        return demo.SESSIONS.get(session)
+    if _when_needed(request, get_tokens).load():
+        return _when_needed(request, get_real_history)
+    return demo_history()
+
+
+def get_demo_history(request: Request, session: str | None = Depends(demo_session),
+                     history: History = Depends(get_history)) -> History:
+    if not session and _when_needed(request, get_tokens).load():
         raise HTTPException(409, "Gmail is connected, so the demo inbox is off. Disconnect Gmail to use it.")
     return history
 
@@ -245,7 +277,7 @@ def get_app_settings(path: Path = Depends(get_app_settings_path)) -> app_setting
     return app_settings.load(path)
 
 
-@app.post("/app-settings", response_model=app_settings.AppSettings)
+@app.post("/app-settings", response_model=app_settings.AppSettings, dependencies=NOT_IN_DEMO)
 def update_app_settings(changes: dict, path: Path = Depends(get_app_settings_path)) -> app_settings.AppSettings:
     try:
         return app_settings.update(path, changes)
@@ -265,7 +297,7 @@ def _with_label_names(now: dict) -> dict:
     return now
 
 
-@app.get("/cold-start")
+@app.get("/cold-start", dependencies=NOT_IN_DEMO)
 def cold_start_status(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
                       real: History = Depends(get_real_history)) -> dict:
     """How the look back over your last six months is going, and the habits to answer."""
@@ -276,7 +308,7 @@ def cold_start_status(tokens: gmail.TokenStore = Depends(get_tokens), http: http
     return {**_with_label_names(cold_start.status(real)), "new_account": not real.decisions}
 
 
-@app.post("/cold-start/start")
+@app.post("/cold-start/start", dependencies=NOT_IN_DEMO)
 def cold_start_begin(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
                      real: History = Depends(get_real_history)) -> dict:
     """Start the look back (or carry on after a stop or a Gmail error). Never runs again once done."""
@@ -286,7 +318,7 @@ def cold_start_begin(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx
     return _with_label_names(cold_start.status(real))
 
 
-@app.post("/cold-start/skip")
+@app.post("/cold-start/skip", dependencies=NOT_IN_DEMO)
 def cold_start_skip(real: History = Depends(get_real_history)) -> dict:
     return _with_label_names(cold_start.skip(real))
 
@@ -296,7 +328,7 @@ class ColdStartAnswer(BaseModel):
     choice: Literal["handle", "tell", "label", "ask", "reject"]
 
 
-@app.post("/cold-start/answer")
+@app.post("/cold-start/answer", dependencies=NOT_IN_DEMO)
 def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real_history),
                       tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> dict:
     """Your answer to one habit he found. Saved as a "for emails like this" rule, so safety still wins.
@@ -318,7 +350,7 @@ def cold_start_answer(request: ColdStartAnswer, real: History = Depends(get_real
     return {**_with_label_names(now), "reply": reply}
 
 
-@app.post("/cold-start/done")
+@app.post("/cold-start/done", dependencies=NOT_IN_DEMO)
 def cold_start_done(real: History = Depends(get_real_history)) -> dict:
     try:
         return _with_label_names(cold_start.finish(real))
@@ -331,7 +363,7 @@ class RenameLabel(BaseModel):
     name: str
 
 
-@app.post("/labels/rename")
+@app.post("/labels/rename", dependencies=NOT_IN_DEMO)
 def rename_oscar_label(request: RenameLabel, tokens: gmail.TokenStore = Depends(get_tokens),
                  http: httpx.Client = Depends(get_http), path: Path = Depends(get_app_settings_path)) -> dict:
     """Rename one of Oscar's Gmail labels. If he can change labels in your Gmail, the label is
@@ -413,7 +445,7 @@ def _waiting_ids(history: History) -> set[str]:
     return {d.id for d in needs_you(history)[AutonomyLevel.ASK_FIRST]}
 
 
-@app.get("/extension/status")
+@app.get("/extension/status", dependencies=NOT_IN_DEMO)
 def extension_status(history: History = Depends(get_history), tokens: gmail.TokenStore = Depends(get_tokens),
                      real: History = Depends(get_real_history),
                      settings_path: Path = Depends(get_app_settings_path)) -> dict:
@@ -435,7 +467,7 @@ def extension_status(history: History = Depends(get_history), tokens: gmail.Toke
             "settings": app_settings.load(settings_path).model_dump()}
 
 
-@app.get("/extension/thread/{thread_id}")
+@app.get("/extension/thread/{thread_id}", dependencies=NOT_IN_DEMO)
 def extension_thread(thread_id: str, history: History = Depends(get_history)) -> dict:
     """Oscar's latest call on a Gmail thread, by its id as Gmail's page shows it, and his call on
     every email in it he's read, oldest first."""
@@ -449,7 +481,7 @@ def extension_thread(thread_id: str, history: History = Depends(get_history)) ->
             "thread": [_extension_item(history, d, asks) for d in reversed(found)]}
 
 
-@app.get("/extension/threads")
+@app.get("/extension/threads", dependencies=NOT_IN_DEMO)
 def extension_threads(ids: str = "", history: History = Depends(get_history)) -> dict:
     """His call on each of up to 100 threads, for the chips in Gmail's list: {thread id: label}."""
     wanted = [i for i in ids.split(",") if THREAD_ID.match(i)][:100]
@@ -525,24 +557,50 @@ def chat_status() -> dict:
     return {"model": model_name()}
 
 
-@app.post("/demo/inbox", response_model=list[Decision])
+@app.post("/demo/inbox", response_model=list[Decision], dependencies=NOT_IN_DEMO)
 def load_demo_inbox(history: History = Depends(get_demo_history)) -> list[Decision]:
-    """Run every email in emails/ through Oscar, as if they just arrived."""
+    """Run every email in emails/ through Oscar, as if they just arrived. Not in demo mode: there,
+    /demo/start and /demo/check are the only ways email comes in, so a demo never grows past its own."""
     decisions = []
     for path in sorted(DEMO_EMAILS.glob("*.json")):
         decisions.append(decide_endpoint(Email.model_validate_json(path.read_text()), history))
     return decisions
 
 
+@app.post("/demo/start", response_model=list[Decision])
+def demo_start(session: str | None = Depends(demo_session)) -> list[Decision]:
+    """Start this browser's demo afresh: forget everything in it, then Oscar decides on the demo
+    emails that are there at the start (oscar/demo.py), as if they just arrived."""
+    if not session:
+        raise HTTPException(400, "This is only for the demo.")
+    with demo.SESSIONS.arriving(session):
+        return demo.start(demo.SESSIONS.fresh(session))
+
+
+@app.post("/demo/check")
+def demo_check(session: str | None = Depends(demo_session)) -> dict:
+    """The demo's Check now: the demo emails that come in later, decided with what you've taught
+    him so far. Each comes in once."""
+    if not session:
+        raise HTTPException(400, "This is only for the demo.")
+    with demo.SESSIONS.arriving(session):
+        return {"new": demo.check(demo.SESSIONS.get(session)), "skipped": 0, "done": 0}
+
+
 @app.post("/demo/reset")
-def reset(history: History = Depends(get_demo_history)) -> dict:
-    """Forget all decisions and feedback, so the demo can start again."""
+def reset(session: str | None = Depends(demo_session),
+          history: History = Depends(get_demo_history)) -> dict | list[Decision]:
+    """Forget all decisions and feedback, so the demo can start again. In demo mode that's this
+    browser's demo, started afresh."""
+    if session:
+        return demo_start(session)
     history.clear()
     return {"ok": True}
 
 
-@app.post("/decide", response_model=Decision)
+@app.post("/decide", response_model=Decision, dependencies=NOT_IN_DEMO)
 def decide_endpoint(email: Email, history: History = Depends(get_demo_history)) -> Decision:
+    """Oscar decides on one email you send him. Not in demo mode, for the same reason as /demo/inbox."""
     decision = decide(email, Preferences.from_feedback(teaching(history)), type_hint=type_hints(history).get(email.sender))
     history.add_decision(decision)
     return decision
@@ -633,7 +691,7 @@ TEACHES = {FeedbackKind.ALWAYS_DO_THIS, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind
 def _rethink_after_teaching(history: History, tokens: gmail.TokenStore, http: httpx.Client) -> None:
     """You taught Oscar something on the real inbox: decide again, in the background, on the recent
     emails it covers, so you don't have to review each one. The demo inbox has nothing to re-read."""
-    if tokens.load() and any(d.source == "gmail" for d in history.decisions.values()):
+    if any(d.source == "gmail" for d in history.decisions.values()) and tokens.load():
         inbox.rethink_soon(history, lambda: gmail_client(tokens, http))
 
 
@@ -685,12 +743,18 @@ _states: dict[str, float] = {}  # sign-in attempts in progress, so a callback ca
 
 
 @app.get("/gmail")
-def gmail_status(tokens: gmail.TokenStore = Depends(get_tokens), real: History = Depends(get_real_history)) -> dict:
+def gmail_status(request: Request, session: str | None = Depends(demo_session)) -> dict:
+    if session:  # the demo never looks at your Gmail connection
+        return {"configured": gmail.configured(), "connected": False, "demo": True, "address": None, "name": None,
+                "picture": None, "connected_at": None, "last_sync": None, "auto_check_minutes": 0,
+                "rethinking": False, "can_draft": False, "can_act": False, "acting": False, "read_only": False}
+    tokens, real = _when_needed(request, get_tokens), _when_needed(request, get_real_history)
     saved = tokens.load() or {}
     acting = acting_on(tokens, real)
     return {
         "configured": gmail.configured(),
         "connected": bool(saved),
+        "demo": False,
         "address": saved.get("address"),
         "name": saved.get("name"),  # from your Google account, when it was shared
         "picture": saved.get("picture"),
@@ -709,7 +773,7 @@ class ActingRequest(BaseModel):
     on: bool
 
 
-@app.post("/gmail/acting")
+@app.post("/gmail/acting", dependencies=NOT_IN_DEMO)
 def set_acting(request: ActingRequest, tokens: gmail.TokenStore = Depends(get_tokens),
                real: History = Depends(get_real_history)) -> dict:
     """Let Oscar act in Gmail, or go back to only reading. Only new emails are acted on."""
@@ -729,7 +793,7 @@ def _back_to_settings(gmail_result: str) -> RedirectResponse:
     return RedirectResponse(f"{WEB_URL}/settings?{urlencode({'gmail': gmail_result})}")
 
 
-@app.get("/auth/google/start")
+@app.get("/auth/google/start", dependencies=NOT_IN_DEMO)
 def google_start(act: bool = False) -> RedirectResponse:
     """Send the user to Google to give Oscar access to Gmail: read-only, or with act, permission to
     change labels (Stage 12)."""
@@ -744,7 +808,7 @@ def google_start(act: bool = False) -> RedirectResponse:
     return RedirectResponse(gmail.auth_url(state, act=act))
 
 
-@app.get("/auth/google/callback")
+@app.get("/auth/google/callback", dependencies=NOT_IN_DEMO)
 def google_callback(
     state: str = "",
     code: str = "",
@@ -789,7 +853,7 @@ def google_callback(
     return _back_to_settings("connected")
 
 
-@app.post("/gmail/sync")
+@app.post("/gmail/sync", dependencies=NOT_IN_DEMO)
 def gmail_sync(
     limit: int = 25,
     tokens: gmail.TokenStore = Depends(get_tokens),
@@ -832,7 +896,7 @@ def check_gmail(tokens: gmail.TokenStore, http: httpx.Client, real: History, lim
     return result
 
 
-@app.post("/gmail/recheck")
+@app.post("/gmail/recheck", dependencies=NOT_IN_DEMO)
 def gmail_recheck(
     tokens: gmail.TokenStore = Depends(get_tokens),
     http: httpx.Client = Depends(get_http),
@@ -849,7 +913,7 @@ def gmail_recheck(
         raise HTTPException(502, "I couldn't reach Gmail. Try again in a minute.")
 
 
-@app.post("/gmail/disconnect")
+@app.post("/gmail/disconnect", dependencies=NOT_IN_DEMO)
 def gmail_disconnect(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http),
                      real: History = Depends(get_real_history)) -> dict:
     """Forget the Gmail connection. Oscar's decisions and your reviews of them are kept."""
@@ -861,7 +925,7 @@ def gmail_disconnect(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx
     return {"ok": True}
 
 
-@app.get("/emails/{decision_id}/content")
+@app.get("/emails/{decision_id}/content", dependencies=NOT_IN_DEMO)
 def email_content(
     decision_id: str,
     tokens: gmail.TokenStore = Depends(get_tokens),
@@ -913,7 +977,7 @@ class ReviewRequest(BaseModel):
     note: str | None = None
 
 
-@app.post("/reviews", response_model=Review)
+@app.post("/reviews", response_model=Review, dependencies=NOT_IN_DEMO)
 def review_endpoint(request: ReviewRequest, real: History = Depends(get_real_history),
                     tokens: gmail.TokenStore = Depends(get_tokens), http: httpx.Client = Depends(get_http)) -> Review:
     """Score one of Oscar's decisions on the real inbox. It also teaches him about that sender, and
@@ -991,7 +1055,7 @@ def correct_from_review(real: History, review: Review, tokens: gmail.TokenStore,
         return None  # the review is saved either way; Undo is still there
 
 
-@app.get("/reviews/summary")
+@app.get("/reviews/summary", dependencies=NOT_IN_DEMO)
 def review_summary(real: History = Depends(get_real_history)) -> dict:
     return summary(real)
 

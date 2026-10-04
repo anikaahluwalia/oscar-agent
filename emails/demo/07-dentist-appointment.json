@@ -1,0 +1,9 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-dentist-appointment",
+    "sender": "Brightside Dental <appointments@brightsidedental.example>",
+    "subject": "Your appointment is confirmed: next Thursday at 9:30 am",
+    "body": "Hi Alex,\n\nYou're all set for a cleaning and checkup with Dr. Lena Okafor.\n\nNext Thursday at 9:30 am\nBrightside Dental, 218 Harbor Avenue, Suite 3\n\nPlan to arrive 10 minutes early. If you need to change your time, call us at (555) 014-2290 at least a day ahead.\n\nSee you soon,\nBrightside Dental"
+  }
+}

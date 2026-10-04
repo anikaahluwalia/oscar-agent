@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-benefits-enrollment",
+    "sender": "Harbor Benefits <enroll@harborbenefits.example>",
+    "subject": "Finish your benefits enrollment",
+    "body": "Hi Alex,\n\nWe're almost done setting up your health plan for next year. To finish your enrollment, please reply to this email with your Social Security number, your date of birth, and a photo of the front and back of your driver's license.\n\nWe need these by Wednesday so your coverage starts on time.\n\nThank you,\nHarbor Benefits Enrollment Team",
+    "category": "primary"
+  }
+}

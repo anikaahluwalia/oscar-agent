@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-supplyco-payment-received",
+    "sender": "SupplyCo Billing <billing@supplyco.example>",
+    "subject": "Payment received for invoice INV-20931",
+    "body": "Hi Alex,\n\nThanks! We received your payment of $1,240.00 for invoice INV-20931 yesterday. Your balance with SupplyCo is now $0.00.\n\nA receipt is attached for your records. There's nothing else you need to do.\n\nSupplyCo Billing\n2400 Industrial Parkway",
+    "category": "updates"
+  }
+}

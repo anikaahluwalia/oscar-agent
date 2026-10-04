@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-saturday-brief",
+    "sender": "The Saturday Brief <editors@saturdaybrief.example>",
+    "subject": "The Saturday Brief: a new budget, an early bridge, and the best soup in town",
+    "body": "View in browser\n\nGood morning! Here's what we're reading this week.\n\n1. The city council passed next year's budget after a late-night session. Here's what changes for parks and libraries.\n2. The Riverside footbridge opens to walkers on Monday, two months ahead of schedule.\n3. We tried nine bowls of soup so you don't have to. The winner might surprise you.\n\nThanks for reading, and see you next Saturday.\n\nThe Saturday Brief · 19 Market Row\nManage preferences · Unsubscribe",
+    "category": "updates",
+    "bulk": true
+  }
+}

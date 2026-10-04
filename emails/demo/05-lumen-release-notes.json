@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-lumen-release-notes",
+    "sender": "Lumen Notes <updates@lumen-app.example>",
+    "subject": "What's new in Lumen 4.2: offline mode and faster search",
+    "body": "Lumen 4.2 is rolling out to everyone this week.\n\nWhat's new\n• Offline mode: notes open and save without a connection, and sync when you're back online.\n• Search is up to three times faster in large notebooks.\n• Pin up to five notebooks to the sidebar.\n\nFixes\n• Pasted tables keep their formatting.\n• The sidebar remembers its width between sessions.\n\nNo action needed: the update installs on its own.\n\nThe Lumen team",
+    "category": "updates",
+    "bulk": true
+  }
+}

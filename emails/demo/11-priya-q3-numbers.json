@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-priya-q3-numbers",
+    "sender": "Priya Nair <priya.nair@brightpath.example>",
+    "subject": "Q3 numbers for Thursday's deck",
+    "body": "Hi Alex,\n\nQuick one: could you send me the final Q3 signup numbers when you get a chance? I'm putting the slides together for Thursday's review and want to use the same figures as your report.\n\nThanks!\nPriya",
+    "category": "primary"
+  }
+}

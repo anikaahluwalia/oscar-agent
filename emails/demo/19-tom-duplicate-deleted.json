@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo-tom-duplicate-deleted",
+    "sender": "Tom Becker <tom.becker@brightpath.example>",
+    "subject": "Cleaned up the duplicate budget file",
+    "body": "Hi Alex,\n\nFYI, I deleted the duplicate copy of \"Budget 2026 v3\" from the shared Finance folder. The one in Finance/Planning is the right one and has everyone's edits, so nothing was lost.\n\nNo need to reply.\n\nTom",
+    "category": "primary"
+  }
+}
