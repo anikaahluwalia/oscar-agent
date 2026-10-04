@@ -3,8 +3,8 @@
 # Oscar -- your inbox companion
 
 Oscar is a proactive email agent, named after my dog Oscar. Like the real
-Oscar, keeps an eye on things, and comes to get you when something isn't
-right (on your inbox).
+Oscar, he keeps an eye on things and comes to get you when something isn't
+right in your inbox.
 
 [Try Oscar](https://oscar-demo-1has.onrender.com/)  [Design process](DESIGN.md)  [Example transcripts](examples/TRANSCRIPTS.md)
 
@@ -15,13 +15,13 @@ The demo uses sample emails, so you don't need an account, Gmail connection, or 
 For each email, Oscar picks one action (archive, mark read, label, draft a reply...) and how much
 to do on his own.
 
-Unique features about Oscar:
+What makes Oscar different:
 - Learns from your answers so he asks less
-- A built-in safety floor that a user cannot bypass (money transfers, account security, etc)
+- A built-in safety floor that a user cannot bypass (money transfers, account security, etc.)
 
 For more about features, please check out [DESIGN.md](DESIGN.md).
 
-Through user feedback and patterns, Oscar chooses between 4 levels...
+Using your feedback and the patterns he learns, Oscar chooses between 4 levels:
 
 | Level | In the app | What happens |
 |---|---|---|
@@ -51,7 +51,7 @@ The extension shows what Oscar decided, why, and the controls to approve, declin
 **Promises:** the things he never does alone, whatever you teach him.
 ![Promises](assets/promises.png)
 
-# How he learns
+## How he learns
 Instead of simply approving an action, you can choose from:
 - Handle quietly
 - Handle and tell me
@@ -59,12 +59,12 @@ Instead of simply approving an action, you can choose from:
   
 For example, in the demo you approve a sale email and tell Oscar to handle emails like it. He then archives a sale from a different shop without asking again. A sale containing hidden instructions still gets stopped.
 
-Feedback can change how much he asks, but it cannot lower the safety floor that is forced. On a connected Gmail account, Oscar starts read-only. If you enable actions, he can mark emails read, archive them, add his own labels, and save drafts. He never sends email or permanently deletes your messages. You can toggle read-off in the settings so you can see him work at full potential!
+Feedback can change how much he asks, but it can never lower the safety floor. On a connected Gmail account, Oscar starts read-only. If you turn on **Let Oscar act in Gmail** in Settings, he can mark emails read, archive them, add his own labels, and save drafts, so you can see him work at full potential! He never sends email and never deletes anything for good: when an email asks to be deleted and you hold to approve, he moves it to Gmail's Trash, where you can get it back.
 
-# What I tested
+## What I tested
 
 I evaluated whether Oscar stopped on risky emails and whether he still acted on harmless ones. 
-Asking everytime shouldn't count as success. In the latest recorded evaluation, exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses. These are results on constructed test cases, not a production safety guarantee.
+Asking every time shouldn't count as success. In the latest recorded evaluation, exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses. These are results on constructed test cases, not a production safety guarantee.
 
 The [evaluation write-up](docs/EVALUATION.md) includes the control pairs, learning experiment, failures, and limitations.
 
@@ -86,11 +86,11 @@ npm install
 npm run dev                                   # the web app, on localhost:3000
 ```
 
-Open http://localhost:3000 and press **Try Oscar**. You get an inbox of made-up emails, for your browser and kept only in the API's memory. Every email still goes through Oscar's real decisions, learning and safety checks. with a guided tour!
+Open http://localhost:3000 and press **Try Oscar**. You get an inbox of made-up emails, for your browser and kept only in the API's memory. Every email still goes through Oscar's real decisions, learning and safety checks, with a guided tour.
 
 In the app:
 
-- **Today**: what's you need to do, what Oscar took care of today and coming up events.
+- **Today**: what you need to do, what Oscar took care of today, and upcoming events.
 - **Chat**: ask about your email ("what needs me?"), or teach him a rule. 
 - **Inbox**: every email and what he did with it. Approve, decline, undo, learn **Why?**, etc.
 - **Review**: check his actions one email at a time.
@@ -100,8 +100,8 @@ In the app:
 
 ## Connect your Gmail
 
-Oscar starts read-only so, he notes what he *would* do and nothing in Gmail changes. If you turn on
-**Let Oscar act in Gmail** in Settings, he can only do things you can undo such as, mark read, archive,
+Oscar starts read-only, so he notes what he *would* do and nothing in Gmail changes. If you turn on
+**Let Oscar act in Gmail** in Settings, he can only do things you can undo, such as mark read, archive,
 add his own labels, and save a draft he tells you about. When an email asks to be deleted, he asks first,
 and only if you hold to approve does he move it to Gmail's Trash, where Undo can bring it back. He acts on at most 25 emails per check and only on new email.
 
@@ -117,8 +117,8 @@ and only if you hold to approve does he move it to Gmail's Trash, where Undo can
    Connect Gmail**). Oscar checks for new email every 5 minutes while the API runs, or press
    **Check now**.
 
-When you first connect, he will look at your last six months of email (read-only) and suggests
-habits/patterns he noticed (nothing changes until you answer). While Gmail is connected the demo inbox is
+When you first connect, he looks at your last six months of email (read-only) and suggests
+habits he noticed (nothing changes until you answer). While Gmail is connected the demo inbox is
 off.
 
 ## The Chrome extension
@@ -130,8 +130,8 @@ off.
 
 Each email Oscar has read gets tagged in your list: Handled, FYI, Needs you or Stopped. When you
 open an email, a panel opens beside it with his call first, what he did, and what you can do
-(Yes or Not this one, Undo, or his draft). If you click on why, you can understand his thought process. Until you let him act
-in Gmail, the panel asks you to check his deciscion instead. Oscar also sits in the corner and says
+(Yes or Not this one, Undo, or his draft). Open **Why** to see the decision factors behind his call. Until you let him act
+in Gmail, the panel asks you to check his decision instead. Oscar also sits in the corner and says
 hello with how things stand when Gmail opens. It needs your real Gmail connected, and only talks
 to the API on localhost.
 
