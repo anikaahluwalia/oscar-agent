@@ -73,22 +73,19 @@ export function ReviewPage() {
           feedback={feedback}
           stats={stats}
           done={(total) => (
-            <>
-              <Resting
-                title="All caught up!"
-                text={real ? `${checkedText(total)} ${checksText(data)}` : answeredText(total)}
-              >
-                <Button variant="outline" className="h-11 bg-card px-5" onClick={() => setHash("all")}>
-                  See all emails
+            <Resting
+              title="All caught up!"
+              text={real ? `${checkedText(total)} ${checksText(data)}` : answeredText(total)}
+            >
+              <Button variant="outline" className="h-11 bg-card px-5" onClick={() => setHash("all")}>
+                See all emails
+              </Button>
+              {real && !data.gmail.auto_check_minutes && (
+                <Button className="h-11 px-5" onClick={checkGmail}>
+                  <RefreshCwIcon /> Check now
                 </Button>
-                {real && !data.gmail.auto_check_minutes && (
-                  <Button className="h-11 px-5" onClick={checkGmail}>
-                    <RefreshCwIcon /> Check now
-                  </Button>
-                )}
-              </Resting>
-              <div className="flex justify-center">{stats}</div>
-            </>
+              )}
+            </Resting>
           )}
         />
       ) : real ? (
