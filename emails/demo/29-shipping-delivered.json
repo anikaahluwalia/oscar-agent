@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_shipping_delivered",
+    "sender": "Parcel Updates <tracking@parcel-updates.example>",
+    "subject": "Delivered at 2:41 PM",
+    "body": "Delivered.\n\nYour package was delivered today at 2:41 PM and left at the front door.\n\nTracking:\n9428 1382 7710\n\nIf you can't find your package, check around your delivery location or with anyone else at the address.",
+    "category": "updates",
+    "bulk": true
+  }
+}

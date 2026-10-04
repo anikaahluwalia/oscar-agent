@@ -60,7 +60,7 @@ GIFT_CARDS = r"(?:gift ?cards?|(?:apple|steam|google play|itunes|amazon|ebay|raz
 MONEY = (r"(?:\bwire (?:me|us|it|them|the (?:money|funds|payment|deposit|balance)|\$|money|funds|payment)"
          r"|\btransfer (?:me|us|\$|money|funds|the (?:money|funds|payment|deposit|balance))|\be-?transfer\b"
          r"|\b(?:venmo|zelle|paypal|cash ?app)\b|\bremit\b|\bpay (?:this|the|me|us|it|now|today|immediately|invoice)\b"
-         r"|\bsend (?:me |us )?(?:the )?(?:money|funds|payment|deposit)\b|\$\s?[\d,]+(?:\.\d\d)?\s+to\b|\brouting (?:number|no)\b"
+         r"|\bsend (?:me |us )?(?:the )?(?:\$\s?[\d,]+(?:\.\d\d)? )?(?:money|funds|payment|deposit)\b|\$\s?[\d,]+(?:\.\d\d)?\s+to\b|\brouting (?:number|no)\b"
          r"|\bsettle (?:the |your |this |that )?(?:\$\s?[\d,]+ )?(?:balance|invoice|bill|payment|amount)\b|\bbeneficiary\b"
          r"|\bpayment handle\b|\bpay (?:the |this |your )?\$\s?[\d,]+|\b(?:wire|transfer)\b[^.?!\n]{0,40}\bto (?:the|this|my|our|a new) (?:account|iban)\b|\b(?:send|pay|venmo) (?:\w+ ){0,2}your share\b|" + GIFT_CARDS + r")")
 ID_DOCS = (r"\b(?:scan|copy|photo|picture|pdf|image)s? of (?:the front and back of )?(?:your |my |a )?(?:passport|driver'?s licen[cs]e"
@@ -109,7 +109,12 @@ DISCLAIMER = re.compile(
 NEGATED = re.compile(
     r"\b(?:never|don't|do not|please don't|please do not)\s+(?:\w+\s+){0,2}?(?:share|give|disclose|reveal|tell|send)\b"
     r"[^.?!\n,;]{0,60}?\b(?:with|to) (?:anyone|anybody|others|other people|someone else)\b(?:,? (?:not )?even (?:us|our staff))?"
-    r"|\bwe(?:'ll| will)? never (?:ask|call|email|text) (?:you )?(?:for|to (?:share|give|send))\b[^.?!\n,;]{0,60}")
+    r"|\bwe(?:'ll| will)? never (?:ask|call|email|text) (?:you )?(?:for|to (?:share|give|send))\b[^.?!\n,;]{0,60}"
+    # A warning that ends there: "Never share your verification code." Only when the sentence (or the
+    # subject line) stops right after it, so "never share your password over chat, but email it to me"
+    # is still read as the request it is.
+    r"|\b(?:never|don't|do not)\s+(?:share|give out|disclose|reveal)\s+(?:your|the|any)\s+(?:\w+\s+){0,2}?"
+    r"(?:codes?|passwords?|passcodes?|pins?|credentials|log-?in details)\b(?=\s*(?:[.!]|\n|$))")
 
 # Patterns in the email text that hold Oscar back no matter which action the
 # classifier picked (how far: FLAG_LEVELS below). These look for requests, not just
@@ -198,6 +203,8 @@ EMAIL_CHECKS = MappingProxyType({
             r"\b(read|send|share|give|tell) (me |us )?(the |your )?(\d-digit |one-time |verification |security )?code\b",
             _asks_for(SECRET),
             r"\b(\d-digit |one-time |verification |security )?code\b.{0,120}\breply with (it|the code|that)\b",
+            # The same across sentences and lines: "a code by text in a minute. Reply to this email with it."
+            r"\bcodes?\b(?s:.){0,160}?\breply (to (this|my|our|the) (e-?mail|message|text) )?with (it|them|the code|that( code)?|this( code)?)\b",
             # A code that came by text, then a request for it in the next sentence.
             r"\b(code|digits)\b[^?!\n]{0,80}\b(by text|texted|via sms|to your phone|on your phone)\b.{0,120}?\b(forward|send|read|tell|give|share|text)\b (it|me|us|them)\b",
         ],
@@ -298,7 +305,10 @@ CAUTION = re.compile(
     r"\b(passwords?|passcodes?|passphrases?|log-?in details|credentials|(verification|one-time|security|2fa|sign-?in|backup|recovery) codes?"
     r"|wire transfer|routing numbers?|account numbers?|iban|swift code|gift ?card (codes?|numbers?|pins?)|crypto|bitcoin"
     r"|passports?|driver'?s licen[cs]e|social security|ssn|medical (records?|history)|diagnos[ie]s|nda|contracts?|e-?sign|docusign"
-    r"|overdue|e-?transfer|beneficiary|new payee|insurance card|salary|payment handle)\b",
+    r"|overdue|e-?transfer|beneficiary|new payee|insurance card|salary|payment handle"
+    # A contract by another name: "Re: Services agreement", "I'll send a clean copy for signature".
+    r"|(services?|consulting|master|licen[cs]e|employment|lease|rental|partnership|purchase|settlement|loan) agreements?"
+    r"|for (your )?signatures?)\b",
     re.I,
 )
 
@@ -331,8 +341,13 @@ class SafetyFlag(BaseModel):
     matched: str
 
 
+def without_warnings(text: str) -> str:
+    """The text without its warnings against sharing something, which aren't requests (NEGATED)."""
+    return NEGATED.sub(" ", _normalise(text))
+
+
 def check_email(email: Email) -> list[SafetyFlag]:
-    text = NEGATED.sub(" ", _normalise(f"{email.subject}\n{email.body}".lower()))
+    text = without_warnings(f"{email.subject}\n{email.body}".lower())
     flags = []
     for category, (reason, patterns) in EMAIL_CHECKS.items():
         scanned = DISCLAIMER.sub(" ", text) if category == SafetyCategory.IRREVERSIBLE_DELETE else text

@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_interview_invite",
+    "sender": "Maya Chen <maya@northstar-labs.example>",
+    "subject": "Invitation: Technical Interview — Northstar Labs",
+    "body": "Maya Chen has invited you to an event.\n\nTechnical Interview — Northstar Labs\n\nWednesday, October 7\n11:30 AM – 12:15 PM\n\nGuests:\nMaya Chen\nAnika Ahluwalia\n\nWill you attend?\n\nYes | Maybe | No",
+    "category": "primary"
+  }
+}

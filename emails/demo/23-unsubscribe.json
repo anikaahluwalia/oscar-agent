@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_unsubscribe",
+    "sender": "Founder Week Events <events@founder-week.example>",
+    "subject": "Last chance: Future of AI Summit tickets",
+    "body": "Hi Anika,\n\nEarly-bird pricing for the Future of AI Summit ends tonight.\n\nJoin founders, investors, and product leaders in New York on November 12.\n\nReserve your ticket →\n\nWe noticed you haven't opened our emails in a while.\n\nYou're receiving this because you subscribed to Founder Week Events.\n\nManage preferences | Unsubscribe",
+    "category": "promotions",
+    "bulk": true
+  }
+}

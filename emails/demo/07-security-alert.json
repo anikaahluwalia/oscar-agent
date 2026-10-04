@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_security_alert",
+    "sender": "Account Security <no-reply@account-security.example>",
+    "subject": "New sign-in on Mac",
+    "body": "New sign-in on Mac\n\nWe noticed a new sign-in to your account.\n\nDevice:\nMac\nChrome\n\nLocation:\nToronto, Canada\n\nTime:\nOctober 3, 10:42 PM\n\nIf this was you, you don't need to do anything.\n\nIf you don't recognize this activity, review your account security.\n\nAccount Security",
+    "category": "updates",
+    "bulk": true
+  }
+}

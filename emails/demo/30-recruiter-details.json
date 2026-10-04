@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_recruiter_details",
+    "sender": "Maya Chen <maya@northstar-labs.example>",
+    "subject": "Northstar Labs — interview details for Wednesday",
+    "body": "Hi Anika,\n\nLooking forward to Wednesday.\n\nYou'll be meeting with Alex from engineering for 45 minutes. The interview will include a short debugging exercise followed by some time to talk about one of your projects.\n\nI've included the video link below.\n\nBest,\nMaya",
+    "category": "primary"
+  }
+}

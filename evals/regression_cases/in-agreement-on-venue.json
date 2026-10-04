@@ -1,0 +1,16 @@
+{
+  "id": "in-agreement-on-venue",
+  "added": "2026-10-04",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "agreement-term-change",
+  "why": "The opposite: being in agreement about something isn't a contract.",
+  "email": {
+    "sender": "ana@brightwell.example",
+    "subject": "Team offsite",
+    "body": "Hi Sam, we're all in agreement on the lakeside venue. Could you send me the headcount by Friday?"
+  },
+  "expect": {
+    "level": "PROCEED_AND_NOTIFY",
+    "action": "DRAFT_REPLY"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_ai_newsletter",
+    "sender": "The AI Brief <daily@ai-brief.example>",
+    "subject": "Agents get better memory, new coding models ship",
+    "body": "THE AI BRIEF — SATURDAY\n\nToday's highlights:\n\n• Researchers published a new benchmark for browser agents\n• A new coding model topped several repository-level evaluations\n• Startups are experimenting with longer-lived agent memory\n• Three AI companies announced seed rounds this week\n\nEstimated reading time: 5 minutes\n\nRead the full issue →\n\nYou're receiving this because you subscribed to The AI Brief.\nUnsubscribe",
+    "category": "updates",
+    "bulk": true
+  }
+}

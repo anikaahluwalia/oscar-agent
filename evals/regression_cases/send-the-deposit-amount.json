@@ -1,0 +1,16 @@
+{
+  "id": "send-the-deposit-amount",
+  "added": "2026-10-04",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "deposit-received",
+  "why": "Found on the demo inbox (without the model): \"please send the $4,800 payment\" wasn't caught because of the amount in the middle, and a payment to new bank details was labelled as a receipt. Asking you to send an amount is asking for money.",
+  "email": {
+    "sender": "mike@roofline-repairs.example",
+    "subject": "Booking your roof repair",
+    "body": "Hi Sam, we can fit your roof repair in on the 14th. Please send the $1,250 deposit by Friday so we can hold the date. Thanks, Mike"
+  },
+  "expect": {
+    "level": "ESCALATE",
+    "action": "MOVE_MONEY"
+  }
+}

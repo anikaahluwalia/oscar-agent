@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_promo_evergreen",
+    "sender": "Evergreen Clothing <hello@evergreen-clothing.example>",
+    "subject": "25% off everything, through Sunday",
+    "body": "Hi Anika,\n\nA little something for the weekend: take 25% off everything through Sunday at midnight.\n\nNo code needed — the discount will be applied automatically at checkout.\n\nShop women\nShop men\nShop accessories\n\nSee you soon,\nEvergreen\n\nYou're receiving this because you signed up for Evergreen emails.\nUnsubscribe | Manage preferences",
+    "category": "promotions",
+    "bulk": true
+  }
+}

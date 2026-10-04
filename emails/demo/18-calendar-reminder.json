@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_calendar_reminder",
+    "sender": "Calendar <calendar@calendar-notify.example>",
+    "subject": "Reminder: Product sync @ Mon Oct 5, 10:00 AM",
+    "body": "Reminder\n\nProduct sync\n\nMonday, October 5\n10:00 AM – 10:30 AM\n\nYou already responded Yes to this event.\n\nOrganizer:\nMaya Patel\n\nCalendar",
+    "category": "updates",
+    "bulk": true
+  }
+}

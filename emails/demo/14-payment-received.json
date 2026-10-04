@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_payment_received",
+    "sender": "Atlas Billing <billing@atlas-software.example>",
+    "subject": "Payment received — Invoice #AT-88241",
+    "body": "Hi Anika,\n\nWe received your payment of $12.00 CAD for your Atlas Plus subscription.\n\nInvoice: AT-88241\nPayment date: October 3, 2026\nAmount: $12.00 CAD\nPayment method: Visa ending in 1842\n\nNo action is required.\n\nThanks,\nAtlas Billing",
+    "category": "updates",
+    "bulk": true
+  }
+}

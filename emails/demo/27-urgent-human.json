@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_urgent_human",
+    "sender": "Nina Patel <nina@harbour-tech.example>",
+    "subject": "Could you look at this before 4?",
+    "body": "Hey Anika,\n\nSorry for the late notice — the client moved the review up.\n\nCould you take a quick look at the final two slides before 4 PM and tell me if anything looks off?\n\nThe deck is in the same shared folder we've been using.\n\nThanks,\nNina",
+    "category": "primary"
+  }
+}

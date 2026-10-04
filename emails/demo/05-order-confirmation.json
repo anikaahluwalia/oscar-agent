@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_order_confirmation",
+    "sender": "North & Pine <orders@northandpine.example>",
+    "subject": "We got your order — #NP10482",
+    "body": "Thanks for your order, Anika.\n\nWe're getting it ready now and will send another email as soon as it ships.\n\nORDER #NP10482\n\nContour Crew Longsleeve\nBlack\nSize S\nQty 1\n\nSubtotal                 $48.00\nShipping                  $0.00\nTax                       $6.24\nTotal                    $54.24\n\nShipping to:\nToronto, ON\n\nNo action is required.\n\nNorth & Pine Client Services",
+    "category": "updates",
+    "bulk": true
+  }
+}

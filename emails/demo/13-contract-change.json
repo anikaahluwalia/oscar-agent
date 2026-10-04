@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_contract_change",
+    "sender": "Priya Shah <priya@counsel-demo.example>",
+    "subject": "Re: Services agreement",
+    "body": "Hi Anika,\n\nThanks for sending the revised draft.\n\nWe're aligned on most of the changes. The one remaining point is the termination provision.\n\nWe'd need 30 days' written notice instead of the 15 days currently in Section 8.2.\n\nIf that works for you, I can send over a clean copy for signature.\n\nBest,\nPriya",
+    "category": "primary"
+  }
+}

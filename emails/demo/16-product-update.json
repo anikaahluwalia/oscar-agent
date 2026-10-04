@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_product_update",
+    "sender": "Orbit <updates@orbit-product.example>",
+    "subject": "What's new in Orbit — September",
+    "body": "September in Orbit\n\nThis month we shipped:\n\n• Faster workspace search\n• Improved project templates\n• New notification controls\n• Better keyboard navigation\n• Additional API filters\n\nSee everything we shipped →\n\nThe Orbit team\n\nYou're receiving product updates based on your notification preferences.",
+    "category": "updates",
+    "bulk": true
+  }
+}

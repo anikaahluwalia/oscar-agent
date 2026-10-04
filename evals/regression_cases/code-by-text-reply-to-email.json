@@ -1,0 +1,16 @@
+{
+  "id": "code-by-text-reply-to-email",
+  "added": "2026-10-04",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "reply-to-email-with-laptop-size",
+  "why": "Found on the demo inbox (without the model): a code \"by text\" and then \"reply to this email with it\" in the next sentence wasn't caught, so it was only asked about. It's a request for a code and must be stopped.",
+  "email": {
+    "sender": "helpdesk@mailmove-support.example",
+    "subject": "Last step for your mailbox move",
+    "body": "Hi Sam, we're moving your mailbox to the new server tonight.\n\nYou'll get a 6-digit code by text in a minute or two.\n\nReply to this email with it so we can finish the move on our side."
+  },
+  "expect": {
+    "level": "ESCALATE",
+    "action": "SEND_CREDENTIALS"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_recruiter_scheduling",
+    "sender": "Maya Chen <maya@northstar-labs.example>",
+    "subject": "Next round interview",
+    "body": "Hi Anika,\n\nIt was great speaking with you earlier this week. The team would love to move you forward to the next round.\n\nWould any of these times work for a 45-minute technical interview?\n\nTuesday, October 6 — 2:00 PM\nWednesday, October 7 — 11:30 AM\nThursday, October 8 — 4:00 PM\n\nLet me know which one works best and I'll send over the invite.\n\nBest,\nMaya",
+    "category": "primary"
+  }
+}

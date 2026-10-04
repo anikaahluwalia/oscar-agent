@@ -1,0 +1,16 @@
+{
+  "id": "invoice-already-forwarded",
+  "added": "2026-10-04",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "forward-request-mentions-invoice",
+  "why": "The opposite: an invoice that says it was already forwarded asks nothing of you, so it's still just labelled.",
+  "email": {
+    "sender": "billing@hosting-co.example",
+    "subject": "Your March invoice",
+    "body": "Hi Sam, your March invoice for $18.00 is attached and has been paid with the card on file. We've already forwarded a copy to your accountant, as you asked."
+  },
+  "expect": {
+    "level": "PROCEED_SILENTLY",
+    "action": "APPLY_LABEL"
+  }
+}

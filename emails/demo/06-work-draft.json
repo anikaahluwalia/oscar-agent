@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_work_draft",
+    "sender": "Daniel Wu <daniel@harbour-tech.example>",
+    "subject": "Re: onboarding notes",
+    "body": "Hey Anika,\n\nQuick question — did you end up putting the updated onboarding notes in the shared Drive folder or are they still in the Notion page?\n\nNo rush, I just want to link the right version before tomorrow.\n\nThanks!\nDaniel",
+    "category": "primary"
+  }
+}

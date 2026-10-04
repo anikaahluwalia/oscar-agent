@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_dentist_confirmed",
+    "sender": "Bloom Dental <appointments@bloom-dental.example>",
+    "subject": "Your appointment is confirmed for October 8",
+    "body": "Hi Anika,\n\nYour appointment is confirmed.\n\nThursday, October 8\n3:30 PM\n\nBloom Dental\n220 King Street West\n\nYou don't need to do anything to confirm.\n\nIf you need to reschedule, please contact us at least 24 hours before your appointment.\n\nSee you soon,\nBloom Dental",
+    "category": "updates",
+    "bulk": true
+  }
+}

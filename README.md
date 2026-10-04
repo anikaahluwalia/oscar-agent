@@ -100,7 +100,7 @@ and told you), **Ask me** (asks first) and **Stopped** (stopped it).
 - **Settings**: Gmail, appearance (light, dark or match your device), and leaving the demo.
 
 Try "what needs me?", "what did you handle?" or a rule like "always archive emails
-from hello@denimco.example" in **Chat**. In the demo, approve the Denim Co sale and
+from hello@evergreen-clothing.example" in **Chat**. In the demo, approve the Evergreen Clothing sale and
 choose **Handle all emails like this**, then press **Check now**: he archives a sale from
 a different shop on his own, and still stops the tricky one.
 

@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_vendor_reschedule",
+    "sender": "Jordan Wells <jordan@supplyco-demo.example>",
+    "subject": "Thursday delivery instead?",
+    "body": "Hi Anika,\n\nWould it be alright if we moved next week's delivery from Tuesday to Thursday?\n\nEverything else would stay the same — same quantity, same address, and no change to the price.\n\nIf Thursday works, I can update the delivery window on our end.\n\nThanks,\nJordan",
+    "category": "primary"
+  }
+}

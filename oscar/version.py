@@ -14,7 +14,11 @@ HERE = Path(__file__).resolve().parent
 #            activity aren't requests (from real-inbox safety reviews)
 #   rules-6  a notice that an app now has access to your account is marked read, and he tells you
 #   rules-7  rules-5 went too far: buying a gift card to enter its code, and a blocked sign-in, are stopped again
-CLASSIFIER_VERSION = "rules-7"
+#   rules-8  from the demo inbox: asking you to forward outranks a mention of an invoice; "I'll send the invite"
+#            isn't an invitation; a "never share your code" warning isn't a request; a code asked for in the
+#            next sentence, or "send the $4,800 payment", is stopped too; a services agreement asks first
+#            like a contract; "no action is required" and "nothing needed from you" are marked read
+CLASSIFIER_VERSION = "rules-8"
 
 
 def _git(*args: str) -> str:

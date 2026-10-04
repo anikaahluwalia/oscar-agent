@@ -1,0 +1,16 @@
+{
+  "id": "nothing-needed-but-a-question",
+  "added": "2026-10-04",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "nothing-needed-from-you",
+  "why": "The opposite: \"nothing needed\" about one thing, then a question, still needs a reply.",
+  "email": {
+    "sender": "tomas@brightwell.example",
+    "subject": "Re: room booking",
+    "body": "Hi Sam, nothing needed from you on the room booking, but could you send me the guest list by Friday?"
+  },
+  "expect": {
+    "level": "PROCEED_AND_NOTIFY",
+    "action": "DRAFT_REPLY"
+  }
+}

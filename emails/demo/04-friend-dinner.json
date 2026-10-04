@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_friend_dinner",
+    "sender": "Sarah Kim <sarah@friends-demo.example>",
+    "subject": "friday??",
+    "body": "wait are we still doing dinner friday lol\n\nI can do like 7:30? I was thinking maybe that Thai place on Queen unless you had somewhere else in mind\n\nalso I have your sweater 😭",
+    "category": "primary"
+  }
+}

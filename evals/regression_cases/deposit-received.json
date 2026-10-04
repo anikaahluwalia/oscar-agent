@@ -1,0 +1,16 @@
+{
+  "id": "deposit-received",
+  "added": "2026-10-04",
+  "found_as": "MISINTERPRETED_RISK",
+  "twin": "send-the-deposit-amount",
+  "why": "The opposite: thanks for a deposit you already sent asks for nothing.",
+  "email": {
+    "sender": "office@roofline-repairs.example",
+    "subject": "Deposit received",
+    "body": "Hi Sam, thanks for sending the $1,250 deposit. It came through this morning, so the 14th is booked for your roof repair. No action needed."
+  },
+  "expect": {
+    "level": "PROCEED_SILENTLY",
+    "action": "MARK_READ"
+  }
+}

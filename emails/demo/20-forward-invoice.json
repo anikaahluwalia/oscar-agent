@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_forward_invoice",
+    "sender": "Chloe Martin <chloe@harbour-tech.example>",
+    "subject": "Can you send Finance the September invoice?",
+    "body": "Hey Anika,\n\nWhen you get a chance, could you forward the September Cloudworks invoice to Finance?\n\nI think finance@harbour-tech.example is the right address.\n\nThanks!\nChloe",
+    "category": "primary"
+  }
+}

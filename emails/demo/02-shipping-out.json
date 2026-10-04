@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_shipping_out",
+    "sender": "Parcel Updates <tracking@parcel-updates.example>",
+    "subject": "Your package is out for delivery",
+    "body": "Your package is out for delivery.\n\nEstimated delivery:\nToday between 1:15 PM and 4:15 PM\n\nTracking:\n9428 1382 7710\n\nDelivery location:\nFront door\n\nWe'll send another update once your package has been delivered.",
+    "category": "updates",
+    "bulk": true
+  }
+}

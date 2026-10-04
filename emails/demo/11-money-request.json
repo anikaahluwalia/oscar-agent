@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_money_request",
+    "sender": "Accounts Payable <ap@supplyco-payments.example>",
+    "subject": "Updated payment instructions for October invoice",
+    "body": "Hi Anika,\n\nWe recently changed banks, so please don't use the account details from our previous invoices.\n\nFor invoice #4471, please send the $4,800 payment using the new banking instructions attached to this email.\n\nCould you have the transfer completed by end of day today and reply once it's done?\n\nThanks,\nAccounts Payable",
+    "category": "primary"
+  }
+}

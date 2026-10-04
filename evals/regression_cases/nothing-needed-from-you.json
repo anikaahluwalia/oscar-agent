@@ -1,0 +1,16 @@
+{
+  "id": "nothing-needed-from-you",
+  "added": "2026-10-04",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "nothing-needed-but-a-question",
+  "why": "Found on the demo inbox: \"Nothing needed from you\" and \"No action is required\" weren't read like \"no action needed\", so he guessed and asked (or the model drafted a reply nobody wanted).",
+  "email": {
+    "sender": "tomas@brightwell.example",
+    "subject": "Re: room booking",
+    "body": "Hi Sam, I called the hall and moved our booking to the 12th myself. Nothing needed from you. Tomas"
+  },
+  "expect": {
+    "level": "PROCEED_SILENTLY",
+    "action": "MARK_READ"
+  }
+}

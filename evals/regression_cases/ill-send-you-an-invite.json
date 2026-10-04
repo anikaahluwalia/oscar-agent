@@ -1,0 +1,16 @@
+{
+  "id": "ill-send-you-an-invite",
+  "added": "2026-10-04",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "calendar-invite-sent-to-you",
+  "why": "Found on the demo inbox: \"reply to confirm and I'll send the calendar invite\" was read as an invitation to accept. Someone saying they'll send an invite later hasn't invited you yet; what they want now is your answer.",
+  "email": {
+    "sender": "jo@brightwell.example",
+    "subject": "Coffee next week",
+    "body": "Hi Sam, lovely to meet you at the meetup. How about Wednesday at 2 for a coffee chat? If that suits you, I'll send you a calendar invite."
+  },
+  "expect": {
+    "level": "PROCEED_AND_NOTIFY",
+    "action": "DRAFT_REPLY"
+  }
+}

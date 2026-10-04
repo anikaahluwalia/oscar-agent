@@ -9,6 +9,7 @@ address) is never something to reply to, however many question marks it has.
 import re
 
 from oscar.models import Action, Classification, Email
+from oscar.safety import without_warnings
 
 RULES: list[tuple[Action, list[str]]] = [
     (Action.MOVE_MONEY, [
@@ -40,6 +41,13 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\bview (it )?in (your )?browser\b",
         r"\bmanage (your )?preferences\b",
     ]),
+    # Before the receipt rules: asking you to forward an invoice outranks the mention of one.
+    (Action.FORWARD, [
+        r"\bplease forward\b",
+        r"\bforward this to\b",
+        r"\bpass this along to\b",
+        r"\b(can|could|would|will) you (please |also |just )?forward\b",
+    ]),
     (Action.APPLY_LABEL, [
         r"\breceipt\b",
         r"\border confirmation\b",
@@ -49,11 +57,6 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\bout for delivery\b",
         r"\byour (order|package|parcel) (is|has been) (on its way|delivered|confirmed)\b",
         r"\btracking (number|info)\b",
-    ]),
-    (Action.FORWARD, [
-        r"\bplease forward\b",
-        r"\bforward this to\b",
-        r"\bpass this along to\b",
     ]),
     (Action.SEND_REPLY, [
         r"\bplease confirm\b",
@@ -69,7 +72,8 @@ RULES: list[tuple[Action, list[str]]] = [
         r"\bfyi\b",
         r"\bheads up\b",
         r"\bno need to reply\b",
-        r"\bno action (is )?needed\b",
+        r"\bno action (is )?(needed|required)\b",
+        r"\bnothing (else )?(is )?needed from you\b",
     ]),
 ]
 
@@ -100,6 +104,11 @@ APP_ACCESS = re.compile(
     re.I,
 )
 
+# Someone saying they'll send an invite later hasn't invited you yet: "reply to confirm and I'll send
+# the calendar invite" wants your answer now. An invite that's been sent ("I've sent you a calendar
+# invite") still counts.
+LATER_INVITE = re.compile(r"\b(send|send over|send out|follow up with) (you )?(the|a|an) (calendar )?invite\b")
+
 FALLBACK = Action.MARK_READ
 REPLIES = {Action.DRAFT_REPLY, Action.SEND_REPLY}
 
@@ -118,7 +127,7 @@ def classify(email: Email, bulk_action: Action | None = None) -> Classification:
     """The action for an email. bulk_action replaces archive for mail sent to a list (mark as read,
     say); without it, list mail that matches nothing else is marked read. The app no longer has
     this setting (Oscar learns it from your answers instead); some regression cases and tests still set it."""
-    text = f"{email.subject}\n{email.body}".lower()
+    text = without_warnings(f"{email.subject}\n{email.body}".lower())  # "never share your code" asks for nothing
     bulk = is_bulk(email)
     for action, patterns in RULES:
         if action == Action.ARCHIVE and (found := APP_ACCESS.search(text)):
@@ -126,8 +135,9 @@ def classify(email: Email, bulk_action: Action | None = None) -> Classification:
             return Classification(action=Action.MARK_READ, matched_pattern=found.group(0), email_type="app_access")
         if bulk and action in REPLIES:
             continue  # nobody is waiting for a reply to a promo or a notification
+        scanned = LATER_INVITE.sub(" ", text) if action == Action.ACCEPT_MEETING else text
         for pattern in patterns:
-            match = re.search(pattern, text, re.MULTILINE)
+            match = re.search(pattern, scanned, re.MULTILINE)
             if match:
                 email_type, rule_action = TYPES[action], None
                 if bulk and bulk_action and action == Action.ARCHIVE:

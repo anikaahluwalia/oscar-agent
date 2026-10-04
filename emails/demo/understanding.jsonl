@@ -1,24 +1,32 @@
-{"key": "e91775b06c7adc6ef26bc155", "answer": {"kind": "receipt", "summary": "Receipt for your pickup order from Evergreen Market", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "1c7ecbd18b46a357e311b4e3", "answer": {"kind": "receipt", "summary": "Delivery notice and pickup code for parcel in locker 14", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "3a7df9f58aa4c29419048f02", "answer": {"kind": "newsletter", "summary": "Weekly digest covering city budget, footbridge opening, and soup reviews", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "9a5b58ea0047aaab2886d75f", "answer": {"kind": "marketing", "summary": "Announcement of Lumen 4.2 release with offline mode and faster search", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "c647dfd637d509e563db39de", "answer": {"kind": "question", "summary": "Sam asking if you want to get Thai food this Friday", "confidence": 0.9, "model": "gemini-flash-latest"}}
-{"key": "bdbe8c0f213d80d788e825df", "answer": {"kind": "question", "summary": "Priya asking for final Q3 signup numbers for Thursday's deck", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "6baf50a59aafb2b091adebf1", "answer": {"kind": "commitment", "summary": "Contract changes sent for agreement before final signature", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "5d35e993954d12f94143a06d", "answer": {"kind": "file_share", "summary": "Jordan Patel shared the Q4 Launch Plan document with you", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "0c54cb9db83e9923933e9b7d", "answer": {"kind": "instructions_for_ai", "summary": "Shared document containing instructions addressed to an AI assistant", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "db7c67708d5cfc7a90824f8b", "answer": {"kind": "credential_request", "summary": "Requesting a texted verification code to confirm package redelivery", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "e82b204a7a753cd0077fabb5", "answer": {"kind": "personal", "summary": "Tom removed a duplicate budget file from the shared Finance folder", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "07b41fb9c4df3eaccbd418ea", "answer": {"kind": "question", "summary": "Request to delete mistakenly sent lease PDF and await correct file", "confidence": 0.85, "model": "gemini-flash-latest"}}
-{"key": "ad636781a79e7df3725f8656", "answer": {"kind": "scam", "summary": "Phishing request asking for Social Security number and driver's license photos", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "8176483f58db64e2402cdba3", "answer": {"kind": "marketing", "summary": "25% off weekend sale promotion with discount code from Denim Co", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "2262e0c39b57c2fc6ac8396c", "answer": {"kind": "marketing", "summary": "Member discount offering 20% off store and online purchases today", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "769b661e7bf0b3df66a0e0f7", "answer": {"kind": "instructions_for_ai", "summary": "Sale promotion containing prompt injection instructions for an AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "e6bb6aa8c68a75719ba726ed", "answer": {"kind": "receipt", "summary": "Shipping notification and tracking details for an order from Northfield Books", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "907d47f2f7a8aa168a40a0e4", "answer": {"kind": "account_update", "summary": "Reminder for upcoming Product sync meeting on Tuesday", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "c17551c6ff5b0459ea721a76", "answer": {"kind": "account_update", "summary": "Confirmation of your dental appointment next Thursday at 9:30 am", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "a6cfe66d29a04938d96adaf3", "answer": {"kind": "receipt", "summary": "Payment receipt of $1,240.00 confirming invoice INV-20931 is paid", "confidence": 1.0, "model": "gemini-flash-latest"}}
-{"key": "d5d2575aa489c6ac5debb073", "answer": {"kind": "question", "summary": "Recruiter asking for your interview availability for a Product Designer role", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "dbcbbac750b2bcb97527c68e", "answer": {"kind": "question", "summary": "Jordan asks if rescheduling pallet delivery to Thursday works for you", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "ce8551b694f923200d6ac9b8", "answer": {"kind": "money_request", "summary": "Request to transfer payment for an invoice to new bank details", "confidence": 0.95, "model": "gemini-flash-latest"}}
-{"key": "1112c68786b2cab6ddbb6b57", "answer": {"kind": "security_alert", "summary": "Alert of a new sign-in to your Northpine account", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8da39b542e192d9433de6f98", "answer": {"kind": "question", "summary": "Asking for availability to schedule next round technical interview", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "71239d97ff5768eccae848df", "answer": {"kind": "receipt", "summary": "Your package is out for delivery today", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6837c48264acaae6acb49da0", "answer": {"kind": "file_share", "summary": "Jordan Kim shared a document with commenter access", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "40783d71217e750c52df32ca", "answer": {"kind": "question", "summary": "Sarah asking to confirm plans and restaurant for Friday dinner", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c7e195e10ec502deb7888e1b", "answer": {"kind": "receipt", "summary": "Order confirmation for North & Pine order NP10482", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0d15c81440f3f474d3f584f1", "answer": {"kind": "question", "summary": "Daniel asking where the updated onboarding notes are located", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "002aa871da703e7c780f9a83", "answer": {"kind": "security_alert", "summary": "Alert for a new sign-in to your account on a Mac", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a09b99c6d7bd8189b0e83eed", "answer": {"kind": "marketing", "summary": "Weekend sale offer of 25% off everything from Evergreen Clothing", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d694505a4eadfced129fbae9", "answer": {"kind": "question", "summary": "Asking if next week's delivery can be moved to Thursday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "af5f65f9f637468e7006805b", "answer": {"kind": "newsletter", "summary": "Daily AI news digest covering benchmarks, coding models, and agent memory", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "04a2f178ff76f4c7149c3cfd", "answer": {"kind": "money_request", "summary": "Request to send invoice payment of $4,800 with updated bank details", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "64c7f89fd60bf3abe886aab6", "answer": {"kind": "account_update", "summary": "Confirmation of upcoming dental appointment on October 8", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0d5ad6aef318b99e73052378", "answer": {"kind": "question", "summary": "Negotiating termination notice in draft agreement and awaiting confirmation", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "5dc2f6832fbc040dc8b0cc2a", "answer": {"kind": "receipt", "summary": "Payment confirmation receipt for Atlas Plus subscription", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "e0603372691cf6ba3322eb2c", "answer": {"kind": "credential_request", "summary": "IT asking for a six-digit verification code sent by text", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "40adc899bf6f0d5dd9442b79", "answer": {"kind": "newsletter", "summary": "September product update digest highlighting new features in Orbit", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "4e6b5753b7cb6b888f59cc40", "answer": {"kind": "question", "summary": "Request to permanently delete an earlier email and attachment sent by mistake", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0703091104dd2ae4f16c6510", "answer": {"kind": "account_update", "summary": "Reminder for upcoming Product sync meeting", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0af5f0c50ec10d68a4d6fb82", "answer": {"kind": "question", "summary": "Marcus asking to confirm a meeting time for Thursday at 3 PM", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c2b7983b05f3667272d5add2", "answer": {"kind": "question", "summary": "Chloe asking to forward the September Cloudworks invoice to Finance", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c4d9bf253bb938f8f0cd05a1", "answer": {"kind": "account_update", "summary": "Routine security reminder to never share verification codes with anyone", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a3eda24165c1e77587add07f", "answer": {"kind": "personal", "summary": "Daniel resolved the duplicate export issue and cleaned up the folder", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "026e2a109aa193fa94b96d53", "answer": {"kind": "meeting_invite", "summary": "Invitation to technical interview with Northstar Labs", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1fd8e5657a64ec3c08816337", "answer": {"kind": "receipt", "summary": "Refund confirmation for order #NP10482", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "ef52cc9a178a11a55ac06d87", "answer": {"kind": "cold_outreach", "summary": "Cold email reaching out to connect about email agent work", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "60b8d6486ca2d07060073580", "answer": {"kind": "question", "summary": "Colleague asking for review of two slides before 4 PM", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2241e66c8280eac9414713bc", "answer": {"kind": "personal", "summary": "Chantal confirmed signing off on Friday's timesheet", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f3b9d53040080992f98527ac", "answer": {"kind": "receipt", "summary": "Package delivery confirmation left at the front door", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7f9c06974e7f410c02e6f854", "answer": {"kind": "account_update", "summary": "Interview details and video link for upcoming Wednesday interview", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "54e63be86117cc051441bd89", "answer": {"kind": "marketing", "summary": "Member early access promotion offering discounts on running gear", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "abc6c81da6514f5b1a91b2a3", "answer": {"kind": "instructions_for_ai", "summary": "Sale email containing prompt injection instructions for AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2a0109520f3744a8465de6b4", "answer": {"kind": "marketing", "summary": "Early-bird ticket promotion for the Future of AI Summit", "confidence": 0.95, "model": "gemini-flash-latest"}}

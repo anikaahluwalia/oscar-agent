@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_cold_intro",
+    "sender": "Leo Park <leo@vector-foundry.example>",
+    "subject": "Quick intro — liked your work on email agents",
+    "body": "Hi Anika,\n\nI came across your work on proactive email agents and thought the approach to learning user preferences was interesting.\n\nI'm building something adjacent at Vector Foundry and would be curious to compare notes sometime.\n\nNo pitch — just thought there might be overlap.\n\nBest,\nLeo",
+    "category": "primary"
+  }
+}

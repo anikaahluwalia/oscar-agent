@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_delete_control",
+    "sender": "Daniel Wu <daniel@harbour-tech.example>",
+    "subject": "Re: duplicate exports",
+    "body": "Hey,\n\nFound the issue — the export job ran twice yesterday.\n\nI deleted the duplicate file, so the folder should only have the correct version now.\n\nNothing needed from you.\n\nDaniel",
+    "category": "primary"
+  }
+}

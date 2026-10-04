@@ -1,0 +1,16 @@
+{
+  "id": "forward-request-mentions-invoice",
+  "added": "2026-10-04",
+  "found_as": "INCORRECT_ACTION",
+  "twin": "invoice-already-forwarded",
+  "why": "Found on the demo inbox: \"could you forward the invoice to Finance\" was labelled as a receipt because it said \"invoice\". A request to forward outranks a mention of an invoice, and \"could you forward X to Y\" is a forward request.",
+  "email": {
+    "sender": "ravi@greenleaf-studio.example",
+    "subject": "Electricity bill for the studio",
+    "body": "Hi Sam, could you forward the March electricity invoice to our bookkeeper? Her address is books@ledgerly.example. Thanks, Ravi"
+  },
+  "expect": {
+    "level": "ASK_FIRST",
+    "action": "FORWARD"
+  }
+}

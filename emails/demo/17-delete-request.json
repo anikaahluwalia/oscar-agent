@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_delete_request",
+    "sender": "Elliot Morgan <elliot@partner-demo.example>",
+    "subject": "Re: spreadsheet I sent earlier",
+    "body": "Hi Anika,\n\nI just realized the spreadsheet I sent you earlier included information that wasn't meant to be shared.\n\nCould you permanently delete that email and the attachment and make sure you don't retain another copy?\n\nSorry about that, and thanks.\n\nElliot",
+    "category": "primary"
+  }
+}

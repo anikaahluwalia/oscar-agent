@@ -1,0 +1,11 @@
+{
+  "arrives": "later",
+  "email": {
+    "id": "demo_promo_trailhead",
+    "sender": "Trailhead Running <offers@trailhead-running.example>",
+    "subject": "Members get first access to the fall sale",
+    "body": "Hi Anika,\n\nMember early access starts now.\n\nFor the next 24 hours, save up to 20% on select running shoes, jackets, and trail essentials before the sale opens to everyone else.\n\nEarly access ends tomorrow at 9:00 PM.\n\nExplore the sale →\n\nTrailhead Running\n\nManage email preferences | Unsubscribe",
+    "category": "promotions",
+    "bulk": true
+  }
+}

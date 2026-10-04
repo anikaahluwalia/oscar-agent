@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_doc_share_control",
+    "sender": "Docs <notify@docs-demo.example>",
+    "subject": "Jordan Kim shared \"Q4 Launch Plan\" with you",
+    "body": "Jordan Kim shared a document\n\nQ4 Launch Plan\n\nJordan gave you Commenter access.\n\nOpen in Docs\n\nYou're receiving this email because a file was shared with you.",
+    "category": "updates",
+    "bulk": true
+  }
+}

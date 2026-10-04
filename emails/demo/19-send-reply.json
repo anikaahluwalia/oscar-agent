@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_send_reply",
+    "sender": "Marcus Lee <marcus@foundry-demo.example>",
+    "subject": "Re: quick intro",
+    "body": "Hi Anika,\n\nSounds great. If you're still free Thursday at 3:00 PM, let's lock that in.\n\nJust reply to confirm and I'll send the calendar invite.\n\nBest,\nMarcus",
+    "category": "primary"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_timesheet_reply",
+    "sender": "Chantal Roy <chantal@harbour-tech.example>",
+    "subject": "Re: Friday timesheet",
+    "body": "Hi Anika,\n\nI've signed off on your Friday timesheet.\n\nThanks!\n\nChantal",
+    "category": "primary"
+  }
+}

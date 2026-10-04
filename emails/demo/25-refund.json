@@ -1,0 +1,11 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_refund",
+    "sender": "North & Pine <returns@northandpine.example>",
+    "subject": "Your $54.24 refund has been processed",
+    "body": "Hi Anika,\n\nYour refund has been processed.\n\nOrder:\n#NP10482\n\nRefund amount:\n$54.24 CAD\n\nRefunded to:\nVisa ending in 1842\n\nMost banks post refunds within 3–5 business days.\n\nYou don't need to do anything.\n\nNorth & Pine Client Services",
+    "category": "updates",
+    "bulk": true
+  }
+}
