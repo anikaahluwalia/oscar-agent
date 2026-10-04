@@ -34,6 +34,8 @@ You can review his decisions in the web app or use the Chrome extension inside G
 
 The extension shows what Oscar decided, why, and the controls to approve, decline, undo, or give feedback. Little Oscar also sits in the corner to get your attention when something needs you.
 
+[chrome](web/public/oscar-in-gmail.mp4)
+
 # How he learns
 Instead of simply approving an action, you can choose from:
 - Handle quietly
