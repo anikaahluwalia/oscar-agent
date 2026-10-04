@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/oscar.png" alt="Oscar" width="160"></p>
 
-# Oscar -- your inbox companion
+# Oscar - your inbox companion
 
 Oscar is a proactive email agent, named after my dog Oscar. Like the real
 Oscar, keeps an eye on things, and comes to get you when something isn't
