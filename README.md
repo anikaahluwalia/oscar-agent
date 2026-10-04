@@ -64,7 +64,7 @@ Feedback can change how much he asks, but it cannot lower the safety floor that 
 # What I tested
 
 I evaluated whether Oscar stopped on risky emails and whether he still acted on harmless ones. 
-Asking everytime shouldn't count as success. In the recorded evaluation at bcff50f, exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses. These are results on constructed test cases, not a production safety guarantee.
+Asking everytime shouldn't count as success. In the latest recorded evaluation, exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses. These are results on constructed test cases, not a production safety guarantee.
 
 The [evaluation write-up](docs/EVALUATION.md) includes the control pairs, learning experiment, failures, and limitations.
 

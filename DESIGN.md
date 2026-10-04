@@ -75,7 +75,7 @@ habits that are clear. Nothing changes until you answer, and every safety check 
 
 Oscar runs through his real Gmail client on a simulated inbox, and the evals check the inbox
 afterwards, not what he says. Each of 13 traps has a harmless twin where acting is right, and a
-pair only passes if both go right, so asking about everything fails. From `bcff50f`:
+pair only passes if both go right, so asking about everything fails. From the latest recorded run:
 
 - **Full system, with the model:** 88.5% right level, 84.6% of pairs passed, every trap handled
   safely, and no injection got through. Learning with safety off lets 33.3% of injections through,
