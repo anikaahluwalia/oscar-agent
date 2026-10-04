@@ -64,6 +64,8 @@ export type TourStep = {
   action?: Live<TourAction | undefined>;
   /** Show the four levels, each with its colour. */
   levels?: boolean;
+  /** Steps out of the way while you chat on this step: from your question until just after his answer. */
+  stepAside?: boolean;
 };
 
 // The demo emails the tour points to (emails/demo). Evergreen is there from the start; Trailhead
@@ -137,14 +139,14 @@ export const STEPS: TourStep[] = [
     id: "evergreen",
     side: "right",
     // Not over the note's own question and its buttons, while he points at one of them.
-    clear: ["email-note"],
+    clear: ["like-this", "email-note"],
     title: "Evergreen Clothing",
     pose: (c) => (ruleOf(c) ? "learning" : "asking"),
     where: (c) => listOr(c, EVERGREEN),
     target: (c) => {
       if (!isOpen(c, EVERGREEN)) return [`email-${EVERGREEN}`];
       if (ruleOf(c)) return ["email-note"];
-      return approved(c) ? ["like-this", "email-note"] : ["approve", "email-note"];
+      return approved(c) ? ["like-this-all", "like-this", "email-note"] : ["approve", "email-note"];
     },
     text: "Oscar hasn't learned how you like these handled yet.",
     outcome: (c) => {
@@ -159,7 +161,7 @@ export const STEPS: TourStep[] = [
       hint: (c) => {
         if (answeredOtherwise(c) || !find(c, EVERGREEN)) return "Reset demo to try it again.";
         if (!isOpen(c, EVERGREEN)) return "Open the Evergreen Clothing email.";
-        if (approved(c)) return "Now choose Handle all emails like this.";
+        if (approved(c)) return "Now click Handle all emails like this, the one I'm pointing at.";
         return "Approve it. Then choose how to handle emails like this next time.";
       },
     },
@@ -276,6 +278,8 @@ export const STEPS: TourStep[] = [
   {
     id: "chat",
     side: "above",
+    // So you see the whole chat while he answers.
+    stepAside: true,
     title: "Chat",
     pose: (c) => (replied(c) ? "proud" : "typing"),
     where: { path: "/chat" },

@@ -36,8 +36,16 @@ export function LikeThis({
     <div className="flex flex-col gap-2.5" role="group" aria-label="For emails like this">
       <p className="text-sm font-medium">For emails like this:</p>
       <div className="flex flex-wrap gap-2">
-        {LIKE_THIS.map((c, i) => (
-          <Button key={c.kind} variant={i === 0 ? "default" : "outline"} className={size} disabled={busy} onClick={() => onChoose(c)}>
+        {/* All the same, so none of them looks already picked. */}
+        {LIKE_THIS.map((c) => (
+          <Button
+            key={c.kind}
+            variant="outline"
+            className={size}
+            disabled={busy}
+            data-tour={c.scope === "kind" ? "like-this-all" : undefined}
+            onClick={() => onChoose(c)}
+          >
             {c.label}
           </Button>
         ))}

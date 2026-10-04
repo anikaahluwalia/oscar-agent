@@ -35,6 +35,8 @@ const PAD = 6; // the ring around what he points at
 const ARROW = 16;
 const TAP = "h-9 rounded-full px-4 text-[13px] font-semibold";
 const TOP_BAR = 64; // the phone's header, with a little room under it
+const BACK_MS = 1500; // after his answer in Chat, before the tour comes back
+const GIVE_UP_MS = 30000; // no answer by then: the tour comes back anyway
 // Another window over the app (the Why drawer, the phone's More menu): the tour steps aside for it.
 const OTHER_DIALOG = '[role="dialog"][aria-modal="true"]';
 // ...and for an open menu (Change, Make it a rule, the Inbox's pills), which sits below the dim.
@@ -321,6 +323,20 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
   if (start.index !== index) setStart({ index, before: beforeOf(data, messages) });
   const c: TourCtx = { data, hash, narrow, chat: messages, before: start.before };
 
+  // A step that steps aside (Chat) hides the tour from your question until a moment after his
+  // answer, so you see the whole chat. `caught` is how much of the chat the tour has let go by.
+  const [caught, setCaught] = useState({ index, n: messages.length });
+  if (caught.index !== index) setCaught({ index, n: messages.length });
+  const away = !!step.stepAside && caught.index === index && messages.length > caught.n;
+  const answered = messages.at(-1)?.from === "oscar";
+  useEffect(() => {
+    if (!away) return;
+    // If he never answers, it comes back anyway, and doesn't hide again when he finally does.
+    const n = answered ? messages.length : messages.length + 1;
+    const t = setTimeout(() => setCaught({ index, n }), answered ? BACK_MS : GIVE_UP_MS);
+    return () => clearTimeout(t);
+  }, [away, answered, index, messages.length]);
+
   const names = step.centre ? "" : (live(step.target, c) ?? []).join(" ");
   const clearNames = step.centre ? "" : (step.clear ?? []).join(" ");
   const where = live(step.where, c);
@@ -452,7 +468,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
   // While a new target is still being found, he stays where he was, without an arrow.
   const ready = !!geo && geo.key === key;
   const target = geo && !geo.lost ? geo.target : null;
-  const covered = !!geo?.covered;
+  const covered = !!geo?.covered || away;
   const showing = !!geo && !covered;
   // Each step puts focus on what he says, once he's on screen, so a keyboard or screen reader
   // follows along. Not while you're typing somewhere in the app.
@@ -545,7 +561,8 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
           layout === "reverse" && "flex-row-reverse",
           // He stands level with the near edge of the bubble, close to what he points at.
           !phone && layout !== "centre" && (spot?.side === "above" ? "items-end" : "items-start"),
-          (!geo || covered) && "invisible",
+          // All at once: the buttons inside would otherwise fade out on their own.
+          (!geo || covered) && "invisible **:transition-none",
         )}
         style={
           phone
