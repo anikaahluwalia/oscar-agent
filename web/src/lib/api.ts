@@ -379,35 +379,6 @@ export interface PermissionRow {
 export const getPermissions = () => call<PermissionRow[]>("/permissions");
 export const getPatterns = () => call<PatternRow[]>("/patterns");
 
-/** One stretch of the decisions you answered (oscar/progress.py _window). */
-export interface ProgressWindow {
-  n: number;
-  from: string | null;
-  to: string | null;
-  matched: number;
-  match_rate: number | null;
-  unsafe: number;
-  unnecessary_asks: number;
-  asked: number;
-  too_permissive: number;
-  acted: number;
-}
-
-/** How well Oscar's calls matched what you said, from your own answers only (GET /progress). */
-export interface Progress {
-  graded: number;
-  enough: boolean;
-  recent: ProgressWindow | null;
-  earlier: ProgressWindow | null; // only when recent and earlier don't overlap
-  all: ProgressWindow;
-  trend: {
-    unit: "day" | "week" | null;
-    points: { start: string; n: number; ask_rate: number; stopped_rate: number; handled_rate: number }[];
-    rules?: { at: string; kind: FeedbackKind; family: string | null; action: Action; level: Level | null }[];
-  };
-  learned_most: { kind: string; action: Action; earlier: Level; now: Level; emails: number; since: string; latest: string }[];
-}
-export const getProgress = () => call<Progress>("/progress");
 
 /** How Oscar shows up in Gmail, read by the extension too (oscar/app_settings.py). */
 export interface AppSettings {
@@ -501,7 +472,7 @@ export const API_ORIGIN = new URL(API).origin;
 /** The whole real email, fetched from Gmail when you open it. Nothing is saved. */
 export const getEmailContent = (decisionId: string) =>
   call<{ html: string | null; text: string }>(`/emails/${encodeURIComponent(decisionId)}/content`);
-/** A saved eval run (evals/results/runs). Every test number on Promises and Oscar's Progress comes from one of these. */
+/** A saved eval run (evals/results/runs). The test note on Promises comes from one of these. */
 export interface EvalRun {
   run_id: string;
   created_at: string;

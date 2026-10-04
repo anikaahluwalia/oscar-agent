@@ -1,4 +1,5 @@
-"""Oscar's Progress: how well his calls matched what you wanted, worked out from your own answers only.
+"""How well Oscar's calls matched what you wanted, worked out from your own answers only. For
+evaluation (GET /progress): the app no longer has a page for it.
 
 A decision counts once you've said what you wanted for it, in one of these ways (the first one
 found wins):
@@ -154,7 +155,7 @@ def _learned_most(history: History) -> list[dict]:
 
 
 def progress(history: History) -> dict:
-    """Everything the Progress page shows. "recent" and "earlier" are the latest and the first
+    """Everything GET /progress gives. "recent" and "earlier" are the latest and the first
     decisions you answered, up to WINDOW each and never overlapping. "earlier" only shows once each
     side has MIN_GRADED. Until then "recent" covers all of them, and below MIN_GRADED there's none."""
     rows = graded(history)

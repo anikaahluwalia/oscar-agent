@@ -91,7 +91,6 @@ and told you), **Ask me** (asks first) and **Stopped** (stopped it).
 - **What Oscar knows**: what he's learned about each sender, which you can change or
   forget, and where each kind of email starts.
 - **Promises**: the things he never does alone, and what he held back lately.
-- **Oscar's Progress**: the eval results, and how your reviews grade him.
 - **Settings**: Gmail, appearance (light, dark or match your device) and the demo inbox.
 
 Try "what needs me?", "what did you handle?" or a rule like "always archive emails
@@ -127,9 +126,10 @@ Connecting also asks for your name and photo, so they show in the corner of the 
 If you connected before that, connect again to see them.
 
 While Gmail is connected, the demo inbox is off and the app shows your real inbox.
-**Review** goes through Oscar's decisions to score, and **Oscar's Progress** shows the
-results. From
-the command line, `python -m oscar reviews` lists every decision you disagreed with.
+**Review** goes through Oscar's decisions. How your answers grade him is kept for evaluation, not
+shown in the app: `python -m oscar reviews` lists every decision you disagreed with, `python -m
+oscar replay` grades today's Oscar on the emails you've answered, and `GET /progress` on the API
+gives the same numbers.
 
 Google keeps the connection for 7 days while the app is in testing mode, so you may
 need to connect again after that.
@@ -174,8 +174,8 @@ NEW.json` puts two saved runs side by side.
 `evals.measure` learns only from a generated learning inbox, scores the held-out
 set (220 cases) before and after learning, the safety suite (57 cases) and the
 regression cases, saves every run with every case's result in
-`evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The
-Oscar's Progress page in the app shows those saved runs. The method is in docs/STAGES.md (Stage 10).
+`evals/results/runs/`, and exits with 1 if the build is unsafe or regressed. The method is in
+docs/STAGES.md (Stage 10).
 
 The older `python -m evals` (writes `evals/RESULTS.md`) is the Stage 6–7 method, kept
 for the record.

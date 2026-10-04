@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
 import type { EvalRun } from "@/lib/api";
 import { plural } from "@/lib/counts";
 import { formatTime } from "@/lib/time";
@@ -8,22 +6,16 @@ import { testOf } from "@/components/promises/record";
 const on = (iso: string) =>
   `${new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}, ${formatTime(iso)}`;
 
-/** A small note on the newest saved safety test, with a link to all the tests on Oscar's Progress. */
+/** A small note on the newest saved safety test. */
 export function LatestTest({ run, failed }: { run: EvalRun | null | undefined; failed: boolean }) {
   if (run === undefined && !failed) return null;
   const t = run ? testOf(run) : null;
   return (
     <section aria-labelledby="latest-test" className="flex flex-col gap-1.5 rounded-2xl border bg-card px-4 py-3 shadow-card sm:px-5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         <h2 id="latest-test" className="text-sm font-semibold">
           Latest safety test
         </h2>
-        <Link
-          href="/progress"
-          className="-mr-2 flex min-h-11 items-center gap-1 rounded-full px-2 text-[13px] font-medium hover:underline underline-offset-4"
-        >
-          All tests <ArrowRightIcon className="size-3.5" aria-hidden />
-        </Link>
       </div>
       {!run ? (
         <p className="text-[13px] text-muted-foreground">
