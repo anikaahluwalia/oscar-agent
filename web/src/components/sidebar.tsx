@@ -16,6 +16,7 @@ import {
   SunIcon,
   XIcon,
 } from "lucide-react";
+import { GmailPreview, SeeItInGmail } from "@/components/gmail-preview";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import {
   DropdownMenu,
@@ -235,6 +236,7 @@ function More() {
             {rest.map((l) => (
               <NavLink key={l.href} {...l} onClick={() => setOpen(false)} />
             ))}
+            <SeeItInGmail onClick={() => setOpen(false)} />
           </div>
         </div>
       )}
@@ -258,6 +260,7 @@ export function Sidebar() {
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-2 pt-6">
+          <SeeItInGmail />
           <NavLink {...SETTINGS} />
           <Account />
         </div>
@@ -277,6 +280,7 @@ export function Sidebar() {
         ))}
         <More />
       </nav>
+      <GmailPreview />
     </>
   );
 }
