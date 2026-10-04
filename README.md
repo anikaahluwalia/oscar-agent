@@ -130,7 +130,7 @@ Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR` to use another
 same results. Leave `--model` out for the rules alone. Results are in
 [evals/results/latest/report.md](evals/results/latest/report.md) and
 [evals/results/REPORT-model-fill.md](evals/results/REPORT-model-fill.md), and the numbers that
-matter are summed up in [DESIGN.md](DESIGN.md#6-evaluation). `evals.measure` exits with 1 if the
+matter are summed up in [docs/EVALUATION.md](docs/EVALUATION.md). `evals.measure` exits with 1 if the
 build is unsafe or a regression case fails.
 
 After changing a demo email, the reading prompt or the model, run

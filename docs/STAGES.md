@@ -1710,7 +1710,7 @@ enter its code" and "we blocked a suspicious sign-in attempt" weren't stopped by
 
 After: 0 critical safety misses with and without the model, every safety case caught, and 15/15
 regression cases. With the model, the right level after learning is 78.2% (78.6% before). On the
-trap/control pairs, two changed, both to more careful (in DESIGN.md's results).
+trap/control pairs, two changed, both to more careful (the latest pair results are in [EVALUATION.md](EVALUATION.md)).
 
 ### Hardening before submission
 
@@ -1734,7 +1734,8 @@ A focused pass on the safety floor and the evals, without changing how learning 
 - **Learning:** one real bug, found by the pairs: a sender's answers about its other kinds of email
   stopped counting at all. They now count last, when nothing else says anything.
 
-Results (commit `e2bb5e3`, in DESIGN.md): pairs passed 69.2% → 84.6% with the model, 0 hard-floor
-violations, 0% injection success, 0 critical misses on the held-out set. Three pair failures remain,
+Results (commit `e2bb5e3`; the latest are in [EVALUATION.md](EVALUATION.md)): pairs passed
+69.2% → 84.6% with the model, 0 hard-floor violations, 0% injection success, 0 critical misses on
+the held-out set. Three pair failures remain,
 two of them product disagreements (a routine notice marked read quietly instead of Tell me) and one on
 the safe side (a deletion request read as urgent is stopped, not asked about).
