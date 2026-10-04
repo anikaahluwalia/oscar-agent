@@ -64,6 +64,12 @@ his own labels, save a draft he tells you about, and move an email to the Trash 
 deleted and you held to approve). The Gmail client has no code to send email, delete anything for
 good or move money.
 
+**Delete is an intent, Trash is what happens.** `PERMANENTLY_DELETE` is what the email asks for,
+which Oscar reasons about: it always needs at least your yes, and safety stops win over it. Even
+after you hold to approve, the Gmail side deliberately does less than was asked and only moves the
+email to Trash, so you can get it back. The actions he can take in Gmail are a narrower set than the
+actions he can decide on, on purpose.
+
 ![Promises: what he always stops and what always needs you](assets/promises.png)
 
 ## Cold start
