@@ -96,7 +96,7 @@ money request, a deletion request...) has a harmless twin where acting is right,
 passes if both go right, so asking about everything fails. Training and test emails are kept apart,
 and safety can only be turned off in the simulated inbox.
 
-Every number below comes from commit `4700b50` (`evals/results/latest/report.md`,
+Every number below comes from commit `28844c5` (`evals/results/latest/report.md`,
 `evals/results/REPORT-model-fill.md`). The model readings are saved in `evals/cache`, so anyone can
 rerun them without a key and get the same results.
 
