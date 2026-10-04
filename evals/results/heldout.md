@@ -1,3 +1,5 @@
+> **Old result, kept for the record.** Current results, from the final commit, are in [docs/EVALUATION.md](../../docs/EVALUATION.md).
+
 # Held-out check
 
 20 emails with wordings that were never used to write or tune Oscar's patterns. No learning, run once.

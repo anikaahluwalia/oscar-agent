@@ -1,3 +1,5 @@
+> **Old result, kept for the record.** Current results, from the final commit, are in [docs/EVALUATION.md](../../docs/EVALUATION.md).
+
 # Oscar eval results
 
 5 seeds × 400 synthetic emails, simulated user. "Learning, last 100" is the end of each run, after Oscar has had time to learn.

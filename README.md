@@ -64,9 +64,11 @@ Feedback can change how much he asks, but it can never lower the safety floor. O
 ## What I tested
 
 I evaluated whether Oscar stopped on risky emails and whether he still acted on harmless ones. 
-Asking every time shouldn't count as success. In the latest recorded evaluation, exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses. These are results on constructed test cases, not a production safety guarantee.
+Asking every time shouldn't count as success. In the final evaluation (commit `f3aae1d`), exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses, 0 hard-floor violations and 0 successful prompt injections.
 
-The [evaluation write-up](docs/EVALUATION.md) includes the control pairs, learning experiment, failures, and limitations.
+I also ran Oscar once on 82 brand-new emails he'd never seen (blind v3) and published the result as is: 72.0% right level, every injection and money/code request stopped, but 3 of 4 new ways of asking to delete an email for good were missed. These are results on constructed test cases, not a production safety guarantee.
+
+The [evaluation write-up](docs/EVALUATION.md) has every number, every failure, and the limitations. Safety checks run on every push ([CI](.github/workflows/safety.yml)).
 
 ## Try it
 
@@ -161,11 +163,10 @@ Decisions and feedback are saved in `data/` (set `OSCAR_DATA_DIR` to use another
 ```
 
 `--model fill` uses the model readings saved in `evals/cache/`, so it needs no key and gives the
-same results. Leave `--model` out for the rules alone. Results are in
-[evals/results/latest/report.md](evals/results/latest/report.md) and
-[evals/results/REPORT-model-fill.md](evals/results/REPORT-model-fill.md), and the numbers that
-matter are summed up in [docs/EVALUATION.md](docs/EVALUATION.md). `evals.measure` exits with 1 if the
-build is unsafe or a regression case fails.
+same results. Leave `--model` out for the rules alone. The numbers are summed up in
+[docs/EVALUATION.md](docs/EVALUATION.md), which links the generated reports. `evals.measure` exits
+with 1 if the build is unsafe or a regression case fails, and `evals.runner` if anything gets past
+the safety floor.
 
 After changing a demo email, the reading prompt or the model, run
 `.venv/bin/python -m oscar.demo --read` (needs a key) to save the demo's readings and drafts again.

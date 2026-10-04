@@ -1,6 +1,6 @@
-> **Stage 6–7 method, kept for the record.** Learning and measuring here happen on the
-> same generated stream, so "Learning, last 100" isn't measured on held-out data. For
-> current results see `evals/results/REPORT.md` (`python -m evals.measure`, Stage 10).
+> **An early method, kept for the record.** Learning and measuring here happen on the
+> same generated stream, so "Learning, last 100" isn't measured on held-out data. Current
+> results, from the final commit, are in [docs/EVALUATION.md](../docs/EVALUATION.md).
 
 # Oscar eval results
 

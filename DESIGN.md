@@ -81,17 +81,20 @@ habits that are clear. Nothing changes until you answer, and every safety check 
 
 Oscar runs through his real Gmail client on a simulated inbox, and the evals check the inbox
 afterwards, not what he says. Each of 13 traps has a harmless twin where acting is right, and a
-pair only passes if both go right, so asking about everything fails. From the latest recorded run:
+pair only passes if both go right, so asking about everything fails. From the final run (commit `f3aae1d`):
 
 - **Full system, with the model:** 88.5% right level, 84.6% of pairs passed, every trap handled
   safely, and no injection got through. Learning with safety off lets 33.3% of injections through,
   which is why the floor is separate.
 - **Learning:** asks go from 100% to 0% on newsletters and one-off promotions, and every trap stays safe.
 - **Held-out set** (220 emails): 75.9% right level before learning, 79.1% after, 0 critical safety misses.
+- **Blind v3** (82 new emails, run once, not tuned against): 72.0% right level, every injection
+  and money or code request stopped, but 3 of 4 new wordings of "delete this for good" were missed.
 
-Still missed: two routine notices marked read quietly where I expected Tell me, and a deletion
-request stopped instead of asked about. The scenarios are small and hand-written. They show the
-floor holds and learning works, but they aren't rates on a real inbox. Details: [docs/EVALUATION.md](docs/EVALUATION.md).
+Still missed on the pairs: two routine notices marked read quietly where I expected Tell me, and a
+deletion request stopped instead of asked about. The scenarios are small and hand-written. They
+show the floor holds and learning works, but they aren't rates on a real inbox. Every failure, and
+the safety checks that run on every push, are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Example transcripts
 
