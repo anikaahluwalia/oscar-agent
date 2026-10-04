@@ -25,6 +25,7 @@ const NOUNS: Record<string, [string, string]> = {
   receipt: ["receipt", "receipts"],
   fyi: ["notice", "notices"],
   account_update: ["notice", "notices"],
+  file_share: ["shared file", "shared files"],
   social_notification: ["notification", "notifications"],
 };
 const noun = (type: string, n: number) => (NOUNS[type] ?? ["email", "emails"])[n === 1 ? 0 : 1];
