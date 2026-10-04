@@ -8,7 +8,9 @@ import { useCallback, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { OscarAvatar } from "@/components/oscar-avatar";
 import { wouldOnly } from "@/lib/labels";
+import { subscribeSettings } from "@/lib/local-setting";
 import {
+  demoSession,
   getAutonomy,
   getBrief,
   getCategories,
@@ -27,6 +29,7 @@ import {
   type LearnedRow,
   type ReviewSummary,
   type Level,
+  type RuleScope,
 } from "@/lib/api";
 
 const CHANGED = "oscar:changed";
@@ -80,6 +83,18 @@ function latestPerEmail(items: DecisionWithFeedback[]): DecisionWithFeedback[] {
   return items.filter((i) => !seen.has(i.decision.email_id) && seen.add(i.decision.email_id));
 }
 
+// Reviews grade Oscar on a real inbox, so the demo has none (and the API doesn't offer them there).
+const NO_REVIEWS: ReviewSummary = {
+  decisions: 0,
+  reviewed: 0,
+  scored: 0,
+  agreement: null,
+  labels: { CORRECT: 0, QUESTIONED_TOO_MUCH: 0, NEEDED_TO_ASK: 0, MISINTERPRETED_RISK: 0, UNNECESSARY_FLAGGING: 0, INCORRECT_ACTION: 0, INCORRECT_TYPE: 0, OTHER: 0, SKIP: 0 },
+  old_way: 0,
+  graded: { n: 0 },
+  by_version: {},
+};
+
 async function fetchAll(): Promise<OscarData> {
   const [items, brief, autonomy, learned, gmail, reviews, categories] = await Promise.all([
     getDecisions(),
@@ -87,7 +102,7 @@ async function fetchAll(): Promise<OscarData> {
     getAutonomy(),
     getLearned(),
     getGmailStatus(),
-    getReviewSummary(),
+    demoSession() ? NO_REVIEWS : getReviewSummary(),
     getCategories(),
   ]);
   // An email you deleted in Gmail leaves the lists. `all` keeps it, so your answers on it still count.
@@ -145,6 +160,14 @@ let retry: ReturnType<typeof setTimeout> | null = null;
 let followUp: ReturnType<typeof setTimeout> | null = null; // while he redoes his calls after you teach him
 
 let checkedOnOpen = false;
+// Which inbox the data is from: this browser's demo inbox (its id), or the real one (null).
+// Switching between them clears what's shown, so one never shows the other's emails.
+let shown: string | null | undefined;
+
+/** This browser's demo inbox while it's in demo mode (demoSession), kept up to date for the page. */
+export function useDemoSession() {
+  return useSyncExternalStore(subscribeSettings, demoSession, () => null);
+}
 
 /**
  * Opening the app (or refreshing the page) checks Gmail, the same as pressing Check now: he says
@@ -165,6 +188,9 @@ function load(changed = true) {
     again ||= changed;
     return;
   }
+  const session = demoSession();
+  if (shown !== undefined && session !== shown) store = { data: null, error: false };
+  shown = session;
   loading = true;
   fetchAll()
     .then(
@@ -173,8 +199,15 @@ function load(changed = true) {
     )
     .finally(() => {
       loading = false;
+      // You started or left the demo while this was loading: what came back is for the other inbox.
+      if (demoSession() !== session) {
+        store = { data: null, error: false };
+        again = true;
+      }
       listeners.forEach((l) => l());
       if (store.data?.gmail.connected && !checkedOnOpen) checkOnOpen();
+      // A demo inbox with nothing in it was forgotten by the API (it restarted): start it again.
+      if (session && store.data && !store.data.all.length) void import("@/lib/demo").then(({ restartIfEmpty }) => restartIfEmpty(session));
       if (again) {
         again = false;
         load();
@@ -225,9 +258,9 @@ const SERVER: Store = { data: null, error: false };
 export function useOscar() {
   const { data, error } = useSyncExternalStore(subscribe, () => store, () => SERVER);
 
-  const feedback = useCallback(async (decisionId: string, kind: FeedbackKind, editedText?: string) => {
+  const feedback = useCallback(async (decisionId: string, kind: FeedbackKind, editedText?: string, scope?: RuleScope, level?: Level) => {
     try {
-      const { reply } = await sendFeedback(decisionId, kind, editedText);
+      const { reply } = await sendFeedback(decisionId, kind, editedText, scope, level);
       oscarSays(reply);
       notifyChanged();
       return true;

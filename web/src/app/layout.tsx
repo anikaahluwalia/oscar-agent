@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
-import { Onboarding } from "@/components/settings/onboarding";
-import { Sidebar } from "@/components/sidebar";
+import { AppFrame } from "@/components/app-frame";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WhyDrawer } from "@/components/why-drawer";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-sans", subsets: ["latin"] });
@@ -23,12 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
           <TooltipProvider>
-            <div className="flex flex-1 flex-col md:flex-row">
-              <Sidebar />
-              <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-            </div>
-            <WhyDrawer />
-            <Onboarding />
+            <AppFrame>{children}</AppFrame>
           </TooltipProvider>
           <Toaster position="bottom-center" mobileOffset={{ bottom: "5rem" }} />
         </ThemeProvider>

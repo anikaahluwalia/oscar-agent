@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
-      { source: "/", destination: "/today", permanent: false },
       // Older pages, under the names they have now.
       { source: "/home", destination: "/today", permanent: false },
       { source: "/activity", destination: "/inbox", permanent: false },

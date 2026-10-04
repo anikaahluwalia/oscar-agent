@@ -1,12 +1,57 @@
 // Bringing in email. Until Gmail is connected, the inbox is the example emails in emails/ (the demo
-// inbox); after that, it's checking your real inbox.
+// inbox); after that, it's checking your real inbox. In demo mode (picked on the front page), this
+// browser has its own simulated inbox instead (emails/demo).
 
-import { disconnectGmail, loadDemoInbox, recheckGmail, resetDemo, syncGmail } from "@/lib/api";
+import {
+  checkDemo,
+  demoSession,
+  disconnectGmail,
+  isDemo,
+  loadDemoInbox,
+  recheckGmail,
+  resetDemo,
+  startDemo as startDemoInbox,
+  syncGmail,
+  type Decision,
+} from "@/lib/api";
 import { notifyChanged, offerUndo, oscarSays } from "@/lib/use-oscar";
+
+// --- Demo mode --------------------------------------------------------------
+
+let starting: Promise<Decision[]> | null = null;
+const started = new Set<string>(); // demo inboxes this page has started, so an empty one is only started again once
+
+/** A fresh demo inbox with its first emails. Asking twice while it's starting waits for the same start. */
+export function startDemo() {
+  const id = demoSession();
+  if (id) started.add(id);
+  starting ??= startDemoInbox().finally(() => (starting = null));
+  return starting;
+}
+
+/** The API came back with nothing for this demo (it was restarted, say): start it again, quietly. */
+export function restartIfEmpty(id: string) {
+  if (started.has(id)) return;
+  startDemo().then(notifyChanged, () => {});
+}
+
+/** Reset demo: the demo inbox starts again from its first emails, and he forgets what you taught him there. */
+export async function resetDemoInbox() {
+  try {
+    await resetDemo();
+    notifyChanged();
+    oscarSays("All fresh! The demo is back to the start.");
+    return true;
+  } catch (e) {
+    oscarSays(e instanceof Error ? e.message : "I can't reach my API right now.");
+    return false;
+  }
+}
 
 export async function bringInDemo() {
   try {
-    const decisions = await loadDemoInbox();
+    // In demo mode it's only offered on an empty demo inbox, so it starts that one.
+    const decisions = isDemo() ? await startDemo() : await loadDemoInbox();
     notifyChanged();
     oscarSays("New emails are in, and I've sorted them!");
     offerUndo(decisions);
@@ -44,19 +89,21 @@ async function syncWhenFree() {
   }
 }
 
-/** Check now, and what opening or refreshing the app does (use-oscar.tsx). */
+/** Check now, and what opening or refreshing the app does (use-oscar.tsx). In demo mode, the demo inbox's new emails. */
 export async function checkGmail() {
   if (checking) return; // a second click while the first check is running does nothing
   checking = true;
   oscarSays("On it! Checking your inbox...");
   try {
-    const { new: count, skipped, done } = await syncWhenFree();
+    const { new: count, skipped, done } = isDemo() ? await checkDemo() : await syncWhenFree();
     notifyChanged();
     const read = !count
       ? "Nothing new in your inbox. All quiet!"
       : done
         ? `I read ${count} new ${count === 1 ? "email" : "emails"} and took care of ${done}! You can undo any of them.`
-        : `I read ${count} new ${count === 1 ? "email" : "emails"}! I didn't change anything in Gmail.`;
+        : isDemo()
+          ? `I read ${count} new ${count === 1 ? "email" : "emails"}, and sorted ${count === 1 ? "it" : "them"}!`
+          : `I read ${count} new ${count === 1 ? "email" : "emails"}! I didn't change anything in Gmail.`;
     oscarSays(skipped ? `${read} I couldn't open ${skipped}; I'll try again next time.` : read);
   } catch (e) {
     oscarSays(e instanceof Error ? e.message : "I can't reach my API right now.");

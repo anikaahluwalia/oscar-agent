@@ -76,8 +76,14 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. Until Gmail is connected, the inbox is the example
-emails: click **Bring in the demo emails** on Today (it's also in **Settings**).
+Open http://localhost:3000 and pick a way in:
+
+- **Try Oscar**: a simulated inbox, no Gmail needed. It's just for your browser and kept
+  only in the API's memory, but every email goes through Oscar's real learning and safety
+  checks. A small guide shows how he learns in about a minute. The banner at the top has
+  **Check now** (two more emails come in), **Reset demo** and **Leave**. After changing a
+  demo email (`emails/demo/`), the prompt or the model, run `.venv/bin/python -m oscar.demo --read`.
+- **Connect Gmail**: your real inbox (see "Connect a real Gmail inbox" below).
 
 In the app, Oscar's four levels are called **Quietly** (did it), **Tell me** (did it
 and told you), **Ask me** (asks first) and **Stopped** (stopped it).
@@ -91,11 +97,12 @@ and told you), **Ask me** (asks first) and **Stopped** (stopped it).
 - **What Oscar knows**: what he's learned about each sender, which you can change or
   forget, and where each kind of email starts.
 - **Promises**: the things he never does alone, and what he held back lately.
-- **Settings**: Gmail, appearance (light, dark or match your device) and the demo inbox.
+- **Settings**: Gmail, appearance (light, dark or match your device), and leaving the demo.
 
 Try "what needs me?", "what did you handle?" or a rule like "always archive emails
-from digest@morningbrew-weekly.example" in **Chat**. Approve the newsletter a few
-times and bring the emails in again to watch Oscar learn.
+from hello@denimco.example" in **Chat**. In the demo, approve the Denim Co sale and
+choose **Handle all emails like this**, then press **Check now**: he archives a sale from
+a different shop on his own, and still stops the tricky one.
 
 ## Oscar in Gmail (Chrome extension)
 

@@ -131,7 +131,7 @@ function AccountMenu({ children, side }: { children: React.ReactNode; side: "top
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/settings">{gmail?.connected ? "Settings and Gmail" : "Connect Gmail"}</Link>
+          <Link href="/settings">{gmail?.connected ? "Settings and Gmail" : gmail?.demo ? "Settings" : "Connect Gmail"}</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

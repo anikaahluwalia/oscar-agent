@@ -1,16 +1,47 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { FlaskConicalIcon } from "lucide-react";
 import { Page } from "@/components/page";
 import { GmailSettings, useGmailResult } from "@/components/settings/gmail-settings";
 import { AppearanceRow, ChatRow, DataSettings, NameRow } from "@/components/settings/more-settings";
 import { AdvancedSettings, GmailCompanionSettings } from "@/components/settings/oscar-settings";
-import { SettingsGroup } from "@/components/settings/rows";
-import { useOscar } from "@/lib/use-oscar";
+import { ROW_BUTTON, SettingsGroup, SettingsRow } from "@/components/settings/rows";
+import { Button } from "@/components/ui/button";
+import { leaveDemo } from "@/lib/api";
+import { useDemoSession, useOscar } from "@/lib/use-oscar";
+
+/** In the demo, Gmail and everything kept with a real inbox isn't there to change; this says so. */
+function DemoSettings() {
+  const router = useRouter();
+  return (
+    <SettingsGroup title="Demo">
+      <SettingsRow
+        icon={FlaskConicalIcon}
+        title="You're trying Oscar on a simulated inbox"
+        text="Gmail, his Gmail labels and your data are for a real inbox, so they're not here. Leave the demo to connect Gmail."
+        control={
+          <Button
+            variant="outline"
+            className={ROW_BUTTON}
+            onClick={() => {
+              leaveDemo();
+              router.push("/");
+            }}
+          >
+            Leave the demo
+          </Button>
+        }
+      />
+    </SettingsGroup>
+  );
+}
 
 /** Settings under short headings: Gmail, Oscar in Gmail with his notifications and labels, you, the look, the chat, advanced, your data. */
 export function SettingsPage() {
   const { data } = useOscar();
   const gmail = data?.gmail;
+  const demo = !!useDemoSession();
   useGmailResult();
 
   return (
@@ -20,9 +51,9 @@ export function SettingsPage() {
         <p className="text-base text-muted-foreground">Your Gmail, and how Oscar works for you.</p>
       </header>
 
-      <GmailSettings gmail={gmail} />
+      {demo ? <DemoSettings /> : <GmailSettings gmail={gmail} />}
 
-      <GmailCompanionSettings />
+      {!demo && <GmailCompanionSettings />}
 
       <SettingsGroup title="You">
         <NameRow />
@@ -36,10 +67,11 @@ export function SettingsPage() {
         <ChatRow />
       </SettingsGroup>
 
-      <AdvancedSettings gmail={gmail} />
+      {/* Kept with a real inbox (or the shared example one), so not in the demo. */}
+      {!demo && <AdvancedSettings gmail={gmail} />}
 
       {/* The demo inbox controls only make sense until Gmail is connected. */}
-      <DataSettings demo={!!gmail && !gmail.connected} />
+      {!demo && <DataSettings demo={!!gmail && !gmail.connected} />}
     </Page>
   );
 }

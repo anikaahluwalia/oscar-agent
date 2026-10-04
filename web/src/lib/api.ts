@@ -1,5 +1,7 @@
 // Types and calls for the Oscar API (oscar/api.py).
 
+import { readSetting, writeSetting } from "@/lib/local-setting";
+
 export type Level = "PROCEED_SILENTLY" | "PROCEED_AND_NOTIFY" | "ASK_FIRST" | "ESCALATE";
 
 export type Action =
@@ -192,6 +194,7 @@ export interface GmailStatus {
   can_act: boolean; // Stage 12: the connection allows changing labels
   acting: boolean; // Oscar acts in Gmail
   read_only: boolean;
+  demo?: boolean; // this browser is in demo mode: a simulated inbox, and Gmail isn't used at all
 }
 
 /** Something Oscar did in Gmail (Stage 12): the labels it added and removed, and whether it was undone. */
@@ -235,6 +238,8 @@ export interface FeedbackEvent {
   sender: string;
   edited_text: string | null;
   blocked_by_floor: boolean;
+  scope?: RuleScope; // a rule about this sender, or every email like this one
+  desired_level?: Level | null;
 }
 
 export interface DecisionWithFeedback {
@@ -347,10 +352,45 @@ export interface AutonomyRow {
 
 const API = process.env.NEXT_PUBLIC_OSCAR_API ?? "http://localhost:8000";
 
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
+// --- Demo mode ----------------------------------------------------------------
+// Trying Oscar without Gmail. Each browser gets its own simulated inbox on the API, kept in memory
+// and never mixed with a real one: while in the demo, every call says which one (X-Oscar-Demo).
+// The mode is "demo" or "gmail" once you've picked on the front page, and unset before that.
+
+const DEMO_ID = /^[A-Za-z0-9_-]{8,64}$/;
+
+/** This browser's demo inbox, while it's in demo mode. Null on the real inbox (and on the server). */
+export function demoSession(): string | null {
+  const id = readSetting("demo-session");
+  return readSetting("mode") === "demo" && id && DEMO_ID.test(id) ? id : null;
+}
+
+export const isDemo = () => demoSession() !== null;
+
+/** Start a new demo inbox in this browser. Each one starts fresh. */
+export function enterDemo(): string {
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+  writeSetting("demo-session", id);
+  writeSetting("mode", "demo");
+  return id;
+}
+
+/** Back to the front page: forget the demo inbox, and the choice. */
+export function leaveDemo() {
+  writeSetting("demo-session", null);
+  writeSetting("mode", null);
+}
+
+/** You picked your real inbox. */
+export function chooseGmail() {
+  leaveDemo();
+  writeSetting("mode", "gmail");
+}
+
+async function call<T>(path: string, init?: RequestInit, demo = demoSession()): Promise<T> {
   const response = await fetch(`${API}${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...init?.headers },
+    headers: { "content-type": "application/json", ...(demo ? { "X-Oscar-Demo": demo } : {}), ...init?.headers },
   });
   if (!response.ok) {
     // FastAPI puts the reason in "detail". For feedback errors it's Oscar's own words.
@@ -455,9 +495,16 @@ export const deleteCategory = (id: string) => call<{ ok: boolean }>(`/categories
 export const assignCategory = (sender: string, categoryId: string | null) =>
   call<{ ok: boolean }>("/categories/assign", { method: "POST", body: JSON.stringify({ sender, category_id: categoryId }) });
 export const loadDemoInbox = () => call<Decision[]>("/demo/inbox", { method: "POST" });
-export const resetDemo = () => call<{ ok: boolean }>("/demo/reset", { method: "POST" });
+/** In demo mode, starts this browser's demo inbox again (like startDemo); otherwise the shared example inbox. */
+export const resetDemo = () => call<unknown>("/demo/reset", { method: "POST" });
+/** Demo mode: a fresh demo inbox, with its first emails decided as if they just arrived. */
+export const startDemo = () => call<Decision[]>("/demo/start", { method: "POST" });
+/** Demo mode's Check now: the emails that come in later, decided with what he's learned so far. */
+export const checkDemo = () => call<{ new: number; skipped: number; done: number }>("/demo/check", { method: "POST" });
 
 export const getGmailStatus = () => call<GmailStatus>("/gmail");
+/** Your real Gmail connection, even while this browser is in the demo (the front page asks this). */
+export const getRealGmailStatus = () => call<GmailStatus>("/gmail", undefined, null);
 /** A link, not a fetch: it takes you to Google and back. */
 export const gmailConnectUrl = `${API}/auth/google/start`;
 /** Connect again, this time with permission to change labels (Stage 12). */
