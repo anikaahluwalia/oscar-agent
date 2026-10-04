@@ -4,15 +4,24 @@ Oscar inside Gmail, in three parts:
 
 - **Chips in your inbox.** Each email he's read gets his call next to the subject: Handled, FYI,
   Needs you or Stopped. They take the place of his Gmail labels in the list, so you don't see both.
-- **Oscar at the bottom of the page**, with a count of what needs you and one card at a time:
-  all caught up, what needs you, something he handled (with Undo), an approval, something he
-  stopped, and "Was that right?" (thumbs up, or what he should have done instead). Which cards
+- **Oscar at the bottom of the page**, with a count of what needs you. When Gmail opens he says
+  hello and tells you how things stand: "All handled! Nothing needs you right now." or "3 emails
+  need you. I stopped 1 that looked risky.", with **Show me** for the list of what's waiting. It
+  goes by itself after about 8 seconds (not while your pointer is on it), and he skips it when
+  you open Gmail straight onto an email, since his panel is there. After that, one card at a
+  time: all caught up, what needs you, something he handled (with Undo), an approval, something
+  he stopped, and "Was that right?" (thumbs up, or what he should have done instead). Which cards
   show, whether he's there at all, which side he starts on and whether he moves are set in the
-  app, under Settings > Oscar in Gmail and Notifications.
+  app, under Settings > Oscar in Gmail and Notifications. With "Show Oscar in Gmail" off there's
+  no Oscar, no hello and no panel opening by itself; with the cards about what's waiting off, no
+  hello while something is.
 - **A panel down the right** for the open email, beside Gmail rather than on top of it (Gmail gets
-  narrower while it's open; in a narrow window it goes on top instead). It opens by itself when
-  you open an email and goes away when you're back in your list. Close it and it stays closed on
-  that email; the next one you open gets it again. Summary (what it is, what he recommends and why),
+  narrower while it's open; in a narrow window it goes on top instead). It opens by itself every
+  time you open an email, from your inbox, a label, a search, the reading pane or a link, and
+  goes away when you're back in your list. Close it and it stays closed while you're on that
+  email; the next one you open gets it again, and so does that one if you leave and come back.
+  If Gmail is slow to show the email he waits a few seconds for it, then opens anyway. If he
+  can't reach his API, or Gmail isn't connected yet, it still opens and tells you so. Summary (what it is, what he recommends and why),
   Actions (what he did, Approve, Undo, "always do this" or "always ask me", and "Was that right?"),
   Why? (what mattered and any safety rule) and Thread (his call on each email in it).
 

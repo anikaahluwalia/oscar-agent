@@ -34,6 +34,7 @@ def test_status_counts_what_needs_you(setup):
     status = client.get("/extension/status").json()
     assert status["connected"] and status["read_only"]
     assert status["count"] == len(status["waiting"]) >= 1
+    assert status["stopped"] == sum(i["status"] == "Stopped" for i in status["waiting"]) == 1
     stopped = next(i for i in status["waiting"] if i["level"] == "ESCALATE")
     assert stopped["subject"] == "Overdue" and stopped["thread_id"] == "ab12cd34ef"
 

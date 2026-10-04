@@ -1,10 +1,10 @@
 // Oscar inside Gmail, in three parts:
 //  - a chip on each email in Gmail's list with his call: Handled, FYI, Needs you or Stopped;
-//  - Oscar at the bottom of the page (right by default, wherever you drag him), with one card at a
-//    time: all caught up, what needs you, something he handled, an approval, something he stopped,
-//    and "was that right?";
+//  - Oscar at the bottom of the page (right by default, wherever you drag him). When Gmail opens he
+//    says hello and whether anything needs you, then shows one card at a time: all caught up, what
+//    needs you, something he handled, an approval, something he stopped, and "was that right?";
 //  - a panel down the right for the open email: Summary, Actions, Why? and Thread. It opens by
-//    itself when you open an email, and stays closed on one you closed it on.
+//    itself every time you open an email. Closing it hides it while you stay on that email.
 // Everything is drawn in closed shadow roots so Gmail's styles can't reach it, and every piece of
 // email text goes in as text (never HTML), since subjects and senders come from strangers.
 
@@ -97,15 +97,16 @@
     .badge { position: absolute; top: 2px; left: 0; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
              background: #16171a; color: #ffffff; box-shadow: 0 0 0 2px #ffffff; font-size: 12px; font-weight: 800;
              line-height: 22px; text-align: center; }
-    @media (prefers-reduced-motion: reduce) { .peek, .note { transition: none; animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .peek, .note, .note.going { transition: none; animation: none; } }
     /* "Animate" off in Oscar's Settings. */
-    .still .peek, .still .note { transition: none; animation: none; }
+    .still .peek, .still .note, .still .note.going { transition: none; animation: none; }
 
     /* One card at a time, just above him. */
     .note { position: fixed; bottom: 82px; z-index: 2147483000; width: 292px; max-width: calc(100vw - 32px); padding: 14px 16px;
             border-radius: 20px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 14px 40px rgba(22,23,26,.16);
             display: flex; flex-direction: column; gap: 8px; animation: rise .22s ease; }
     .note.bubble { width: auto; max-width: 260px; padding: 12px 44px 12px 16px; }
+    .note.going { opacity: 0; transform: translateY(6px); transition: opacity .4s ease, transform .4s ease; }
     @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
     .note .x { position: absolute; top: 8px; right: 8px; }
     .note-title { margin: 0; padding-right: 26px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
@@ -240,6 +241,23 @@
   // The open email: the subject heading of Gmail's reading pane (h2.hP) carries the thread id.
   // Gmail can keep an email you left hidden on the page, so only a heading you can see counts.
   const openThread = () => threadOf([...document.querySelectorAll("h2.hP")].find((h) => h.offsetParent)?.parentElement);
+  // Gmail's address says an email is open before the email is on the page: #inbox/<id>,
+  // #label/Receipts/<id>, #search/invoice/<id>, #all/<id> and so on. The id is the thread id in hex
+  // in older links (and the ones Oscar makes), or Gmail's newer long id, which isn't one.
+  function hashEmail() {
+    const parts = location.hash.replace(/^#/, "").split("?")[0].split("/");
+    const deep = ["label", "search", "category", "advanced-search"].includes(parts[0]) ? 3 : 2;
+    const id = parts.length >= deep ? parts[parts.length - 1] : "";
+    return /^([0-9a-f]{12,20}|[A-Za-z0-9]{24,})$/.test(id) ? id : null;
+  }
+  // Where you are. visit is the email you're on, from the address (or, with no id in it, from the
+  // email on the page, as in some reading pane layouts); thread is its thread id once Gmail shows
+  // it. Both are null in your list.
+  function where() {
+    const inHash = hashEmail();
+    const thread = openThread() ?? (/^[0-9a-f]+$/.test(inHash ?? "") ? inHash : null);
+    return { visit: inHash ?? thread, thread };
+  }
 
   const host = el("div", { id: "oscar-for-gmail" });
   const root = host.attachShadow({ mode: "closed" });
@@ -251,14 +269,15 @@
   const state = {
     status: null, error: null, threadId: null, thread: null, focus: null, // the open email, and which of its emails is shown
     pinned: null, // an email you picked from a card or list, shown until Gmail has it open
+    visit: undefined, // the email you're on (see where), or null in your list; undefined until he's looked
+    closed: false, // you closed the panel on this email: it stays closed until you leave it
+    listing: false, // "Show me": the panel shows what's waiting, even on an email
     open: false, tab: "summary", whyOpen: true, busy: false, said: null,
     card: null, // what the card above Oscar shows: { kind, item, wrong? }
     feedback: {}, // decision id -> "down" while you pick what he should have done
     spot: 1, // where Oscar sits along the bottom: 0 is the far left, 1 the far right
     byHimself: false, // the panel opened because you opened an email, not because you asked
   };
-  // Emails you closed the panel on, so it stays closed there until Gmail is reloaded.
-  const closedOn = new Set();
   // What you've already seen, so each card shows once. Kept in this browser only.
   let memory = { seen: [], quietDay: null, quietCount: null, started: false, position: null };
 
@@ -278,6 +297,7 @@
     });
   } catch {
     loaded = true; // storage unavailable: he stays on the right, and cards may show again
+    setTimeout(() => refresh(), 0);
   }
 
   // --- the cards above Oscar ---------------------------------------------------------------
@@ -314,6 +334,14 @@
     if (card?.item) markSeen(card.item.id);
     if (card?.kind === "attention") memory.quietCount = state.status?.count ?? null;
     if (card?.kind === "idle") memory.quietDay = today();
+    if (card?.kind === "hello") {
+      // The hello already said it, so the "all caught up" and "need you" cards don't say it again.
+      clearTimeout(helloTimer);
+      if (state.status?.connected) {
+        if (state.status.count) memory.quietCount = state.status.count;
+        else memory.quietDay = today();
+      }
+    }
     keep();
     state.said = null;
     // After something he did on his own, ask if it was right (once).
@@ -329,6 +357,7 @@
     state.said = null;
     state.open = true;
     state.byHimself = false;
+    state.listing = false;
     state.tab = tab;
     state.focus = item?.id ?? null;
     state.pinned = item?.thread_id && item.thread_id !== openThread() ? item : null;
@@ -339,6 +368,55 @@
 
   const POSE = { idle: "sleeping", attention: "thinking", handled: "proud", approval: "asking", stopped: "guarding", feedback: "learning" };
 
+  // What he says when Gmail opens, from the same status as his badge. "Show me" only when
+  // something is waiting. A safety stop is only mentioned when safety cards are on.
+  function hello() {
+    const s = state.status;
+    if (state.error || !s) {
+      return { pose: "thinking", title: "I can't reach my API right now.", text: "Is Oscar running? I'll keep checking." };
+    }
+    if (!s.connected) {
+      return { pose: "sleeping", title: "I'm not reading your Gmail yet.", text: "Connect Gmail in Oscar's Settings and I'll get started." };
+    }
+    const handled = s.handled_today ? `I handled ${s.handled_today} today.` : "";
+    if (!s.count) return { pose: "proud", title: "All handled!", text: `Nothing needs you right now. ${handled}`.trim() };
+    const notify = { safety: true, ...(s.settings?.notify ?? {}) };
+    const stopped = notify.safety ? s.stopped ?? s.waiting.filter((i) => i.status === "Stopped").length : 0;
+    return { pose: stopped ? "guarding" : "alert", more: true,
+      title: `${s.count} ${s.count === 1 ? "email needs" : "emails need"} you.`,
+      text: [stopped ? `I stopped ${stopped} that looked risky.` : "", handled].filter(Boolean).join(" ") };
+  }
+  // Worth saying at all: not when you turned off the cards about what's waiting and something is.
+  function helloWorth() {
+    const s = state.status;
+    const notify = { approvals: true, safety: true, ...(s?.settings?.notify ?? {}) };
+    return !s?.connected || !s.count || notify.approvals || notify.safety;
+  }
+
+  // The hello goes by itself after 8 seconds, but not while you're pointing at it.
+  let helloTimer = null;
+  function fadeHello(ms = 8000) {
+    clearTimeout(helloTimer);
+    helloTimer = setTimeout(() => {
+      wrap.querySelector(".note.hello")?.classList.add("going");
+      helloTimer = setTimeout(() => state.card?.kind === "hello" && dismiss(), 400);
+    }, ms);
+  }
+  function holdHello() {
+    clearTimeout(helloTimer);
+    wrap.querySelector(".note.hello")?.classList.remove("going");
+  }
+  // "Show me": the panel, with the list of what's waiting.
+  function showWaiting() {
+    dismiss();
+    state.open = true;
+    state.byHimself = false;
+    state.listing = true;
+    state.said = null;
+    render();
+    refresh();
+  }
+
   function card() {
     const c = state.card;
     if (!c || state.open) return null;
@@ -348,6 +426,15 @@
       : `right: ${Math.max(12, window.innerWidth - leftFor(state.spot) - SIZE)}px`;
     const note = (cls, ...children) => el("section", { class: `note ${cls}`, role: "status", style: side }, close, ...children);
 
+    if (c.kind === "hello") {
+      const hi = hello();
+      const bubble = note("bubble hello", el("p", { class: "note-title", text: hi.title }),
+        hi.text ? el("p", { class: "note-text", text: hi.text }) : null,
+        hi.more ? el("div", {}, el("button", { class: "btn", type: "button", onclick: showWaiting }, "Show me")) : null);
+      bubble.addEventListener("mouseenter", holdHello);
+      bubble.addEventListener("mouseleave", () => fadeHello(3000));
+      return bubble;
+    }
     if (c.kind === "idle") {
       return note("bubble", el("p", { class: "note-title", text: "All caught up!" }),
         el("p", { class: "note-text", text: s.handled_today ? `${s.handled_today} handled today` : "Nothing needs you." }));
@@ -555,23 +642,30 @@
         el("b", { text: i.subject || "(no subject)" }), el("small", {}, chip(i.status), address(i.sender))))))];
   }
 
-  // Closing the panel on an email keeps it closed there; the next email you open gets it again.
+  // Closing the panel on an email hides it while you stay there. The next email you open gets it
+  // again, and so does this one if you leave it and come back.
   function closePanel() {
     state.open = false;
     state.byHimself = false;
-    if (state.threadId) closedOn.add(state.threadId);
+    state.listing = false;
+    if (state.visit) state.closed = true;
     render();
   }
 
+  // When the API can't be reached, he says so calmly. He checks again every minute, and whenever
+  // you open another email.
+  const DOWN = "I can't reach my API right now, so I can't tell you about your emails. Is Oscar running on this computer? I'll keep checking.";
+  const trouble = (error) => (/can't reach/i.test(error) ? DOWN : error);
+
   function panel() {
     const s = state.status;
-    const item = shown();
+    const item = state.listing ? null : shown();
     const app = s?.app ?? "http://localhost:3000";
     const TABS = [["summary", "Summary"], ["actions", "Actions"], ["why", "Why?"], ["thread", "Thread"]];
     let body;
-    if (state.error) body = [el("p", { class: "said", text: state.error })];
+    if (state.error) body = [el("p", { class: "said", text: trouble(state.error) })];
     else if (s && !s.connected) body = [el("p", { class: "said" }, "Connect Gmail in Oscar's ", el("a", { href: `${app}/settings`, target: "_blank", rel: "noopener" }, "Settings"), " first.")];
-    else if (!item) body = [state.threadId && state.thread ? el("p", { class: "said", text: "I haven't read this one yet." }) : null, ...waitingList()];
+    else if (!item) body = [state.threadId && state.thread && !state.listing ? el("p", { class: "said", text: "I haven't read this one yet." }) : null, ...waitingList()];
     else body = { summary: summaryTab, actions: actionsTab, why: whyTab, thread: threadTab }[state.tab](item);
 
     const buddy = item ? { Stopped: "guarding", "Needs you": "asking", Handled: "proud", FYI: "alert" }[item.status] ?? "alert"
@@ -661,13 +755,13 @@
     wrap.classList.toggle("dark", dark);
     const s = state.status;
     const count = s?.count ?? 0;
-    const pose = state.card ? POSE[state.card.kind] : count ? "thinking" : "sleeping";
+    const pose = state.card?.kind === "hello" ? hello().pose : state.card ? POSE[state.card.kind] : count ? "thinking" : "sleeping";
     const label = !s ? "Oscar" : count ? `Oscar: ${count} ${count === 1 ? "thing" : "things"} for you` : "Oscar: nothing needs you";
     const peek = el("button", { class: `peek${state.card ? " up" : ""}`, type: "button", hidden: state.open, "aria-expanded": String(state.open),
       "aria-label": `${label}. Drag, or use the arrow keys, to move him.`, style: `left: ${leftFor(state.spot)}px`,
       onclick: () => {
         if (justDragged) return;
-        if (state.card?.kind === "attention" || state.card?.kind === "idle") dismiss();
+        if (["attention", "idle", "hello"].includes(state.card?.kind)) dismiss();
         state.open = true;
         state.byHimself = false;
         state.said = null;
@@ -683,13 +777,43 @@
     wrap.replaceChildren(...(companion.show ? [peek, card() ?? ""] : []), panel());
   }
 
-  let refreshing = null;
+  // One look at a time. Asked again mid-look (you opened another email meanwhile), he looks once
+  // more straight after, so the change isn't missed.
+  let refreshing = null, again = false;
   function refresh() {
     if (!alive()) return Promise.resolve(retire());
     if (!loaded) return Promise.resolve();
-    refreshing ??= load().finally(() => (refreshing = null));
+    if (refreshing) {
+      again = true;
+      return refreshing;
+    }
+    refreshing = load().finally(() => {
+      refreshing = null;
+      if (again) {
+        again = false;
+        refresh();
+      }
+    });
     return refreshing;
   }
+
+  // Gmail puts an email's address up before the email itself, and can be slow to. He looks again
+  // every 300ms, for up to 5 seconds, then opens the panel anyway.
+  let looking = null, waitedFor = null;
+  function lookAgain(visit) {
+    if (looking) return;
+    let tries = 0;
+    looking = setInterval(() => {
+      const here = where();
+      if (here.thread || here.visit !== visit || ++tries >= 16) {
+        clearInterval(looking);
+        looking = null;
+        if (!here.thread && here.visit === visit) waitedFor = visit;
+        refresh();
+      }
+    }, 300);
+  }
+  let greeted = false; // the hello, once a page load
 
   async function load() {
     const status = await ask({ type: "status" });
@@ -709,31 +833,55 @@
       memory.started = true;
       keep();
     }
-    const thread = openThread();
+    const here = where();
+    const thread = here.thread;
+    if (here.visit !== state.visit) {
+      // You opened an email, another one, or went back to your list.
+      state.visit = here.visit;
+      state.closed = false;
+      state.listing = false;
+      waitedFor = null;
+      // Back in your list, a panel he opened by himself goes away again.
+      if (!here.visit && state.byHimself) {
+        state.open = false;
+        state.byHimself = false;
+      }
+    }
     if (thread !== state.threadId) {
       // Gmail opened another email: the one you picked, or one you clicked yourself.
       if (thread !== state.pinned?.thread_id) state.focus = null;
       state.pinned = null;
-      // Opening an email opens his panel beside it, unless you closed it on that one or turned him
-      // off in Oscar's Settings. Back in your list, a panel he opened by himself goes away again.
-      const show = status.ok && status.data.connected && (status.data.settings?.companion?.show ?? true);
-      if (thread && show && !state.open && !closedOn.has(thread)) {
+    }
+    // Opening an email opens his panel beside it, every time, unless you closed it on this one or
+    // turned him off in Oscar's Settings. That includes when he can't reach his API or Gmail isn't
+    // connected: the panel then says so. He waits for Gmail to show the email first (lookAgain).
+    const show = (status.ok ? status.data : state.status)?.settings?.companion?.show ?? true;
+    if (here.visit && show && !state.open && !state.closed) {
+      if (thread || waitedFor === here.visit) {
         state.open = true;
         state.byHimself = true;
         state.tab = "summary";
-      } else if (!thread && state.byHimself) {
-        state.open = false;
-        state.byHimself = false;
+      } else {
+        lookAgain(here.visit);
       }
     }
     state.threadId = thread;
     if (thread && status.ok) {
       const found = await ask({ type: "thread", id: thread });
       state.thread = found.ok ? found.data : null;
+      if (where().thread !== thread) again = true; // you moved on while he asked: look again
     } else {
       state.thread = null;
     }
-    if (state.card?.kind !== "feedback" && !state.said) state.card = nextCard();
+    // Hello when Gmail opens (once a page load), unless his panel is already open on an email.
+    if (!greeted) {
+      greeted = true;
+      if (show && !here.visit && !state.open && helloWorth()) {
+        state.card = { kind: "hello" };
+        fadeHello();
+      }
+    }
+    if (!["feedback", "hello"].includes(state.card?.kind) && !state.said) state.card = nextCard();
     chips.clear();
     paintRows();
     render();
@@ -806,7 +954,17 @@
 
   // The open email changes without a page load: watch the address, and check the page now and then.
   // The check compares with the email he last looked at, so a change he missed mid-load is caught next time.
-  const onHash = () => setTimeout(refresh, 600);
+  // Every time the address moves to another email, or off one, it counts as a new visit, however
+  // quickly you come back: so opening the same email again opens the panel again.
+  let lastHash = hashEmail();
+  const onHash = () => {
+    const id = hashEmail();
+    if (id !== lastHash) {
+      lastHash = id;
+      state.visit = undefined;
+    }
+    setTimeout(refresh, 300);
+  };
   const onResize = () => render();
   window.addEventListener("hashchange", onHash);
   window.addEventListener("resize", onResize);
@@ -815,7 +973,8 @@
     if (e.key === "Escape" && state.open) closePanel();
   });
   const watching = setInterval(() => {
-    if (openThread() !== state.threadId) refresh();
+    const here = where();
+    if (here.visit !== state.visit || here.thread !== state.threadId) refresh();
   }, 1500);
   const checking = setInterval(refresh, 60_000);
 
@@ -844,6 +1003,8 @@
     clearTimeout(soon);
     clearInterval(watching);
     clearInterval(checking);
+    clearInterval(looking);
+    clearTimeout(helloTimer);
     window.removeEventListener("hashchange", onHash);
     window.removeEventListener("resize", onResize);
     host.remove();

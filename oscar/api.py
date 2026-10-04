@@ -462,6 +462,8 @@ def extension_status(history: History = Depends(get_history), tokens: gmail.Toke
     recent = [d for r in mine if r.done_at >= since and (d := history.get_decision(r.decision_id))]
     return {"connected": connected, "read_only": not (connected and acting_on(tokens, real)),
             "count": len(waiting), "waiting": [_extension_item(history, d, asks) for d in waiting[:8]],
+            # How many of those a safety rule stopped, for his hello when Gmail opens.
+            "stopped": sum(status_label(history, d, asks) == "Stopped" for d in waiting),
             "recent": [_extension_item(history, d, asks) for d in recent[:5]],
             "handled_today": sum(r.done_at.astimezone().date() == today for r in mine),
             "settings": app_settings.load(settings_path).model_dump()}
