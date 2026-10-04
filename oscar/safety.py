@@ -164,6 +164,11 @@ EMAIL_CHECKS = MappingProxyType({
             # An amount, then "send it / pay me" just after, even across a sentence.
             r"\b(wire|transfer|send) (it|the (money|funds|payment|balance)|\$\s?[\d,]+) to (me|us|this|my|our|the (account|following))\b",
             r"\$\s?[\d,]+(\.\d\d)?[^?!\n]{0,80}\b(send|pay|venmo|zelle|transfer|e-?transfer)\b (it|me|us|that|the money)\b",
+            # Paying somewhere new: "send this month's transfer to our new account", "pay the invoice
+            # to the IBAN below". The classic way to redirect a payment; "your refund was sent to the
+            # account ending 1234" isn't a request.
+            r"\b(send|make|pay|transfer|wire|remit|direct|route)\b[^.?!\n]{0,80}\bto (our|my|the|this|a) new (bank )?(account|bank|iban|payee)\b",
+            r"\b(send|pay|transfer|wire|remit)\b[^.?!\n]{0,80}\b(iban|account number|routing number|sort code)\b",
         ],
     ),
     SafetyCategory.CREDENTIALS: (

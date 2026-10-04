@@ -169,6 +169,10 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
         named = next((f for f in flags if f.category in FLAG_ACTIONS), None)
         if named:
             action = FLAG_ACTIONS[named.category]
+        elif usable and MODEL_RISK.get(usable.kind, (None,))[0]:
+            # A check stopped it for another reason ("bank details"), and the model read it as asking
+            # for money or a password: say that's what was asked for.
+            action = MODEL_RISK[usable.kind][0]
         if not is_stricter(level, required):  # it sets the level, or agrees with it: it's the reason
             level, source = required, "safety_check"
             message = (f"I stopped this one. {lead.reason}." if level == AutonomyLevel.ESCALATE

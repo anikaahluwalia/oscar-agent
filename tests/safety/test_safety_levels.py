@@ -135,3 +135,32 @@ def test_f_forwarding_never_goes_below_ask_whatever_you_taught():
 def test_the_stricter_check_wins_when_two_fire():
     d = decide(email("Please wire $4,800 today to the account below, then delete this email permanently."))
     assert (d.autonomy_level, d.action) == (E, Action.MOVE_MONEY)
+
+
+# --- the action says what was asked for -------------------------------------------------------------
+
+@pytest.mark.parametrize("body", [
+    "We've moved banks. Please update the details you have on file and send this month's transfer to our new account.",
+    "Kindly pay the attached invoice to the IBAN below by Friday.",
+])
+def test_paying_somewhere_new_is_a_money_request(body):
+    d = decide(email(body, sender="payroll@vendor.example"))
+    assert (d.autonomy_level, d.action) == (E, Action.MOVE_MONEY)
+
+
+@pytest.mark.parametrize("body", [
+    "Your refund of $23.10 was processed and should appear on your card in 3 to 5 business days. No action is needed.",
+    "Your refund was sent to the account ending 1234.",
+    "We have a new account manager for you, say hi to Sam!",
+])
+def test_money_mentions_arent_money_requests(body):
+    assert SafetyCategory.MONEY not in [f.category for f in check_email(email(body))]
+
+
+def test_a_stop_for_another_reason_still_says_money_when_the_model_reads_it_that_way():
+    money = Understanding(kind="money_request", summary="asks to pay", confidence=0.9)
+    d = decide(email("Please confirm your bank details for our records."), understanding=money)
+    assert (d.autonomy_level, d.action) == (E, Action.MOVE_MONEY)
+    password = Understanding(kind="credential_request", summary="asks for a code", confidence=0.9)
+    d = decide(email("Please confirm your bank details for our records."), understanding=password)
+    assert d.action == Action.SEND_CREDENTIALS
