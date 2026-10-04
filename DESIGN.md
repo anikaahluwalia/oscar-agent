@@ -146,6 +146,13 @@ On the larger held-out set (`evals/results/REPORT.md` and `REPORT-model-fill.md`
 after learning goes from 54.1% with the rules alone to 78.2% with the model, with 0 critical safety
 misses either way.
 
+To test a fix on my real emails, I run `python -m oscar replay`. It reads again every email I've
+answered in Review or in a safety review, lets today's Oscar decide on it, and grades that against
+my answer next to his first call on the same emails. It also says how many wrong stops are fixed,
+and lists any real risk he no longer stops. It only reads Gmail and adds nothing to what he
+learned or what the app shows, and an email never learns from my own answer about it. The
+synthetic evals above stay the benchmark; this just shows whether a fix helped on my inbox.
+
 ## Known limits
 
 - The scenarios are small and written by hand. They show the floor holds and learning works on

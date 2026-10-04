@@ -7,6 +7,7 @@
     python -m oscar learned                         show what Oscar has learned
     python -m oscar reviews                         real inbox: how Oscar did, and where you disagreed
     python -m oscar regression <decision_id>        real inbox: draft a scrubbed regression case from a review
+    python -m oscar replay [--limit N] [--rules-only]  real inbox: today's Oscar on the emails you answered
 """
 
 import argparse
@@ -112,6 +113,115 @@ def run_reviews(history: History) -> None:
         print()
 
 
+def run_replay(limit: int | None, rules_only: bool) -> int:
+    """Today's Oscar on the real emails you've answered, graded against your answers. Gmail is only
+    read, with a read-only client, the way the app connects to it."""
+    import httpx
+
+    from oscar import app_settings
+    from oscar.gmail import GmailClient, GmailError, TokenStore
+    from oscar.inbox import reader_for
+    from oscar.replay import replay, targets
+    from oscar.understand import api_key, reads_real_email
+
+    tokens = TokenStore(default_data_dir() / "gmail" / "token.json")
+    if not tokens.load():
+        print("Gmail isn't connected. Connect it in the app first, then run this again.")
+        return 1
+    history = History(real_inbox_dir())
+    if not targets(history):
+        print("No answered real emails yet. Answer some in Review first, then run this again.")
+        return 0
+    reader = None
+    if rules_only:
+        print("Using the rules only, as asked.")
+    elif reads_real_email() == "off":
+        print("The model is off for real emails (OSCAR_MODEL_READS), so this uses the rules only.")
+    elif not api_key():
+        print("There's no model key, so this uses the rules only.")
+    else:
+        reader = reader_for(history)
+    names = app_settings.load(default_data_dir() / "app_settings.json").labels
+    gmail = GmailClient(tokens, httpx.Client(timeout=20), names=names, read_only=True)
+    try:
+        result = replay(history, gmail, reader, limit=limit)
+    except GmailError as e:
+        print(f"Gmail stopped the replay partway ({e}). Try again in a few minutes.")
+        return 1
+    except httpx.HTTPError as e:
+        print(f"Lost the connection to Gmail partway ({type(e).__name__}). Try again.")
+        return 1
+    print_replay(history, result)
+    return 0
+
+
+def print_replay(history: History, result: dict) -> None:
+    def about(row: dict) -> str:
+        d = history.get_decision(row["decision_id"])
+        return f'"{d.subject}" from {d.sender}' if d else row["email_id"]
+
+    def call(c: dict) -> str:
+        grade = c.get("grade")
+        return f"{c['action']} → {c['level']}" + (f" ({'right' if grade == 'none' else grade.replace('_', ' ')})" if grade else "")
+
+    print()
+    model = "rules only" if result["model"] == "off" else f"model reads {result['model']}"
+    print(f"Version {result['version']}, {model}. "
+          f"{result['read']} of {result['emails']} emails read again, {result['skipped']} skipped (gone from Gmail).")
+    risks, wrong = result["real_risks"], result["wrong_stops"]
+    by_id = {r["email_id"]: r for r in [*result["per_email"], *result["not_read"]]}
+    if risks["not_stopped"]:
+        print()
+        print(f"REAL RISKS NO LONGER STOPPED: {len(risks['not_stopped'])}. Look at these first.")
+        for email_id in risks["not_stopped"]:
+            print(f"  {about(by_id[email_id])}")
+            print(f"     now: {call(by_id[email_id]['now'])}")
+    if risks["not_read"]:
+        print()
+        print(f"Real risks that couldn't be checked: {len(risks['not_read'])}. Gmail no longer has them.")
+        for email_id in risks["not_read"]:
+            print(f"  {about(by_id[email_id])}")
+    before, now_ = result["before"], result["now"]
+    if now_["n"]:
+        print()
+        print(f"On the same {now_['n']} emails you answered in Review:")
+        print(f"  {'':34}{'before':>8}{'now':>8}")
+        rows = [("right", "passed"), ("too cautious", "too_cautious"), ("too permissive", "too_permissive"),
+                ("wrong action", "wrong_action"), ("acted when you'd have stopped it", "acted_when_you_would_stop")]
+        for name, key in rows:
+            pick = lambda g: g[key] if key in g else g["errors"][key]  # noqa: E731
+            print(f"  {name:34}{pick(before):>8}{pick(now_):>8}")
+    print()
+    if wrong["of"]:
+        print(f"Wrong stops: {wrong['still_stopped']} of {wrong['of']} you marked misclassified are still stopped.")
+    if wrong["not_read"]:
+        print(f"  {len(wrong['not_read'])} more couldn't be read from Gmail, so they weren't checked.")
+    if risks["of"]:
+        print(f"Real risks: {risks['still_stopped']} of {risks['of']} you marked as real risks are still stopped.")
+    if risks["not_read"]:
+        print(f"  {len(risks['not_read'])} more couldn't be read from Gmail, so they weren't checked.")
+    for moved, title in (("better", "Better now"), ("worse", "Worse now"), ("changed", "Different mistake now")):
+        changed = [r for r in result["per_email"] if r["moved"] == moved]
+        if changed:
+            print()
+            print(f"{title} ({len(changed)}):")
+            for r in changed:
+                print(f"  {about(r)}")
+                print(f"     before: {call(r['before'])}   now: {call(r['now'])}")
+    print()
+    if result.get("saved_to"):
+        print(f"Saved to {result['saved_to']}")
+    else:
+        print("Nothing could be read again, so nothing was saved.")
+
+
+def at_least_one(text: str) -> int:
+    n = int(text)
+    if n < 1:
+        raise argparse.ArgumentTypeError("needs to be 1 or more")
+    return n
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m oscar")
     commands = parser.add_subparsers(dest="command")
@@ -126,6 +236,9 @@ def main(argv: list[str]) -> int:
 
     commands.add_parser("learned", help="show what Oscar has learned")
     commands.add_parser("reviews", help="real inbox: review summary and disagreements")
+    replay_cmd = commands.add_parser("replay", help="real inbox: decide again on the emails you answered, and compare")
+    replay_cmd.add_argument("--limit", type=at_least_one, help="only the newest N answered emails")
+    replay_cmd.add_argument("--rules-only", action="store_true", help="leave the model out")
     regression_cmd = commands.add_parser("regression", help="real inbox: draft a regression case from a review")
     regression_cmd.add_argument("decision_id")
 
@@ -135,6 +248,8 @@ def main(argv: list[str]) -> int:
     if args.command == "reviews":
         run_reviews(History(real_inbox_dir()))
         return 0
+    if args.command == "replay":
+        return run_replay(args.limit, args.rules_only)
     if args.command == "regression":
         from oscar.regression import write_draft
         try:

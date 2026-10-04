@@ -378,8 +378,13 @@ def lessons(history: History, skip_email: str | None = None) -> list[FeedbackEve
 def teaching(history: History, skip_email: str | None = None) -> list[FeedbackEvent]:
     """Everything Oscar learns from in this history: your feedback, and what your reviews teach.
     After "clear what I've learned" (the learning_since setting), only what came after it. Nothing
-    is deleted, so it can be brought back."""
-    events = sorted([*history.feedback, *lessons(history, skip_email)], key=lambda e: e.created_at)
+    is deleted, so it can be brought back.
+
+    skip_email leaves out everything you said about one email, buttons and reviews both, for
+    re-reading it. An Approve or Undo on it is as much the answer as a review is."""
+    own = {d.id for d in history.decisions.values() if d.email_id == skip_email} if skip_email else set()
+    feedback = [e for e in history.feedback if e.decision_id not in own]
+    events = sorted([*feedback, *lessons(history, skip_email)], key=lambda e: e.created_at)
     since = history.settings.get("learning_since")
     if since:
         cutoff = datetime.fromisoformat(since)

@@ -22,9 +22,11 @@ def no_background_rethink(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def no_waiting(monkeypatch):
-    """The six-month look back pauses between Gmail reads (oscar/cold_start.py); tests don't wait."""
-    from oscar import cold_start
+    """The six-month look back and the replay pause between Gmail reads (oscar/cold_start.py,
+    oscar/replay.py); tests don't wait."""
+    from oscar import cold_start, replay
     monkeypatch.setattr(cold_start, "_sleep", lambda seconds: None)
+    monkeypatch.setattr(replay, "_sleep", lambda seconds: None)
 
 
 @pytest.fixture(autouse=True)

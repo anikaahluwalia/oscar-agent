@@ -191,7 +191,7 @@ def run(history: History, gmail: GmailClient, should_stop: Callable[[], bool] = 
         data.update(candidates=candidates(data["stats"]), habits=HABITS, phase="ready", state="ready")
         store.save(data)
     except GmailError as e:
-        why = ("Gmail asked me to slow down" if _rate_limited(e)
+        why = ("Gmail asked me to slow down" if rate_limited(e)
                else "Gmail stopped letting me read your email" if e.status in (401, 403) else "Gmail stopped me")
         data.update(state="failed", error=f"{why} partway ({e}). Try again in a few minutes and I'll carry on.")
         store.save(data)
@@ -226,21 +226,32 @@ def _list(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[
         store.save(data)
 
 
-def _rate_limited(e: GmailError) -> bool:
+def rate_limited(e: GmailError) -> bool:
     return e.status == 429 or (e.status == 403 and e.reason in RATE_LIMITED)
 
 
-def _read(reader: GmailClient, message_id: str) -> dict:
-    """One email's metadata. When Gmail says to slow down, wait and try again (1, 2, 4, 8, 16
-    seconds) before giving up."""
+def skippable(e: GmailError) -> bool:
+    """Gmail won't show this one email (deleted since, or refused), so it's skipped rather than
+    stopping. Anything else, like a revoked token or an outage, stops the whole read."""
+    return not rate_limited(e) and e.status in (400, 403, 404)
+
+
+def patiently(read: Callable[[], dict]) -> dict:
+    """One Gmail read. When Gmail says to slow down, wait and try again (1, 2, 4, 8, 16 seconds)
+    before giving up. The replay (oscar/replay.py) reads the same way."""
     for wait in (*BACKOFF, None):
         try:
-            return reader.metadata(message_id)
+            return read()
         except GmailError as e:
-            if not _rate_limited(e) or wait is None:
+            if not rate_limited(e) or wait is None:
                 raise
             _sleep(wait)
     raise AssertionError("unreachable")
+
+
+def _read(reader: GmailClient, message_id: str) -> dict:
+    """One email's metadata."""
+    return patiently(lambda: reader.metadata(message_id))
 
 
 def _understand(reader: GmailClient, store: Store, data: dict, should_stop: Callable[[], bool],
@@ -262,7 +273,7 @@ def _understand(reader: GmailClient, store: Store, data: dict, should_stop: Call
                 refused = 0
                 _sleep(PACE)
         except GmailError as e:
-            if _rate_limited(e) or e.status not in (400, 403, 404):
+            if not skippable(e):
                 raise
             refused = refused + 1 if e.status == 403 else 0
             if refused >= MAX_REFUSED_IN_A_ROW:
