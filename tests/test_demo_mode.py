@@ -175,7 +175,7 @@ GUARDED = [
     ("get", "/extension/status", None), ("get", "/extension/thread/abcdef12", None), ("get", "/extension/threads?ids=abcdef12", None),
     ("post", "/gmail/acting", {"on": True}), ("get", "/auth/google/start", None),
     ("get", "/auth/google/callback?state=s&code=c", None), ("post", "/gmail/sync", {}), ("post", "/gmail/recheck", {}),
-    ("post", "/gmail/disconnect", {}), ("get", "/emails/abc/content", None),
+    ("post", "/gmail/disconnect", {}),
     ("post", "/reviews", {"decision_id": "x", "label": "CORRECT"}), ("get", "/reviews/summary", None),
     # Not real, but a demo only takes in its own emails, so one browser can't fill up the API's memory.
     ("post", "/decide", {"id": "x", "sender": "a@b.example", "subject": "s", "body": "b"}), ("post", "/demo/inbox", {}),
@@ -197,7 +197,9 @@ def test_nothing_real_can_be_reached_from_the_demo(setup, method, path, body):
 def test_every_route_that_touches_gmail_or_settings_is_guarded():
     """Found from the routes themselves, so a new endpoint can't be missed. /feedback and /chat use the
     token only for real-inbox decisions (none in a demo), /email-image only fetches an email's image,
-    and reading the app settings is fine."""
+    and reading the app settings is fine. Opening an email looks up Gmail only outside the demo, and
+    only when it's needed, so it isn't found here: test_opening_a_demo_email_never_touches_anything_real
+    checks it instead."""
     allowed = {("POST", "/feedback"), ("POST", "/chat"), ("GET", "/email-image"), ("GET", "/app-settings")}
 
     def calls(dependant) -> set:
@@ -214,6 +216,43 @@ def test_every_route_that_touches_gmail_or_settings_is_guarded():
         for method in route.methods:
             if used & real and (method, route.path) not in allowed:
                 assert not_in_demo in used, f"{method} {route.path} can reach real data from the demo"
+
+
+def test_opening_a_demo_email_shows_all_of_it(setup):
+    client = in_demo()
+    dinner = by_email(client.post("/demo/start").json())["demo_friend_dinner"]
+    whole = next(e.email for e in START if e.email.id == "demo_friend_dinner")
+    assert len(whole.body) > len(dinner["snippet"])  # more than the start Oscar keeps
+    r = client.get(f"/emails/{dinner['id']}/content")
+    assert r.status_code == 200
+    assert r.json() == {"html": None, "text": whole.body}  # shaped like a real one, line breaks and all
+
+
+def test_a_demo_only_opens_its_own_emails(setup):
+    one, two = in_demo("browser-one"), in_demo("browser-two")
+    dinner = by_email(one.post("/demo/start").json())["demo_friend_dinner"]
+    two.post("/demo/start")
+    assert two.get(f"/emails/{dinner['id']}/content").status_code == 404
+    assert one.get("/emails/nope/content").status_code == 404
+
+
+def test_opening_a_demo_email_never_touches_anything_real(setup, tmp_path):
+    client, tokens, real = setup
+    connect(tokens)
+    real.add_decision(decide(Email(id="r1", sender="boss@work.example", subject="Real", body="fyi")))
+    real_id = next(iter(real.decisions))
+    demo_client = in_demo()
+    dinner = by_email(demo_client.post("/demo/start").json())["demo_friend_dinner"]
+    before = {p.name: p.read_text() for p in tmp_path.rglob("*") if p.is_file()}
+
+    def untouchable():
+        raise AssertionError("the demo looked up something real")
+
+    for dependency in (get_tokens, get_real_history, get_http, get_app_settings_path):
+        app.dependency_overrides[dependency] = untouchable
+    assert demo_client.get(f"/emails/{dinner['id']}/content").status_code == 200
+    assert demo_client.get(f"/emails/{real_id}/content").status_code == 404  # a real email is never found from the demo
+    assert {p.name: p.read_text() for p in tmp_path.rglob("*") if p.is_file()} == before
 
 
 def test_feedback_in_the_demo_never_opens_the_token(setup):

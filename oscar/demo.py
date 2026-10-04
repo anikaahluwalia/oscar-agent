@@ -126,6 +126,17 @@ def check(history: History) -> int:
     return len(new)
 
 
+def content(history: History, decision_id: str) -> dict | None:
+    """The whole demo email behind one of this demo's decisions, for opening it in the app. The same
+    shape as a real one from Gmail (gmail.email_content), only text since the demo emails have no
+    HTML. None when it isn't one of this demo's emails."""
+    decision = history.get_decision(decision_id)
+    if decision is None:
+        return None
+    email = next((e.email for e in emails() if e.email.id == decision.email_id), None)
+    return {"html": None, "text": email.body} if email else None
+
+
 def read_all() -> int:
     """Read every demo email with the model, and keep only the readings for the emails as they are now."""
     if not api_key():

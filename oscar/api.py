@@ -925,15 +925,18 @@ def gmail_disconnect(tokens: gmail.TokenStore = Depends(get_tokens), http: httpx
     return {"ok": True}
 
 
-@app.get("/emails/{decision_id}/content", dependencies=NOT_IN_DEMO)
-def email_content(
-    decision_id: str,
-    tokens: gmail.TokenStore = Depends(get_tokens),
-    http: httpx.Client = Depends(get_http),
-    real: History = Depends(get_real_history),
-) -> dict:
-    """The whole real email, fetched from Gmail when you open it so you can see what it is.
-    Read-only, and nothing is saved: Oscar's history keeps only the first 160 characters."""
+@app.get("/emails/{decision_id}/content")
+def email_content(decision_id: str, request: Request, session: str | None = Depends(demo_session)) -> dict:
+    """The whole email, when you open it so you can see what it is. Read-only, and nothing is saved:
+    Oscar's history keeps only the first 160 characters. A real one is fetched from Gmail. In demo
+    mode it's the made-up email from emails/demo/, and nothing real is even looked up."""
+    if session:
+        found = demo.content(demo.SESSIONS.get(session), decision_id)
+        if found is None:
+            raise HTTPException(404, "That isn't one of this demo's emails.")
+        return found
+    tokens, http = _when_needed(request, get_tokens), _when_needed(request, get_http)
+    real = _when_needed(request, get_real_history)
     decision = real.get_decision(decision_id)
     if decision is None or decision.source != "gmail" or not decision.gmail:
         raise HTTPException(404, "That isn't one of your real emails.")
