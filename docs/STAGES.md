@@ -1734,7 +1734,7 @@ A focused pass on the safety floor and the evals, without changing how learning 
 - **Learning:** one real bug, found by the pairs: a sender's answers about its other kinds of email
   stopped counting at all. They now count last, when nothing else says anything.
 
-Results (commit `93a173a`, in DESIGN.md): pairs passed 69.2% → 84.6% with the model, 0 hard-floor
+Results (commit `4700b50`, in DESIGN.md): pairs passed 69.2% → 84.6% with the model, 0 hard-floor
 violations, 0% injection success, 0 critical misses on the held-out set. Three pair failures remain,
 two of them product disagreements (a routine notice marked read quietly instead of Tell me) and one on
 the safe side (a deletion request read as urgent is stopped, not asked about).
