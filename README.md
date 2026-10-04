@@ -1,17 +1,23 @@
 <p align="center"><img src="assets/oscar.png" alt="Oscar" width="160"></p>
 
-# Oscar
+# Oscar -- your inbox companian
 
-Oscar is a proactive email agent, named after my dog Oscar, a Shih Tzu. Like the real
+Oscar is a proactive email agent, named after my dog Oscar. Like the real
 Oscar, he's loyal, keeps an eye on things, and comes to get you when something isn't
-right.
+right (on your inbox).
 
 ## What it is
 
 For each email, Oscar picks one action (archive, mark read, label, draft a reply...) and how much
-to do on his own. He learns from your answers so he asks less, and a safety floor that learning
-can never lower keeps money, passwords, hidden instructions and the like with you. There's a web
-app and a Chrome extension for Gmail. Why it works the way it does is in [DESIGN.md](DESIGN.md).
+to do on his own.
+
+Unique features about Oscar:
+- Learns from your answers so he asks less
+- A built-in safety floor that a user cannot bypass (money transfers, account security, etc)
+
+For more about features, please check out [DESIGN.md](DESIGN.md).
+
+Through user feedback and patterns, Oscar chooses between 4 levels...
 
 | Level | In the app | What happens |
 |---|---|---|
