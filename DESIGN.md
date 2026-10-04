@@ -2,7 +2,7 @@
 
 Oscar is an email agent. For each email he picks one action and how much to do on his own, learns
 from your answers to ask less, and never lets that learning weaken safety. **Try Oscar** runs the
-same decision code on made-up emails in a pretend Gmail, and needs no API key. The build log is in [docs/STAGES.md](docs/STAGES.md), the full results in
+same decision code on made-up emails in a pretend Gmail, and needs no API key. The full results are in
 [docs/EVALUATION.md](docs/EVALUATION.md), and all transcripts in [examples/TRANSCRIPTS.md](examples/TRANSCRIPTS.md).
 
 ## Four levels

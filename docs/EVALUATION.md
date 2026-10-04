@@ -1,7 +1,6 @@
 # Oscar — Evaluation
 
-The full evaluation behind the short summary in [DESIGN.md](../DESIGN.md). How the results changed
-from stage to stage is in [STAGES.md](STAGES.md).
+The full evaluation behind the short summary in [DESIGN.md](../DESIGN.md).
 
 ## Rerunning it
 
