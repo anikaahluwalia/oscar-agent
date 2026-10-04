@@ -199,6 +199,9 @@ def print_replay(history: History, result: dict) -> None:
         for name, key in rows:
             pick = lambda g: g[key] if key in g else g["errors"][key]  # noqa: E731
             print(f"  {name:34}{pick(before):>8}{pick(now_):>8}")
+        if result.get("said_later"):
+            print(f"  ({result['said_later']} of now's mistakes are what you told him later for that sender, so your"
+                  " older answer is out of date. They're marked below.)")
     print()
     if wrong["of"] or wrong["not_read"]:
         print(f"Wrong stops: {wrong['still_stopped']} of {wrong['of']} you marked misclassified are still stopped.")
@@ -208,14 +211,16 @@ def print_replay(history: History, result: dict) -> None:
         print(f"Real risks: {risks['still_stopped']} of {risks['of']} you marked as real risks are still stopped.")
     if risks["not_read"]:
         print(f"  {len(risks['not_read'])} more couldn't be read from Gmail, so they weren't checked.")
-    for moved, title in (("better", "Better now"), ("worse", "Worse now"), ("changed", "Different mistake now")):
-        changed = [r for r in result["per_email"] if r["moved"] == moved]
+    for moved, title in (("better", "Better now"), ("worse", "Worse now"), ("changed", "Different mistake now"),
+                         (None, "Same mistake as before, but it's what you told him later")):
+        changed = [r for r in result["per_email"] if r["moved"] == moved and (moved or r.get("said_later"))]
         if changed:
             print()
             print(f"{title} ({len(changed)}):")
             for r in changed:
                 print(f"  {about(r)}")
-                print(f"     before: {call(r['before'])}   now: {call(r['now'])}")
+                print(f"     before: {call(r['before'])}   now: {call(r['now'])}"
+                      + ("   (you told him this later)" if r.get("said_later") else ""))
     print()
     if result.get("saved_to"):
         print(f"Saved to {result['saved_to']}")

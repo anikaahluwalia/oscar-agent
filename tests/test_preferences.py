@@ -124,6 +124,66 @@ def test_broad_habits_are_only_for_easy_to_undo_actions():
     assert level(Preferences.from_feedback(events), action=Action.UNSUBSCRIBE, sender="c@three.example") is None
 
 
+
+# A sender's own answers come before what's true across senders (found replaying the real inbox:
+# "label it" for one job site lost to everyone else's job alerts being archived).
+JOBS = "alerts@jobsite.example"
+
+
+def labelled_by_you(n, sender=JOBS):
+    """Review answers from when he couldn't tell what the email was: label it, quietly."""
+    return [FeedbackEvent(decision_id=f"r{i}", kind=FeedbackKind.REVIEW, action=Action.APPLY_LABEL,
+                          autonomy_level=ASK, sender=sender, email_type="unknown", desired_level=S,
+                          action_feedback="CORRECT") for i in range(n)]
+
+
+def archived_everywhere():
+    return [e for s in ("a@one.example", "b@two.example", "d@four.example")
+            for e in quietly(8, sender=s, email_type="job_alert")]
+
+
+def test_what_you_showed_for_a_sender_beats_what_emails_like_it_get():
+    prefs = Preferences.from_feedback(archived_everywhere() + labelled_by_you(2))
+    assert prefs.habit(JOBS, "job_alert") == Action.APPLY_LABEL
+
+
+def test_a_sender_you_never_answered_for_gets_what_emails_like_it_get():
+    prefs = Preferences.from_feedback(archived_everywhere() + labelled_by_you(2))
+    assert prefs.habit("new@otherjobs.example", "job_alert") == Action.ARCHIVE
+
+
+def test_a_newer_rule_for_the_sender_still_wins():
+    told = [event(FeedbackKind.JUST_HANDLE_IT, sender=JOBS, email_type="job_alert", desired=S)]
+    prefs = Preferences.from_feedback(archived_everywhere() + labelled_by_you(2) + told)
+    assert prefs.habit(JOBS, "job_alert") == Action.ARCHIVE
+
+
+def test_answers_about_a_senders_other_emails_dont_count():
+    # Two labels on a shop's receipts say nothing about its newsletters.
+    archived = [e for s in ("a@one.example", "b@two.example", "d@four.example") for e in quietly(8, sender=s)]
+    receipts = approvals(2, action=Action.APPLY_LABEL, sender="news@shop.example", email_type="receipt")
+    assert Preferences.from_feedback(archived + receipts).habit("news@shop.example", "newsletter") == Action.ARCHIVE
+
+
+def test_answers_about_this_kind_beat_the_senders_other_answers():
+    jobs = approvals(2, action=Action.APPLY_LABEL, sender=JOBS, email_type="job_alert")
+    social = approvals(3, action=Action.ARCHIVE, sender=JOBS, email_type="social_notification")
+    assert Preferences.from_feedback(jobs + social).habit(JOBS, "job_alert") == Action.APPLY_LABEL
+
+
+def test_the_newest_rule_wins_whether_its_for_the_sender_or_every_email_like_it():
+    labels = approvals(2, action=Action.APPLY_LABEL, sender=JOBS, email_type="job_alert")
+    every = FeedbackEvent(decision_id="k", kind=FeedbackKind.ALWAYS_DO_THIS, action=Action.ARCHIVE, autonomy_level=ASK,
+                          sender=JOBS, email_type="job_alert", desired_level=S, scope="kind")
+    assert Preferences.from_feedback(labels + [every]).habit(JOBS, "job_alert") == Action.ARCHIVE
+    just_this_one = event(FeedbackKind.JUST_HANDLE_IT, action=Action.APPLY_LABEL, sender=JOBS, email_type="job_alert", desired=S)
+    assert Preferences.from_feedback(labels + [every, just_this_one]).habit(JOBS, "job_alert") == Action.APPLY_LABEL
+
+
+def test_an_action_you_turned_down_for_the_sender_is_never_the_habit():
+    no = event(FeedbackKind.REJECT, sender=JOBS, email_type="job_alert")
+    assert Preferences.from_feedback(archived_everywhere() + [no]).habit(JOBS, "job_alert") is None
+
 # --- what's ignored --------------------------------------------------------------
 
 def test_blocked_feedback_is_ignored():

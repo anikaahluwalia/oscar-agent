@@ -259,3 +259,60 @@ def test_the_command_wants_a_limit_of_one_or_more():
     for bad in ("0", "-3"):
         with pytest.raises(SystemExit):
             main(["replay", "--limit", bad])
+
+
+def test_a_mistake_you_later_told_him_to_make_is_marked(tmp_path, capsys):
+    # You said "just mark it read" on one email, then "just handle it" (archive) on a later one from
+    # the same shop. Archiving the first now goes against its old answer, but it's your newer word.
+    first, later = (message(f"p{n}", "deals@shop.example", "Sale this weekend", PROMO) for n in (1, 2))
+    history, fake, gmail = setup(tmp_path, [first, later])
+    d = first_read(history, first)
+    record_review(history, answer(d, S, Action.MARK_READ, why="preference"))
+    record_feedback(history, first_read(history, later, acting=True).id, FeedbackKind.JUST_HANDLE_IT)
+
+    result = replay(history, gmail, say=quiet)
+    row = next(r for r in result["per_email"] if r["email_id"] == "p1")
+    assert row["now"]["action"] == Action.ARCHIVE.value and row["now"]["grade"] == "wrong_action"
+    assert row["said_later"] and result["said_later"] == 1
+    print_replay(history, result)
+    assert "you told him this later" in capsys.readouterr().out
+
+
+def test_a_mistake_you_never_okayed_isnt_marked(tmp_path):
+    history, fake, gmail = setup(tmp_path, [promo(1)])
+    d = first_read(history, promo(1))
+    record_review(history, answer(d, S, Action.MARK_READ, why="preference"))
+    result = replay(history, gmail, say=quiet)
+    assert result["said_later"] == 0
+
+
+def shop(n):
+    return message(f"p{n}", "deals@shop.example", "Sale this weekend", PROMO)
+
+
+def test_an_okay_only_says_the_action_not_how_much_to_ask(tmp_path):
+    # "Archive it quietly" on p1, then a plain Approve on p2: he still asks, and the Approve never
+    # said he shouldn't, so that mistake isn't put down to you.
+    history, fake, gmail = setup(tmp_path, [shop(1), shop(2)])
+    record_review(history, answer(first_read(history, shop(1)), S, Action.ARCHIVE, why="preference"))
+    record_feedback(history, first_read(history, shop(2), acting=True).id, FeedbackKind.APPROVE)
+    row = replay(history, gmail, say=quiet)["per_email"][0]
+    assert row["now"]["grade"] == "too_cautious" and not row["said_later"]
+
+
+def test_a_later_no_takes_the_okay_back(tmp_path):
+    history, fake, gmail = setup(tmp_path, [shop(1), shop(2), shop(3)])
+    record_review(history, answer(first_read(history, shop(1)), S, Action.MARK_READ, why="preference"))
+    record_feedback(history, first_read(history, shop(2), acting=True).id, FeedbackKind.JUST_HANDLE_IT)
+    record_feedback(history, first_read(history, shop(3), acting=True).id, FeedbackKind.REJECT)
+    row = next(r for r in replay(history, gmail, say=quiet)["per_email"] if r["email_id"] == "p1")
+    assert row["now"]["grade"] != "none" and not row.get("said_later")
+
+
+def test_what_you_said_before_answering_isnt_later(tmp_path):
+    history, fake, gmail = setup(tmp_path, [shop(1), shop(2)])
+    d = first_read(history, shop(1))
+    record_feedback(history, first_read(history, shop(2), acting=True).id, FeedbackKind.JUST_HANDLE_IT)
+    record_review(history, answer(d, S, Action.MARK_READ, why="preference"))
+    row = next(r for r in replay(history, gmail, say=quiet)["per_email"] if r["email_id"] == "p1")
+    assert row["now"]["grade"] == "wrong_action" and not row["said_later"]

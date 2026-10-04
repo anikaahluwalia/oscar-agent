@@ -18,6 +18,7 @@ from collections.abc import Callable
 from oscar.agent import decide
 from oscar.classification import type_hints
 from oscar.cold_start import MAX_REFUSED_IN_A_ROW, patiently, skippable
+from oscar.feedback import CHOICES, FeedbackEvent, FeedbackKind
 from oscar.gmail import GmailClient, GmailError, parse_message
 from oscar.history import History
 from oscar.models import Action, AutonomyLevel, Decision, now
@@ -67,6 +68,7 @@ def replay(history: History, gmail: GmailClient, reader: Reader | None = None, l
     version = policy_version()
     say(f"Reading {len(todo)} emails from Gmail...")
     rows, before_rows, now_rows, gone, refused = [], [], [], [], 0
+    taught = teaching(history)
     for i, (before, found, verdict) in enumerate(todo, 1):
         if i % PROGRESS_EVERY == 0:
             say(f"  {i} of {len(todo)}")
@@ -97,6 +99,8 @@ def replay(history: History, gmail: GmailClient, reader: Reader | None = None, l
             row["before"]["grade"], row["now"]["grade"] = (grade_answer(right, d.autonomy_level, d.action)[0]
                                                            for d in (before, call))
             row["moved"] = _moved(right, before, call)
+            if row["now"]["grade"] != "none":
+                row["said_later"] = _said_later(taught, history, before, review.reviewed_at, call, row["now"]["grade"])
         rows.append(row)
 
     # A wrong stop is fixed when no safety rule stops it now. A real risk is kept safe only while
@@ -121,6 +125,8 @@ def replay(history: History, gmail: GmailClient, reader: Reader | None = None, l
         "real_risks": {"of": len(risks), "still_stopped": sum(r["now"]["level"] == AutonomyLevel.ESCALATE.value for r in risks),
                        "not_stopped": [r["email_id"] for r in risks if r["now"]["level"] != AutonomyLevel.ESCALATE.value],
                        "not_read": unread("RISK_CORRECT")},
+        # Mistakes that are what you told him later for that sender: your older answer is out of date.
+        "said_later": sum(bool(r.get("said_later")) for r in rows),
         "per_email": rows,
     }
     # Saved by version, so runs can be compared. A run that read nothing isn't saved, and one
@@ -141,6 +147,31 @@ def _call(d: Decision) -> dict:
 
 def _value(action: Action | str | None) -> str | None:
     return action.value if isinstance(action, Action) else action
+
+
+SAYS_DO_IT = frozenset({FeedbackKind.APPROVE, FeedbackKind.JUST_HANDLE_IT, FeedbackKind.HANDLE_AND_TELL_ME,
+                        FeedbackKind.ALWAYS_DO_THIS})
+TAKES_IT_BACK = frozenset({FeedbackKind.REJECT, FeedbackKind.UNDO, FeedbackKind.ALWAYS_ASK_ME, FeedbackKind.KEEP_ASKING,
+                           FeedbackKind.FORGET})
+
+
+def _said_later(taught: list[FeedbackEvent], history: History, before: Decision, answered_at, call: Decision,
+                grade: str) -> bool:
+    """Whether his call follows what you said after answering this email, about the same sender on
+    another email. Only your newest word about that action counts. A wrong action needs an okay
+    for that action; asking more or less than you said needs you to have set that level (an Approve
+    or a Yes only says the action was right)."""
+    own = {d.id for d in history.decisions.values() if d.email_id == before.email_id}
+    later = [e for e in taught if e.sender == before.sender and e.created_at > answered_at
+             and e.decision_id not in own and e.action == call.action]
+    if not later:
+        return False
+    newest = max(later, key=lambda e: e.created_at)
+    if newest.kind in TAKES_IT_BACK or newest.action_feedback == "INCORRECT":
+        return False
+    if grade == "wrong_action":
+        return newest.action_feedback == "CORRECT" or newest.kind in SAYS_DO_IT
+    return (newest.desired_level or CHOICES.get(newest.kind)) == call.autonomy_level
 
 
 def _moved(right: Answer, before: Decision, call: Decision) -> str | None:

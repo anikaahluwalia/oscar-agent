@@ -44,7 +44,7 @@ after it, so learning can't make a risky action or a risky email less safe.
 
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import NamedTuple
 
 from oscar.feedback import CHOICES, FeedbackEvent, FeedbackKind, Learned, action_verdict, normalize
@@ -112,6 +112,9 @@ SHARED_DOMAINS = {"gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "
 # The most autonomy an action can ever learn. Drafts stop at notify: a draft you don't
 # know about is no use to you.
 CEILINGS: dict[Action, AutonomyLevel] = {Action.DRAFT_REPLY: N}
+
+
+EARLIEST = datetime.min.replace(tzinfo=timezone.utc)  # for a rule with no date, so any dated one is newer
 
 
 def family(email_type: str | None) -> str | None:
@@ -290,7 +293,9 @@ class Preferences:
 
     @staticmethod
     def _mine(event: FeedbackEvent, kind: str | None) -> list[tuple]:
-        return [("sender", event.sender, event.action)] + ([("sender", event.sender, kind, event.action)] if kind else [])
+        # Also kept apart by kind, and (kind None) for emails he couldn't place, so habit() can tell
+        # your answers about this kind of email from your answers about the sender's other ones.
+        return [("sender", event.sender, event.action), ("sender", event.sender, kind, event.action)]
 
     def _rule(self, scope: tuple, event: FeedbackEvent) -> None:
         record = self._record(scope)
@@ -378,9 +383,14 @@ class Preferences:
             found = self._judge(record, action, level, broad=False) if record else None
             if found:
                 return found
-        if not (broad and self.policy.broad and kind and action in HABIT_ACTIONS):
+        return self._emails_like_it(action, level, sender, kind) if broad else None
+
+    def _emails_like_it(self, action: Action, level: AutonomyLevel, sender: str, kind: str | None) -> Suggestion | None:
+        """What other senders' answers say for emails like this one (the same domain, then the same
+        kind), held back by any no from this sender."""
+        if not (self.policy.broad and kind and action in HABIT_ACTIONS):
             return None
-        mine = [self.records[s] for s in specific if s in self.records]
+        mine = [r for r in (self.records.get(("sender", sender, kind, action)), self.records.get(("sender", sender, action))) if r]
         if any(r.always_ask for r in mine):
             return None  # what you said about this sender beats what's true across senders
         domain = domain_of(sender)
@@ -405,23 +415,52 @@ class Preferences:
     def habit(self, sender: str, email_type: str | None = None) -> Action | None:
         """The easy-to-undo action you've clearly shown you want for this sender's email (or, with a
         kind of email, for emails like it), if there is one: approved at least twice and never
-        turned down, or one you told him to handle. The one with the most behind it wins."""
+        turned down, enough answers saying he could do it on his own, or one you told him to handle.
+
+        In this order, the first with something to say wins (found replaying the real inbox, where
+        two "label it"s for one job site lost to everyone else's archived job alerts):
+        1. A rule you set, for this sender or for every email of this kind. The newest one wins.
+        2. Your answers for this sender about this kind of email.
+        3. Your answers for this sender on emails he couldn't place yet (often the same kind,
+           before he could read them).
+        4. What emails like it get, from other senders.
+        Answers about the sender's other kinds of email don't count: two labels on a shop's
+        receipts say nothing about its newsletters."""
         kind = family(email_type)
-        best: tuple[Action, float] | None = None
+        # Without a kind, everything you said about the sender is about "this kind".
+        own = [("sender", sender, kind), ("sender", sender, None)] if kind else [("sender", sender)]
+        rules, tiers = [], [{} for _ in range(len(own) + 1)]
         for action in HABIT_ACTIONS:
-            weight = 0.0
-            for scope in ([("sender", sender, kind, action)] if kind else []) + [("sender", sender, action)]:
-                record = self.records.get(scope)
-                if record is None or record.always_ask or record.declined:
-                    continue
-                if record.told or record.approved >= 2:
-                    weight = max(weight, record.approved + (10 if record.told else 0))
-            found = self.suggest(action, A, sender, email_type)
+            records = [self.records.get((*scope, action)) for scope in own]
+            if any(r and (r.always_ask or r.declined) for r in records):
+                continue  # you said no to this for the sender
+            kind_rule = self.records.get(("kind", kind, action)) if kind else None
+            for record in [*records, kind_rule]:
+                if record and record.told and not record.always_ask:
+                    rules.append((record.updated_at or EARLIEST, action))
+            for tier, record in zip(tiers, records):
+                weight = self._shown(record, action)
+                if weight:
+                    tier[action] = weight
+            found = self._emails_like_it(action, A, sender, kind)
             if found and found.level in (S, N):
-                weight = max(weight, found.evidence + (10 if found.confidence == 1.0 else 0))
-            if weight and (best is None or weight > best[1]):
-                best = (action, weight)
-        return best[0] if best else None
+                tiers[-1][action] = found.evidence + (10 if found.confidence == 1.0 else 0)
+        if rules:
+            return max(rules, key=lambda rule: rule[0])[1]
+        for tier in tiers:
+            if tier:
+                return max(tier, key=tier.get)
+        return None
+
+    def _shown(self, record: Record | None, action: Action) -> float:
+        """How clearly one record of yours says to do this action: approved twice, or enough answers
+        that he could do it on his own. 0 if it doesn't."""
+        if record is None:
+            return 0.0
+        found = self._sender_evidence(record, action, A)
+        if found and found.level in (S, N):
+            return max(found.evidence, record.approved)
+        return record.approved if record.approved >= 2 else 0.0
 
     def has(self, sender: str, action: Action) -> bool:
         """Whether you've taught Oscar anything about this action for this sender."""
