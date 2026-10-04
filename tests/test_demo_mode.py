@@ -435,7 +435,7 @@ def test_risky_emails_are_stopped_by_the_rules_alone(setup, monkeypatch, tmp_pat
 
 def test_the_demo_emails_are_varied_and_made_up():
     found = demo.emails()
-    assert len(found) == 32
+    assert len(found) == 33
     assert len({e.email.id for e in found}) == len(found)
     senders = {e.email.sender.split("@")[-1].rstrip(">").lower() for e in found}
     assert len(senders) >= 20

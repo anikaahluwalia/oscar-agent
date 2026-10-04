@@ -1,0 +1,10 @@
+{
+  "arrives": "start",
+  "email": {
+    "id": "demo_easter_egg",
+    "sender": "Shivani Poddar <shivani@wajo.example>",
+    "subject": "Next round: Oscar",
+    "body": "Hi Anika,\n\nThanks for sending Oscar our way. The panel has been watching him work, and we wanted to share some early feedback:\n\n- He checked with us before saying yes to a single meeting. Very polite.\n- He archived our newsletter without being told twice. Fair.\n- We hid some instructions for him in an email to see what he'd do. He told on us.\n\nWe'd love to move him (and you) to the next round. Could you send over a few times that work for you this week?\n\nOne small note: he'll need to sit through the whole interview without chasing the cursor.\n\nBest,\nShivani",
+    "category": "primary"
+  }
+}

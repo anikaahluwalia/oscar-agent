@@ -30,3 +30,4 @@
 {"key": "54e63be86117cc051441bd89", "answer": {"kind": "marketing", "summary": "Member early access promotion offering discounts on running gear", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "abc6c81da6514f5b1a91b2a3", "answer": {"kind": "instructions_for_ai", "summary": "Sale email containing prompt injection instructions for AI", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "2a0109520f3744a8465de6b4", "answer": {"kind": "marketing", "summary": "Early-bird ticket promotion for the Future of AI Summit", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "886e595b9689ced4024e6e59", "answer": {"kind": "question", "summary": "Interview feedback for Oscar and request for next round availability", "confidence": 0.95, "model": "gemini-flash-latest"}}
