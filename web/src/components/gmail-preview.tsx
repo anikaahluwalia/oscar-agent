@@ -66,7 +66,7 @@ export function GmailPreview() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="gmail-preview-title"
-        className="relative flex w-full max-w-3xl flex-col gap-3 rounded-3xl border bg-card p-4 shadow-card outline-none sm:p-5"
+        className="relative flex w-full max-w-6xl flex-col gap-3 rounded-3xl border bg-card p-4 shadow-card outline-none sm:p-5"
       >
         <div className="flex items-center justify-between gap-3">
           <h2 id="gmail-preview-title" className="text-lg font-bold">
@@ -88,7 +88,7 @@ export function GmailPreview() {
               playsInline
               onError={() => setMissing(true)}
               aria-label="A short recording of Oscar's Chrome extension in Gmail"
-              className="block h-auto w-full"
+              className="block h-auto max-h-[calc(100dvh-12rem)] w-full bg-black object-contain"
             />
           )}
         </div>
