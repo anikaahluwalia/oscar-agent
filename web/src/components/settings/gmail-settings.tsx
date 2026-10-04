@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Facts, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
 import { getGmailStatus, gmailActUrl, gmailConnectUrl, setActing, type GmailStatus } from "@/lib/api";
 import { checkGmail, disconnectGmailAccount } from "@/lib/demo";
-import { dayLabel, formatTime } from "@/lib/time";
 import { notifyChanged, oscarSays } from "@/lib/use-oscar";
 
 // The API sends back a short code after Google; only these fixed words are ever shown,
@@ -38,23 +37,6 @@ export function useGmailResult() {
       .finally(notifyChanged);
   }, []);
 }
-
-function lastChecked(gmail: GmailStatus) {
-  const parts = [];
-  if (gmail.last_sync) {
-    const iso = new Date(gmail.last_sync * 1000).toISOString();
-    const day = dayLabel(iso);
-    const when = day === "Today" || day === "Yesterday" ? day.toLowerCase() : `on ${day}`;
-    parts.push(`Last checked ${when} at ${formatTime(iso)}`);
-  } else {
-    parts.push("Not checked yet");
-  }
-  if (gmail.auto_check_minutes > 0) {
-    parts.push(`he checks every ${gmail.auto_check_minutes} ${gmail.auto_check_minutes === 1 ? "minute" : "minutes"} while the API is running`);
-  }
-  return parts.join(" · ");
-}
-
 
 /** The email account: who's connected, checking, disconnecting, letting Oscar act, and re-reading recent emails. */
 export function GmailSettings({ gmail }: { gmail: GmailStatus | undefined }) {
@@ -157,11 +139,10 @@ function AccountCard({ gmail }: { gmail: GmailStatus }) {
         </div>
       </div>
       <div className="flex flex-col gap-1 text-[13px] leading-normal text-muted-foreground">
-        <p>{lastChecked(gmail)}</p>
         <p>
           {gmail.acting
-            ? "Oscar reads your inbox and does the undoable things below. Disconnecting keeps his decisions and your reviews."
-            : "Oscar can read your inbox but can't change anything in it. Disconnecting keeps his decisions and your reviews."}
+            ? "Oscar reads your inbox and can act. Disconnecting will keep his decisions and your reviews."
+            : "Oscar reads your inbox but can't change it. Disconnecting will keep his decisions and your reviews."}
         </p>
         {/* Connected before Oscar asked Google for your profile. Keep the permission to act if it was given. */}
         {!gmail.name && (
@@ -181,10 +162,9 @@ function AccountCard({ gmail }: { gmail: GmailStatus }) {
 }
 
 const ACTING_FACTS = [
-  "He marks emails as read, archives them, and labels the ones worth a look: Stopped, Needs you or FYI. You can rename his labels below.",
-  "On his own only when he's sure; otherwise he asks, and does it when you approve.",
-  "Never sends, deletes, unsubscribes or touches money. Anything risky still comes to you.",
-  "Every action can be undone. He only acts on emails that arrive from now on, at most 25 per check.",
+  "Marks read, archives and labels. If he isn't sure, he asks first.",
+  "Never sends, deletes, unsubscribes or touches money.",
+  "Everything can be undone. Only new emails.",
 ];
 
 /**
@@ -197,7 +177,7 @@ function ActingRow({ gmail }: { gmail: GmailStatus }) {
       <SettingsRow
         icon={HandIcon}
         title="Let Oscar act in Gmail"
-        text="Off. He only reads your inbox."
+        text="He only reads your inbox."
         control={
           <Button asChild className={ROW_BUTTON}>
             <a href={gmailActUrl}>Give Oscar permission to act</a>
@@ -227,7 +207,7 @@ function ActingRow({ gmail }: { gmail: GmailStatus }) {
       icon={HandIcon}
       inline
       title="Let Oscar act in Gmail"
-      text={gmail.acting ? "On. He does the easy ones and asks about the rest." : "Off. He only reads your inbox."}
+      text={gmail.acting ? "He does the easy ones and asks about the rest." : "He only reads your inbox."}
       control={<Switch label="Let Oscar act in Gmail" on={gmail.acting} onChange={toggle} />}
     >
       <Facts items={ACTING_FACTS} />

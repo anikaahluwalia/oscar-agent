@@ -486,7 +486,6 @@ export const getLearning = () => call<{ cleared_at: string | null }>("/learning"
 export const clearLearning = () => call<{ cleared_at: string; reply: string }>("/learning/clear", { method: "POST", body: "{}" });
 export const restoreLearning = () => call<{ cleared_at: null; reply: string }>("/learning/restore", { method: "POST", body: "{}" });
 /** A link, not a fetch: the browser saves the file. */
-export const exportUrl = `${API}/export`;
 
 /** Every kind of email you can say one is (oscar/classification.py EMAIL_TYPES). */
 export const getEmailTypes = () => call<{ type: string; risky: boolean }[]>("/email-types");
@@ -575,7 +574,6 @@ export const sendChat = (message: string, history: ChatTurn[], decisionId?: stri
     method: "POST",
     body: JSON.stringify({ message, history, decision_id: decisionId ?? null }),
   });
-export const getChatStatus = () => call<{ model: string | null }>("/chat/status");
 
 /** desiredLevel: for a rule about every email like this one, how much he does on his own (quietly or with a heads up). */
 export const sendFeedback = (decisionId: string, kind: FeedbackKind, editedText?: string, scope: RuleScope = "sender", desiredLevel?: Level) =>

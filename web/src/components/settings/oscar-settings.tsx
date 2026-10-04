@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   BellIcon,
   BrainIcon,
-  DownloadIcon,
   MoveHorizontalIcon,
   PartyPopperIcon,
   RotateCwIcon,
@@ -17,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Segmented, SettingsGroup, SettingsRow, Switch, ROW_BUTTON } from "@/components/settings/rows";
 import {
   clearLearning,
-  exportUrl,
   getAppSettings,
   getLearning,
   renameLabel,
@@ -297,7 +295,7 @@ function ClearLearningRow() {
   );
 }
 
-/** Re-reading, clearing what he learned, and taking your decisions with you. */
+/** Re-reading recent emails, and clearing what he learned. */
 export function AdvancedSettings({ gmail }: { gmail: GmailStatus | undefined }) {
   return (
     <SettingsGroup title="Advanced">
@@ -315,19 +313,6 @@ export function AdvancedSettings({ gmail }: { gmail: GmailStatus | undefined }) 
         />
       )}
       <ClearLearningRow />
-      <SettingsRow
-        icon={DownloadIcon}
-        tone="muted"
-        title="Export decision history"
-        text="Every decision I made on this inbox, with your answers, as a JSON file."
-        control={
-          <Button asChild variant="outline" className={ROW_BUTTON}>
-            <a href={exportUrl} download>
-              Export
-            </a>
-          </Button>
-        }
-      />
     </SettingsGroup>
   );
 }

@@ -60,16 +60,6 @@ export async function bringInDemo() {
   }
 }
 
-export async function startOver() {
-  try {
-    await resetDemo();
-    notifyChanged();
-    oscarSays("Fresh start! I've forgotten everything.");
-  } catch {
-    oscarSays("I can't reach my API right now.");
-  }
-}
-
 // --- The real inbox ---------------------------------------------------------
 
 let checking = false;

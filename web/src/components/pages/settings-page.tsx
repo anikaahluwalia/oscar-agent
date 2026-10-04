@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { FlaskConicalIcon } from "lucide-react";
 import { Page } from "@/components/page";
 import { GmailSettings, useGmailResult } from "@/components/settings/gmail-settings";
-import { AppearanceRow, ChatRow, DataSettings, NameRow } from "@/components/settings/more-settings";
+import { AppearanceRow, NameRow } from "@/components/settings/more-settings";
 import { AdvancedSettings, GmailCompanionSettings } from "@/components/settings/oscar-settings";
 import { ROW_BUTTON, SettingsGroup, SettingsRow } from "@/components/settings/rows";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ function DemoSettings() {
       <SettingsRow
         icon={FlaskConicalIcon}
         title="You're trying Oscar on a simulated inbox"
-        text="Gmail, his Gmail labels and your data are for a real inbox, so they're not here. Leave the demo to connect Gmail."
+        text="Gmail and his Gmail labels are for a real inbox, so they're not here. Leave the demo to connect Gmail."
         control={
           <Button
             variant="outline"
@@ -37,7 +37,7 @@ function DemoSettings() {
   );
 }
 
-/** Settings under short headings: Gmail, Oscar in Gmail with his notifications and labels, you, the look, the chat, advanced, your data. */
+/** Settings under short headings: Gmail, Oscar in Gmail with his notifications and labels, you, the look, and advanced. */
 export function SettingsPage() {
   const { data } = useOscar();
   const gmail = data?.gmail;
@@ -66,15 +66,8 @@ export function SettingsPage() {
         </SettingsGroup>
       </div>
 
-      <SettingsGroup title="Oscar's chat">
-        <ChatRow />
-      </SettingsGroup>
-
       {/* Kept with a real inbox (or the shared example one), so not in the demo. */}
       {!demo && <AdvancedSettings gmail={gmail} />}
-
-      {/* The demo inbox controls only make sense until Gmail is connected. */}
-      {!demo && <DataSettings demo={!!gmail && !gmail.connected} />}
     </Page>
   );
 }
