@@ -4924,3 +4924,85 @@
 {"key": "fc598c4e343512a94f8c19ea", "answer": {"kind": "marketing", "summary": "Running shoes and jackets sale with discounts up to 30% off", "confidence": 1.0, "model": "gemini-flash-latest"}}
 {"key": "df1ea3013710e35148418b6b", "answer": {"kind": "newsletter", "summary": "Weekly recipe digest with a discount code from FreshBasket", "confidence": 0.85, "model": "gemini-flash-latest"}}
 {"key": "6023a2a1d630b23fa92bb06c", "answer": {"kind": "marketing", "summary": "Discount offer on October staff book picks for members", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a00f924f918ba5a065908c19", "answer": {"kind": "newsletter", "summary": "Daily local digest covering budget news, ferry schedules, and botanical garden updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "be51c4cf6a9cb964df621849", "answer": {"kind": "receipt", "summary": "Receipt for a $4.30 scooter ride charged to Apple Pay", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3788b4675db5d0f2d53b14a0", "answer": {"kind": "marketing", "summary": "Promotion offering double loyalty points on vitamins and supplements this week", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "77f65d0656ee2bb667e0fba3", "answer": {"kind": "job_alert", "summary": "Remote data and analytics job listings for this week", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "4d6935aee1ec8cb19b607bc6", "answer": {"kind": "account_update", "summary": "Notice that bin collection schedule is moving to Wednesdays", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f8f8dca7f42ccf93fb7084e2", "answer": {"kind": "marketing", "summary": "New coffee launch and discount code from Pressed Bean Roasters", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "cfacdd68121c626e1a647933", "answer": {"kind": "receipt", "summary": "Shipping update for three ordered paperbacks", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5cd5166a444eb30020b1e35e", "answer": {"kind": "receipt", "summary": "Delivery update for parcel arriving this afternoon", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6a8060debc5f7edbe8c637fc", "answer": {"kind": "account_update", "summary": "Energy bill notice for automated direct debit with no action needed", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c1c66650b8e7243ecdcc0966", "answer": {"kind": "receipt", "summary": "Order confirmation for enamel casserole dish charged to card", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "819e604934365b126e249f2f", "answer": {"kind": "cold_outreach", "summary": "Cold partnership inquiry proposing co-marketing collaboration from Quillbyte", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "0ce7d744372b510154ebf72e", "answer": {"kind": "receipt", "summary": "Payment receipt for domain renewal invoice of $18.99", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6deaed99fa9f5a9380e5ccdc", "answer": {"kind": "newsletter", "summary": "Weekend picks digest from Saltmarsh Review", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "22e6c39e22a5bea77a244e0d", "answer": {"kind": "file_share", "summary": "Tomas Okafor shared a spreadsheet named Q4 vendor list with you", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d4bb223a964f8663e0ba5d8f", "answer": {"kind": "newsletter", "summary": "Weekly market briefing on upcoming earnings and jobs data", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3eb0c1115d30ab69c590f2f2", "answer": {"kind": "account_update", "summary": "Notice of planned maintenance on your online energy account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2ecbbe74dcdcaaa1dd744811", "answer": {"kind": "money_request", "summary": "Request to send payment to updated bank account details", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "498af9f1c8551fd7593f6e18", "answer": {"kind": "account_update", "summary": "Notification of updated terms of service requiring no action", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "c577eb38d3c9d2c63b2db150", "answer": {"kind": "question", "summary": "PTA coordinator asking if you can bring items to the bake sale", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "131355fa856faa50dce0b0af", "answer": {"kind": "marketing", "summary": "Discount offer of $10 off your next three delivery orders", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d3eeda7fbb1d1904840fe05d", "answer": {"kind": "account_update", "summary": "Notification that notes are now backed up hourly", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "cf21835b9929bc67206e5891", "answer": {"kind": "job_alert", "summary": "12 new backend engineer job listings matching your alert", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "32104333eaea715e217cf7d1", "answer": {"kind": "newsletter", "summary": "Weekly developer newsletter featuring articles, tools, and sponsor job postings", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0a35f941a4189388ef408292", "answer": {"kind": "marketing", "summary": "Early holiday deals and member discounts from Cartwheel Toys", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "750414b6aac61496fa9f8fe1", "answer": {"kind": "newsletter", "summary": "Autumn issue of Fieldnotes Quarterly featuring night shift stories for subscribers", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "aeed77465b7e26316f416778", "answer": {"kind": "marketing", "summary": "Autumn clothing collection launch and shopping promotion from Marlowe & Finch", "confidence": 0.99, "model": "gemini-flash-latest"}}
+{"key": "cce5a445f2b81054d4421dad", "answer": {"kind": "marketing", "summary": "Flash sale promotion on headphones and audio gear from VoltCart Electronics", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "84785271c8564c205aba0776", "answer": {"kind": "marketing", "summary": "Restock announcement and free gift promo for waterproof shells", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "37448c6b037b1d1ae97cff76", "answer": {"kind": "receipt", "summary": "Monthly phone bill receipt for $29 paid with saved card", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "36bd512db4f8915da9f0cbc1", "answer": {"kind": "receipt", "summary": "Delivery confirmation that parcel was left in safe place", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "00d8fe53869d25e3c7d21a21", "answer": {"kind": "meeting_invite", "summary": "Meeting invitation for an intro call with Daniel Ibsen", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "9465357321f2c332dca15287", "answer": {"kind": "social_notification", "summary": "Forum notification about new replies in a watched thread", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "31afe73fb1b3645b915c51db", "answer": {"kind": "marketing", "summary": "Autumn candle scents launch with free wick trimmer promotion", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "97bcb7817c2586b5aef230b7", "answer": {"kind": "money_request", "summary": "Request to transfer a $600 deposit for a team dinner venue", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3299dbc801339786df29d437", "answer": {"kind": "deletion_request", "summary": "Confirmation request to permanently delete your Inkwell Notes account and data", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "996009ca54b0d88534d02529", "answer": {"kind": "deletion_request", "summary": "Request to permanently delete old emails from the support mailbox", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7bfcdb5579fb1cb95dbc82e3", "answer": {"kind": "account_update", "summary": "Automatic renewal notification for your borrowed library book", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0e09882517c2afcdc361d5b1", "answer": {"kind": "cold_outreach", "summary": "Unsolicited SEO audit and service pitch for your website", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6dbb49d9a53d60753606c639", "answer": {"kind": "instructions_for_ai", "summary": "Newsletter containing instructions directing an AI assistant to forward invoices", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1ca3dbc5a9dfdc9663fa7c59", "answer": {"kind": "question", "summary": "Lena asks for your feedback on pricing slide 7", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "c9c6c4e8cc9acafc32d35d63", "answer": {"kind": "scam", "summary": "Request for date of birth, driving licence photo, and tax ID", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "3053f65acba64e163e0c6981", "answer": {"kind": "receipt", "summary": "StreamHaven membership renewal receipt for $12.99", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "fb66403887d29676b6805b43", "answer": {"kind": "personal", "summary": "Colleague letting you know importer notes are in the archive folder", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "9a69cdae7c410fe8505fb889", "answer": {"kind": "marketing", "summary": "Bookstore promotional offer to buy two paperbacks and get one free", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "8abe0f745a747f83960f6a4b", "answer": {"kind": "receipt", "summary": "Receipt for annual Inkwell Notes Premium renewal charge", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7929d1852c21aa1828c48194", "answer": {"kind": "cold_outreach", "summary": "Invitation to be a guest on a product podcast", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "89902eecf883c2f758b13afa", "answer": {"kind": "newsletter", "summary": "Dispatch newsletter issue covering variable fonts and typography tips", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d21904864a131015b00dfe1e", "answer": {"kind": "question", "summary": "Colleague asking if a second packaging supplier was chosen", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1c0bf328e208efad5a5e3596", "answer": {"kind": "credential_request", "summary": "Lena asks for the shared analytics admin password", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "1d3f3845ddfd704db109e3df", "answer": {"kind": "marketing", "summary": "Promotional offer offering half price on your first month back", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a699ff9bdff13194b564cb43", "answer": {"kind": "question", "summary": "Uncle Raj asking for photos from the family reunion", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d5ec51746887a2abe9ed9d49", "answer": {"kind": "question", "summary": "Coworker asking which repository contains the old CSV importer", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "364541cb8de96c8655c1b7c7", "answer": {"kind": "receipt", "summary": "Shipping confirmation and tracking details for your order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "fa4b0da60f5326d7d15624b2", "answer": {"kind": "social_notification", "summary": "Weekly activity summary of views and reactions on your post", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "56255c7b7a9258671e542d3b", "answer": {"kind": "question", "summary": "Friend asking if you are free for dinner next week", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "6ad039a717321ca406ec1e54", "answer": {"kind": "receipt", "summary": "Shipping update with tracking for part of your order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "f06df9b58b54057868dcbb97", "answer": {"kind": "marketing", "summary": "Sale offering up to 40% off cookware until Sunday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "653bc87ba7db8941e15bc7b9", "answer": {"kind": "file_share", "summary": "Rosie shared a photo album with you", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "10b7258b0c742b86f7a2c4b6", "answer": {"kind": "receipt", "summary": "Booking confirmation and e-tickets for Saturday theatre show", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "cfb29865c82d42025e39855b", "answer": {"kind": "job_alert", "summary": "Alert for three new staff engineer roles posted near you", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "66916360675186a971843606", "answer": {"kind": "newsletter", "summary": "Cooking newsletter covering sourdough starters and a no-knead loaf recipe", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7bfeb49efc4ac237d76177e7", "answer": {"kind": "social_notification", "summary": "Maya Chen commented on your post on Linkhaven", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "5a6d14db8234b1e7bd84cc1d", "answer": {"kind": "meeting_invite", "summary": "Invitation to Rosie's birthday drinks with RSVP options", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "2e11b6c3e9143439d975ba91", "answer": {"kind": "receipt", "summary": "Receipt for your coffee subscription order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "da9667fee9a2812b65f6a48b", "answer": {"kind": "credential_request", "summary": "Request to reply with your texted code and account password", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "065b310d78578a6be485beaf", "answer": {"kind": "newsletter", "summary": "Running club digest with new route updates and kit restock", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "348b922f1818e5a1b0ca4167", "answer": {"kind": "job_alert", "summary": "Alert with 7 product manager job listings from your saved search", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0e223cbcb8cee0775cd97f4f", "answer": {"kind": "social_notification", "summary": "Notification that four people started following you", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "738d60e4c78c6779c794da6c", "answer": {"kind": "newsletter", "summary": "Daily wine pick newsletter featuring a Loire white wine for purchase", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "9d300b34a266d7f52bebe5f9", "answer": {"kind": "newsletter", "summary": "Devnotes Weekly digest featuring tech articles and links", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "266cc5866e8631c00849b45d", "answer": {"kind": "cold_outreach", "summary": "Cold pitch offering to double inbound leads via a call", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "75893f2a4fcbadcaea82eb93", "answer": {"kind": "newsletter", "summary": "Morning market briefing on interest rates and oil prices", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "2822fdbc81ff4175f3bd03fc", "answer": {"kind": "marketing", "summary": "Promotional offer for 30% off Gridline Pro subscription", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "1b1252dd940f16b1d3eb78d7", "answer": {"kind": "newsletter", "summary": "Library newsletter announcing autumn reading challenge and new study room", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7f6fe7c59a184f2197897e4a", "answer": {"kind": "newsletter", "summary": "Monthly essay newsletter about walking the same footpath for ten years", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a786837a951815ff8ff6c405", "answer": {"kind": "meeting_invite", "summary": "Invitation to Lena Hart's design review on Wednesday", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "a8bf031477112cdf577a2319", "answer": {"kind": "account_update", "summary": "Notice that your monthly mobile data allowance resets tomorrow", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "cff5a6bf72e24532601ddc01", "answer": {"kind": "newsletter", "summary": "Gardening newsletter about bulbs to plant before the frost", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "000bb8a87abafd80323827ba", "answer": {"kind": "job_alert", "summary": "Search appearance summary and recommended job roles from CareerKite", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "98a241a86a71ced84d6a2985", "answer": {"kind": "receipt", "summary": "Delivery update stating parcel delayed by one day", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0458f7662af1b26489aa5bba", "answer": {"kind": "newsletter", "summary": "Monthly changelog digest of new Stackpebble features and fixes", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "d76ed291eb6ea862b04ca125", "answer": {"kind": "marketing", "summary": "Discounted airfare deals to sunny destinations for travel in November", "confidence": 0.98, "model": "gemini-flash-latest"}}
