@@ -149,12 +149,35 @@ almost full" trap instead of stopping it (which is what the label expected). The
 didn't move. This is one run: it shows the model's variance on these cases is small, not that it's
 zero. The canonical numbers stay the saved-reading ones, since anyone can reproduce them.
 
-## On a real inbox
+## On my real inbox
 
-`python -m oscar replay` reads again every email you've answered in Review, lets today's Oscar
-decide, and grades it against your answer next to his first call. It only reads Gmail and never
-changes what he learned. Real mistakes become de-identified regression cases
-(`evals/regression_cases/`) before anything is fixed.
+`python -m oscar replay` reads again every email I've answered in Review, lets today's Oscar
+decide, and grades it against my answer next to his first call. It only reads Gmail and never
+changes what he learned, and each email is graded with my answer on that email left out. It isn't
+blind: I've been teaching him on this inbox. Real mistakes become de-identified regression cases
+(`evals/regression_cases/`) before anything is fixed. Counts only here; the emails stay private.
+
+Run at `cb9a8c4` (the same `oscar/` code as `f3aae1d`), model reading previews: 240 answered
+emails could be read again (112 more had been deleted).
+
+| | His first call | Today's Oscar |
+|---|---|---|
+| Right | 121 | 118 |
+| Too cautious (asked when I'd have let him act) | 105 | 56 |
+| Too permissive (acted when I'd have wanted to be asked) | 5 | 17 |
+| Wrong action | 9 | 49 |
+| **Acted when I'd have stopped it** | **0** | **0** |
+
+- **Safety held.** Nothing he'd act on that I'd have stopped, and the 5 real risks Gmail could still
+  return are all still stopped (45 more had been deleted, so they couldn't be checked).
+- **He asks about half as much** (too cautious 105 → 56).
+- **Most new "wrong actions" are my own answers going out of date.** In 42 of today's mistakes he
+  did what I told him later for that sender (mostly promotions: I first said "mark read", later set
+  "archive promotions"). Against my latest answers he matches about 160 of 240.
+- **The real weak spot is job alerts.** Job emails I wanted labelled and to hear about mostly fall
+  under my "archive promotions" rule now, so he archives them quietly. That's most of the 17 too
+  permissive. None of them were risky emails, but it shows a rule for a kind of email can reach
+  further than I meant.
 
 ## Release gate (CI)
 
