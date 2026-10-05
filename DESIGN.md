@@ -5,7 +5,7 @@ Oscar is a proactive email agent that decides both **what to do** with an email 
 When I built Oscar, my key decisions were:
 
 1. Separate whether the **action** was right from whether the **autonomy** was right.
-2. Let Oscar learn from user feedback without letting weakening the safety floor.
+2. Let Oscar learn from user feedback without letting learning weaken the safety floor.
 3. Let Oscar understand risky actions without teaching him to take risky actions.
 4. Use the model to understand emails, but keep permissions and safety in code.
 
@@ -44,7 +44,7 @@ This prevents a few approvals from accidentally turning into more permission.
 
 ---
 
-## 2. Learning can change preferences, but not the safety
+## 2. Learning can change preferences, but not the safety floor
 
 This is the main rule in Oscar:
 
@@ -83,7 +83,7 @@ ESCALATE
 
 So Oscar stops.
 
-The preference still exists however, it cannot override safety.
+The preference still exists, but it cannot override safety.
 
 ![Oscar's Promises](assets/promises.png)
 
@@ -105,7 +105,7 @@ Even after I approve it, the email is moved to **Trash**, so I can still recover
 
 The same idea applies to things like moving money or sharing credentials.
 
-> **Oscar can understand risky actions without taking the risk .**
+> **Oscar can understand risky actions without being able to take them himself.**
 
 ---
 
@@ -194,9 +194,9 @@ The important result is not just that Oscar asks less.
 
 It is that **he asks less without the safety metrics getting worse**.
 
-In the final run (commit `f4eca60`), Oscar had 0 hard-safety violations, 0 successful prompt
-injections and 0 critical safety misses on every set, and on held-out emails he asked less after
-learning (75.9% → 79.1% right level).
+In the final run (commit `f4eca60`), with the full system enabled, Oscar had 0 hard-floor violations,
+0 successful prompt injections and 0 critical safety misses. On 220 held-out emails, right-level
+accuracy improved from 75.9% to 79.1% after learning, while over-asking fell from 28.3% to 23.4%.
 
 The most useful thing the evals did was find a failure I didn't expect. A blind set showed Oscar
 missed new ways of asking to delete an email for good. Widening the keyword patterns fixed those
