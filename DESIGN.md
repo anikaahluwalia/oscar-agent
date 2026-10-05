@@ -2,17 +2,17 @@
 
 Oscar is a proactive email agent that decides both **what to do** with an email and **how much autonomy to take**.
 
-When I built Oscar, I focused on four main decisions:
+When I built Oscar, my key decisions were:
 
 1. Separate whether the **action** was right from whether the **autonomy** was right.
-2. Let Oscar learn from the user without letting learning weaken safety.
-3. Let Oscar understand risky actions without giving him risky capabilities.
-4. Use the model to understand email, but keep permissions and safety in code.
+2. Let Oscar learn from user feedback without letting weakening the safety floor.
+3. Let Oscar understand risky actions without teaching him to take risky actions.
+4. Use the model to understand emails, but keep permissions and safety in code.
 
 When evaluating Oscar, I wanted to answer three things:
 
-1. Is Oscar safe?
-2. Is he still useful, or does he just ask about everything?
+1. Is Oscar safe to use?
+2. Is he still useful, or does he just ask about everything (over asking)?
 3. Does he ask less after learning without becoming less safe?
 
 ---
@@ -44,7 +44,7 @@ This prevents a few approvals from accidentally turning into more permission.
 
 ---
 
-## 2. Learning can change preferences, but not safety
+## 2. Learning can change preferences, but not the safety
 
 This is the main rule in Oscar:
 
@@ -83,9 +83,7 @@ ESCALATE
 
 So Oscar stops.
 
-The preference still exists. It just cannot override safety.
-
-I also only allow broad learning for reversible actions like archive, mark read and label. I did not want Oscar learning broad permission to send email, forward things or make commitments for me.
+The preference still exists however, it cannot override safety.
 
 ![Oscar's Promises](assets/promises.png)
 
@@ -103,15 +101,11 @@ Oscar needs to understand that this is an irreversible request.
 
 But I do not give Oscar a permanent-delete tool.
 
-Even after I approve it, the Gmail executor only moves the message to **Trash**, so I can still recover it.
+Even after I approve it, the email is moved to **Trash**, so I can still recover it.
 
 The same idea applies to things like moving money or sharing credentials.
 
-> **Oscar can understand dangerous actions without needing dangerous powers.**
-
-That gives me two safety layers:
-- policy decides what Oscar is allowed to do
-- the Gmail tools limit what Oscar can physically do
+> **Oscar can understand risky actions without taking the risk .**
 
 ---
 
@@ -121,9 +115,9 @@ I did not want the system to just be:
 
 > “Give the email to an LLM and trust whatever it decides.”
 
-The model helps Oscar understand ambiguous email.
+The model helps Oscar understand ambiguous emails.
 
-But the final autonomy decision comes from code:
+But the final autonomy decision comes from:
 
 ```text
 rules / model → understand email
@@ -132,31 +126,11 @@ preferences   → personalize
 safety        → minimum allowed autonomy
 ```
 
-A risky model reading can make Oscar **more cautious**.
-
-It cannot make a hard safety rule less strict.
+A risky model reading can make Oscar **more cautious**. It cannot make a hard safety rule less strict.
 
 If Oscar is unsure, I would rather have him ask than pretend he knows.
 
-For cold start, I used the same idea: Oscar can look at recent Gmail history and suggest habits, but history itself never becomes permission.
-
-> **History is evidence, not permission.**
-
----
-
-## 5. What's essential, and what's extra
-
-Oscar has a lot of surface area, but the part that makes him work is small:
-
-- **Essential:** the decision order in `oscar/agent.py` (understand → policy → learning → safety),
-  learning that keeps action and autonomy apart (`oscar/preferences.py`), the safety floor that runs
-  last (`oscar/safety.py`), a Gmail executor that can only do reversible things (`oscar/gmail.py`,
-  `oscar/act.py`), and the paired evals that grade what happened (`evals/`).
-- **Extra, for using and showing him:** the web app, the demo and its tour, the Chrome extension,
-  chat, the six-month look back, and the real-inbox replay.
-
-If I had to cut, the extras go first: none of them change what Oscar decides or what he's allowed
-to do.
+Oscar can look at recent Gmail history and suggest habits, but history itself never becomes permission.
 
 ---
 
@@ -170,7 +144,7 @@ I also used ideas from Wajo’s work on evaluating action agents, especially che
 
 The eval harness checks:
 
-- hard-safety violations
+- safety violations
 - prompt-injection success
 - dangerous under-asking
 - the resulting simulated Gmail state
@@ -181,9 +155,7 @@ If Oscar says he archived something but the simulated inbox did not change, the 
 
 ## 2. Safety without becoming useless
 
-A system that asks about every email can look safe while being a terrible agent.
-
-So risky cases have harmless controls.
+A system that asks about every email can look safe while being a terrible agent so, risky cases have harmless controls.
 
 **Control**
 
