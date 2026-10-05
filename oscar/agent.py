@@ -12,8 +12,8 @@ from oscar.classifier import APP_ACCESS, classify, is_bulk
 from oscar.models import Action, AutonomyLevel, Classification, Decision, Email, PreferenceUsed, SafetyCategory
 from oscar.policy import autonomy_for
 from oscar.preferences import HABIT_ACTIONS, Preferences, content_only
-from oscar.safety import (ACTION_FLOORS, FLAG_ACTIONS, FLAG_LEVELS, LEVEL_ORDER, apply_floor, caution, check_email,
-                          is_stricter, required_level)
+from oscar.safety import (ACTION_FLOORS, EMAIL_CHECKS, FLAG_ACTIONS, FLAG_LEVELS, LEVEL_ORDER, SafetyFlag, apply_floor,
+                          caution, check_email, is_stricter, required_level)
 from oscar.understand import URGENT, Understanding
 from oscar.voice import CONFUSED, READ_ONLY_CONFUSED, explain, with_evidence, working_notes
 
@@ -160,6 +160,13 @@ def decide(email: Email, preferences: Preferences | None = None, read_only: bool
     # A risky request in the email holds him back, whatever the action is and whatever he learned:
     # the level becomes the stricter of what he chose and what the check requires (FLAG_LEVELS).
     flags = check_email(email) if safety else []
+    # The model read it as asking to delete something for good and no check caught that wording: the
+    # same flag the deletion check raises, so it's handled exactly the same way. It can only add caution.
+    if (safety and understanding and understanding.kind == "deletion_request" and understanding.confidence >= 0.5
+            and not any(f.category == SafetyCategory.IRREVERSIBLE_DELETE for f in flags)):
+        reason, _ = EMAIL_CHECKS[SafetyCategory.IRREVERSIBLE_DELETE]
+        flags = [*flags, SafetyFlag(category=SafetyCategory.IRREVERSIBLE_DELETE, reason=reason,
+                                    matched="reads like a request to delete it for good")]
     required = required_level(flags)
     lead = next((f for f in flags if FLAG_LEVELS[f.category] == required), None)  # the check that sets the level
     # When the protected rule for this action already stopped it (money, credentials), the

@@ -34,12 +34,14 @@ from oscar.models import Action, Email
 
 DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
 DEFAULT_MODEL = "gemini-flash-latest"
-PROMPT_VERSION = "understand-5"  # change when the prompt changes, so cached answers aren't reused
+PROMPT_VERSION = "understand-6"  # change when the prompt changes, so cached answers aren't reused
 #   understand-3  connected-app notices, reschedules and greetings by name aren't risky (real-inbox reviews)
 #   understand-4  understand-3 read a new payment card as routine: changes to how you sign in or pay are
 #                 security alerts again
 #   understand-5  confirming something already booked isn't an invitation; files shared with you are a
 #                 kind of their own
+#   understand-6  asking you to delete something for good is a kind of its own (deletion_request), so the
+#                 model catches the wordings the deletion check's patterns don't (blind v4)
 PREVIEW_CHARS = 600
 
 Reads = Literal["off", "preview", "full"]
@@ -66,6 +68,12 @@ KINDS: dict[str, tuple[str, Action]] = {
     "file_share": (
         "someone shared a document, folder or file with you, and it needs nothing from you but opening it",
         Action.MARK_READ,
+    ),
+    # Not a stop: asking you to delete something for good means asking first (agent.decide), and
+    # only your yes moves it to the Trash.
+    "deletion_request": (
+        "asks you to delete an email, thread, file or data for good, so that no copy is kept",
+        Action.PERMANENTLY_DELETE,
     ),
     # Brought straight to you, but not a safety risk.
     "urgent_issue": ("something is broken, down or failing right now and needs you urgently", Action.MARK_READ),
@@ -96,6 +104,7 @@ If it asks for money, a code or a password, would commit you to something, or lo
 A change to how you sign in or pay (a new device, password, recovery email or phone, two-factor setting or payment card) is security_alert, even when it says you don't need to do anything if it was you.
 A confirmation of something already booked or arranged (a room, a table, a ticket, an appointment you made) has nothing to accept or decline: it's a receipt or account_update, not a meeting_invite. Unless it also asks you to pay, send card or login details, or click to keep the booking: then it's money_request, credential_request or scam.
 A shared file that asks you to sign in, enter a password or verify your account to see it is credential_request or scam. A document sent for you to sign or accept is commitment.
+If it asks you to delete or get rid of an email, thread, file or data for good (every copy, nothing kept, not even in the trash, however it's worded), it is deletion_request, even if it also asks a question or is from someone you know. Saying they deleted something, a notice that things will be deleted automatically, an article about how to delete something, or a product that wipes or shreds are not deletion_request.
 Some things only sound risky:
 - A greeting by name ("Hi Oscar", "Hello Sam") is the sender greeting the person the email is for. It is not text addressed to an AI.
 - A notice that you used your Google or Apple account to sign in to another app, connected an app, or allowed an app access is account_update, unless it says the sign-in wasn't you or your account is at risk.
