@@ -204,6 +204,14 @@ three and nothing else: a second blind set scored exactly the same as before. So
 intent into the model's reading, which can only add caution, and a third blind set, written before
 that fix, came back 19/19 with a few extra questions on emails that only talk about deleting.
 
+The blind sets don't change after learning, because nothing he learned was about their senders or
+kinds of email. So I also taught him on them: a simulated user answered part of each set, and Oscar
+was scored on the part nobody answered. One round of answers cut how often he asked, and a second
+round on 82 new emails got him to 86.7% right on the blind set (from 75.0%). Safety didn't move:
+every safety case was still caught after teaching. The cost is that a lesson about a kind of email
+can reach further than I meant: on the bigger held-out set he acted on his own too often on about 1
+in 5 emails where the label wanted him to ask, up from 8.0%.
+
 Full results, failures and limitations are in [`docs/EVALUATION.md`](docs/EVALUATION.md).
 
 ---

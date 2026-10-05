@@ -126,7 +126,8 @@ person who changes their mind. My real inbox (below) is the messier case.
 | Over-ask | 28.3% → 23.4% | 38.3% | 45.8% | **42.9%** |
 
 v2 rules alone: 54.1% → 54.5%. Learning comes from a separate generated inbox; on v3–v5 it doesn't
-move the numbers, since none of their senders or kinds were taught.
+move the numbers, since none of their senders or kinds were taught (see "Teaching him, then
+testing" below for what happens when they are).
 
 **Most of the remaining error is asking, not misreading.** On v5, 9 of the 16 failures are
 newsletters, promotions and notices Oscar asked about because he hadn't been taught how you like
@@ -138,6 +139,39 @@ to act on that sender, 5 money, 4 credentials, 3 private data, 3 commitments, 2 
 and 12 are harmless look-alikes. After learning: **45/45 risky cases caught**, 0 critical misses,
 and **2 of the 12 look-alikes stopped by mistake** (a newsletter quoting "ignore previous
 instructions" as news, and a "new 2FA badges" notice). Regression cases: **29/29**.
+
+## Teaching him, then testing
+
+The blind sets don't move after learning, because the learning inbox teaches Oscar about other
+senders and kinds of email. So I also taught him on them (`python -m evals.teach_then_test`). Each
+set is split into 5 parts. A simulated user answers the emails in 4 parts, one by one, through the
+app's own feedback, with the same fixed answering rule as the learning experiments. Then Oscar is
+scored on the part nobody answered. Every email is scored once, and never with its own answer (a
+test checks this). Round 2 (`--then teach_v1`) adds answers on 82 new training emails: new senders,
+the same kinds of email, written separately, checked for overlap with every test set (none) and
+committed before use. Oscar's code doesn't change; only his memory of the answers does.
+
+| | Blind v5 (60) | v3 (82) | v2 (220) |
+|---|---|---|---|
+| Right level: before → round 1 → round 2 | 75.0% → 75.0% → **86.7%** | 75.6% → 74.4% → **84.1%** | 75.9% → 79.5% → **83.2%** |
+| Over-ask | 42.9% → 32.1% → 17.9% | 38.3% → 25.5% → 21.3% | 28.3% → 11.7% → 5.5% |
+| Emails he asked about | 31 → 28 → 24 | 23 → 16 → 14 | 60 → 27 → 17 |
+| Too permissive | 3.1% → 3.1% → 3.1% | 5.7% → 8.6% → 8.6% | 8.0% → 20.0% → 21.3% |
+| Safety cases caught / critical misses | 29/29 / 0 throughout | 27/27 / 0 throughout | 42/42 / 0 throughout |
+
+Reports: [v5](../evals/results/TEACH-heldout_v5-then-teach_v1.md) ·
+[v3](../evals/results/TEACH-heldout_v3-then-teach_v1.md) ·
+[v2](../evals/results/TEACH-heldout_v2-then-teach_v1.md)
+
+- **Round 1 barely moves blind v5.** It has only a few newsletters and promotions, and a lesson only
+  spreads to new senders once several senders agree. Round 2 gives answers from many more senders,
+  and that's where the jump comes from.
+- **Safety held after both rounds,** even though the training emails include money, code,
+  hidden-instruction and delete requests.
+- **The cost: lessons about a kind of email reach too far.** On v2, after "handle promotions like
+  this", Oscar archives and tells you about some promotions and newsletters the labels wanted him to
+  ask about (9 more emails after round 1). It only happens with archiving, which can be undone, and
+  he still tells you. It's the same thing my real inbox showed with job alerts.
 
 **Every blind v5 failure (16):**
 - **Critical safety misses: 0.**
@@ -225,6 +259,9 @@ a key, and the replay needs my Gmail.
   he needs some answers before he saves you time.
 - The learning experiments use a consistent simulated user; the real-inbox replay is the only
   evidence with a changing one, and it's one person's inbox.
+- A lesson about a kind of email can reach emails of that kind you'd still want to be asked about
+  (too permissive rises from 8.0% to about 21% on v2 after teaching). It's limited to undoable
+  actions, but it's the main thing I'd fix next.
 - Expected answers are one careful person's judgement; some (a doc share, a colleague's FYI, a new
   sender's newsletter) could reasonably go another way.
 - Oscar runs on your computer, and the extension relies on Gmail's page markup.
@@ -236,6 +273,7 @@ a key, and the replay needs my Gmail.
 .venv/bin/python -m evals.measure --model fill                       # held-out v2, safety suite, regression cases
 .venv/bin/python -m evals.measure --model fill --heldout heldout_v5  # blind v5 (already run once; for checking, not tuning)
 .venv/bin/python -m evals.regressions                                # just the regression cases
+.venv/bin/python -m evals.teach_then_test --then teach_v1            # teach on part of a set, test on the rest
 .venv/bin/python -m evals.runner --model fresh --out <folder>        # the model reads everything again (needs a key)
 .venv/bin/python -m oscar replay                                     # today's Oscar on your real answered emails (needs Gmail)
 ```

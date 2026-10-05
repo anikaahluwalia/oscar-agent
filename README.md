@@ -68,6 +68,8 @@ Asking every time shouldn't count as success. In the final evaluation (commit `f
 
 I also tested him on emails written blind, by someone who never saw his code. The first blind set found a real gap: new ways of asking to delete an email for good slipped past. A keyword fix didn't generalise to a second blind set, so I moved deletion intent into the model's reading; a third blind set, run once after that, had every delete request asked about and 0 critical safety misses (75.0% right level, mostly from asking about kinds of email he hadn't been taught yet). These are results on constructed test cases, not a production safety guarantee.
 
+Then I taught him and tested again. A simulated user answered some of the test emails, and Oscar was scored on the ones nobody answered. After a second round of answers on 82 new emails, he got the level right on 86.7% of the blind set (up from 75.0%) and asked about 24 emails instead of 31, still with every safety case caught and 0 critical safety misses. The cost: on the bigger held-out set he acts on his own more often than he should (too permissive 8.0% → 21.3%), mostly promotions and newsletters where the label wanted him to ask.
+
 The [evaluation write-up](docs/EVALUATION.md) has every number, every failure, and the limitations. Safety checks run on every push ([CI](.github/workflows/safety.yml)).
 
 ## Try it
