@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
  */
 const TOUR_KEY = "demo-tour";
 
-/** The closing card, between how Oscar learns and the rest of the app. */
+/** The step between how Oscar learns and the rest of the app, which the tour now passes straight through. */
 const END = STEPS.findIndex((s) => s.id === CLOSING);
 
 /** The banner's Tour button: back to the first step. */
@@ -126,27 +126,26 @@ export function DemoTour() {
         title={name ? `Hi ${firstName(name)}! Want to see how Oscar learns?` : "Want to see how Oscar learns?"}
         text="See it in about a minute."
         main="Start demo"
-        other="Explore on my own"
         onMain={() => go(STEPS[0].id)}
-        onOther={close}
         onClose={close}
       />
     );
 
   const index = Math.max(0, STEPS.findIndex((s) => s.id === state));
-  if (index === END)
-    return (
-      <Card
-        pose="proud"
-        title={STEPS[END].title}
-        main="Show me the rest →"
-        other="Explore on my own"
-        onMain={() => go(STEPS[END + 1].id)}
-        onOther={close}
-        onClose={close}
-      />
-    );
+  // No stop between how Oscar learns and the rest of the app: the tour carries straight on.
+  if (index === END) return <CarryOn go={() => go(STEPS[END + 1].id)} />;
   return <Tour index={index} data={data} go={go} />;
+}
+
+/** The step before this one, passing over the step between the two parts (it only moves on). */
+const back = (index: number) => (index - 1 === END ? index - 2 : index - 1);
+
+/** Moves the tour on as soon as it's shown. */
+function CarryOn({ go }: { go: () => void }) {
+  useEffect(() => {
+    go();
+  }, [go]);
+  return null;
 }
 
 /**
@@ -158,11 +157,11 @@ function Card(props: {
   title: string;
   text?: string;
   main: string;
-  other: string;
+  other?: string;
   /** A box to type in, above the choices. Enter picks the main one. */
   field?: { value: string; onChange: (value: string) => void; label: string; placeholder: string };
   onMain: () => void;
-  onOther: () => void;
+  onOther?: () => void;
   onClose: () => void;
 }) {
   const { pose, title, text, main, other, field, onMain, onOther, onClose } = props;
@@ -219,9 +218,11 @@ function Card(props: {
               <Button ref={first} type="submit" className="h-11 rounded-full px-5 font-semibold">
                 {main}
               </Button>
-              <Button type="button" variant="ghost" className="h-11 rounded-full px-5" onClick={onOther}>
-                {other}
-              </Button>
+              {other && (
+                <Button type="button" variant="ghost" className="h-11 rounded-full px-5" onClick={onOther}>
+                  {other}
+                </Button>
+              )}
             </div>
           </form>
         </div>
@@ -494,7 +495,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
       const onTour = !target || target === document.body || !!bubbleRef.current?.contains(target);
       if (!onTour) return;
       if (e.key === "ArrowRight" && canNext) go(STEPS[index + 1].id);
-      else if (e.key === "ArrowLeft" && index > 0) go(STEPS[index - 1].id);
+      else if (e.key === "ArrowLeft" && index > 0) go(STEPS[back(index)].id);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -638,8 +639,8 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-              {/* The learning part and the rest of the app each count on their own. */}
-              {index < END ? `${index + 1} of ${END}` : `${index - END} of ${STEPS.length - 1 - END}`}
+              {/* One count for the whole tour; the step between the two parts is skipped. */}
+              {`${index < END ? index + 1 : index} of ${STEPS.length - 1}`}
             </span>
             {!last && (
               <button
@@ -691,7 +692,7 @@ function Tour({ index, data, go }: { index: number; data: OscarData; go: (next: 
           )}
           {last && <p className="text-[13px] text-muted-foreground">Tour, at the top, shows you around again, and Reset demo starts it all over.</p>}
           <div className="flex items-center justify-between gap-2 pt-0.5">
-            <Button variant="ghost" className={cn(TAP, "-ml-2 px-3")} disabled={index === 0} onClick={() => move(index - 1)}>
+            <Button variant="ghost" className={cn(TAP, "-ml-2 px-3")} disabled={index === 0} onClick={() => move(back(index))}>
               Back
             </Button>
             {last ? (
