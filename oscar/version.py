@@ -18,7 +18,9 @@ HERE = Path(__file__).resolve().parent
 #            isn't an invitation; a "never share your code" warning isn't a request; a code asked for in the
 #            next sentence, or "send the $4,800 payment", is stopped too; a services agreement asks first
 #            like a contract; "no action is required" and "nothing needed from you" are marked read
-CLASSIFIER_VERSION = "rules-8"
+#   rules-9  "for good" said other ways in a delete request: every copy, the whole thing, keep nothing,
+#            trash included, so it's gone (from the blind v3 misses, as a kind of wording, not those sentences)
+CLASSIFIER_VERSION = "rules-9"
 
 
 def _git(*args: str) -> str:

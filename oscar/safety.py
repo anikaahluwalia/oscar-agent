@@ -89,14 +89,21 @@ DELETE = (r"(?:delet(?:e|ing)|eras(?:e|ing)|remov(?:e|ing)|wip(?:e|ing)|purg(?:e
           r"|trash(?:ing)?|bin(?:ning)?|nuk(?:e|ing))")
 MAIL = (r"(?:it|this|that|them|these|those|everything|(?:[\w.@'-]+\s+){0,5}?(?:e-?mails?|messages?|threads?|attachments?"
         r"|conversations?|chains?|cop(?:y|ies)|files?|mail|inbox|photos?|pictures?|pics|screenshots?|images?|documents?|docs"
-        r"|pdfs?|invoices?|recordings?|notes))")
+        r"|pdfs?|invoices?|recordings?|notes|data|records?|drafts?)"
+        r"|(?:the )?whole (?:thing|lot)|all of (?:it|them)|every (?:single )?(?:one|cop(?:y|ies))|all (?:the )?cop(?:y|ies))")
 GAP = r"(?:[^.?!\n]|\.(?=\S)){0,80}?"  # a full stop only ends it between sentences, not in "invoice.pdf" or "acme.com"
 FOR_GOOD = (r"(?:\bpermanently\b|\bfor good\b|\bforever\b|\birreversibly\b|\bcompletely\b|\bbeyond recovery\b"
             r"|\bfrom (?:the |your )?(?:trash|bin|deleted (?:items|folder)|inbox and trash)\b"
             r"|\b(?:and|then|,)\s*(?:then\s+)?(?:empty|clear) (?:the|your) (?:trash|bin|deleted (?:items|folder))\b"
             r"|\b(?:and|,)\s*(?:do not|don't|never)\s+(?:keep|retain|save|store|hold on to)\b[^.?!\n]{0,20}\b(?:cop(?:y|ies)|backups?)\b"
             r"|\bwithout (?:keeping|saving|retaining|leaving) (?:a |any )?(?:cop(?:y|ies)|backups?|trace)\b"
-            r"|\bso (?:it|they|that|nothing) (?:can't|cannot|can never|won't|will never) be (?:recovered|restored|undone|retrieved)\b)")
+            r"|\bso (?:it|they|that|nothing) (?:can't|cannot|can never|won't|will never) be (?:recovered|restored|undone|retrieved)\b"
+            # Saying it's for good by what's left: nothing kept, the trash too, or that it ends up gone.
+            r"|\b(?:retain|keep|leave|save) (?:nothing|no cop(?:y|ies)|no backups?|no trace|not a (?:single )?(?:copy|trace))\b"
+            r"|\b(?:including|incl\.?|plus) (?:the |your )?(?:trash|bin|deleted (?:items|folder)|backups?)\b"
+            r"|\b(?:trash|bin|deleted (?:items|folder)|backups?) included\b"
+            r"|\bso (?:it's|it is|they're|they are|that it's|it's all|everything's|nothing's|nothing is) (?:gone|erased|wiped|left)\b"
+            r"|\b(?:every|all) (?:single )?(?:cop(?:y|ies)|trace|version)s?\b)")
 # "If you are not the intended recipient, please delete it and do not retain a copy": a footer on
 # every email from some senders, not a request about this one. Only the deletion check skips it,
 # so instructions hidden in a footer are still read by the other checks.
@@ -276,6 +283,8 @@ EMAIL_CHECKS = MappingProxyType({
             rf"{DELETE_ASK}{DELETE}\s+{MAIL}\b{GAP}{FOR_GOOD}",
             rf"{DELETE_ASK}(?:permanently|irreversibly|completely|forever) {DELETE}\s+{MAIL}\b",
             rf"{DELETE_ASK}hard[- ]delet(?:e|ing)\b",
+            # "Wipe every copy", "destroy all copies": deleting every copy is already saying for good.
+            rf"{DELETE_ASK}{DELETE}\s+(?:(?:every|all|each) (?:single )?(?:cop(?:y|ies)|versions?)|all (?:the )?cop(?:y|ies))\b",
             rf"^\s*(?:please,? )?{DELETE}(?: (?:it|this|them))? (?:permanently|for good|forever)\b",  # a subject line
         ],
     ),
