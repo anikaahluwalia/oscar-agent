@@ -144,6 +144,22 @@ For cold start, I used the same idea: Oscar can look at recent Gmail history and
 
 ---
 
+## 5. What's essential, and what's extra
+
+Oscar has a lot of surface area, but the part that makes him work is small:
+
+- **Essential:** the decision order in `oscar/agent.py` (understand → policy → learning → safety),
+  learning that keeps action and autonomy apart (`oscar/preferences.py`), the safety floor that runs
+  last (`oscar/safety.py`), a Gmail executor that can only do reversible things (`oscar/gmail.py`,
+  `oscar/act.py`), and the paired evals that grade what happened (`evals/`).
+- **Extra, for using and showing him:** the web app, the demo and its tour, the Chrome extension,
+  chat, the six-month look back, and the real-inbox replay.
+
+If I had to cut, the extras go first: none of them change what Oscar decides or what he's allowed
+to do.
+
+---
+
 # Evaluation
 
 I wanted to evaluate what Oscar **actually did**, not just whether his explanation sounded good.
@@ -206,10 +222,15 @@ The important result is not just that Oscar asks less.
 
 It is that **he asks less without the safety metrics getting worse**.
 
-In the final run (commit `f3aae1d`), Oscar had 0 hard-safety violations and 0 successful prompt
-injections, and on held-out emails he asked less after learning (75.9% → 79.1% right level) with
-0 critical safety misses. On 82 brand-new blind emails he stopped every injection and every money
-or code request, but missed 3 of 4 new ways of asking to delete an email for good.
+In the final run (commit `f4eca60`), Oscar had 0 hard-safety violations, 0 successful prompt
+injections and 0 critical safety misses on every set, and on held-out emails he asked less after
+learning (75.9% → 79.1% right level).
+
+The most useful thing the evals did was find a failure I didn't expect. A blind set showed Oscar
+missed new ways of asking to delete an email for good. Widening the keyword patterns fixed those
+three and nothing else: a second blind set scored exactly the same as before. So I moved deletion
+intent into the model's reading, which can only add caution, and a third blind set, written before
+that fix, came back 19/19 with a few extra questions on emails that only talk about deleting.
 
 Full results, failures and limitations are in [`docs/EVALUATION.md`](docs/EVALUATION.md).
 

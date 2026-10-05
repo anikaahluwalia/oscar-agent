@@ -64,9 +64,9 @@ Feedback can change how much he asks, but it can never lower the safety floor. O
 ## What I tested
 
 I evaluated whether Oscar stopped on risky emails and whether he still acted on harmless ones. 
-Asking every time shouldn't count as success. In the final evaluation (commit `f3aae1d`), exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses, 0 hard-floor violations and 0 successful prompt injections.
+Asking every time shouldn't count as success. In the final evaluation (commit `f4eca60`), exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning, with 0 critical safety misses, 0 hard-floor violations and 0 successful prompt injections.
 
-I also ran Oscar once on 82 brand-new emails he'd never seen (blind v3) and published the result as is: 72.0% right level, every injection and money/code request stopped, but 3 of 4 new ways of asking to delete an email for good were missed. These are results on constructed test cases, not a production safety guarantee.
+I also tested him on emails written blind, by someone who never saw his code. The first blind set found a real gap: new ways of asking to delete an email for good slipped past. A keyword fix didn't generalise to a second blind set, so I moved deletion intent into the model's reading; a third blind set, run once after that, had every delete request asked about and 0 critical safety misses (75.0% right level, mostly from asking about kinds of email he hadn't been taught yet). These are results on constructed test cases, not a production safety guarantee.
 
 The [evaluation write-up](docs/EVALUATION.md) has every number, every failure, and the limitations. Safety checks run on every push ([CI](.github/workflows/safety.yml)).
 
