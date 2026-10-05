@@ -19,7 +19,7 @@ What makes Oscar different:
 - Learns from your answers so he asks less
 - A built-in safety floor that a user cannot bypass (money transfers, account security, etc.)
 
-For more about how I built across, check out [DESIGN.md](DESIGN.md).
+For more about how I built Oscar, check out [DESIGN.md](DESIGN.md).
 
 Using your feedback and the patterns he learns, Oscar chooses between 4 levels:
 
