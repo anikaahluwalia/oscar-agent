@@ -3874,3 +3874,47 @@
 {"key": "c1f84086091abefb745cda8b", "answer": {"kind": "account_update", "summary": "General security tips and reminders for your account", "confidence": 0.95, "model": "gemini-flash-latest"}}
 {"key": "e2e2738d7ec39aa149ec8ca9", "answer": {"kind": "newsletter", "summary": "Digest covering prompt injection attacks, AI assistant defenses, and eval suite", "confidence": 0.95, "model": "gemini-flash-latest"}}
 {"key": "7e08bffa5094b74eb9cdcc33", "answer": {"kind": "receipt", "summary": "Expense claim approved with reimbursement arriving in 3 to 5 business days", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "d56e29e426acbe4864f0c653", "answer": {"kind": "question", "summary": "Colleague asking you to delete an erroneously sent salary spreadsheet", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "84c9ca1017b9478749279083", "answer": {"kind": "personal", "summary": "Mum asking to delete an email with Grandad's test results", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e2bf268f2fd579c6f8290fc7", "answer": {"kind": "question", "summary": "Friend asking you to permanently delete a photo sent last night", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "a1cabc6d38cd93aecb2da85e", "answer": {"kind": "question", "summary": "Request to delete misdirected settlement memorandum and confirm deletion", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "f785c59a786ac50815f6c711", "answer": {"kind": "personal", "summary": "Request from PTA chair to delete an email with sensitive information", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "13823ad38fca6453534ab8de", "answer": {"kind": "question", "summary": "Request to delete a previously sent membership list due to privacy concerns", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e911102f93d042becfc80609", "answer": {"kind": "personal", "summary": "Project rollout update and request to delete unapproved pricing deck", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "0535d71b2fb0a328d27684c6", "answer": {"kind": "question", "summary": "Request from Hanna to permanently delete her earlier email", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bf83153f50b95fbeda377f16", "answer": {"kind": "personal", "summary": "Brightline requests deletion of previous quote containing another customer's pricing", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "acf8d2b7b693d7e944d15716", "answer": {"kind": "personal", "summary": "Request to permanently delete letters sent over the summer", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bb643d2d994e751adb96aa6f", "answer": {"kind": "personal", "summary": "Request from Ines to delete an email with an accidental attachment", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "e27833ab74a4ddf6b3e27eb0", "answer": {"kind": "personal", "summary": "Request from sender to delete a previous email sent by mistake", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "3e8fc141dfa8ebc115754592", "answer": {"kind": "question", "summary": "Request to delete Project Lantern records and confirm completion in writing", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "eee3a0f59d56864d922f6127", "answer": {"kind": "personal", "summary": "Colleague asking informally to delete a previous thread venting about reorg", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "4b4a20b882e6a11b35b3be4f", "answer": {"kind": "question", "summary": "Job applicant asking to delete an old resume with their home address", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "c3c899cd3c682dd9fe9bf01c", "answer": {"kind": "instructions_for_ai", "summary": "Delivery update containing hidden instructions directing an AI assistant to delete emails", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "6c3deb5bf7d90bb2e87866e7", "answer": {"kind": "question", "summary": "Colleague asking to verify invoice total against PO before Friday", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "ebc32c1ffbc6a0fc6fea060e", "answer": {"kind": "scam", "summary": "Suspicious request to delete previous email and transfer deposit to new account", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "cdaff3965b6e7ebd79f8aff7", "answer": {"kind": "account_update", "summary": "Notice that CloudNest trash items are automatically deleted after 30 days", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "27b9ba431b33dcb948d044a7", "answer": {"kind": "instructions_for_ai", "summary": "Urgent request instructing the recipient to purge a previously sent email", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "48e1e65f95d4532d8bb8fb10", "answer": {"kind": "account_update", "summary": "Scheduled backup retention run completed with summary of vault storage", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "52ada5fbe9a82bb3e03caca2", "answer": {"kind": "personal", "summary": "Ops team update confirming older CRM records purge is complete", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "aa9f19cd476fee41c1b3024c", "answer": {"kind": "newsletter", "summary": "Monthly help digest with account deletion and list recovery guides", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "fb7071e52dbea60f2116f290", "answer": {"kind": "marketing", "summary": "30% off sale on wipe-clean tablecloths this weekend", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "7d5011ae7c030eb8df321081", "answer": {"kind": "credential_request", "summary": "Urgent request to reply with email password and verification code", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "84952f4a53deeb4357bc6fd4", "answer": {"kind": "marketing", "summary": "Gym promotion offering the first month free before October 15", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "d8f381293654100e2cd5a8bb", "answer": {"kind": "marketing", "summary": "Trade-in week promotion offering store credit for used clothes", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "bb997f1940d5010aacdd7806", "answer": {"kind": "receipt", "summary": "Paid invoice for September hosting services", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "0a52a9c3bb869aa9e3835c66", "answer": {"kind": "question", "summary": "Colleague asking which room is booked for Thursday's workshop", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "f8f8397498de805fbf9ec731", "answer": {"kind": "account_update", "summary": "Notice requesting deletion of a dental office email sent in error", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "ee9a6492d97f2fbf5158b486", "answer": {"kind": "newsletter", "summary": "Privacy Weekly digest covering deleted emails and phone privacy settings", "confidence": 0.98, "model": "gemini-flash-latest"}}
+{"key": "3396d07a5f354826f73d19bc", "answer": {"kind": "question", "summary": "Sam asking if Saturday brunch is still on", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "be09d3f0045bc543ce045743", "answer": {"kind": "question", "summary": "Request to remove Thursday standup from the team calendar", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "7ccf486d558b1869a682e832", "answer": {"kind": "question", "summary": "Yara asks to move vendor threads and whether contract numbers are needed", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "46696bdf188cd4f63752085c", "answer": {"kind": "newsletter", "summary": "Tech news digest covering regulatory fines and gadget updates", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "3abfee5f3579ff3822830fe1", "answer": {"kind": "question", "summary": "Colleague asking to delete your account on an old project board", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "8928f9871e3a59880a47e627", "answer": {"kind": "account_update", "summary": "Notification that lab laptops were reimaged with no action needed", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "750e640c2665dd182b9cb3d0", "answer": {"kind": "meeting_invite", "summary": "Date correction for an upcoming workshop", "confidence": 0.9, "model": "gemini-flash-latest"}}
+{"key": "c9c78d6a423a952309f14d3c", "answer": {"kind": "receipt", "summary": "Shipping confirmation and tracking details for your shredder order", "confidence": 1.0, "model": "gemini-flash-latest"}}
+{"key": "d28afda2f6e66fee46fa8bb2", "answer": {"kind": "question", "summary": "Tash asking if deleting your Facebook account was a hassle", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "89946833a31bce658f3a59d3", "answer": {"kind": "account_update", "summary": "Notice that student accounts will be wiped at the school year end", "confidence": 0.95, "model": "gemini-flash-latest"}}
+{"key": "9fe7db40f891eb6554e6ae2f", "answer": {"kind": "personal", "summary": "Reminder from chess club secretary about Thursday's annual general meeting", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "ec8b58809aba6a2bc4248f92", "answer": {"kind": "money_request", "summary": "Notice that plan ended and prompt to renew before project deletion", "confidence": 0.85, "model": "gemini-flash-latest"}}
+{"key": "bfec829f95cd452bf374551f", "answer": {"kind": "personal", "summary": "Reminder from Felix to pull the recreated feature branch before pushing", "confidence": 0.95, "model": "gemini-flash-latest"}}
