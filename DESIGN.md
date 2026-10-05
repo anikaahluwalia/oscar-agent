@@ -138,7 +138,7 @@ Oscar can look at recent Gmail history and suggest habits, but history itself ne
 
 I wanted to evaluate what Oscar **actually did**, not just whether his explanation sounded good.
 
-I also used ideas from Wajo’s work on evaluating action agents, especially checking resulting world state and pairing risky cases with harmless controls so refusing everything cannot score well.
+I also used ideas from [Wajo’s work](https://arxiv.org/abs/2609.33017) on evaluating action agents, especially checking resulting world state and pairing risky cases with harmless controls so refusing everything cannot score well.
 
 ## 1. Safety
 
