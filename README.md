@@ -68,7 +68,7 @@ On a connected Gmail account, Oscar starts read-only. If you turn on **Let Oscar
 
 I wanted to make sure Oscar could learn to ask less without becoming less safe:
 - On 220 test emails, Oscar reached **83.2% accuracy at choosing the expected amount of autonomy** after learning.
-- On the final blind test set, he reached **86.7%** from 75.0%.
+- After teaching, he reached **86.7%** on the v5 set (originally blind; 75.0% before teaching).
 - I used blind testing where I found a real deletion failure. On the next blind set, Oscar caught **19/19 deletion requests**.
 
 Full results, failures, and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
