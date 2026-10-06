@@ -12,14 +12,14 @@ The demo uses sample emails, so you don't need an account, Gmail connection, or 
 
 ## What Oscar does
 
-For each email, Oscar picks one action (archive, mark read, label, draft a reply...) and how much
+For each email, Oscar picks one action (archive, mark read, label, draft a reply...) and decides how much
 to do on his own.
 
 What makes Oscar different:
 - Learns from your answers so he asks less
 - A built-in safety floor that a user cannot bypass (money transfers, account security, etc.)
 
-For more about features, please check out [DESIGN.md](DESIGN.md).
+For more about how I built Oscar, check out [DESIGN.md](DESIGN.md).
 
 Using your feedback and the patterns he learns, Oscar chooses between 4 levels:
 
@@ -32,7 +32,7 @@ Using your feedback and the patterns he learns, Oscar chooses between 4 levels:
 
 You can review his decisions in the web app or use the Chrome extension inside Gmail. 
 
-The extension shows what Oscar decided, why, and the controls to approve, decline, undo, or give feedback. Little Oscar also sits in the corner to get your attention when something needs you.
+The extension shows what Oscar decided, why, and lets you approve, decline, undo, or give feedback. Little Oscar also sits in the corner to get your attention when something needs you.
 
 ## What it looks like
 
@@ -52,25 +52,26 @@ The extension shows what Oscar decided, why, and the controls to approve, declin
 ![Promises](assets/promises.png)
 
 ## How he learns
+
 Instead of simply approving an action, you can choose from:
 - Handle quietly
 - Handle and tell me
 - Ask me
   
-For example, in the demo you approve a sale email and tell Oscar to handle emails like it. He then archives a sale from a different shop without asking again. A sale containing hidden instructions still gets stopped.
+For example: if you approve a sale email and tell Oscar to handle emails like it, he will archive a sale from a different shop without asking again. A sale containing hidden instructions still gets stopped.
 
-Feedback can change how much he asks, but it can never lower the safety floor. On a connected Gmail account, Oscar starts read-only. If you turn on **Let Oscar act in Gmail** in Settings, he can mark emails read, archive them, add his own labels, and save drafts, so you can see him work at full potential! He never sends email and never deletes anything for good: when an email asks to be deleted and you hold to approve, he moves it to Gmail's Trash, where you can get it back.
+User feedback can change how much he asks but, it can't lower the safety floor. 
+
+On a connected Gmail account, Oscar starts read-only. If you turn on **Let Oscar act in Gmail** in Settings, he can mark emails read, archive them, add his own labels, and save drafts, so you can see him work at full potential! He never sends an email and never deletes anything for good. When an email asks to be deleted and you hold to approve, he moves it to Gmail's Trash, where you can get it back.
 
 ## What I tested
 
-I evaluated whether Oscar stopped on risky emails and whether he still acted on harmless ones. 
-Asking every time shouldn't count as success. In the final evaluation (commit `f4eca60`), exact autonomy-level accuracy on 220 held-out emails increased from 75.9% to 79.1% after learning while over-asking fell from 28.3% to 23.4%, and with the full system enabled there were 0 critical safety misses, 0 hard-floor violations and 0 successful prompt injections.
+I wanted to make sure Oscar could learn to ask less without becoming less safe:
+- On 220 test emails, Oscar reached **83.2% accuracy at choosing the expected amount of autonomy** after learning.
+- On the final blind test set, he reached **86.7%** from 75.0%.
+- I used blind testing where I found a real deletion failure. On the next blind set, Oscar caught **19/19 deletion requests**.
 
-I also tested him on emails written blind, by someone who never saw his code. The first blind set found a real gap: new ways of asking to delete an email for good slipped past. A keyword fix didn't generalise to a second blind set, so I moved deletion intent into the model's reading; a third blind set, run once after that, had every delete request asked about and 0 critical safety misses (75.0% right level, mostly from asking about kinds of email he hadn't been taught yet). These are results on constructed test cases, not a production safety guarantee.
-
-Then I taught him and tested again. A simulated user answered some of the test emails, and Oscar was scored on the ones nobody answered. After a second round of answers on 82 new emails, he got the level right on 86.7% of the v5 set (originally blind; up from 75.0%) and asked about 24 emails instead of 31, still with every safety case caught and 0 critical safety misses. The cost: on the bigger held-out set he acts on his own more often than he should (too permissive 8.0% → 21.3%), mostly promotions and newsletters where the label wanted him to ask.
-
-The [evaluation write-up](docs/EVALUATION.md) has every number, every failure, and the limitations. Safety checks run on every push ([CI](.github/workflows/safety.yml)).
+Full results, failures, and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Try it
 

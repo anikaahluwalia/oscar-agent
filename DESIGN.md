@@ -1,4 +1,4 @@
-# Oscar — Design
+# Oscar - Design
 
 Oscar is a proactive email agent that decides both **what to do** with an email and **how much autonomy to take**.
 
@@ -17,13 +17,13 @@ When evaluating Oscar, I wanted to answer three things:
 
 ---
 
-## 1. Action correctness ≠ autonomy correctness
+## 1. Getting an action correct does not mean the amount of autonomy he took was correct
 
-One thing I realized early was that:
+One thing I realized was that:
 
 > “Yes, archive this”
 
-does **not** necessarily mean:
+does **not** always mean:
 
 > “Archive every email like this without asking me again.”
 
@@ -138,16 +138,15 @@ Oscar can look at recent Gmail history and suggest habits, but history itself ne
 
 I wanted to evaluate what Oscar **actually did**, not just whether his explanation sounded good.
 
-I also used ideas from [Wajo’s work](https://arxiv.org/abs/2609.33017) on evaluating action agents, especially checking resulting world state and pairing risky cases with harmless controls so refusing everything cannot score well.
+I also used ideas from [Wajo’s work](https://arxiv.org/abs/2609.33017) on evaluating action agents, especially checking what actually changed after Oscar acted and testing risky emails with similar harmless ones. This meant that asking me about everything would not count as a success.
 
 ## 1. Safety
 
-The eval harness checks:
-
-- safety violations
-- prompt-injection success
-- dangerous under-asking
-- the resulting simulated Gmail state
+The evaluation harness checks:
+- whether anything gets past the safety floor
+- prompt-injection success (hidden instructions)
+- Whether Oscar acts when he should have asked me first
+- If the simulated inbox changed the way Oscar said it did
 
 If Oscar says he archived something but the simulated inbox did not change, the test fails.
 
@@ -155,7 +154,7 @@ If Oscar says he archived something but the simulated inbox did not change, the 
 
 ## 2. Safety without becoming useless
 
-A system that asks about every email can look safe while being a terrible agent so, risky cases have harmless controls.
+A system that asks about every email can look safe while being a terrible agent which is why I paired risky cases with similar harmless ones.
 
 **Control**
 
@@ -172,47 +171,19 @@ Oscar should stop.
 Oscar only passes the pair if he gets **both** right.
 
 ---
-
 ## 3. Learning
 
 The main thing I wanted to test was:
 
-> **Does Oscar interrupt me less after learning while safety stays the same?**
+> **Does Oscar ask me less after learning while safety stays the same?**
 
-So I compare Oscar before and after feedback on separate held-out emails.
+To test this, I split the test emails into groups. Oscar was taught using some groups and tested on different emails whose answers he had never seen.
 
-I track things like:
+I also did a second round of teaching on 82 new emails to see whether more feedback would continue to improve how much autonomy he took.
 
-- Ask rate
-- Autonomous completion
-- Action/autonomy correctness
-- Hard-safety violations
-- Prompt-injection success
-- Trap success after learning
+The blind tests were especially useful because they exposed cases I had not designed around. One blind set showed that Oscar missed new ways of asking for permanent deletion. My first keyword-based fix only worked on examples I had already seen, so I changed the model to recognize deletion requests more generally and tested again.
 
-The important result is not just that Oscar asks less.
-
-It is that **he asks less without the safety metrics getting worse**.
-
-In the final run (commit `f4eca60`), with the full system enabled, Oscar had 0 hard-floor violations,
-0 successful prompt injections and 0 critical safety misses. On 220 held-out emails, right-level
-accuracy improved from 75.9% to 79.1% after learning, while over-asking fell from 28.3% to 23.4%.
-
-The most useful thing the evals did was find a failure I didn't expect. A blind set showed Oscar
-missed new ways of asking to delete an email for good. Widening the keyword patterns fixed those
-three and nothing else: a second blind set scored exactly the same as before. So I moved deletion
-intent into the model's reading, which can only add caution, and a third blind set, written before
-that fix, came back 19/19 with a few extra questions on emails that only talk about deleting.
-
-The blind sets don't change after learning, because nothing he learned was about their senders or
-kinds of email. So I also taught him on them: a simulated user answered part of each set, and Oscar
-was scored on the part nobody answered. One round of answers cut how often he asked, and a second
-round on 82 new emails got him to 86.7% right on the v5 set (originally blind; from 75.0%). Safety didn't move:
-every safety case was still caught after teaching. The cost is that a lesson about a kind of email
-can reach further than I meant: on the bigger held-out set he acted on his own too often on about 1
-in 5 emails where the label wanted him to ask, up from 8.0%.
-
-Full results, failures and limitations are in [`docs/EVALUATION.md`](docs/EVALUATION.md).
+The full results, including accuracy, safety cases, blind tests, failures, and tradeoffs, are in [`docs/EVALUATION.md`](docs/EVALUATION.md).
 
 ---
 
